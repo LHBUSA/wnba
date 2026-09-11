@@ -149,16 +149,122 @@
 .form-chips .L { background: rgba(224,90,90,.14); color: var(--neg); }
 @media (max-width: 600px) { .mu-head { grid-template-columns: minmax(0, 1fr); } .mu-team.home { text-align: left; } }
 
-/* ------------------------------------------------------------ props */
-.layer-key { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); }
-.layer-key div { padding: 10px 12px; border-radius: var(--r2); border: 1px solid var(--line); background: var(--ink-2); font-size: 12.5px; color: var(--dim); }
-.layer-key b { display: block; font: 700 10.5px/1.2 var(--f-data); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
-.layer-key .k1 b { color: var(--paper); } .layer-key .k2 b { color: var(--market); } .layer-key .k3 b, .layer-key .k4 b { color: var(--model); }
-@media (max-width: 800px) { .layer-key { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.market-cell { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.market-cell small { font: 500 10.5px/1 var(--f-data); color: var(--faint); }
+/* ------------------------------------------------------------ props / best-line board */
+/* One slim "how to read this board" rail replaces the four explanation cards.
+   The full definition is a tooltip on hover/tap, so the contract stays on the
+   page without owning the top third of it. */
+.read-rail { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r2); background: var(--ink-2); }
+.rk { display: inline-flex; align-items: baseline; gap: 7px; padding: 4px 8px; border-radius: 999px; border: 1px solid transparent; cursor: help; }
+.rk:hover, .rk:focus { outline: none; border-color: var(--line-2); background: var(--ink-3); }
+.rk b { font: 700 10.5px/1.2 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--paper); white-space: nowrap; }
+.rk > span { font-size: 12.5px; color: var(--meta); }
+.rk-cons b { color: var(--market); }
+.rk-pbe b { color: var(--model); }
+.rk-tip {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 6;
+  padding: 10px 12px; border-radius: var(--r2); border: 1px solid var(--line-2);
+  background: var(--ink-3); box-shadow: var(--sh-1);
+  font-size: 12.5px; line-height: 1.5; color: var(--paper-2);
+  opacity: 0; visibility: hidden; transition: opacity .12s;
+}
+.rk:hover .rk-tip, .rk:focus .rk-tip, .rk:focus-within .rk-tip { opacity: 1; visibility: visible; }
+
+/* The PBE layer is stated once, not repeated in a dead cell on every row. */
+.pbe-status { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin-top: var(--s2); padding: 10px 14px; border: 1px solid var(--line); border-left: 3px solid var(--model); border-radius: var(--r2); background: linear-gradient(90deg, rgba(122,169,255,.06), transparent 60%); }
+.ps-tag { font: 700 10.5px/1.2 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--model); white-space: nowrap; }
+.pbe-status p { font-size: 12.5px; line-height: 1.5; color: var(--meta); flex: 1 1 320px; min-width: 0; }
+.pbe-pill { font: 700 10.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--model); border: 1px solid rgba(122,169,255,.3); background: rgba(122,169,255,.07); padding: 5px 9px; border-radius: 6px; }
+
+/* Market state sits directly above the rows, not under the table. */
+.snap-rail { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 9px 14px; border: 1px solid var(--line); border-bottom: 0; border-radius: var(--r3) var(--r3) 0 0; background: var(--ink-2); font: 500 12px/1.4 var(--f-data); color: var(--meta); }
+.sr-state { display: inline-flex; align-items: center; gap: 7px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-size: 11px; color: var(--paper-2); }
+.sr-state::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.sr-state[data-state='CURRENT']::before, .sr-state[data-state='CACHED']::before { background: var(--pos); box-shadow: 0 0 0 3px var(--pos-soft); }
+.sr-state[data-state='STALE']::before { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+.sr-state[data-state='ERROR']::before, .sr-state[data-state='UNAVAILABLE']::before, .sr-state[data-state='NOT_CONFIGURED']::before { background: var(--neg); }
+.sr-quiet { margin-left: auto; color: var(--faint); }
+
+/* The board itself: four fixed columns, no horizontal scroller anywhere. */
+.board-shell { border: 1px solid var(--line); border-radius: 0 0 var(--r3) var(--r3); background: linear-gradient(180deg, var(--ink-2), var(--ink-1)); box-shadow: var(--sh-1); overflow: hidden; }
+.board { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.board col.c-mu { width: 25%; }
+.board th { font: 600 10.5px/1.2 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--line-2); background: var(--ink-2); }
+.board td { padding: 14px 16px; border-bottom: 1px solid var(--line-3); vertical-align: top; text-align: left; }
+.board tbody tr:last-child td { border-bottom: 0; }
+.board tbody tr:nth-child(even) td { background: rgba(255, 245, 220, .022); }
+.board tbody tr:hover td { background: rgba(255, 245, 220, .04); }
+.board-foot { padding: var(--s4); border-top: 1px solid var(--line); display: grid; gap: 6px; }
+
+/* matchup cell */
+.mu-teams { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mu-t { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.mu-t b { font: 700 17px/1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; color: var(--paper); }
+.mu-at { font: 500 11.5px/1 var(--f-data); color: var(--faint); }
+.mu-when { margin-top: 7px; font: 500 12px/1.4 var(--f-data); color: var(--meta); }
+.mu-go { display: inline-block; margin-top: 8px; font: 600 11.5px/1 var(--f-ui); letter-spacing: .04em; color: var(--gold); border-bottom: 1px solid transparent; }
+.mu-go:hover { color: var(--gold-bright); border-bottom-color: var(--gold-line); }
+
+/* market cell: price/line first, book second, benchmark third */
+.mc-label { display: none; font: 700 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.mc-primary { font: 700 21px/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--paper); margin-bottom: 4px; }
+/* Cap the measure so the price and its book stay one visual unit on wide screens. */
+.mc > * { max-width: 250px; }
+.mr { display: flex; align-items: baseline; gap: 8px; padding: 2px 0; min-width: 0; }
+.mr-side { min-width: 2.6em; font: 600 11.5px/1.5 var(--f-data); letter-spacing: .06em; color: var(--dim); flex: none; }
+.mr-main { min-width: 3.6em; font: 600 15px/1.5 var(--f-data); font-variant-numeric: tabular-nums; color: var(--paper); flex: none; }
+.mr-sub { font: 500 13px/1.5 var(--f-data); font-variant-numeric: tabular-nums; color: var(--dim); flex: none; }
+.mr-side:empty { display: none; }
+.mr-book { margin-left: auto; font: 500 12px/1.5 var(--f-ui); color: var(--meta); text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-third { margin-top: 6px; font: 500 11.5px/1.5 var(--f-data); color: var(--meta); overflow-wrap: anywhere; }
+.mc-third i { font-style: normal; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-right: 4px; }
+.mc-third.cons { color: var(--market); }
+.mc-third.cons i { color: rgba(185, 156, 255, .7); }
+.mc-move { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: var(--faint); }
+.mc-move .spark { width: 58px; height: 14px; }
 .cons { color: var(--market); }
-.na { color: var(--subtle); }
+.na { color: var(--faint); }
+
+/* player props board */
+.pboard col.c-who { width: 34%; }
+.pboard col.c-line { width: 11%; }
+.pp-who .avatar { float: left; margin-right: 10px; }
+.pp-id { display: block; overflow: hidden; }
+.pp-name { display: block; font: 600 14.5px/1.25 var(--f-ui); color: var(--paper); }
+a.pp-name:hover { color: var(--gold-bright); }
+.pp-id small { display: block; margin-top: 3px; font: 500 11.5px/1.4 var(--f-data); color: var(--meta); }
+.pp-line { font: 700 17px/1.2 var(--f-display); font-variant-numeric: tabular-nums; color: var(--paper); }
+
+/* Between the card breakpoint and ~1120px the market columns are the tight ones:
+   give them the width back from the matchup column and drop the tertiary a notch. */
+@media (min-width: 901px) and (max-width: 1120px) {
+  .board col.c-mu { width: 21%; }
+  .board th, .board td { padding-inline: 12px; }
+  .mc-third { font-size: 11px; }
+  .mr-book { font-size: 11.5px; }
+}
+
+/* Mobile: the table becomes cards. Nothing scrolls sideways. */
+@media (max-width: 900px) {
+  .snap-rail { border-radius: var(--r2); border-bottom: 1px solid var(--line); }
+  .sr-quiet { margin-left: 0; flex-basis: 100%; }
+  .board-shell { border: 0; border-radius: 0; background: none; box-shadow: none; overflow: visible; }
+  .board, .board tbody, .board tr, .board td { display: block; width: auto; }
+  .board thead, .board colgroup { display: none; }
+  .board tr { margin-top: var(--s3); padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r3); background: linear-gradient(180deg, var(--ink-2), var(--ink-1)); box-shadow: var(--sh-1); }
+  .board td { padding: 0; border-bottom: 0; background: none !important; }
+  .board td.mc, .board td.pp-line { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-3); }
+  .mc-label { display: block; margin-bottom: 6px; }
+  .mc > * { max-width: none; }
+  .mu-go { margin-top: 10px; }
+  .board-foot { margin-top: var(--s4); padding: var(--s3) 0 0; border-top: 1px solid var(--line); }
+  .pp-line { font-size: 20px; }
+  .board td.pp-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .board td.pp-line .mc-label { margin-bottom: 0; }
+}
+@media (max-width: 420px) {
+  .board tr { padding: 12px 13px; }
+  .mr-book { font-size: 11.5px; }
+}
 
 /* ------------------------------------------------------------ pro */
 .pro-wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--s5); align-items: start; }
