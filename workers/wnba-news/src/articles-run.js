@@ -75,12 +75,12 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     byId.set(a.id, { ...cardOf(a), input_hash: inHash, first_published_at: a.first_published_at });
     written += 1;
   }
-  // One story per injury episode: when ESPN re-touches the same status, the newest article is the story and
-  // older renders are marked superseded (still reachable at their URLs, dropped from lists).
-  const newestByEpisode = new Map();
-  for (const c of byId.values()) if (c.episode && (!newestByEpisode.has(c.episode) || c.published_at > newestByEpisode.get(c.episode).published_at)) newestByEpisode.set(c.episode, c);
+  // One live injury story per player: the newest render is the story; older ones (earlier feed updates or
+  // earlier statuses that have left the feed) are marked superseded — still reachable, dropped from lists.
+  const newestByPlayer = new Map();
+  for (const c of byId.values()) if (c.kind === 'injury' && c.lead_player_id && (!newestByPlayer.has(c.lead_player_id) || c.published_at > newestByPlayer.get(c.lead_player_id).published_at)) newestByPlayer.set(c.lead_player_id, c);
   for (const c of byId.values()) {
-    const top = c.episode ? newestByEpisode.get(c.episode) : null;
+    const top = c.kind === 'injury' && c.lead_player_id ? newestByPlayer.get(c.lead_player_id) : null;
     if (top && top.id !== c.id) c.superseded_by = top.id; else delete c.superseded_by;
   }
   // Retire: trend articles older than the current day's set; keep 90 days of everything else.
