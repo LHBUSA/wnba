@@ -1,0 +1,191 @@
+{
+  "at": "2026-09-11T18:10:09.319Z",
+  "api": "https://wnba-api.sales-fd3.workers.dev",
+  "news": "https://wnba-news.sales-fd3.workers.dev",
+  "summary": {
+    "PASS": 19,
+    "DEGRADED": 1
+  },
+  "results": [
+    {
+      "capability": "schedule / game ids",
+      "status": "PASS",
+      "http": 200,
+      "ms": 1168,
+      "freshness": "CURRENT",
+      "detail": "NEXT 20260917 · 5 games",
+      "evidence": null
+    },
+    {
+      "capability": "game detail + box score",
+      "status": "PASS",
+      "http": 200,
+      "ms": 472,
+      "freshness": "CACHED",
+      "detail": "CON 71-97 DAL · 23 box rows",
+      "evidence": null
+    },
+    {
+      "capability": "play-by-play",
+      "status": "PASS",
+      "http": 200,
+      "ms": 472,
+      "freshness": "CACHED",
+      "detail": "405 events · FINAL_PERSISTED_ARCHIVE",
+      "evidence": null
+    },
+    {
+      "capability": "shot coordinates",
+      "status": "PASS",
+      "http": 200,
+      "ms": 472,
+      "freshness": "CACHED",
+      "detail": "136/136 FGA located",
+      "evidence": null
+    },
+    {
+      "capability": "replay archive",
+      "status": "PASS",
+      "http": 200,
+      "ms": 472,
+      "freshness": "CACHED",
+      "detail": "FINAL_PERSISTED_ARCHIVE",
+      "evidence": null
+    },
+    {
+      "capability": "standings",
+      "status": "PASS",
+      "http": 200,
+      "ms": 361,
+      "freshness": "CACHED",
+      "detail": "2026 Regular Season — current · current=true",
+      "evidence": null
+    },
+    {
+      "capability": "teams",
+      "status": "PASS",
+      "http": 200,
+      "ms": 408,
+      "freshness": "CURRENT",
+      "detail": "15 teams",
+      "evidence": null
+    },
+    {
+      "capability": "rosters / players",
+      "status": "PASS",
+      "http": 200,
+      "ms": 600,
+      "freshness": "CURRENT",
+      "detail": "209 players · photos 156",
+      "evidence": null
+    },
+    {
+      "capability": "player page + game log",
+      "status": "PASS",
+      "http": 200,
+      "ms": 436,
+      "freshness": "CURRENT",
+      "detail": "Paige Bueckers · 39 games",
+      "evidence": null
+    },
+    {
+      "capability": "injuries / availability",
+      "status": "PASS",
+      "http": 200,
+      "ms": 250,
+      "freshness": "CACHED",
+      "detail": "41 listed · 0 changes logged",
+      "evidence": null
+    },
+    {
+      "capability": "transactions",
+      "status": "PASS",
+      "http": 200,
+      "ms": 325,
+      "freshness": "CURRENT",
+      "detail": "100 items",
+      "evidence": null
+    },
+    {
+      "capability": "player season stats",
+      "status": "PASS",
+      "http": 200,
+      "ms": 430,
+      "freshness": "CURRENT",
+      "detail": "127 qualified players",
+      "evidence": null
+    },
+    {
+      "capability": "team season stats",
+      "status": "PASS",
+      "http": 200,
+      "ms": 429,
+      "freshness": "CURRENT",
+      "detail": "15 teams",
+      "evidence": null
+    },
+    {
+      "capability": "matchup research",
+      "status": "PASS",
+      "http": 200,
+      "ms": 842,
+      "freshness": "CURRENT",
+      "detail": "CON rot n=5 · ATL rot n=5",
+      "evidence": null
+    },
+    {
+      "capability": "game odds",
+      "status": "PASS",
+      "http": 200,
+      "ms": 462,
+      "freshness": "CACHED",
+      "detail": "8 events · captured 2026-09-11T17:31:20.806Z",
+      "evidence": null
+    },
+    {
+      "capability": "player props",
+      "status": "DEGRADED",
+      "http": 200,
+      "ms": 372,
+      "freshness": "CACHED",
+      "detail": "0 prop rows (captured only for games within 36h)",
+      "evidence": null
+    },
+    {
+      "capability": "provider egress (Cloudflare)",
+      "status": "PASS",
+      "http": 200,
+      "ms": 473,
+      "freshness": "CURRENT",
+      "detail": "scoreboard:200 summary:200 standings:200 injuries:200 teams:200 roster:200 athlete:200 gamelog:200 leaders:200 transactions:200 core_plays:200 site_api_host:403",
+      "evidence": null
+    },
+    {
+      "capability": "news — official + external",
+      "status": "PASS",
+      "http": 200,
+      "ms": 525,
+      "freshness": "CURRENT",
+      "detail": "62 items · last ingest 2026-09-11T18:09:22.055Z",
+      "evidence": null
+    },
+    {
+      "capability": "news — PBE Desk (owned)",
+      "status": "PASS",
+      "http": 200,
+      "ms": 525,
+      "freshness": "CURRENT",
+      "detail": "7 desk stories",
+      "evidence": null
+    },
+    {
+      "capability": "news — dedupe clusters",
+      "status": "PASS",
+      "http": 200,
+      "ms": 525,
+      "freshness": "CURRENT",
+      "detail": "3 cross-publisher clusters",
+      "evidence": null
+    }
+  ]
+}
