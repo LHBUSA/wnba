@@ -426,13 +426,14 @@ export async function previewArticles({ api, upcoming, now }) {
     const form = (t) => `${t.team.short_name} ${t.form.record_last10 || '—'} over their last ${t.form.sample} (avg margin ${pts(t.form.avg_margin_last10) ?? '—'})`;
     const deck = `${dLong(g.start_utc)}${g.venue?.name ? ` at ${g.venue.name}` : ''}. ${form(A)}; ${form(H)}.`;
     const body = [];
+    const coreOf = (t) => { const outIds = new Set(t.availability.map((x) => x.athlete_id)); return t.rotation.rows.filter((x) => x.appearances > 0 && !outIds.has(x.athlete_id)).slice(0, 3); };
+    const cores = { a: coreOf(A), h: coreOf(H) };
     for (const t of [A, H]) {
       const st = t.standing;
       const r = t.schedule_context;
       const pace = t.pace ? ` They average an estimated ${f1(t.pace.possessions_per_game)} possessions and ${f1(t.pace.points_per_game)} points per game.` : '';
       body.push(`The ${full(t.team)} are ${standingText(st, st?.conference_name) || t.team.record || ''}, ${t.form.record_last10} in their last ${t.form.sample}.${r.rest_days !== null ? ` They come in on ${r.rest_days} day${r.rest_days === 1 ? '' : 's'} of rest.` : ''}${pace}`);
-      const outIds = new Set(t.availability.map((x) => x.athlete_id));
-      const core = t.rotation.rows.filter((x) => x.appearances > 0 && !outIds.has(x.athlete_id)).slice(0, 3);
+      const core = t === A ? cores.a : cores.h;
       if (core.length) body.push(`Their heaviest minutes among available players over the last ${t.rotation.sample} games: ${listJoin(core.map((x) => `${x.name} (${f1(x.min)} min, ${f1(x.pts)} pts)`))}.`);
       if (t.availability.length) body.push(`On ESPN’s injury feed for the ${t.team.short_name}: ${listJoin(t.availability.slice(0, 4).map((x) => `${x.name} (${x.status})`))}.`);
     }
@@ -451,7 +452,7 @@ export async function previewArticles({ api, upcoming, now }) {
       lead_team_id: H.team.team_id, lead_player_id: null, primary_subject: H.team.short_name, published_at: mk?.captured_at || new Date(now).toISOString(),
       context: { game: { game_id: g.game_id, start_utc: g.start_utc, home: g.home, away: g.away, venue: g.venue } },
       entities: [gameEntity(g), { type: 'team', id: A.team.team_id, name: A.team.name }, { type: 'team', id: H.team.team_id, name: H.team.name }, ...[A, H].flatMap((t) => t.rotation.rows.filter((x) => x.appearances > 0).slice(0, 2).map((x) => ({ type: 'player', id: x.athlete_id, name: x.name })))],
-      facts: { away: { form: A.form, rest: A.schedule_context, pace: A.pace, standing: A.standing, rot: A.rotation.rows.slice(0, 3), inj: A.availability.map((x) => ({ name: x.name, status: x.status })) }, home: { form: H.form, rest: H.schedule_context, pace: H.pace, standing: H.standing, rot: H.rotation.rows.slice(0, 3), inj: H.availability.map((x) => ({ name: x.name, status: x.status })) }, series: m.season_series, market: mt?.facts || null, out_count: outCount, props: mk?.props || null },
+      facts: { away: { form: A.form, rest: A.schedule_context, pace: A.pace, standing: A.standing, rot: cores.a, inj: A.availability.map((x) => ({ name: x.name, status: x.status })) }, home: { form: H.form, rest: H.schedule_context, pace: H.pace, standing: H.standing, rot: cores.h, inj: H.availability.map((x) => ({ name: x.name, status: x.status })) }, series: m.season_series, market: mt?.facts || null, out_count: outCount, props: mk?.props || null },
       evidence: [{ kind: 'record', source: 'wnba-api matchup research (ESPN standings, schedules, box scores, injury feed)', url: `https://wnba.propbetedge.ai/matchups/${g.game_id}`, record: { game_id: g.game_id } }, ...(mk ? [{ kind: 'market', source: 'The Odds API (stored PropBetEdge snapshot)', captured_at: mk.captured_at, record: { books: mk.books, spread_home: mk.spread.home_line, total: mk.total.line } }] : [])],
       input_hash: `${mk?.captured_at || 'nomkt'}|${outCount}`
     }));
