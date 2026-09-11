@@ -6,7 +6,7 @@ import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
 import { errorState, skeleton, marketStrip, avatar } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
-import { KIND_LABEL, DESK, articleCard } from '../ui/articles.js';
+import { KIND_LABEL, DESK, articleCard, headlineText } from '../ui/articles.js';
 import { storyMedia, creditLine } from '../ui/story-media.js';
 import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
 
@@ -40,8 +40,8 @@ export async function mount(root, ctx) {
           <a class="cat" href="/news/c/${deskKind}">${DESK[a.kind] || KIND_LABEL[a.kind] || a.category}</a>
           <span class="story-teams">${teams.slice(0, 2).map((t) => html`<a href="/teams/${t.id}" aria-label="${t.name}">${teamLogo({ team_id: t.id, name: t.name }, 26)}</a>`)}</span>
         </div>
-        <h1>${a.headline}</h1>
-        <p class="deck">${a.deck}</p>
+        <h1>${headlineText(a.headline)}</h1>
+        <p class="deck">${headlineText(a.deck)}</p>
         <div class="byline">
           <span class="by">By the PropBetEdge WNBA Newsroom</span>
           <span>Published <time datetime="${a.first_published_at || a.published_at}">${fmtDateTimeET(a.first_published_at || a.published_at)}</time></span>
