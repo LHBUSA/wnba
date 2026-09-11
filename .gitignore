@@ -9,3 +9,11 @@ qa-artifacts/
 .DS_Store
 .vercel
 .admin-token
+
+# photo pipeline working state (outputs live in data/ + public/media)
+scripts/cache/
+scripts/models/
+scripts/out/
+scripts/out-discovery/
+scripts/.cache/
+__pycache__/

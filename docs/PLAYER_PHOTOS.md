@@ -2,21 +2,38 @@
 
 Ledger: `data/player-photos.json` (Git-versioned; bundled into `wnba-api`, which is the only authority the site reads). Derivatives: `public/media/players/<espnAthleteId>/{portrait,square}.webp`. Pipeline: `scripts/photos/s1_roster.py … s8_manifest.py` (run log: `docs/PHOTO_COVERAGE_PIPELINE_RUN.md`).
 
-## Coverage (2026-09-11)
+## Coverage (2026-09-11, after stage 9)
 
-**156 verified photos / 209 active roster players (74.6%).**
+**166 verified photos / 209 active roster players (79.4%)** — 156 from the Wikidata P18 route plus 10 from Commons-category discovery (stage 9).
 
 | Status | Count |
 |---|---|
-| approved & shipped | 156 |
-| no image on Wikidata (P18 missing) | 31 |
+| approved & shipped | 166 (P18: 156 · Commons category: 10) |
+| no image (no P18 and no usable file in the item's own Commons category) | 25 |
 | no identity match (no Wikidata item: 4; ESPN/Wikidata DOB disagree: 2; name matches non-basketball items only: 1) | 7 |
-| rejected on review (head cut in source, low resolution, multi-face, Commons names another subject, face hidden) | 7 |
+| rejected on review (P18 and category route both failed: Bree Hall, Nia Coffey, Anneli Maley) | 3 |
 | held — identity confidence "review" (matched by jersey/college/category) | 6 |
 | held — public-domain basis needs legal sign-off | 1 |
-| held — face largely hidden (final review) | 1 |
+| held — face largely hidden (P18 and the category file both fail the visible-face bar) | 1 |
 
-Shipped licenses: CC BY-SA 2.0 (53), CC BY 4.0 (47), CC BY-SA 4.0 (35), CC BY 2.0 (10), CC BY-SA 3.0 (8), CC0 (3). No NC, no ND, no fair use.
+The ledger files rejected + held together under `status: "rejected"` (11); the reason of a held entry starts with `held:`.
+
+Shipped licenses: CC BY-SA 2.0 (54), CC BY 4.0 (49), CC BY-SA 4.0 (42), CC BY 2.0 (10), CC BY-SA 3.0 (7), CC BY-SA 3.0 AT (1), CC0 (3). No NC, no ND, no fair use.
+
+### Count reconciliation (why an older doc said 164)
+
+`docs/PHOTO_COVERAGE_PIPELINE_RUN.md` was generated at 17:55Z by stage 8, **before the final visual/rights review**. Its "approved 164" includes the 8 entries that review then held (6 identity-review, Rebekah Gardner's PD mark, Nyara Sabally's hidden face), so 164 − 8 = 156 shipped at promotion (17:59Z). The license deltas account for exactly those 8 (CC BY-SA 2.0 −5, CC BY-SA 4.0 −2, Public domain −1). The ledger (`data/player-photos.json`) and the derivative folders on disk are the source of truth; both said 156 and now say 166.
+
+## Stage 9 — Commons-category discovery
+
+For a verified identity (exact name + exact DOB) whose P18 is missing or was rejected for an image problem, `scripts/photos/s9_category_discovery.py` inspects **at most 40 files, newest first, of the item's own Commons category** (P373, else a `Category:` commonswiki sitelink; files only, no subcategories). Ported from the UFC portrait worker, with its gaps closed:
+
+- **Category membership is never identity proof.** The file itself must name the player in its title/description, or depict her QID (P180). A file naming another rostered player, or depicting other people, is flagged review-only.
+- Same license allowlist; jpeg/png/webp; short edge ≥ 500 px; one dominant face (Haar + YuNet); stage-6 crop rules (`croplib.py`, shared with stage 6); portrait ≥ 280 px.
+- **No free-text or global image search** is used, at any stage.
+- Nothing ships without the recorded visual review in `data/photo-discovery-review.json`; `s10_promote.py` then writes the ledger entry (with a `discovery` record: category, files inspected, outcome) and copies the derivatives.
+
+Run 2026-09-11: 39 eligible players → 17 with a category and a passing file → 10 approved, 5 rejected on review (soft/downcast close-ups, a cardboard fan cutout, a file whose title names Sylvia Fowles, a bowed head) → 22 have no Commons category on their item. Every inspected player now carries its `discovery` record in the ledger.
 
 ## Rules
 

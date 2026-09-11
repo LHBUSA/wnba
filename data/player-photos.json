@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-09-11T17:55:15Z",
- "promoted_at": "2026-09-11T17:59:16Z",
+ "promoted_at": "2026-09-11T19:33:48Z",
  "method": {
   "roster": "ESPN site.web.api.espn.com /apis/site/v2/sports/basketball/wnba/teams (15) + /teams/{id}/roster; every athlete listed (all status.type=active). DOB = date part of athlete.dateOfBirth. ESPN images NOT used.",
   "identity": "Deterministic. Candidates: SPARQL bulk of all Wikidata items with P3588 (WNBA.com ID) plus wbsearchentities for every player (so uniqueness is checked beyond the P3588 set), then wbgetentities for full claims. Match only if (a) P31=Q5 and (P3588 present or P641=Q5372 basketball or P106=Q3665646 basketball player); (b) normalized ESPN displayName/fullName equals an English label/alias (languages en, mul, en-us, en-gb, en-ca; normalize = NFKD strip diacritics, casefold, hyphen->space, drop punctuation, collapse whitespace; suffixes kept literally); (c) best-rank day-precision P569 equals ESPN DOB exactly (conflicting P569 values => no match). Exactly one item must pass; 0 or >1 => no_identity_match.",
@@ -9,7 +9,8 @@
   "commons_identity_check": "identity_confidence=high requires the player's surname in the file title/description or Commons depicts (P180) = matched QID, and no reviewer-judgement dependency. Otherwise 'review'. Also flagged: other roster players named on the file page; Commons categories recorded as secondary evidence.",
   "face_detection": "OpenCV Haar frontalface_default (+alt2 confirmation, profile fallback) per brief, cross-validated with OpenCV YuNet (face_detection_yunet_2023mar.onnx, sha256 8f2383e4...ed2552fa4) because Haar alone picked balls/shoes/crowd. Largest YuNet face (score>=0.8) wins; another >=70% as wide => multi_face_review (resolved only by manual reviewer selection, recorded in identity_evidence).",
   "crops": "portrait 4:5 600x750, face height target 33% (28-38%), eyes ~40% from top; square 1:1 256x256, face ~46% (45-55%), eyes ~42%. Head box = face box +45% upward +10% headroom, +12% each side; crop grows to contain it. Clamped to source; never stretched or upscaled (smaller output recorded as out_w/out_h). Source too small => largest crop at target aspect (face fraction may exceed range; noted). WebP q82. Crop coords are in original Commons pixels of image.commons_file.",
-  "review": "Every derivative inspected on contact sheets (review/sheet-XX.png) plus source, alternate, top-of-head and focus sheets. Rejected: head clipped by source frame, ambiguous subject, occluded face, portrait < 280px tall."
+  "review": "Every derivative inspected on contact sheets (review/sheet-XX.png) plus source, alternate, top-of-head and focus sheets. Rejected: head clipped by source frame, ambiguous subject, occluded face, portrait < 280px tall.",
+  "category_discovery": "Stage 9 (scripts/photos/s9_category_discovery.py): for a verified identity whose P18 is missing or was rejected for an image problem, list at most 40 files (newest first, files only, no subcategories) of the item's own Commons category (P373, else a Category: commonswiki sitelink). Same license allowlist; jpeg/png/webp; short edge >= 500; the file itself must name the player (title/description) or depict the QID — category membership is never proof; one dominant face; stage-6 crop rules. Shipped only after the visual review recorded in data/photo-discovery-review.json (stage 10). No free-text image search."
  },
  "roster_source": {
   "teams": "https://site.web.api.espn.com/apis/site/v2/sports/basketball/wnba/teams",
@@ -24,23 +25,27 @@
  "totals": {
   "active_players": 209,
   "matched_identity": 202,
-  "with_image": 171,
-  "license_ok": 171,
-  "approved": 156,
+  "with_image": 177,
+  "license_ok": 177,
+  "approved": 166,
   "by_status": {
-   "approved": 156,
-   "no_image": 31,
-   "rejected": 15,
+   "approved": 166,
+   "no_image": 25,
+   "rejected": 11,
    "no_identity_match": 7
   },
   "approved_by_license": {
-   "CC BY 4.0": 47,
-   "CC BY-SA 4.0": 35,
-   "CC BY-SA 2.0": 53,
+   "CC BY 4.0": 49,
+   "CC BY-SA 4.0": 42,
+   "CC BY-SA 2.0": 54,
    "CC BY 2.0": 10,
    "CC BY-SA 3.0": 7,
    "CC0": 3,
    "CC BY-SA 3.0 at": 1
+  },
+  "approved_by_discovery": {
+   "p18": 156,
+   "commons_category": 10
   }
  },
  "players": [
@@ -688,7 +693,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4433431",
@@ -1398,10 +1412,90 @@
    "wikidata_qid": "Q119556661",
    "wnba_com_id": "1643447",
    "dob": "2003-11-19",
-   "status": "no_image",
-   "reason": "matched Wikidata item has no P18 image",
-   "notes": [],
-   "image": null
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Gabriela Jaquez after the P18 route failed",
+    "source smaller than target: portrait 528x660 (not upscaled)"
+   ],
+   "image": {
+    "commons_file": "File:Gabriela Jaquez (cropped).jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Gabriela_Jaquez_(cropped).jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/8/83/Gabriela_Jaquez_%28cropped%29.jpg",
+    "license_short": "CC BY-SA 4.0",
+    "license_family": "CC BY-SA",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "artist": "John Mac",
+    "credit": "https://www.flickr.com/photos/johnmac612/55041214207/",
+    "attribution_text": "Photo: John Mac / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2026-01-14 20:45:01",
+    "capture_year": 2026,
+    "description": "MN Gophers vs UCLA Bruins on January 14th 2026 at Williams Arena in Minneapolis, Minnesota. Gophers lose 58 to 76. (photo credit John McClellan)",
+    "width": 664,
+    "height": 969,
+    "mime": "image/jpeg",
+    "focal": {
+     "x": 0.3976,
+     "y": 0.2549
+    },
+    "face_box": {
+     "x": 0.2651,
+     "y": 0.1424,
+     "w": 0.2651,
+     "h": 0.225
+    },
+    "face_detector": "yunet+haar",
+    "crops": {
+     "portrait": {
+      "x": 0,
+      "y": 0,
+      "w": 528,
+      "h": 660,
+      "out_w": 528,
+      "out_h": 660,
+      "face_frac": 0.33,
+      "eye_frac": 0.335
+     },
+     "square": {
+      "x": 27,
+      "y": 18,
+      "w": 474,
+      "h": 474,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.429
+     }
+    },
+    "identity_confidence": "high",
+    "identity_evidence": "name+dob exact match (ESPN 2003-11-19); wikidata Q119556661; commons title/description contains surname; file is in the item's own Commons Category:Gabriela Jaquez (commonswiki sitelink); reviewer: file title names the player; UCLA #11; head fully inside, clean 4:5 and 1:1",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/4858656/portrait.webp",
+     "square": "public/media/players/4858656/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Gabriela Jaquez",
+     "category_source": "commonswiki sitelink",
+     "files_inspected": 6,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Gabriela Jaquez",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 6,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player; UCLA #11; head fully inside, clean 4:5 and 1:1"
+    }
+   }
   },
   {
    "espn_athlete_id": "4599199",
@@ -1416,7 +1510,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4432865",
@@ -1569,7 +1672,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "981",
@@ -1724,7 +1836,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "5105732",
@@ -1739,7 +1860,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "3922628",
@@ -1967,7 +2097,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Ashlon Jackson",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 4,
+    "outcome": "no category file passed license, identity, face and crop checks",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4898898",
@@ -1979,10 +2118,89 @@
    "wikidata_qid": "Q119542017",
    "wnba_com_id": "1643429",
    "dob": "2003-03-04",
-   "status": "no_image",
-   "reason": "matched Wikidata item has no P18 image",
-   "notes": [],
-   "image": null
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Gianna Kneepkens after the P18 route failed"
+   ],
+   "image": {
+    "commons_file": "File:Gianna Kneepkens 2.jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Gianna_Kneepkens_2.jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/8/85/Gianna_Kneepkens_2.jpg",
+    "license_short": "CC BY-SA 4.0",
+    "license_family": "CC BY-SA",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "artist": "John Mac",
+    "credit": "https://www.flickr.com/photos/johnmac612/55042295303/",
+    "attribution_text": "Photo: John Mac / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2026-01-14 18:54:02",
+    "capture_year": 2026,
+    "description": "MN Gophers vs UCLA Bruins on January 14th 2026 at Williams Arena in Minneapolis, Minnesota. Gophers lose 58 to 76. (photo credit John McClellan)",
+    "width": 1355,
+    "height": 1929,
+    "mime": "image/jpeg",
+    "focal": {
+     "x": 0.6579,
+     "y": 0.2722
+    },
+    "face_box": {
+     "x": 0.5601,
+     "y": 0.1586,
+     "w": 0.1956,
+     "h": 0.2271
+    },
+    "face_detector": "yunet+haar",
+    "crops": {
+     "portrait": {
+      "x": 293,
+      "y": 0,
+      "w": 1062,
+      "h": 1328,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.367
+     },
+     "square": {
+      "x": 403,
+      "y": 65,
+      "w": 952,
+      "h": 952,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.443
+     }
+    },
+    "identity_confidence": "high",
+    "identity_evidence": "name+dob exact match (ESPN 2003-03-04); wikidata Q119542017; commons title/description contains surname; file is in the item's own Commons Category:Gianna Kneepkens (commonswiki sitelink); reviewer: file title names the player; UCLA #8; clean profile, full headroom (checked at native resolution)",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/4898898/portrait.webp",
+     "square": "public/media/players/4898898/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Gianna Kneepkens",
+     "category_source": "commonswiki sitelink",
+     "files_inspected": 5,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Gianna Kneepkens",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 5,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player; UCLA #8; clean profile, full headroom (checked at native resolution)"
+    }
+   }
   },
   {
    "espn_athlete_id": "5208981",
@@ -2066,10 +2284,89 @@
    "wikidata_qid": "Q100977795",
    "wnba_com_id": "1643449",
    "dob": "2001-09-15",
-   "status": "no_image",
-   "reason": "matched Wikidata item has no P18 image",
-   "notes": [],
-   "image": null
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Charlisse Leger-Walker after the P18 route failed"
+   ],
+   "image": {
+    "commons_file": "File:Charlisse Leger-Walker.jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Charlisse_Leger-Walker.jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Charlisse_Leger-Walker.jpg",
+    "license_short": "CC BY-SA 4.0",
+    "license_family": "CC BY-SA",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "artist": "John Mac",
+    "credit": "https://www.flickr.com/photos/johnmac612/55042295343/",
+    "attribution_text": "Photo: John Mac / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2026-01-14 18:54:33",
+    "capture_year": 2026,
+    "description": "MN Gophers vs UCLA Bruins on January 14th 2026 at Williams Arena in Minneapolis, Minnesota. Gophers lose 58 to 76. (photo credit John McClellan)",
+    "width": 730,
+    "height": 1051,
+    "mime": "image/jpeg",
+    "focal": {
+     "x": 0.5781,
+     "y": 0.2954
+    },
+    "face_box": {
+     "x": 0.4301,
+     "y": 0.1608,
+     "w": 0.2959,
+     "h": 0.2693
+    },
+    "face_detector": "yunet+haar",
+    "crops": {
+     "portrait": {
+      "x": 44,
+      "y": 0,
+      "w": 686,
+      "h": 858,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.328
+     },
+     "square": {
+      "x": 114,
+      "y": 13,
+      "w": 615,
+      "h": 615,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.435
+     }
+    },
+    "identity_confidence": "high",
+    "identity_evidence": "name+dob exact match (ESPN 2001-09-15); wikidata Q100977795; commons title/description contains surname; file is in the item's own Commons Category:Charlisse Leger-Walker (commonswiki sitelink); reviewer: file title names the player; UCLA #5; frontal, clean crop",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/4703609/portrait.webp",
+     "square": "public/media/players/4703609/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Charlisse Leger-Walker",
+     "category_source": "commonswiki sitelink",
+     "files_inspected": 5,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Charlisse Leger-Walker",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 5,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player; UCLA #5; frontal, clean crop"
+    }
+   }
   },
   {
    "espn_athlete_id": "4433792",
@@ -2084,7 +2381,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4433635",
@@ -2588,7 +2894,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4595910",
@@ -3302,42 +3617,90 @@
    "wikidata_qid": "Q34635844",
    "wnba_com_id": "1629574",
    "dob": "1999-03-28",
-   "status": "rejected",
-   "reason": "source frame clips the top of the head (hair/crown cut at the top edge of the Commons image); no alternate P18 image",
-   "notes": [],
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Li Yueru after the P18 route failed",
+    "commons restrictions: personality",
+    "previous P18 rejected: source frame clips the top of the head (hair/crown cut at the top edge of the Commons image); no alternate P18 image"
+   ],
    "image": {
-    "commons_file": "File:Li Yueru.jpg",
-    "p18_file": "File:Li Yueru.jpg",
-    "source_page_url": "https://commons.wikimedia.org/wiki/File:Li_Yueru.jpg",
-    "original_url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Li_Yueru.jpg",
+    "commons_file": "File:Li Yueru 28 Galatasaray WB KTK 20250319 (2).jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Li_Yueru_28_Galatasaray_WB_KTK_20250319_(2).jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Li_Yueru_28_Galatasaray_WB_KTK_20250319_%282%29.jpg",
     "license_short": "CC BY 4.0",
     "license_family": "CC BY",
     "license_url": "https://creativecommons.org/licenses/by/4.0",
-    "artist": "Karakalem",
+    "artist": "Zafer",
     "credit": "Own work",
-    "attribution_text": "Photo: Karakalem / CC BY 4.0 via Wikimedia Commons (cropped)",
-    "capture_date": "2024-03-07 23:42:23",
-    "capture_year": 2024,
-    "description": "Photo after the Women's 2024 EuroCup Beşiktaş - Uni Girona match.",
-    "width": 1258,
-    "height": 1104,
+    "attribution_text": "Photo: Zafer / CC BY 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "19 March 2025, 18:03",
+    "capture_year": 2025,
+    "description": "Li Yueru 28 Galatasaray WB KTK 20250319",
+    "width": 5152,
+    "height": 7728,
     "mime": "image/jpeg",
     "focal": {
-     "x": 0.6272,
-     "y": 0.317
+     "x": 0.4695,
+     "y": 0.3233
     },
     "face_box": {
-     "x": 0.4722,
-     "y": 0.0897,
-     "w": 0.31,
-     "h": 0.4547
+     "x": 0.3234,
+     "y": 0.1927,
+     "w": 0.2922,
+     "h": 0.2611
     },
-    "face_detector": "yunet",
-    "crops": null,
+    "face_detector": "yunet+haar",
+    "crops": {
+     "portrait": {
+      "x": 0,
+      "y": 0,
+      "w": 4892,
+      "h": 6115,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.368
+     },
+     "square": {
+      "x": 225,
+      "y": 378,
+      "w": 4387,
+      "h": 4387,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.427
+     }
+    },
     "identity_confidence": "high",
-    "identity_evidence": "name+dob exact match (ESPN 1999-03-28); wikidata Q34635844; commons title/description contains surname; commons depicts=Q34635844; commons category: Li Yueru",
-    "verified_at": "2026-09-11T17:55:15Z",
-    "review_status": "rejected"
+    "identity_evidence": "name+dob exact match (ESPN 1999-03-28); wikidata Q34635844; commons title/description contains surname; file is in the item's own Commons Category:Li Yueru (P373); reviewer: file title names the player and jersey 28 (Galatasaray); replaces the rejected P18 whose frame clipped the head",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/4336633/portrait.webp",
+     "square": "public/media/players/4336633/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Li Yueru",
+     "category_source": "P373",
+     "files_inspected": 9,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Li Yueru",
+    "category_source": "P373",
+    "files_inspected": 9,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player and jersey 28 (Galatasaray); replaces the rejected P18 whose frame clipped the head"
+    }
    }
   },
   {
@@ -3421,42 +3784,89 @@
    "wikidata_qid": "Q111585576",
    "wnba_com_id": "1631007",
    "dob": "2000-07-12",
-   "status": "rejected",
-   "reason": "low resolution: portrait crop only 165x206 px from the source",
-   "notes": [],
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Veronica Burton after the P18 route failed",
+    "previous P18 rejected: low resolution: portrait crop only 165x206 px from the source"
+   ],
    "image": {
-    "commons_file": "File:Veronica Burton.jpg",
-    "p18_file": "File:Veronica Burton.jpg",
-    "source_page_url": "https://commons.wikimedia.org/wiki/File:Veronica_Burton.jpg",
-    "original_url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Veronica_Burton.jpg",
-    "license_short": "CC BY-SA 2.0",
+    "commons_file": "File:Veronica Burton Valkyries.jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Veronica_Burton_Valkyries.jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/7/71/Veronica_Burton_Valkyries.jpg",
+    "license_short": "CC BY-SA 4.0",
     "license_family": "CC BY-SA",
-    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
-    "artist": "MGoBlog",
-    "credit": "https://www.flickr.com/photos/mgoblog/51011019702/",
-    "attribution_text": "Photo: MGoBlog / CC BY-SA 2.0 via Wikimedia Commons (cropped)",
-    "capture_date": "2021-03-06 14:59:37",
-    "capture_year": 2021,
-    "description": "Photo by JD Scott",
-    "width": 315,
-    "height": 430,
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "artist": "John Mac",
+    "credit": "https://www.flickr.com/photos/johnmac612/54787995605/",
+    "attribution_text": "Photo: John Mac / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2025-09-14 13:31:13",
+    "capture_year": 2025,
+    "description": "MN Lynx vs Golden State Valkyries, round one playoffs, on September 14th 2025 at Target Center in Minneapolis, Minnesota. Win 101-72. (photo credit John McClellan)",
+    "width": 4098,
+    "height": 6144,
     "mime": "image/jpeg",
     "focal": {
-     "x": 0.446,
-     "y": 0.1977
+     "x": 0.5081,
+     "y": 0.3812
     },
     "face_box": {
-     "x": 0.3683,
-     "y": 0.1186,
-     "w": 0.1556,
-     "h": 0.1581
+     "x": 0.4411,
+     "y": 0.3203,
+     "w": 0.1339,
+     "h": 0.1219
     },
     "face_detector": "yunet+haar",
-    "crops": null,
+    "crops": {
+     "portrait": {
+      "x": 1174,
+      "y": 1315,
+      "w": 1816,
+      "h": 2271,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.4
+     },
+     "square": {
+      "x": 1268,
+      "y": 1539,
+      "w": 1629,
+      "h": 1629,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.42
+     }
+    },
     "identity_confidence": "high",
-    "identity_evidence": "name+dob exact match (ESPN 2000-07-12); wikidata Q111585576; commons title/description contains surname; commons depicts=Q111585576; commons category: Veronica Burton",
-    "verified_at": "2026-09-11T17:55:15Z",
-    "review_status": "rejected"
+    "identity_evidence": "name+dob exact match (ESPN 2000-07-12); wikidata Q111585576; commons title/description contains surname; file is in the item's own Commons Category:Veronica Burton (P373); reviewer: file title names the player (Valkyries); replaces the low-resolution P18",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/4398935/portrait.webp",
+     "square": "public/media/players/4398935/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Veronica Burton",
+     "category_source": "P373",
+     "files_inspected": 5,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Veronica Burton",
+    "category_source": "P373",
+    "files_inspected": 5,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player (Valkyries); replaces the low-resolution P18"
+    }
    }
   },
   {
@@ -3825,7 +4235,19 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Ashten Prechtel",
+    "category_source": "P373",
+    "files_inspected": 2,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "reject",
+     "note": "casual close-up under a cap brim, soft focus: fails the newsroom quality bar"
+    }
+   }
   },
   {
    "espn_athlete_id": "4790263",
@@ -3982,7 +4404,19 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Miela Sowah",
+    "category_source": "P373",
+    "files_inspected": 6,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "reject",
+     "note": "soft focus, eyes downcast: fails the visible-face bar"
+    }
+   }
   },
   {
    "espn_athlete_id": "2590093",
@@ -4590,6 +5024,15 @@
     "identity_evidence": "name+dob exact match (ESPN 2003-06-28); wikidata Q119562099; commons title/description contains surname; commons depicts=Q119562099; commons category: Bree Hall",
     "verified_at": "2026-09-11T17:55:15Z",
     "review_status": "rejected"
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Bree Hall",
+    "category_source": "P373",
+    "files_inspected": 1,
+    "outcome": "no category file passed license, identity, face and crop checks",
+    "review": null
    }
   },
   {
@@ -5052,7 +5495,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4433633",
@@ -5556,7 +6008,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4398776",
@@ -6348,7 +6809,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Chance Gray",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 2,
+    "outcome": "no category file passed license, identity, face and crop checks",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "2566106",
@@ -6503,7 +6973,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "1068",
@@ -6918,6 +7397,18 @@
     "identity_evidence": "name+dob exact match (ESPN 1995-06-11); wikidata Q29840948; commons title/description contains surname; commons category: Nia Coffey",
     "verified_at": "2026-09-11T17:55:15Z",
     "review_status": "rejected"
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Nia Coffey",
+    "category_source": "P373",
+    "files_inspected": 7,
+    "outcome": "candidate flagged (other people named: depicts Q433521) — review only",
+    "review": {
+     "decision": "reject",
+     "note": "file title is 'Sylvia Fowles (34) follows the ball after Nia Coffey (12)...': the dominant face may be Fowles; identity ambiguous"
+    }
    }
   },
   {
@@ -7509,42 +8000,89 @@
    "wikidata_qid": "Q23884729",
    "wnba_com_id": "1627675",
    "dob": "1994-05-11",
-   "status": "rejected",
-   "reason": "low resolution: portrait crop only 182x228 px from the source",
-   "notes": [],
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Courtney Williams after the P18 route failed",
+    "previous P18 rejected: low resolution: portrait crop only 182x228 px from the source"
+   ],
    "image": {
-    "commons_file": "File:Courtney Williams (USF) (cropped).jpg",
-    "p18_file": "File:Courtney Williams (USF) (cropped).jpg",
-    "source_page_url": "https://commons.wikimedia.org/wiki/File:Courtney_Williams_(USF)_(cropped).jpg",
-    "original_url": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Courtney_Williams_%28USF%29_%28cropped%29.jpg",
-    "license_short": "CC BY-SA 3.0",
+    "commons_file": "File:Courtney Williams (cropped).jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Courtney_Williams_(cropped).jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/9/95/Courtney_Williams_%28cropped%29.jpg",
+    "license_short": "CC BY-SA 4.0",
     "license_family": "CC BY-SA",
-    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
-    "artist": "Danny Karwoski",
-    "credit": "Danny Karwoski Facebook",
-    "attribution_text": "Photo: Danny Karwoski / CC BY-SA 3.0 via Wikimedia Commons (cropped)",
-    "capture_date": "2016-03-07",
-    "capture_year": 2016,
-    "description": "Courtney Williams at the AAC Tournament Championship game",
-    "width": 349,
-    "height": 695,
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "artist": "Lorie Shaull",
+    "credit": "Own work",
+    "attribution_text": "Photo: Lorie Shaull / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2019-08-09",
+    "capture_year": 2019,
+    "description": "Connecticut Sun player Courtney Williams in a game against the Minnesota Lynx",
+    "width": 1834,
+    "height": 3418,
     "mime": "image/jpeg",
     "focal": {
-     "x": 0.5315,
-     "y": 0.205
+     "x": 0.3533,
+     "y": 0.1652
     },
     "face_box": {
-     "x": 0.4527,
-     "y": 0.1511,
-     "w": 0.1576,
-     "h": 0.1079
+     "x": 0.2394,
+     "y": 0.0825,
+     "w": 0.2279,
+     "h": 0.1653
     },
     "face_detector": "yunet+haar",
-    "crops": null,
+    "crops": {
+     "portrait": {
+      "x": 0,
+      "y": 0,
+      "w": 1370,
+      "h": 1712,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.29
+     },
+     "square": {
+      "x": 34,
+      "y": 0,
+      "w": 1228,
+      "h": 1228,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.405
+     }
+    },
     "identity_confidence": "high",
-    "identity_evidence": "name+dob exact match (ESPN 1994-05-11); wikidata Q23884729; commons title/description contains surname; commons depicts=Q23884729; commons category: Courtney Williams",
-    "verified_at": "2026-09-11T17:55:15Z",
-    "review_status": "rejected"
+    "identity_evidence": "name+dob exact match (ESPN 1994-05-11); wikidata Q23884729; commons title/description contains surname; commons depicts=Q23884729; file is in the item's own Commons Category:Courtney Williams (P373); reviewer: file title names the player; replaces the low-resolution P18",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/2987891/portrait.webp",
+     "square": "public/media/players/2987891/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Courtney Williams",
+     "category_source": "P373",
+     "files_inspected": 20,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Courtney Williams",
+    "category_source": "P373",
+    "files_inspected": 20,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player; replaces the low-resolution P18"
+    }
    }
   },
   {
@@ -7700,10 +8238,90 @@
    "wikidata_qid": "Q83045949",
    "wnba_com_id": null,
    "dob": "2000-09-09",
-   "status": "no_image",
-   "reason": "matched Wikidata item has no P18 image",
-   "notes": [],
-   "image": null
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Elizabeth Balogun after the P18 route failed",
+    "commons restrictions: personality"
+   ],
+   "image": {
+    "commons_file": "File:Elizabeth Balogun 4 Nigeria 20260904 (2).JPG",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Elizabeth_Balogun_4_Nigeria_20260904_(2).JPG",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/f/fc/Elizabeth_Balogun_4_Nigeria_20260904_%282%29.JPG",
+    "license_short": "CC BY-SA 4.0",
+    "license_family": "CC BY-SA",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "artist": "User:Zafer",
+    "credit": "Own work",
+    "attribution_text": "Photo: User:Zafer / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2026-09-04 15:19:46",
+    "capture_year": 2026,
+    "description": "Elizabeth Balogun 4 Nigeria 20260904",
+    "width": 4672,
+    "height": 7008,
+    "mime": "image/jpeg",
+    "focal": {
+     "x": 0.5154,
+     "y": 0.3984
+    },
+    "face_box": {
+     "x": 0.4891,
+     "y": 0.3757,
+     "w": 0.0526,
+     "h": 0.0455
+    },
+    "face_detector": "yunet+haar",
+    "crops": {
+     "portrait": {
+      "x": 2021,
+      "y": 2364,
+      "w": 773,
+      "h": 966,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.4
+     },
+     "square": {
+      "x": 2061,
+      "y": 2458,
+      "w": 693,
+      "h": 693,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.422
+     }
+    },
+    "identity_confidence": "high",
+    "identity_evidence": "name+dob exact match (ESPN 2000-09-09); wikidata Q83045949; commons title/description contains surname; commons depicts=Q83045949; file is in the item's own Commons Category:Elizabeth Balogun (commonswiki sitelink); reviewer: file title names the player and jersey 4 (Nigeria, 2026-09-04)",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/4398589/portrait.webp",
+     "square": "public/media/players/4398589/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Elizabeth Balogun",
+     "category_source": "commonswiki sitelink",
+     "files_inspected": 5,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Elizabeth Balogun",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 5,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player and jersey 4 (Nigeria, 2026-09-04)"
+    }
+   }
   },
   {
    "espn_athlete_id": "4790258",
@@ -8187,6 +8805,18 @@
     "identity_evidence": "name+dob exact match (ESPN 1998-09-01); wikidata Q28051428; commons depicts=Q28051428; commons category: Anneli Maley; NOTE other roster players named on file page: Isobel Borlase, depicts Q124216554 (5208983)",
     "verified_at": "2026-09-11T17:55:15Z",
     "review_status": "rejected"
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Anneli Maley",
+    "category_source": "P373",
+    "files_inspected": 5,
+    "outcome": "candidate flagged (other people named: Isobel Borlase, depicts Q16228343, depicts Q119568446, depicts Q124216554 (Isobel Borlase), depicts Q5068914) — review only",
+    "review": {
+     "decision": "reject",
+     "note": "detected face is a fan-held cardboard cutout; description names other players"
+    }
    }
   },
   {
@@ -8555,7 +9185,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "2998938",
@@ -8639,7 +9278,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4399342",
@@ -8654,7 +9302,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4873359",
@@ -8810,7 +9467,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "3065570",
@@ -8896,7 +9562,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "2529140",
@@ -9568,7 +10243,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "5208982",
@@ -9651,10 +10335,90 @@
    "wikidata_qid": "Q31271251",
    "wnba_com_id": "1643506",
    "dob": "1990-12-20",
-   "status": "no_image",
-   "reason": "matched Wikidata item has no P18 image",
-   "notes": [],
-   "image": null
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Teja Oblak after the P18 route failed",
+    "commons restrictions: personality"
+   ],
+   "image": {
+    "commons_file": "File:Teja Oblak 3 Galatasaray WB TKBSL 20260201 (2).jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Teja_Oblak_3_Galatasaray_WB_TKBSL_20260201_(2).jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Teja_Oblak_3_Galatasaray_WB_TKBSL_20260201_%282%29.jpg",
+    "license_short": "CC BY 4.0",
+    "license_family": "CC BY",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "artist": "Zafer",
+    "credit": "Own work",
+    "attribution_text": "Photo: Zafer / CC BY 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "1 February 2026, 18:27",
+    "capture_year": 2026,
+    "description": "Teja Oblak 3 Galatasaray WB TKBSL 20260201",
+    "width": 5152,
+    "height": 7728,
+    "mime": "image/jpeg",
+    "focal": {
+     "x": 0.4974,
+     "y": 0.416
+    },
+    "face_box": {
+     "x": 0.4401,
+     "y": 0.3611,
+     "w": 0.1146,
+     "h": 0.1097
+    },
+    "face_detector": "yunet+haar",
+    "crops": {
+     "portrait": {
+      "x": 1535,
+      "y": 2066,
+      "w": 2055,
+      "h": 2571,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.4
+     },
+     "square": {
+      "x": 1642,
+      "y": 2318,
+      "w": 1843,
+      "h": 1843,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.42
+     }
+    },
+    "identity_confidence": "high",
+    "identity_evidence": "name+dob exact match (ESPN 1990-12-20); wikidata Q31271251; commons title/description contains surname; commons depicts=Q31271251; file is in the item's own Commons Category:Teja Oblak (P373); reviewer: file title names the player and jersey 3 (Galatasaray, 2026-02-01)",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/5346554/portrait.webp",
+     "square": "public/media/players/5346554/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Teja Oblak",
+     "category_source": "P373",
+     "files_inspected": 13,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Teja Oblak",
+    "category_source": "P373",
+    "files_inspected": 13,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player and jersey 3 (Galatasaray, 2026-02-01)"
+    }
+   }
   },
   {
    "espn_athlete_id": "3142242",
@@ -9740,7 +10504,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Nyadiew Puoch",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 2,
+    "outcome": "no category file passed license, identity, face and crop checks",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "3056730",
@@ -10678,42 +11451,89 @@
    "wikidata_qid": "Q24060555",
    "wnba_com_id": "1629478",
    "dob": "1997-06-13",
-   "status": "rejected",
-   "reason": "multiple similar-size faces in frame and low resolution (portrait would be 216x270)",
-   "notes": [],
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Katie Lou Samuelson after the P18 route failed",
+    "previous P18 rejected: multiple similar-size faces in frame and low resolution (portrait would be 216x270)"
+   ],
    "image": {
-    "commons_file": "File:Katie Lou Samuelson cropped.jpg",
-    "p18_file": "File:Katie Lou Samuelson cropped.jpg",
-    "source_page_url": "https://commons.wikimedia.org/wiki/File:Katie_Lou_Samuelson_cropped.jpg",
-    "original_url": "https://upload.wikimedia.org/wikipedia/commons/3/37/Katie_Lou_Samuelson_cropped.jpg",
-    "license_short": "CC BY-SA 3.0",
+    "commons_file": "File:Katie Lou Samuelson (47937094962) (cropped).jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Katie_Lou_Samuelson_(47937094962)_(cropped).jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Katie_Lou_Samuelson_%2847937094962%29_%28cropped%29.jpg",
+    "license_short": "CC BY-SA 2.0",
     "license_family": "CC BY-SA",
-    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
-    "artist": "Danny Karwoski",
-    "credit": "Danny Karwoski Facebook",
-    "attribution_text": "Photo: Danny Karwoski / CC BY-SA 3.0 via Wikimedia Commons (cropped)",
-    "capture_date": "2016-03-06",
-    "capture_year": 2016,
-    "description": "Katie Lou Samuelson in Conference tournament game against Tulane",
-    "width": 569,
-    "height": 883,
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "artist": "Lorie Shaull from St Paul, United States",
+    "credit": "Katie Lou Samuelson",
+    "attribution_text": "Photo: Lorie Shaull from St Paul, United States / CC BY-SA 2.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2019-05-26 12:20",
+    "capture_year": 2019,
+    "description": "Minnesota Lynx vs Chicago Sky on 5/25/19 at Target Center in Minneapolis, MN; the Lynx won the game 89-71. Please attribute to Lorie Shaull if used elsewhere.",
+    "width": 2283,
+    "height": 3045,
     "mime": "image/jpeg",
     "focal": {
-     "x": 0.6845,
-     "y": 0.1602
+     "x": 0.6294,
+     "y": 0.2677
     },
     "face_box": {
-     "x": 0.6309,
-     "y": 0.1099,
-     "w": 0.1072,
-     "h": 0.1008
+     "x": 0.513,
+     "y": 0.1535,
+     "w": 0.2328,
+     "h": 0.2284
     },
     "face_detector": "yunet+haar",
-    "crops": null,
+    "crops": {
+     "portrait": {
+      "x": 593,
+      "y": 0,
+      "w": 1686,
+      "h": 2107,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.334
+     },
+     "square": {
+      "x": 681,
+      "y": 69,
+      "w": 1512,
+      "h": 1512,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.42
+     }
+    },
     "identity_confidence": "high",
-    "identity_evidence": "name+dob exact match (ESPN 1997-06-13); wikidata Q24060555; commons title/description contains surname; commons depicts=Q24060555; commons category: Katie Lou Samuelson",
-    "verified_at": "2026-09-11T17:55:15Z",
-    "review_status": "rejected"
+    "identity_evidence": "name+dob exact match (ESPN 1997-06-13); wikidata Q24060555; commons title/description contains surname; commons depicts=Q24060555; file is in the item's own Commons Category:Katie Lou Samuelson (P373); reviewer: file title names the player; single subject (the rejected P18 had several faces); ball is beside, not over, the face (checked at native resolution)",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/3917453/portrait.webp",
+     "square": "public/media/players/3917453/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Katie Lou Samuelson",
+     "category_source": "P373",
+     "files_inspected": 7,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Katie Lou Samuelson",
+    "category_source": "P373",
+    "files_inspected": 7,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player; single subject (the rejected P18 had several faces); ball is beside, not over, the face (checked at native resolution)"
+    }
    }
   },
   {
@@ -10729,7 +11549,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Taylor Thierry",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 2,
+    "outcome": "no category file passed license, identity, face and crop checks",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4001679",
@@ -10815,7 +11644,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "3910470",
@@ -10970,7 +11808,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "2566453",
@@ -11526,6 +12373,18 @@
     "identity_evidence": "name+dob exact match (ESPN 2000-02-26); wikidata Q111585258; commons title/description contains surname; commons depicts=Q111585258; commons category: Nyara Sabally",
     "verified_at": "2026-09-11T17:55:15Z",
     "review_status": "approved"
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Nyara Sabally",
+    "category_source": "P373",
+    "files_inspected": 19,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "reject",
+     "note": "head bowed, face largely hidden: same visible-face failure as the held P18"
+    }
    }
   },
   {
@@ -11887,10 +12746,89 @@
    "wikidata_qid": "Q107387819",
    "wnba_com_id": "1643455",
    "dob": "2001-12-29",
-   "status": "no_image",
-   "reason": "matched Wikidata item has no P18 image",
-   "notes": [],
-   "image": null
+   "status": "approved",
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Angela Dugalić after the P18 route failed"
+   ],
+   "image": {
+    "commons_file": "File:Angela Dugalic (cropped).jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Angela_Dugalic_(cropped).jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/2/22/Angela_Dugalic_%28cropped%29.jpg",
+    "license_short": "CC BY-SA 4.0",
+    "license_family": "CC BY-SA",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "artist": "John Mac",
+    "credit": "https://www.flickr.com/photos/johnmac612/55042121451/",
+    "attribution_text": "Photo: John Mac / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2026-01-14 19:23:28",
+    "capture_year": 2026,
+    "description": "MN Gophers vs UCLA Bruins on January 14th 2026 at Williams Arena in Minneapolis, Minnesota. Gophers lose 58 to 76. (photo credit John McClellan)",
+    "width": 863,
+    "height": 1270,
+    "mime": "image/jpeg",
+    "focal": {
+     "x": 0.42,
+     "y": 0.2764
+    },
+    "face_box": {
+     "x": 0.2874,
+     "y": 0.148,
+     "w": 0.2654,
+     "h": 0.2567
+    },
+    "face_detector": "yunet+haar",
+    "crops": {
+     "portrait": {
+      "x": 0,
+      "y": 0,
+      "w": 790,
+      "h": 988,
+      "out_w": 600,
+      "out_h": 750,
+      "face_frac": 0.33,
+      "eye_frac": 0.32
+     },
+     "square": {
+      "x": 8,
+      "y": 9,
+      "w": 709,
+      "h": 709,
+      "out_w": 256,
+      "out_h": 256,
+      "face_frac": 0.46,
+      "eye_frac": 0.434
+     }
+    },
+    "identity_confidence": "high",
+    "identity_evidence": "name+dob exact match (ESPN 2001-12-29); wikidata Q107387819; commons title/description contains surname; file is in the item's own Commons Category:Angela Dugalić (commonswiki sitelink); reviewer: file title names the player; UCLA #32; clean crop",
+    "verified_at": "2026-09-11T19:33:48Z",
+    "derivatives": {
+     "portrait": "public/media/players/4433411/portrait.webp",
+     "square": "public/media/players/4433411/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Angela Dugalić",
+     "category_source": "commonswiki sitelink",
+     "files_inspected": 5,
+     "max_files": 40
+    }
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": "Category:Angela Dugalić",
+    "category_source": "commonswiki sitelink",
+    "files_inspected": 5,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "file title names the player; UCLA #32; clean crop"
+    }
+   }
   },
   {
    "espn_athlete_id": "5208985",
@@ -12190,7 +13128,16 @@
    "status": "no_image",
    "reason": "matched Wikidata item has no P18 image",
    "notes": [],
-   "image": null
+   "image": null,
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-11T19:31:48Z",
+    "category": null,
+    "category_source": null,
+    "files_inspected": 0,
+    "outcome": "no P373 / commonswiki category on the verified item",
+    "review": null
+   }
   },
   {
    "espn_athlete_id": "4583144",

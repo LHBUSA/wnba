@@ -1,4 +1,6 @@
-# WNBA player photo coverage
+# WNBA player photo coverage — stage-8 run output (pre-review snapshot)
+
+> **Not the shipped count.** This file is stage 8's output from 17:55Z, before the final visual/rights review. "approved 164" includes 8 entries that review then held (6 identity-review, 1 public-domain mark, 1 hidden face), so 156 shipped at 17:59Z; stage 9 (Commons-category discovery) later added 10, for 166. The ledger `data/player-photos.json` and `docs/PLAYER_PHOTOS.md` are authoritative.
 
 Generated 2026-09-11T17:55:15Z. Roster: ESPN (15 teams, 2026 regular season). Manifest: `manifest.json`.
 

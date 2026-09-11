@@ -1,0 +1,23 @@
+{
+  "stage": "s9_category_discovery (Commons category of the verified Wikidata item: P373 or commonswiki Category sitelink; files only, no recursion, <= 40 newest; no free-text search)",
+  "reviewed_at": "2026-09-11T19:55:00Z",
+  "reviewer": "Claude (session for owner), contact sheet scripts/out-discovery/discovery-sheet.png + native-resolution check",
+  "rule": "Approve only when the file itself names the player (title/description) or depicts her QID, exactly one dominant face, the whole head inside the source, and the crop reads as that player at desktop 4:5 and avatar 1:1. Category membership alone is never identity proof.",
+  "decisions": {
+    "4858656": { "name": "Gabriela Jaquez", "decision": "approve", "note": "file title names the player; UCLA #11; head fully inside, clean 4:5 and 1:1" },
+    "4898898": { "name": "Gianna Kneepkens", "decision": "approve", "note": "file title names the player; UCLA #8; clean profile, full headroom (checked at native resolution)" },
+    "4703609": { "name": "Charlisse Leger-Walker", "decision": "approve", "note": "file title names the player; UCLA #5; frontal, clean crop" },
+    "4336633": { "name": "Li Yueru", "decision": "approve", "note": "file title names the player and jersey 28 (Galatasaray); replaces the rejected P18 whose frame clipped the head" },
+    "4398935": { "name": "Veronica Burton", "decision": "approve", "note": "file title names the player (Valkyries); replaces the low-resolution P18" },
+    "2987891": { "name": "Courtney Williams", "decision": "approve", "note": "file title names the player; replaces the low-resolution P18" },
+    "4398589": { "name": "Elizabeth Balogun", "decision": "approve", "note": "file title names the player and jersey 4 (Nigeria, 2026-09-04)" },
+    "5346554": { "name": "Teja Oblak", "decision": "approve", "note": "file title names the player and jersey 3 (Galatasaray, 2026-02-01)" },
+    "3917453": { "name": "Katie Lou Samuelson", "decision": "approve", "note": "file title names the player; single subject (the rejected P18 had several faces); ball is beside, not over, the face (checked at native resolution)" },
+    "4433411": { "name": "Angela Dugalic", "decision": "approve", "note": "file title names the player; UCLA #32; clean crop" },
+    "4433634": { "name": "Ashten Prechtel", "decision": "reject", "note": "casual close-up under a cap brim, soft focus: fails the newsroom quality bar" },
+    "4398577": { "name": "Miela Sowah", "decision": "reject", "note": "soft focus, eyes downcast: fails the visible-face bar" },
+    "3054590": { "name": "Nia Coffey", "decision": "reject", "note": "file title is 'Sylvia Fowles (34) follows the ball after Nia Coffey (12)...': the dominant face may be Fowles; identity ambiguous" },
+    "4281930": { "name": "Anneli Maley", "decision": "reject", "note": "detected face is a fan-held cardboard cutout; description names other players" },
+    "4398768": { "name": "Nyara Sabally", "decision": "reject", "note": "head bowed, face largely hidden: same visible-face failure as the held P18" }
+  }
+}
