@@ -8,3 +8,4 @@ qa-artifacts/
 *.log
 .DS_Store
 .vercel
+.admin-token

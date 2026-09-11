@@ -105,7 +105,8 @@ function competitorOf(c) {
   return {
     ...team,
     home_away: str(c.homeAway),
-    score: toInt(c.score),
+    // Scoreboard publishes score as a string; team schedules as {value, displayValue}.
+    score: toInt(typeof c.score === 'object' && c.score !== null ? c.score.value ?? c.score.displayValue : c.score),
     winner: c.winner === undefined ? null : Boolean(c.winner),
     record: total ? str(total.summary || total.displayValue) : null,
     linescores: Array.isArray(c.linescores) ? c.linescores.map((l) => toInt(l.displayValue ?? l.value)) : [],

@@ -243,7 +243,7 @@ async function today({ env, ctx, path }) {
   const [{ r, sb }, st, recent] = await Promise.all([
     scoreboardFor(env, ctx, todayEt),
     seasonState(env, ctx),
-    scoreboardFor(env, ctx, `${addDays(todayEt, -10)}-${addDays(todayEt, -1)}`)
+    scoreboardFor(env, ctx, `${addDays(todayEt, -30)}-${addDays(todayEt, -1)}`)
   ]);
   if (!sb) return fail('scoreboard_unavailable', 'Today scoreboard unavailable from source', base(path, { freshness: freshnessOf(r), degraded: degradedFrom(r) }), 502);
 
@@ -477,10 +477,14 @@ async function matchup({ env, ctx, params, path }) {
         ? { possessions_per_game: round1(poss), points_per_game: ts.avgPoints ?? null, method: 'Possessions ≈ FGA − OREB + TOV + 0.44·FTA from season per-game team totals (ESPN). Standard estimate, labelled as such.' }
         : null,
       season_stats: ts,
-      key_players: lead.filter((p) => p.team_id === t.team_id).sort((a, b) => (b.avgPoints ?? 0) - (a.avgPoints ?? 0)).slice(0, 5).map((p) => ({ ...p, photo: photoFor(p.athlete_id) })),
+      season_leaders: lead.filter((p) => p.team_id === t.team_id).sort((a, b) => (b.avgPoints ?? 0) - (a.avgPoints ?? 0)).slice(0, 5).map((p) => ({ ...p, photo: photoFor(p.athlete_id) })),
+      season_leaders_note: 'ESPN season leaders list covers qualified players only (127 league-wide on 2026-09-11); recent acquisitions can be missing. Use the observed rotation for current roles.',
       availability: injList.filter((x) => x.team_id === t.team_id)
     };
   });
+
+  const rotations = await Promise.all(sides.map((t, i) => observedRotation(env, ctx, t.team_id, (scheds[i]?.games || []).filter((x) => Date.parse(x.start_utc) < tip))));
+  teamsOut.forEach((t, i) => { t.rotation = rotations[i]; });
 
   const odds = env.WNBA_KV ? await env.WNBA_KV.get('odds:v1:latest', 'json') : null;
   const mk = odds?.events?.find((e) => e.home_team_id === g.home?.team_id && e.away_team_id === g.away?.team_id && Math.abs(Date.parse(e.commence_time) - tip) < 36 * 3600e3) || null;
@@ -496,6 +500,49 @@ async function matchup({ env, ctx, params, path }) {
     base(path, { fetchedAt: L.fetchedAt, freshness: FRESHNESS.CURRENT, staleAfterS: TTL.schedule, cache: L.cache, semantics: 'MATCHUP_RESEARCH', season: g.season, degraded: [stand, leaders, teamStats, inj, ...scheds.map((s) => s.r)].flatMap(degradedFrom) }),
     { maxAge: 60 }
   );
+}
+
+/**
+ * Observed rotation over a team's most recent completed games, from the real
+ * box scores (archive or provider). Role labels are rules on observed minutes,
+ * not projections.
+ */
+async function observedRotation(env, ctx, teamId, games, n = 5) {
+  const recent = games.filter((x) => x.status?.state === 'post' && x.status?.completed).sort((a, b) => String(b.start_utc).localeCompare(String(a.start_utc))).slice(0, n);
+  const loads = await Promise.all(recent.map((g) => loadSummary(env, ctx, g.game_id)));
+  const agg = new Map();
+  let sample = 0;
+  for (const L of loads) {
+    if (!L.summary) continue;
+    sample += 1;
+    for (const r of L.summary.box.players.filter((x) => x.team_id === String(teamId))) {
+      const a = agg.get(r.athlete_id) || { athlete_id: r.athlete_id, name: r.name, position: r.position, games: 0, appearances: 0, starts: 0, min: 0, pts: 0, reb: 0, ast: 0, dnp: 0 };
+      a.games += 1;
+      if (r.dnp || !r.min) a.dnp += 1;
+      else {
+        a.appearances += 1;
+        a.min += r.min || 0;
+        a.pts += r.pts || 0;
+        a.reb += r.reb || 0;
+        a.ast += r.ast || 0;
+      }
+      if (r.starter) a.starts += 1;
+      agg.set(r.athlete_id, a);
+    }
+  }
+  const rows = [...agg.values()].map((a) => {
+    const div = a.appearances || 1;
+    const avgMin = a.appearances ? a.min / div : 0;
+    const role = a.starts >= Math.ceil(sample / 2) ? 'starter' : avgMin >= 15 ? 'rotation' : a.appearances ? 'reserve' : 'did_not_play';
+    return { ...a, min: round1(avgMin), pts: round1(a.pts / div), reb: round1(a.reb / div), ast: round1(a.ast / div), role, photo: photoFor(a.athlete_id) };
+  });
+  rows.sort((x, y) => y.min - x.min);
+  return {
+    method: `Observed over the last ${sample} completed game${sample === 1 ? '' : 's'} (ESPN box scores). Starter = started at least half; rotation = 15+ avg minutes; averages are per appearance.`,
+    sample,
+    games: recent.map((g) => g.game_id),
+    rows
+  };
 }
 
 function teamStatsRows(body) {
@@ -573,6 +620,7 @@ async function team({ env, ctx, params, path }) {
       standing: standingsRows.find((x) => x.team_id === params.id) || null,
       roster: roster.athletes.map((a) => ({ ...a, photo: photoFor(a.athlete_id) })),
       schedule: sched.games,
+      rotation: await observedRotation(env, ctx, params.id, sched.games),
       season_stats: stats.body ? teamStatsRows(stats.body).find((x) => x.team_id === params.id) || null : null,
       availability: inj.body ? normalizeInjuries(inj.body).filter((x) => x.team_id === params.id) : null
     },
