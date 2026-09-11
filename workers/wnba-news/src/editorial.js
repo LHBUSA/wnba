@@ -58,9 +58,7 @@ function findPhrases(text, map) {
   const hay = ` ${norm(text)} `;
   const out = [];
   for (const [name, v] of map) {
-    const needle = ` ${name} `;
-    const needlePoss = ` ${name}'s `;
-    if (hay.includes(needle) || hay.includes(needlePoss)) out.push(v);
+    if (hay.includes(` ${name} `) || hay.includes(` ${name}'s `) || hay.includes(` ${name}' `)) out.push(v);
   }
   return out;
 }
@@ -82,6 +80,26 @@ export function linkEntities(item, dict) {
   for (const t of findPhrases(text, dict.teamByName)) {
     const k = `team:${t.team_id}`;
     if (!ents.has(k)) ents.set(k, { type: 'team', id: String(t.team_id), name: t.name, method: 'exact_team_name' });
+  }
+  // Publisher tags are structured metadata: exact full names there count too.
+  const tagText = (item.tags || []).join(' | ');
+  for (const p of findPhrases(tagText, dict.playerByName)) {
+    const k = `player:${p.athlete_id}`;
+    if (!ents.has(k)) ents.set(k, { type: 'player', id: String(p.athlete_id), name: p.name, team_id: p.team_id || null, method: 'exact_full_name_tag', on_current_roster: true });
+  }
+  for (const t of findPhrases(tagText, dict.teamByName)) {
+    const k = `team:${t.team_id}`;
+    if (!ents.has(k)) ents.set(k, { type: 'team', id: String(t.team_id), name: t.name, method: 'exact_team_name_tag' });
+  }
+  // A bare nickname ("Wings") links a team ONLY when a linked player on that
+  // team's current roster is also named in the same item.
+  const raw = ` ${String(text).replace(/[’‘]/g, "'")} `;
+  for (const t of dict.teamById.values()) {
+    if (!t.short_name || ents.has(`team:${t.team_id}`)) continue;
+    const re = new RegExp(`[^A-Za-z]${t.short_name}('s|')?[^A-Za-z]`);
+    if (!re.test(raw)) continue;
+    const mate = [...ents.values()].find((e) => e.type === 'player' && String(e.team_id) === String(t.team_id));
+    if (mate) ents.set(`team:${t.team_id}`, { type: 'team', id: String(t.team_id), name: t.name, method: `nickname_with_rostered_player:${mate.id}` });
   }
   return [...ents.values()];
 }
@@ -111,7 +129,7 @@ export function relevance(item, entities, source) {
   if (NCAA.test(text) && !wnbaWord && !teams.length) { reasons.push('college context without WNBA signal'); return { accept: false, score: 0, reasons, type }; }
   // Player-only mentions (e.g. a World Cup story naming WNBA players) need a
   // consequence (injury/transaction) or an explicit WNBA mention to qualify.
-  const accept = wnbaWord || teams.length > 0 || source.wnba_scope === 'wnba_only' || (players.length > 0 && ['injury', 'trade', 'transaction', 'lineup'].includes(type));
+  const accept = wnbaWord || teams.length > 0 || source.wnba_scope === 'wnba_only' || (wnbaTag && players.length > 0) || (players.length > 0 && ['injury', 'trade', 'transaction', 'lineup'].includes(type));
   if (!accept) reasons.push('no WNBA signal strong enough');
   return { accept, score: Math.round(score * 10) / 10, reasons, type };
 }

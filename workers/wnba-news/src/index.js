@@ -150,9 +150,9 @@ async function runIngest(env, trigger) {
     const inj = await apiGet(env, '/v1/injuries').catch((e) => { desk.errors.push(e.message); return null; });
     if (inj?.changes?.length) stories.push(...(await availabilityStories(inj.changes.slice(0, 40), teamsById)));
     const tx = await apiGet(env, '/v1/transactions').catch((e) => { desk.errors.push(e.message); return null; });
-    if (tx?.items) stories.push(...(await transactionStories(tx.items, new Date(Date.now() - 72 * 3600e3).toISOString())));
+    if (tx?.items) stories.push(...(await transactionStories(tx.items, new Date(Date.now() - 14 * 86400e3).toISOString())));
     const today = etCompact();
-    const sched = await apiGet(env, `/v1/schedule?from=${addDays(today, -2)}&to=${today}`).catch((e) => { desk.errors.push(e.message); return null; });
+    const sched = await apiGet(env, `/v1/schedule?from=${addDays(today, -14)}&to=${today}`).catch((e) => { desk.errors.push(e.message); return null; });
     const finals = (sched?.games || []).filter((g) => g.status?.state === 'post' && g.status?.completed);
     for (const g of finals.slice(0, 8)) {
       const existing = Object.values(deskStore).find((s) => s.kind === 'result' && s.entities.some((e) => e.type === 'game' && e.id === g.game_id));

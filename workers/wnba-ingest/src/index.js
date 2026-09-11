@@ -24,7 +24,7 @@ const VERSION = '1.0.0';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
 const PROPS_WINDOW_H = 36;
-const BACKFILL_PER_RUN = 4;
+const BACKFILL_PER_RUN = 12;
 
 export default {
   async scheduled(event, env, ctx) {
