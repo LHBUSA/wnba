@@ -299,7 +299,7 @@ export async function mount(root, ctx) {
               </div>` : ''}
               ${v.runs ? html`<div class="run-list" style="margin-top:14px">
                 <span class="card-title" style="margin-bottom:4px">Scoring runs</span>
-                ${v.runs.current ? html`<div class="run"><b style="color:${safeColor(teamOf(v.runs.current.team_id)?.color, 'var(--gold)')}">${v.runs.current.points}-0</b><span>${teamOf(v.runs.current.team_id)?.abbr} current run</span><span class="note">${v.runs.current.from} → ${v.runs.current.to}</span></div>` : ''}
+                ${v.runs.current ? html`<div class="run"><b style="color:${safeColor(teamOf(v.runs.current.team_id)?.color, 'var(--gold)')}">${v.runs.current.points}-0</b><span>${teamOf(v.runs.current.team_id)?.abbr} ${v.g.status?.state === 'in' ? 'current run' : v.atEnd ? 'closing run' : 'run at this point'}</span><span class="note">${v.runs.current.from} → ${v.runs.current.to}</span></div>` : ''}
                 ${Object.values(v.runs.largest).map((r) => html`<div class="run"><b>${r.points}-0</b><span>${teamOf(r.team_id)?.abbr} largest run</span><span class="note">${r.from} → ${r.to}</span></div>`)}
               </div><p class="note" style="margin-top:8px">${v.runs.method}</p>` : ''}
             </div>

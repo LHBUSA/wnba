@@ -52,7 +52,7 @@ export function gameCard(g, { showDate = false, links = true } = {}) {
   return html`<article class="card gcard" style="--home-c:${safeColor(g.home?.color, 'var(--home)')};--away-c:${safeColor(g.away?.color, 'var(--away)')}">
     <div class="gcard-top">
       ${badge(st.key, st.label)}
-      <span class="gcard-time">${showDate || post ? fmtDateET(g.start_utc) : ''}${g.status?.state === 'pre' && showDate ? ` · ${fmtTimeET(g.start_utc)}` : ''}</span>
+      <span class="gcard-time">${showDate || post ? fmtDateET(g.start_utc) : ''}</span>
     </div>
     ${row(g.away, g.home)}
     ${row(g.home, g.away)}

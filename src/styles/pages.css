@@ -128,7 +128,6 @@
 .p-facts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; color: var(--dim); font: 500 13px/1.4 var(--f-data); }
 .p-facts b { color: var(--paper); font-weight: 600; }
 @media (max-width: 720px) { .p-hero { grid-template-columns: 1fr; } .p-photo { max-width: 340px; width: 100%; aspect-ratio: 4 / 5; } }
-@media (max-width: 420px) { .p-photo { aspect-ratio: 1 / 1; } }
 
 /* ------------------------------------------------------------ players grid */
 .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--s3); }

@@ -96,6 +96,8 @@ async function runIngest(env, trigger) {
         const rel = relevance(raw, entities, src);
         if (!rel.accept) {
           run.rejected += 1;
+          // A rule change can un-accept an item we stored earlier; it leaves the feed.
+          if (store[id]) { delete store[id]; run.withdrawn = (run.withdrawn || 0) + 1; }
           if (run.rejected_samples.length < 6) run.rejected_samples.push({ headline: raw.headline, reasons: rel.reasons });
           continue;
         }

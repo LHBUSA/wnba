@@ -13,7 +13,7 @@ export async function mount(root, ctx) {
   let stopTicker = startFreshTicker(root);
 
   const draw = async () => {
-    const [today, news, injuries, standings] = await Promise.all([api.today(), api.news({ limit: 8 }), api.injuries(), api.standings()]);
+    const [today, news, desk, injuries, standings] = await Promise.all([api.today(), api.news({ limit: 6, lane: 'external' }), api.news({ limit: 3, lane: 'pbe' }), api.injuries(), api.standings()]);
     if (!ctx.isCurrent()) return;
     if (!today.ok) { render(root, errorState(today, 'The WNBA slate')); return; }
     const d = today.data;
@@ -28,7 +28,7 @@ export async function mount(root, ctx) {
 
     const changes = (injuries.ok ? injuries.data.changes : []) || [];
     const lastResults = d.last_results?.games || [];
-    const deskItems = news.ok ? news.data.items.filter((i) => i.lane === 'pbe').slice(0, 3) : [];
+    const deskItems = desk.ok ? desk.data.items.slice(0, 3) : [];
     const extItems = news.ok ? news.data.items.filter((i) => i.lane === 'external').slice(0, 5) : [];
     const seeds = standings.ok ? standings.data.groups.map((g) => ({ name: g.name, top: g.entries.slice(0, 4) })) : [];
     const firstUpcoming = slate.games[0];
@@ -38,7 +38,7 @@ export async function mount(root, ctx) {
       <section class="hero">
         <div class="hero-grid">
           <div>
-            <span class="eyebrow">${d.season?.label || 'WNBA'}${d.phase ? ` · ${d.phase}` : ''}</span>
+            <span class="eyebrow">${d.season?.label || 'WNBA'}${d.phase && !String(d.season?.label || '').includes(d.phase) ? ` · ${d.phase}` : ''}</span>
             <h1 style="margin-top:12px">${heroTitle}</h1>
             <p class="lead">${slate.kind === 'TODAY'
               ? `${plural(slate.summary.total, 'game')} on the board — ${slate.summary.live} live, ${slate.summary.final} final, ${slate.summary.scheduled} scheduled.`
@@ -94,7 +94,7 @@ export async function mount(root, ctx) {
             <div class="card card-pad">
               ${changes.length
                 ? changes.slice(0, 8).map((c) => html`<div class="change-row">${avatar({ name: c.name })}<div><a href="${c.athlete_id ? `/players/${c.athlete_id}` : '/injuries'}"><b>${c.name}</b></a><div class="note">${c.status_before || 'Not listed'} <span class="arrow">→</span> ${c.status_after || 'Off feed'}</div></div><span class="note">${relTime(c.captured_at)}</span></div>`)
-                : html`<p class="note">No availability changes recorded yet. PropBetEdge only reports a change after two captures of the source disagree — the ledger started ${injuries.ok ? 'recording this week' : 'when the feed returns'}.</p>`}
+                : html`<p class="note">No availability changes recorded yet. A change is reported only when two consecutive captures of the source disagree. ${injuries.ok ? injuries.data.change_ledger : 'The injury feed is unavailable right now.'}</p>`}
             </div>
           </section>
 

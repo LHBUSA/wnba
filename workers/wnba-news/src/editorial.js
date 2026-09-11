@@ -15,11 +15,12 @@ export function norm(s) {
 }
 
 const NCAA = /\b(ncaa|college|collegiate|freshman|sophomore|recruit|recruiting|commit(s|ted)?|transfer portal|big east|sec|acc|big ten|big 12|pac-12|march madness|final four)\b/i;
+const INTERNATIONAL = /\b(fiba|world cup|olympic|olympics|eurobasket|eurocup|euroleague|team usa|national team)\b/i;
 const OFF_SPORT = /\b(nfl|nhl|mlb|nwsl|mls|premier league|super bowl|touchdown|quarterback|hockey|soccer|baseball|softball|volleyball|golf|tennis|f1|nascar)\b/i;
 
 export const STORY_TYPES = [
   ['injury', /\b(injur(y|ies|ed)|out for|ruled out|will miss|miss(es)? (the )?(rest|remainder)|questionable|doubtful|day-to-day|torn|acl|achilles|sprain(ed)?|fracture|surgery|concussion|protocol|return(s|ed)? from|sidelined|health update)\b/i],
-  ['trade', /\b(trade[sd]?|traded|deal sends|acquire[sd]?)\b/i],
+  ['trade', /\b(traded|trades? (for|with|to)|trade (deadline|talks|request)|deal sends|acquire[sd]?)\b/i],
   ['transaction', /\b(sign(s|ed|ing)?|waive[sd]?|release[sd]?|hardship|seven-day|rest-of-season|contract|extension|re-sign(s|ed)?|claim(s|ed)? off waivers|suspend(ed|s)?)\b/i],
   ['coaching', /\b(head coach|coach(es|ing)? (fired|hire|hired|search)|fire[sd] |hires?|general manager|gm )\b/i],
   ['lineup', /\b(starting lineup|start(s|ing)? in place|move(s|d)? to the bench|minutes restriction|rotation|role change)\b/i],
@@ -127,6 +128,9 @@ export function relevance(item, entities, source) {
   if (['injury', 'trade', 'transaction', 'coaching', 'lineup', 'playoffs'].includes(type) && (players.length || teams.length)) { score += 1.5; reasons.push(`consequential type: ${type}`); }
   if (OFF_SPORT.test(item.headline) && !wnbaWord && !teams.length) { reasons.push('off-sport headline'); return { accept: false, score: 0, reasons, type }; }
   if (NCAA.test(text) && !wnbaWord && !teams.length) { reasons.push('college context without WNBA signal'); return { accept: false, score: 0, reasons, type }; }
+  // International basketball naming WNBA players/teams is WNBA news only with an
+  // explicit WNBA mention or a WNBA consequence (injury, transaction).
+  if (INTERNATIONAL.test(text) && !wnbaWord && !['injury', 'trade', 'transaction'].includes(type)) { reasons.push('international competition without WNBA consequence'); return { accept: false, score: 0, reasons, type }; }
   // Player-only mentions (e.g. a World Cup story naming WNBA players) need a
   // consequence (injury/transaction) or an explicit WNBA mention to qualify.
   const accept = wnbaWord || teams.length > 0 || source.wnba_scope === 'wnba_only' || (wnbaTag && players.length > 0) || (players.length > 0 && ['injury', 'trade', 'transaction', 'lineup'].includes(type));
