@@ -26,7 +26,7 @@ export const ROUTES = [
 const NOT_FOUND = { id: 'not-found', load: () => import('../pages/not-found.js') };
 const SITE = 'https://wnba.propbetedge.ai';
 const DEFAULT_DESCRIPTION = 'PropBetEdge WNBA is the independent WNBA intelligence desk: live WNBACast, sourced injuries, matchup context, sportsbook odds, player research and original WNBA newsroom coverage.';
-const DEFAULT_IMAGE = `${SITE}/share/propbetedge-wnba-social.png`;
+const DEFAULT_IMAGE = `${SITE}/share/propbetedge-wnba-social-v2.jpg`;
 
 export function resolve(pathname) {
   const path = pathname.replace(/\/+$/, '') || '/';
