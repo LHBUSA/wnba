@@ -35,8 +35,10 @@ const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').
 // Short source labels for cards (the full, cited list is on the article page).
 const srcLabel = (s) => String(s).replace(/^wnba-api matchup research.*/i, 'PBE matchup research').replace(/\s*\(.*$/, '').replace(/\s*—.*$/, '');
 const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 2).join(', ');
-// Headline text with number-hyphen tokens ("97-71", "7-3", "3.5-point") kept on one line. Text is unchanged.
-const headlineText = (t) => String(t ?? '').split(/(\d[\d.]*-[\w.]+)/).map((s, i) => (i % 2 ? html`<span class="nobr">${s}</span>` : s));
+// Headline/deck text with number-dash tokens kept on one line; the text itself is unchanged.
+// Both score forms are atomic: "111-91" (hyphen) and "111–91" (en dash, which wnba-articles/1.2.0
+// emits so gate.js does not read "-91" as a moneyline). Also covers "7-3", "3.5-point", "24-16".
+export const headlineText = (t) => String(t ?? '').split(/(\d[\d.]*[-–][\w.]+)/).map((s, i) => (i % 2 ? html`<span class="nobr">${s}</span>` : s));
 
 export function marketChip(c) {
   const m = c.market;
@@ -56,7 +58,7 @@ export function articleCard(c, { lead = false, size = null, eager = false } = {}
     <div class="scard-body">
       <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(c.published_at)}</span></div>
       <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
-      ${sz !== 'compact' && c.deck ? html`<p class="deck">${c.deck}</p>` : ''}
+      ${sz !== 'compact' && c.deck ? html`<p class="deck">${headlineText(c.deck)}</p>` : ''}
       ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}${marketChip(c)}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
     </div>
     ${sz === 'lead' ? html`<div class="scard-foot">
