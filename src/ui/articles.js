@@ -1,7 +1,10 @@
 // Article cards for the in-house WNBA newsroom (hub, home, team, player, game pages).
-import { html, raw } from '../lib/dom.js';
-import { teamLogo, logoEntry, teamColors } from './logo.js';
+// Each card leads with its story media (licensed photo, matchup or team composition) and keeps the
+// photo credit visible. The headline link is stretched over the card so credit links stay real links.
+import { html } from '../lib/dom.js';
+import { teamLogo } from './logo.js';
 import { relTime } from '../lib/format.js';
+import { storyMedia, storyThumb } from './story-media.js';
 
 export const KIND_LABEL = {
   injury: 'Injuries',
@@ -14,34 +17,78 @@ export const KIND_LABEL = {
   market: 'Market moves'
 };
 
+// Desk names used on the front page (editorial voice), keyed by kind.
+export const DESK = {
+  injury: 'Injury Desk',
+  transaction: 'Roster Moves',
+  performance: 'Performances',
+  result: 'Results',
+  preview: 'Previews',
+  trend: 'Team Trends',
+  props: 'Prop Watch',
+  market: 'Market Watch'
+};
+
 export const KIND_ORDER = ['preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];
 
 const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').slice(0, 2);
+// Short source labels for cards (the full, cited list is on the article page).
+const srcLabel = (s) => String(s).replace(/^wnba-api matchup research.*/i, 'PBE matchup research').replace(/\s*\(.*$/, '').replace(/\s*—.*$/, '');
+const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 2).join(', ');
 
-export function articleCard(c, { lead = false } = {}) {
-  const teams = teamsOf(c);
-  const tc = teamColors({ team_id: c.lead_team_id });
-  const leadLogo = logoEntry(c.lead_team_id);
-  const href = `/news/${c.slug}`;
-  return html`<a class="ncard ${lead ? 'lead' : ''}" href="${href}" style="--tc1:${tc.color || '#d4af37'}">
-    ${lead && leadLogo ? html`<img class="bg-logo" src="${leadLogo.files['320']}" alt="" width="240" height="240" loading="lazy" decoding="async" />` : ''}
-    <div class="nc-top"><span class="nc-logos">${teams.map((t) => teamLogo({ team_id: t.id, name: t.name }, lead ? 32 : 24))}</span><span class="cat">${KIND_LABEL[c.kind] || c.category}</span><span class="badge pbe">PBE Newsroom</span></div>
-    <h3>${c.headline}</h3>
-    ${c.deck ? html`<p class="deck">${c.deck}</p>` : ''}
-    ${lead && c.bettor_snippet ? html`<p class="angle"><b style="color:var(--market);font:700 10px/1 var(--f-data);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:4px">Why it matters for bettors</b>${c.bettor_snippet}</p>` : ''}
-    <div class="src"><span>${relTime(c.published_at)}</span>${c.market ? html`<span class="badge market">${c.market.away_abbr ? `${c.market.away_abbr} @ ${c.market.home_abbr} · ` : ''}${c.market.spread !== null ? `${c.market.home_abbr || 'Home'} ${c.market.spread > 0 ? '+' : ''}${c.market.spread}` : ''}${c.market.total !== null ? ` · O/U ${c.market.total}` : ''}</span>` : ''}<span>Sources: ${(c.sources || []).slice(0, 2).join(', ')}</span></div>
-  </a>`;
+export function marketChip(c) {
+  const m = c.market;
+  if (!m) return '';
+  const line = [m.away_abbr ? `${m.away_abbr} @ ${m.home_abbr}` : '', m.spread !== null && m.spread !== undefined ? `${m.home_abbr || 'Home'} ${m.spread > 0 ? '+' : ''}${m.spread}` : '', m.total !== null && m.total !== undefined ? `O/U ${m.total}` : ''].filter(Boolean).join(' · ');
+  return line ? html`<span class="badge market" title="Stored PropBetEdge market capture (${m.books} books)">${line}</span>` : '';
 }
 
-export function articleList(items, { empty = 'No PropBetEdge articles for this yet.' } = {}) {
+/** Standard story card. size: 'lead' | 'feature' | 'card' | 'compact'. */
+export function articleCard(c, { lead = false, size = null, eager = false } = {}) {
+  const sz = size || (lead ? 'lead' : 'card');
+  const href = `/news/${c.slug}`;
+  const slot = sz === 'lead' ? 'lead' : sz === 'compact' ? 'small' : 'card';
+  return html`<article class="scard scard--${sz}">
+    ${storyMedia(c.media, { slot, eager })}
+    <div class="scard-body">
+      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(c.published_at)}</span></div>
+      <h3 class="scard-h"><a href="${href}">${c.headline}</a></h3>
+      ${sz !== 'compact' && c.deck ? html`<p class="deck">${c.deck}</p>` : ''}
+      ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}${marketChip(c)}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
+    </div>
+    ${sz === 'lead' ? html`<div class="scard-foot">
+      ${c.bettor_snippet ? html`<p class="angle"><b>Why it matters for bettors</b>${c.bettor_snippet}</p>` : ''}
+      <div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}${marketChip(c)}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>
+    </div>` : ''}
+  </article>`;
+}
+
+export function articleList(items, { empty = 'No PropBetEdge articles for this yet.', size = 'card' } = {}) {
   if (!items?.length) return html`<p class="note">${empty}</p>`;
-  return html`<div class="ngrid">${items.map((c) => articleCard(c))}</div>`;
+  return html`<div class="ngrid">${items.map((c) => articleCard(c, { size }))}</div>`;
+}
+
+function thumbCredit(m) {
+  const s = m?.layout === 'single' ? m.subjects?.[0] : m?.layout === 'matchup' ? m.subjects?.[1] : null;
+  if (!s) return '';
+  const cr = s.credit || {};
+  return html`<span class="srow-credit">${s.name} · Photo: ${cr.source_page ? html`<a href="${cr.source_page}" rel="noopener nofollow" target="_blank">${cr.author || 'Unknown author'}</a>` : cr.author || 'Unknown author'} · ${cr.license} (cropped)</span>`;
+}
+
+/** River row: square thumbnail of the pictured player (else team mark), desk, headline, time. */
+export function articleRow(c) {
+  return html`<article class="srow">
+    ${storyThumb(c.media, 64)}
+    <div class="srow-body">
+      <span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span>
+      <h3 class="srow-h"><a href="/news/${c.slug}">${c.headline}</a></h3>
+      <span class="note">${relTime(c.published_at)}</span>
+      ${thumbCredit(c.media)}
+    </div>
+  </article>`;
 }
 
 /** Compact list for sidebars. */
 export function articleMini(items) {
-  return html`${(items || []).map((c) => html`<a class="change-row" href="/news/${c.slug}" style="grid-template-columns:auto minmax(0,1fr)">
-    <span class="nc-logos">${teamsOf(c).slice(0, 1).map((t) => teamLogo({ team_id: t.id, name: t.name }, 28))}</span>
-    <span><span class="cat" style="font:700 10px/1 var(--f-data);letter-spacing:.14em;text-transform:uppercase;color:var(--flame)">${KIND_LABEL[c.kind] || c.category}</span><b style="display:block;font:600 15px/1.3 var(--f-editorial);margin-top:4px">${c.headline}</b><span class="note">${relTime(c.published_at)}</span></span>
-  </a>`)}`;
+  return html`<div class="srows">${(items || []).map(articleRow)}</div>`;
 }

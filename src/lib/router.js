@@ -46,10 +46,12 @@ function meta(selector, value) {
   if (node && value) node.setAttribute('content', value);
 }
 
-export function setMeta({ title, description, path }) {
+export function setMeta({ title, description, path, image }) {
   const pageTitle = title ? `${title} · PropBetEdge WNBA` : 'PropBetEdge WNBA — Live WNBA Intelligence';
   const pageDescription = description || DEFAULT_DESCRIPTION;
   const pageUrl = `${SITE}${path === '/' ? '/' : path}`;
+  // A page may supply its own share image (a newsroom story's credited og.jpg, on this domain).
+  const pageImage = image ? `${SITE}${image}` : DEFAULT_IMAGE;
 
   document.title = pageTitle;
   meta('meta[name="description"]', pageDescription);
@@ -60,12 +62,12 @@ export function setMeta({ title, description, path }) {
   meta('meta[property="og:title"]', pageTitle);
   meta('meta[property="og:description"]', pageDescription);
   meta('meta[property="og:url"]', pageUrl);
-  meta('meta[property="og:image"]', DEFAULT_IMAGE);
-  meta('meta[property="og:image:secure_url"]', DEFAULT_IMAGE);
+  meta('meta[property="og:image"]', pageImage);
+  meta('meta[property="og:image:secure_url"]', pageImage);
 
   meta('meta[name="twitter:title"]', pageTitle);
   meta('meta[name="twitter:description"]', pageDescription);
-  meta('meta[name="twitter:image"]', DEFAULT_IMAGE);
+  meta('meta[name="twitter:image"]', pageImage);
 }
 
 export function createRouter({ outlet, onRoute }) {
