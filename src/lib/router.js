@@ -24,28 +24,35 @@ export const ROUTES = [
 ];
 
 const NOT_FOUND = { id: 'not-found', load: () => import('../pages/not-found.js') };
+const SITE = 'https://wnba.propbetedge.ai';
+const DEFAULT_DESCRIPTION = 'PropBetEdge WNBA is the independent WNBA intelligence desk: live WNBACast, sourced injuries, matchup context, sportsbook odds, player research and original WNBA newsroom coverage.';
+const DEFAULT_IMAGE = `${SITE}/share/propbetedge-wnba-social.png`;
 
-export function resolve(pathname) {
-  const path = pathname.replace(/\/+$/, '') || '/';
-  for (const r of ROUTES) {
-    const m = path.match(r.re);
-    if (m) {
-      const params = {};
-      (r.keys || []).forEach((k, i) => { if (m[i + 1]) params[k] = m[i + 1]; });
-      return { route: r, params, path };
-    }
-  }
-  return { route: NOT_FOUND, params: {}, path };
+function meta(selector, value) {
+  const node = document.querySelector(selector);
+  if (node && value) node.setAttribute('content', value);
 }
 
 export function setMeta({ title, description, path }) {
-  document.title = title ? `${title} · PropBetEdge WNBA` : 'PropBetEdge WNBA — Live WNBA Intelligence';
-  const d = document.querySelector('meta[name="description"]');
-  if (d && description) d.setAttribute('content', description);
-  const c = document.querySelector('link[rel="canonical"]');
-  if (c) c.setAttribute('href', `https://wnba.propbetedge.ai${path === '/' ? '/' : path}`);
-  const ot = document.querySelector('meta[property="og:title"]');
-  if (ot) ot.setAttribute('content', document.title);
+  const pageTitle = title ? `${title} · PropBetEdge WNBA` : 'PropBetEdge WNBA — Live WNBA Intelligence';
+  const pageDescription = description || DEFAULT_DESCRIPTION;
+  const pageUrl = `${SITE}${path === '/' ? '/' : path}`;
+
+  document.title = pageTitle;
+  meta('meta[name="description"]', pageDescription);
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) canonical.setAttribute('href', pageUrl);
+
+  meta('meta[property="og:title"]', pageTitle);
+  meta('meta[property="og:description"]', pageDescription);
+  meta('meta[property="og:url"]', pageUrl);
+  meta('meta[property="og:image"]', DEFAULT_IMAGE);
+  meta('meta[property="og:image:secure_url"]', DEFAULT_IMAGE);
+
+  meta('meta[name="twitter:title"]', pageTitle);
+  meta('meta[name="twitter:description"]', pageDescription);
+  meta('meta[name="twitter:image"]', DEFAULT_IMAGE);
 }
 
 export function createRouter({ outlet, onRoute }) {
