@@ -16,7 +16,7 @@
 
 import { validateArticle } from './gate.js';
 
-export const ARTICLE_VERSION = 'wnba-articles/1.0.0';
+export const ARTICLE_VERSION = 'wnba-articles/1.0.1';
 
 // ------------------------------------------------------------ formatting
 
