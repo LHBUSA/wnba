@@ -42,6 +42,12 @@
   .mnav a[aria-current='page'] { color: var(--gold); }
   body { padding-bottom: 64px; }
 }
+/* 360-class phones: brand + Pro + menu otherwise run 23px past the viewport and clip the menu button */
+@media (max-width: 380px) {
+  .hdr-in { gap: var(--s3); }
+  .brand-txt b { font-size: 17px; }
+  .btn-pro { padding: 9px 11px; font-size: 11.5px; }
+}
 .drawer { position: fixed; inset: 0; z-index: 60; display: none; }
 .drawer.open { display: block; }
 .drawer-bg { position: absolute; inset: 0; background: rgba(0,0,0,.6); }

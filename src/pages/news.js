@@ -66,7 +66,7 @@ function sourceWire(wire) {
   if (!wire.ok) return html`<p class="note">Source wire unavailable.</p>`;
   return html`<ol class="wire">${wire.data.items.slice(0, 12).map((i) => html`<li>
       <div class="nmeta">${badge('ext', i.source.name)}<span>${relTime(i.published_at)}</span></div>
-      <a href="${i.url}" rel="noopener" target="_blank">${i.headline} <span class="note" aria-hidden="true">↗</span></a>
+      <a href="${i.url}" rel="noopener" target="_blank">${i.headline}&nbsp;<span class="note" aria-hidden="true">↗</span></a>
       <div class="nents">${entityChips(i.entities)}</div>
     </li>`)}</ol>`;
 }
@@ -80,8 +80,8 @@ export async function mount(root, ctx) {
   if (!arts.ok) return render(root, html`${head}${errorState(arts, 'The newsroom')}`);
   const items = arts.data.items;
   const nav = html`<nav class="desk-nav" aria-label="Newsroom desks">
-    <a class="${!kind ? 'on' : ''}" href="/news">Front page</a>
-    ${['injury', 'preview', 'performance', 'trend', 'transaction', 'props', 'market'].map((k) => html`<a class="${kind === k ? 'on' : ''}" href="/news/c/${k}">${DESK[k]}</a>`)}
+    <a class="${!kind ? 'on' : ''}" href="/news" ${!kind ? html`aria-current="page"` : ''}>Front page</a>
+    ${['injury', 'preview', 'performance', 'trend', 'transaction', 'props', 'market'].map((k) => html`<a class="${kind === k ? 'on' : ''}" href="/news/c/${k}" ${kind === k ? html`aria-current="page"` : ''}>${DESK[k]}</a>`)}
   </nav>`;
   const mast = html`<header class="masthead">
     <div class="mast-row"><span class="eyebrow">PropBetEdge · WNBA</span><span class="mast-date">${dateline()}</span></div>

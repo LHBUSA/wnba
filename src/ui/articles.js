@@ -35,12 +35,15 @@ const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').
 // Short source labels for cards (the full, cited list is on the article page).
 const srcLabel = (s) => String(s).replace(/^wnba-api matchup research.*/i, 'PBE matchup research').replace(/\s*\(.*$/, '').replace(/\s*—.*$/, '');
 const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 2).join(', ');
+// Headline text with number-hyphen tokens ("97-71", "7-3", "3.5-point") kept on one line. Text is unchanged.
+const headlineText = (t) => String(t ?? '').split(/(\d[\d.]*-[\w.]+)/).map((s, i) => (i % 2 ? html`<span class="nobr">${s}</span>` : s));
 
 export function marketChip(c) {
   const m = c.market;
   if (!m) return '';
-  const line = [m.away_abbr ? `${m.away_abbr} @ ${m.home_abbr}` : '', m.spread !== null && m.spread !== undefined ? `${m.home_abbr || 'Home'} ${m.spread > 0 ? '+' : ''}${m.spread}` : '', m.total !== null && m.total !== undefined ? `O/U ${m.total}` : ''].filter(Boolean).join(' · ');
-  return line ? html`<span class="badge market" title="Stored PropBetEdge market capture (${m.books} books)">${line}</span>` : '';
+  const segs = [m.away_abbr ? `${m.away_abbr} @ ${m.home_abbr}` : '', m.spread !== null && m.spread !== undefined ? `${m.home_abbr || 'Home'} ${m.spread > 0 ? '+' : ''}${m.spread}` : '', m.total !== null && m.total !== undefined ? `O/U ${m.total}` : ''].filter(Boolean);
+  // separator glued to the segment before it, so a wrapped chip never starts a line with "·"
+  return segs.length ? html`<span class="badge market" title="Stored PropBetEdge market capture (${m.books} books)">${segs.map((s, i) => html`<span class="mseg">${s}${i < segs.length - 1 ? ' ·' : ''}</span>${i < segs.length - 1 ? ' ' : ''}`)}</span>` : '';
 }
 
 /** Standard story card. size: 'lead' | 'feature' | 'card' | 'compact'. */
@@ -52,7 +55,7 @@ export function articleCard(c, { lead = false, size = null, eager = false } = {}
     ${storyMedia(c.media, { slot, eager })}
     <div class="scard-body">
       <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(c.published_at)}</span></div>
-      <h3 class="scard-h"><a href="${href}">${c.headline}</a></h3>
+      <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
       ${sz !== 'compact' && c.deck ? html`<p class="deck">${c.deck}</p>` : ''}
       ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}${marketChip(c)}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
     </div>
@@ -80,9 +83,8 @@ export function articleRow(c) {
   return html`<article class="srow">
     ${storyThumb(c.media, 64)}
     <div class="srow-body">
-      <span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span>
-      <h3 class="srow-h"><a href="/news/${c.slug}">${c.headline}</a></h3>
-      <span class="note">${relTime(c.published_at)}</span>
+      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(c.published_at)}</span></div>
+      <h3 class="srow-h"><a href="/news/${c.slug}">${headlineText(c.headline)}</a></h3>
       ${thumbCredit(c.media)}
     </div>
   </article>`;
