@@ -11,7 +11,9 @@ export function decodeEntities(s) {
 }
 
 export function stripHtml(s) {
-  return decodeEntities(String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+  // Feeds often entity-encode their HTML (&lt;p&gt;), so decode, strip tags, decode again.
+  const unwrapped = String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+  return decodeEntities(decodeEntities(unwrapped).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
 function tag(block, name) {

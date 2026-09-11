@@ -1,0 +1,88 @@
+/* PropBetEdge WNBA design tokens.
+   PBE near-black / gold base (shared network identity) + a WNBA-native layer:
+   hardwood flame accent for court graphics, condensed scoreboard type, and an
+   editorial serif for the newsroom. No league or team marks are used. */
+
+:root {
+  color-scheme: dark;
+
+  /* surfaces */
+  --ink: #0f0d0a;
+  --ink-1: #15120e;
+  --ink-2: #1c1813;
+  --ink-3: #26211a;
+  --ink-4: #332c23;
+  --glass: rgba(21, 18, 14, 0.82);
+
+  /* text */
+  --paper: #f5f1eb;
+  --paper-2: #e3dccf;
+  --dim: #b8b2a6;
+  --faint: #8d877c;
+  --subtle: #5a544b;
+
+  /* PropBetEdge gold */
+  --gold: #d4af37;
+  --gold-bright: #ecc95c;
+  --gold-soft: rgba(212, 175, 55, 0.14);
+  --gold-line: rgba(212, 175, 55, 0.35);
+
+  /* WNBA layer */
+  --flame: #ff7a2f;            /* hardwood / ball accent — court graphics, live energy */
+  --flame-soft: rgba(255, 122, 47, 0.14);
+  --court: #3a2618;
+  --court-line: rgba(245, 241, 235, 0.22);
+
+  /* state */
+  --live: #ff4d5e;
+  --live-soft: rgba(255, 77, 94, 0.16);
+  --pos: #52b57f;
+  --pos-soft: rgba(82, 181, 127, 0.14);
+  --neg: #e05a5a;
+  --warn: #e0a83e;
+  --warn-soft: rgba(224, 168, 62, 0.14);
+  --model: #7aa9ff;            /* reserved for PBE model outputs (none published yet) */
+  --market: #b99cff;           /* market consensus / no-vig benchmark */
+  --market-soft: rgba(185, 156, 255, 0.13);
+
+  --home: #ecc95c;
+  --away: #8fb4ff;
+
+  /* lines */
+  --line: rgba(255, 245, 220, 0.09);
+  --line-2: rgba(255, 245, 220, 0.16);
+  --line-3: rgba(255, 245, 220, 0.05);
+
+  /* type */
+  --f-ui: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --f-data: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --f-editorial: 'Newsreader', Georgia, 'Times New Roman', serif;
+
+  --fs-micro: 10.5px;
+  --fs-xs: 11.5px;
+  --fs-sm: 13px;
+  --fs-md: 14.5px;
+  --fs-lg: 17px;
+  --fs-xl: 22px;
+  --fs-2xl: 30px;
+  --fs-3xl: 42px;
+
+  /* space / radius / shadow */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --r1: 6px;
+  --r2: 10px;
+  --r3: 14px;
+  --r4: 20px;
+  --sh-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
+  --sh-2: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 50px rgba(0, 0, 0, 0.5);
+
+  --maxw: 1320px;
+  --header-h: 60px;
+}

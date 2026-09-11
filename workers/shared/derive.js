@@ -120,14 +120,21 @@ export function playerProgression(plays) {
   };
 }
 
-export function shotZone(c) {
+/**
+ * Zone from the published coordinate, with the 2-vs-3 decision taken from the
+ * source's own pointsAttempted (coordinates are whole feet, so geometry alone
+ * misclassifies attempts that sit on the arc).
+ * Geometry (WNBA): rim ≈ (25, 0.25); baseline ≈ y −5; lane 16 ft wide; FT line
+ * 15 ft from the backboard (y ≈ 14); corner threes where the straight 22-ft
+ * lines meet the 22 ft 1.75 in arc (≈ 2.8 ft above the rim line).
+ */
+export function shotZone(c, value = null) {
   if (!c) return null;
   const d = Math.hypot(c.x - COORD.RIM_X, c.y - COORD.RIM_Y);
-  const corner = (c.x <= WNBA_THREE.CORNER_X_IN || c.x >= 50 - WNBA_THREE.CORNER_X_IN) && c.y <= 8.5;
-  if (corner) return 'corner_three';
-  if (d >= WNBA_THREE.ARC_FT) return 'above_break_three';
-  if (d <= 4) return 'restricted_area';
-  if (c.x >= 17 && c.x <= 33 && c.y <= 15) return 'paint';
+  const isThree = value === 3 || (value === null && d >= WNBA_THREE.ARC_FT);
+  if (isThree) return (c.x <= 4 || c.x >= 46) && c.y <= 4 ? 'corner_three' : 'above_break_three';
+  if (d <= 4.5) return 'restricted_area';
+  if (c.x >= 17 && c.x <= 33 && c.y <= 14) return 'paint';
   return 'midrange';
 }
 
@@ -136,7 +143,7 @@ export function shotChart(plays) {
   const plotted = shots.filter((p) => p.coordinate);
   const zones = {};
   for (const s of plotted) {
-    const z = shotZone(s.coordinate);
+    const z = shotZone(s.coordinate, s.points_attempted);
     const k = `${s.team_id}:${z}`;
     zones[k] ||= { team_id: s.team_id, zone: z, made: 0, att: 0 };
     zones[k].att += 1;
@@ -156,7 +163,7 @@ export function shotChart(plays) {
       value: s.points_attempted,
       x: s.coordinate.x,
       y: s.coordinate.y,
-      zone: shotZone(s.coordinate),
+      zone: shotZone(s.coordinate, s.points_attempted),
       period: s.period,
       clock: s.clock,
       text: s.text
