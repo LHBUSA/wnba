@@ -1,0 +1,25 @@
+name = "wnba-news"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "fd3a233edadd0a60916413c1199f71ee"
+workers_dev = true
+
+# Independent WNBA newsroom lane: its own Worker, KV namespace and cron.
+[triggers]
+crons = ["*/10 * * * *"]
+
+[[kv_namespaces]]
+binding = "NEWS_KV"
+id = "c35ed1b81eda4e939c21dfcd831664d9"
+
+# Reads structured WNBA records (rosters, injuries ledger, box scores) for
+# entity linking and PBE Desk stories. If wnba-api is down, external news keeps
+# flowing from the last-good entity dictionary; Desk stories pause.
+[[services]]
+binding = "API"
+service = "wnba-api"
+
+[observability]
+enabled = true
+
+# Secrets: ADMIN_TOKEN (POST /run), SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (after approval)

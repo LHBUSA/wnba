@@ -1,0 +1,23 @@
+name = "wnba-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "fd3a233edadd0a60916413c1199f71ee"
+workers_dev = true
+
+# Public read API for wnba.propbetedge.ai. No cron: user reads only.
+# Provider mediation (ESPN) with edge cache + KV last-good; market data is read
+# from snapshots written by wnba-ingest (user traffic never spends odds credits).
+
+[[kv_namespaces]]
+binding = "WNBA_KV"
+id = "c3249a8e3552438da38c6cad0d54e172"
+
+[vars]
+# Payments stay fail-closed until every billing canary passes (docs/PAYWALL.md).
+WNBA_PURCHASE_ACTIVE = "false"
+
+[observability]
+enabled = true
+
+# Optional secrets (bound only after owner approval of the Supabase target):
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY

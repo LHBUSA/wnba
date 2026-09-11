@@ -1,0 +1,22 @@
+name = "wnba-ingest"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "fd3a233edadd0a60916413c1199f71ee"
+workers_dev = true
+
+# Background lane. Cloudflare Cron is the only scheduler (no GitHub Actions).
+# One trigger per minute; the Worker dispatches tasks by minute / ET hour.
+[triggers]
+crons = ["* * * * *"]
+
+[[kv_namespaces]]
+binding = "WNBA_KV"
+id = "c3249a8e3552438da38c6cad0d54e172"
+
+[observability]
+enabled = true
+
+# Secrets:
+#   ODDS_API_KEY               The Odds API key (odds task: 08/13/18 ET only)
+#   ADMIN_TOKEN                bearer token for POST /run/<task>
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   (after owner approval)
