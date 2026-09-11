@@ -50,7 +50,8 @@
 .drawer-panel a[aria-current='page'] { background: var(--ink-3); color: var(--gold); }
 .drawer-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--s3); }
 
-main { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--s4); padding-block: var(--s5) var(--s7); min-height: 70vh; }
+main { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--s4); padding-block: var(--s5) var(--s7); min-height: 70vh; overflow-wrap: anywhere; }
+/* publisher text can carry unbreakable strings (long URLs); tables keep nowrap */
 @media (max-width: 600px) { main { padding-block: var(--s4) var(--s6); } }
 
 .foot { border-top: 1px solid var(--line); background: var(--ink-1); margin-top: var(--s7); }
