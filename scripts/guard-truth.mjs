@@ -74,6 +74,30 @@ if (fs.existsSync(mediaDir)) {
   for (const d of fs.readdirSync(mediaDir)) if (!approved.has(d)) fail('photo-orphan-derivative', `public/media/players/${d}`);
 }
 
+// 6a. Newsroom story media: every derivative is built from the SAME approved ledger file, credited, on disk,
+// never upscaled past 1.3x, and no newsroom folder exists for a player who is not approved.
+const news = JSON.parse(read(path.join(ROOT, 'data', 'newsroom-media.json')));
+const ledgerById = new Map((manifest.players || []).map((p) => [String(p.espn_athlete_id), p]));
+for (const [pid, e] of Object.entries(news.players || {})) {
+  const lp = ledgerById.get(pid);
+  const where = `newsroom media ${pid} ${e.name}`;
+  if (!lp || lp.status !== 'approved') { fail('news-media-unapproved', where); continue; }
+  if (e.commons_file !== lp.image?.commons_file) fail('news-media-source-mismatch', `${where}: ${e.commons_file} != ${lp.image?.commons_file}`);
+  if (!e.attribution || !e.license || !e.source_page_url) fail('news-media-credit', where);
+  if (!e.slots?.wide?.length || !e.slots?.half?.length) fail('news-media-slots', where);
+  for (const f of Object.values(e.slots || {}).flat()) {
+    if (!/^\/media\/news\/players\/\d+\/[a-z0-9-]+\.(webp|jpg)$/.test(f.src)) fail('news-media-origin', `${where} ${f.src}`);
+    else if (!fs.existsSync(path.join(ROOT, 'public', f.src))) fail('news-media-missing', `${where} ${f.src}`);
+    if (!(f.scale <= 1.3)) fail('news-media-upscaled', `${where} ${f.src} scale ${f.scale}`);
+  }
+}
+const newsDir = path.join(ROOT, 'public', 'media', 'news', 'players');
+if (fs.existsSync(newsDir)) for (const d of fs.readdirSync(newsDir)) if (!news.players?.[d] || ledgerById.get(d)?.status !== 'approved') fail('news-media-orphan', `public/media/news/players/${d}`);
+
+// 6c. The shipped page shell references no third-party host (fonts are self-hosted; data comes from owned Workers).
+const shell = read(path.join(ROOT, 'index.html')).replace(/<meta[^>]+>/g, '').replace(/<link rel="canonical"[^>]*>/g, '');
+if (/(src|href)="https?:\/\//i.test(shell)) fail('third-party-host', 'index.html loads an outside host');
+
 // 6b. Team logos: every manifest entry is served from our origin and present on disk.
 const logos = JSON.parse(read(path.join(ROOT, 'data', 'team-logos.json')));
 for (const t of logos.teams || []) {
