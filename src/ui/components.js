@@ -1,6 +1,7 @@
 import { html, raw } from '../lib/dom.js';
 import { STATE_LABEL, currentState, ageMs, formatAge } from '../data/freshness.js';
 import { fmtTimeET, fmtDateET, initials, relTime } from '../lib/format.js';
+import { teamLogo } from './logo.js';
 
 // ------------------------------------------------------------ game state
 
@@ -30,12 +31,30 @@ export function periodName(p) {
 
 export const badge = (key, label) => html`<span class="badge ${key}">${label}</span>`;
 
-export function teamDot(t) {
-  return html`<span class="team-dot" style="background:${safeColor(t?.color)}"></span>`;
+export function teamDot(t, size = 20) {
+  return t?.team_id || t?.abbr ? teamLogo(t, size) : html`<span class="team-dot" style="background:${safeColor(t?.color)}"></span>`;
 }
 
 export function safeColor(c, fallback = 'var(--ink-4)') {
   return /^#[0-9a-f]{3,8}$/i.test(String(c || '')) ? c : fallback;
+}
+
+const BOOKS = { draftkings: 'DraftKings', fanduel: 'FanDuel', betmgm: 'BetMGM', betrivers: 'BetRivers', fanatics: 'Fanatics', bovada: 'Bovada', williamhill_us: 'Caesars', lowvig: 'LowVig', betonlineag: 'BetOnline', espnbet: 'ESPN BET' };
+const bk = (k) => BOOKS[k] || k || '';
+const am = (v) => (v === null || v === undefined ? '—' : v > 0 ? `+${v}` : String(v));
+const line = (v) => (v === null || v === undefined ? '—' : v > 0 ? `+${v}` : String(v));
+
+/** Three-cell market strip (spread / total / moneyline) from a stored snapshot. */
+export function marketStrip(m, g) {
+  if (!m) return '';
+  const h = g.home?.abbr || 'HOME';
+  const a = g.away?.abbr || 'AWAY';
+  return html`<div class="mkt-strip" aria-label="Market snapshot">
+    <div class="mk"><small>Spread</small><b>${h} ${line(m.spread.home_line)}</b><span>${m.spread.home_best ? `${am(m.spread.home_best.price)} ${bk(m.spread.home_best.book)}` : '—'}</span></div>
+    <div class="mk"><small>Total</small><b>${m.total.line ?? '—'}</b><span>${m.total.over_best ? `O ${am(m.total.over_best.price)} ${bk(m.total.over_best.book)}` : '—'}</span></div>
+    <div class="mk"><small>Moneyline</small><b>${a} ${am(m.moneyline.away_best?.price)}</b><span>${h} ${am(m.moneyline.home_best?.price)}</span></div>
+  </div>
+  <div class="mkt-note">Best prices across <b>${m.books} books</b> · The Odds API · ${m.semantics === 'LAST_PRE_TIP_SNAPSHOT' ? 'last pre-tip capture' : 'captured'} ${relTime(m.captured_at)}${m.stale ? ' · STALE' : ''}${m.props?.available ? ` · props: ${m.props.players} players` : ''}</div>`;
 }
 
 export function gameCard(g, { showDate = false, links = true } = {}) {
@@ -43,23 +62,20 @@ export function gameCard(g, { showDate = false, links = true } = {}) {
   const post = g.status?.state === 'post';
   const row = (t, other) => {
     const lost = post && t?.score !== null && other?.score !== null && t.score < other.score;
-    return html`<div class="trow ${lost ? 'lost' : ''}">
-      ${teamDot(t)}
-      <span class="tname"><b>${t?.short_name || t?.abbr || 'TBD'}</b><small>${t?.abbr || ''}${t?.record ? ` · ${t.record}` : ''}</small></span>
-      <span class="tscore">${g.status?.state === 'pre' ? '' : t?.score ?? ''}</span>
+    return html`<div class="gc2-row ${lost ? 'lost' : ''}">
+      ${teamLogo(t, 40)}
+      <span class="tn"><b>${t?.short_name || t?.abbr || 'TBD'}</b><small>${t?.location ? `${t.location} · ` : ''}${t?.record || t?.abbr || ''}</small></span>
+      <span class="sc">${g.status?.state === 'pre' ? '' : t?.score ?? ''}</span>
     </div>`;
   };
-  return html`<article class="card gcard" style="--home-c:${safeColor(g.home?.color, 'var(--home)')};--away-c:${safeColor(g.away?.color, 'var(--away)')}">
-    <div class="gcard-top">
-      ${badge(st.key, st.label)}
-      <span class="gcard-time">${showDate || post ? fmtDateET(g.start_utc) : ''}</span>
-    </div>
+  return html`<article class="gc2" style="--home-c:${safeColor(g.home?.color, '#555')};--away-c:${safeColor(g.away?.color, '#555')}">
+    <div class="gc2-top">${badge(st.key, st.label)}<span class="gc2-when">${showDate || post ? fmtDateET(g.start_utc) : ''}</span></div>
     ${row(g.away, g.home)}
     ${row(g.home, g.away)}
-    ${g.odds_espn?.details && g.status?.state === 'pre' ? html`<div class="gcard-line">${g.odds_espn.provider} line via ESPN: ${g.odds_espn.details}${g.odds_espn.over_under ? ` · O/U ${g.odds_espn.over_under}` : ''}</div>` : ''}
-    ${g.venue?.name ? html`<div class="gcard-line">${g.venue.name}${g.venue.city ? `, ${g.venue.city}` : ''}${g.broadcasts?.length ? ` · ${g.broadcasts.slice(0, 2).join(' / ')}` : ''}</div>` : ''}
-    ${links ? html`<div class="gcard-foot">
-      <a class="primary" href="/cast/${g.game_id}">${g.status?.state === 'in' ? 'Open WNBACast' : post ? 'Replay in WNBACast' : 'WNBACast preview'}</a>
+    ${g.market ? marketStrip(g.market, g) : g.status?.state === 'pre' ? html`<div class="mkt-note">No market snapshot for this game yet · captured 8:00 / 1:00 / 6:00 ET</div>` : ''}
+    ${g.venue?.name ? html`<div class="mkt-note">${g.venue.name}${g.venue.city ? `, ${g.venue.city}` : ''}${g.broadcasts?.length ? ` · ${g.broadcasts.slice(0, 2).join(' / ')}` : ''}</div>` : ''}
+    ${links ? html`<div class="gc2-foot">
+      <a class="primary" href="/cast/${g.game_id}">${g.status?.state === 'in' ? 'Live in WNBACast' : post ? 'Replay' : 'WNBACast'}</a>
       <a href="/matchups/${g.game_id}">Matchup</a>
     </div>` : ''}
   </article>`;
@@ -140,7 +156,7 @@ export function entityChips(entities = []) {
     .slice(0, 6)
     .map((e) => {
       const href = e.type === 'player' ? `/players/${e.id}` : e.type === 'team' ? `/teams/${e.id}` : `/cast/${e.id}`;
-      return html`<a class="chip" href="${href}">${e.type === 'game' ? '▶ ' : ''}${e.name || e.id}</a>`;
+      return html`<a class="chip" href="${href}">${e.type === 'team' ? teamLogo({ team_id: e.id, name: e.name }, 16) : ''}${e.type === 'game' ? '▶ ' : ''}${e.name || e.id}</a>`;
     });
 }
 

@@ -1,117 +1,135 @@
-import { html, render } from '../lib/dom.js';
+import { html, render, raw } from '../lib/dom.js';
 import { api } from '../data/api.js';
-import { gameCard, sourceLine, empty, errorState, skeleton, avatar, statusBadge, entityChips, badge, startFreshTicker } from '../ui/components.js';
-import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, plural, fmtTimeET } from '../lib/format.js';
+import { gameCard, sourceLine, empty, errorState, skeleton, avatar, startFreshTicker } from '../ui/components.js';
+import { teamLogo } from '../ui/logo.js';
+import { articleCard, articleMini } from '../ui/articles.js';
+import { HERO_ART } from '../ui/art.js';
+import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, plural, fmtTimeET, american, bookName } from '../lib/format.js';
 import { createPoller } from '../lib/poller.js';
+import logoManifest from '../../data/team-logos.json';
 
 export const title = () => null;
-export const description = () => 'Today in the WNBA: the current slate with live/final/scheduled state, sourced injuries, market snapshot age, WNBACast and the WNBA-only newsroom.';
+export const description = () => 'The WNBA intelligence layer for bettors: live scores and WNBACast, stored sportsbook lines, sourced injuries and an in-house WNBA newsroom with a bettor angle on every story.';
 
 export async function mount(root, ctx) {
-  render(root, html`<div class="hero">${skeleton(180)}</div><div class="section">${skeleton(140, 2)}</div>`);
+  render(root, html`<div class="hero2" style="min-height:320px">${skeleton(300)}</div><div class="section">${skeleton(160, 2)}</div>`);
   let poller = null;
-  let stopTicker = startFreshTicker(root);
+  const stopTicker = startFreshTicker(root);
 
   const draw = async () => {
-    const [today, news, desk, injuries, standings] = await Promise.all([api.today(), api.news({ limit: 6, lane: 'external' }), api.news({ limit: 3, lane: 'pbe' }), api.injuries(), api.standings()]);
+    const [today, arts, injuries, standings] = await Promise.all([api.today(), api.articles({ limit: 12 }), api.injuries(), api.standings()]);
     if (!ctx.isCurrent()) return;
     if (!today.ok) { render(root, errorState(today, 'The WNBA slate')); return; }
     const d = today.data;
     const slate = d.slate;
     const live = slate.summary.live > 0;
     poller?.setInterval(live ? 20000 : 120000);
-
-    const heroTitle = slate.kind === 'TODAY'
-      ? live ? html`<em>Live</em> WNBA tonight` : html`Today’s <em>WNBA</em> slate`
-      : slate.kind === 'NEXT' ? html`No games today. <em>Next slate</em> ${fmtCompactDate(slate.date, { weekday: 'short', month: 'short', day: 'numeric' })}` : html`No WNBA games <em>scheduled</em>`;
-    const slateLabel = slate.kind === 'TODAY' ? `Today · ${fmtCompactDate(d.today_et)}` : slate.kind === 'NEXT' ? `Next slate · ${fmtCompactDate(slate.date)} · not today` : 'No upcoming games published';
-
+    const games = slate.games;
+    const priced = games.filter((g) => g.market);
+    const stories = arts.ok ? arts.data.items : [];
+    const leadStory = stories.find((c) => c.kind === 'preview' && c.has_market) || stories.find((c) => c.kind === 'injury') || stories[0];
+    const moreStories = stories.filter((c) => c.id !== leadStory?.id).slice(0, 5);
     const changes = (injuries.ok ? injuries.data.changes : []) || [];
     const lastResults = d.last_results?.games || [];
-    const deskItems = desk.ok ? desk.data.items.slice(0, 3) : [];
-    const extItems = news.ok ? news.data.items.filter((i) => i.lane === 'external').slice(0, 5) : [];
     const seeds = standings.ok ? standings.data.groups.map((g) => ({ name: g.name, top: g.entries.slice(0, 4) })) : [];
-    const firstUpcoming = slate.games[0];
-    const lastFinal = lastResults[0];
+    const slateWhen = slate.kind === 'TODAY' ? 'Tonight' : slate.kind === 'NEXT' ? fmtCompactDate(slate.date, { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
+
+    const heroTitle = slate.kind === 'TODAY'
+      ? live ? html`<em>Live</em> WNBA, priced and in context` : html`Tonight’s <em>WNBA</em> slate, priced and in context`
+      : slate.kind === 'NEXT' ? html`No games today. <em>${slate.games.length} games</em> ${fmtCompactDate(slate.date, { weekday: 'long' })}.` : html`The <em>WNBA</em> intelligence desk`;
+    const tickerItems = [
+      ...games.map((g) => `${g.away.abbr} @ ${g.home.abbr} ${g.status.state === 'pre' ? fmtTimeET(g.start_utc) : `${g.away.score}-${g.home.score}`}${g.market?.spread?.home_line !== null && g.market ? ` · ${g.home.abbr} ${g.market.spread.home_line > 0 ? '+' : ''}${g.market.spread.home_line} · O/U ${g.market.total.line}` : ''}`),
+      ...stories.slice(0, 4).map((c) => c.headline)
+    ];
 
     render(root, html`
-      <section class="hero">
-        <div class="hero-grid">
+      <div class="ticker" aria-label="Headlines">
+        <span class="${live ? 'tk-live' : 'tk-next'}">${live ? 'Live' : slate.kind === 'TODAY' ? 'Today' : 'Next slate'}</span>
+        <span class="tk-scroll"><span class="tk-scroll-in">${[...tickerItems, ...tickerItems].map((t) => html`<span>${t}</span>`)}</span></span>
+        <span>${d.market?.captured_at ? `Market ${relTime(d.market.captured_at)}` : 'No market yet'}</span>
+      </div>
+
+      <section class="hero2">
+        ${raw(HERO_ART)}
+        <div class="hero2-in">
           <div>
-            <span class="eyebrow">${d.season?.label || 'WNBA'}${d.phase && !String(d.season?.label || '').includes(d.phase) ? ` · ${d.phase}` : ''}</span>
-            <h1 style="margin-top:12px">${heroTitle}</h1>
-            <p class="lead">${slate.kind === 'TODAY'
-              ? `${plural(slate.summary.total, 'game')} on the board — ${slate.summary.live} live, ${slate.summary.final} final, ${slate.summary.scheduled} scheduled.`
-              : slate.kind === 'NEXT'
-                ? `The WNBA has no games on ${fmtCompactDate(d.today_et, { weekday: 'long', month: 'long', day: 'numeric' })}. The next published slate is ${fmtCompactDate(slate.date)} with ${plural(slate.games.length, 'game')}.`
-                : 'No upcoming WNBA games are published by the source right now.'}
-              ${d.next_phase ? ` ${d.next_phase.name} begins ${fmtDateET(d.next_phase.starts, { month: 'long', day: 'numeric' })}.` : ''}</p>
-            <div style="margin-top:14px">${sourceLine(today.meta, { label: slateLabel })}</div>
+            <span class="kicker">${d.season?.label || 'WNBA'}${d.next_phase ? ` · ${d.next_phase.name} ${fmtDateET(d.next_phase.starts, { month: 'short', day: 'numeric' })}` : ''}</span>
+            <h1 style="margin-top:14px">${heroTitle}</h1>
+            <p class="lead">The WNBA intelligence layer for bettors: live scores and WNBACast, stored sportsbook lines with their capture time, sourced availability, and an in-house newsroom that tells you why each story matters for the market.</p>
+            <div class="pill-row" style="margin-top:16px">
+              <a class="pill on" href="/cast">Open WNBACast</a><a class="pill" href="/props">Best line board</a><a class="pill" href="/news">Newsroom</a><a class="pill" href="/injuries">Availability</a>
+            </div>
+            <div style="margin-top:16px">${sourceLine(today.meta, { label: slate.kind === 'TODAY' ? 'Today · ET' : `Next slate ${fmtCompactDate(slate.date, { month: 'short', day: 'numeric' })} · not today` })}</div>
           </div>
-          <div class="hero-stats">
-            <div class="tile"><small>${slate.kind === 'TODAY' ? 'Games today' : 'Next slate'}</small><b>${slate.games.length}</b><span>${slate.kind === 'TODAY' ? 'ET calendar' : fmtCompactDate(slate.date, { month: 'short', day: 'numeric' })}</span></div>
-            <div class="tile"><small>Players out</small><b>${d.availability?.out ?? '—'}</b><span>${d.availability?.count !== null ? `${d.availability.count} on injury feed` : 'feed unavailable'}</span></div>
-            <div class="tile"><small>Market</small><b>${d.market?.events ?? 0}</b><span>${d.market?.captured_at ? `snapshot ${relTime(d.market.captured_at)}` : 'no snapshot yet'}</span></div>
-          </div>
+          ${leadStory ? html`<div class="hero-feature">
+            <span class="eyebrow">Lead story</span>
+            <a href="/news/${leadStory.slug}" style="display:block;margin-top:10px">
+              <div style="display:flex;gap:8px;align-items:center">${(leadStory.entities || []).filter((e) => e && e.type === 'team').slice(0, 2).map((t) => teamLogo({ team_id: t.id, name: t.name }, 30))}</div>
+              <b style="display:block;font:600 22px/1.2 var(--f-editorial);margin-top:10px">${leadStory.headline}</b>
+              <span class="note" style="display:block;margin-top:8px">${leadStory.deck}</span>
+            </a>
+            <div class="tiles" style="margin-top:14px">
+              <div class="tile"><small>${slateWhen}</small><b>${games.length}</b><span>games · ${priced.length} priced</span></div>
+              <div class="tile"><small>Players out</small><b>${d.availability?.out ?? '—'}</b><span>injury feed</span></div>
+            </div>
+          </div>` : ''}
         </div>
       </section>
 
+      <nav class="card" style="margin-top:14px;padding:10px 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none" aria-label="Teams">
+        ${logoManifest.teams.map((t) => html`<a href="/teams/${t.team_id}" title="${t.name}" style="flex:none;padding:6px;border-radius:10px">${teamLogo({ team_id: t.team_id, name: t.name }, 40)}</a>`)}
+      </nav>
+
       <section class="section">
-        <div class="sec-head"><h2 class="sec-title">${slateLabel}</h2><a class="sec-link" href="/cast">Open WNBACast →</a></div>
-        ${slate.games.length ? html`<div class="slate-grid">${slate.games.map((g) => gameCard(g, { showDate: slate.kind !== 'TODAY' }))}</div>` : empty('Quiet slate', 'No WNBA games are published for the coming days. Replays of completed games stay available in WNBACast.')}
+        <div class="sec-head"><h2 class="sec-title bc">${slate.kind === 'TODAY' ? `Today · ${fmtCompactDate(d.today_et)}` : slate.kind === 'NEXT' ? `Next slate · ${fmtCompactDate(slate.date)}` : 'Upcoming'}</h2><a class="sec-link" href="/cast">All games in WNBACast →</a></div>
+        ${games.length ? html`<div class="slate-grid">${games.map((g) => gameCard(g, { showDate: slate.kind !== 'TODAY' }))}</div>` : empty('Quiet slate', 'No WNBA games are published for the coming days. Replays of completed games stay available in WNBACast.')}
       </section>
+
+      ${priced.length ? html`<section class="section">
+        <div class="sec-head"><h2 class="sec-title bc">Market board</h2><span class="note">The Odds API · best price across books · captured ${fmtDateTimeET(d.market.captured_at)} · never refreshed by page views</span></div>
+        <div class="card"><div class="tbl-wrap"><table class="tbl">
+          <thead><tr><th>Game</th><th>Spread (home)</th><th>Total</th><th>Away ML</th><th>Home ML</th><th>Books</th><th>Props</th></tr></thead>
+          <tbody>${priced.map((g) => html`<tr>
+            <td><a class="pname" href="/matchups/${g.game_id}">${teamLogo(g.away, 22)}${g.away.abbr} @ ${teamLogo(g.home, 22)}${g.home.abbr}<span class="note">${fmtTimeET(g.start_utc)}</span></a></td>
+            <td>${g.home.abbr} ${g.market.spread.home_line > 0 ? '+' : ''}${g.market.spread.home_line ?? '—'} <span class="note">${american(g.market.spread.home_best?.price)} ${bookName(g.market.spread.home_best?.book)}</span></td>
+            <td>${g.market.total.line ?? '—'} <span class="note">O ${american(g.market.total.over_best?.price)}</span></td>
+            <td>${american(g.market.moneyline.away_best?.price)} <span class="note">${bookName(g.market.moneyline.away_best?.book)}</span></td>
+            <td>${american(g.market.moneyline.home_best?.price)} <span class="note">${bookName(g.market.moneyline.home_best?.book)}</span></td>
+            <td>${g.market.books}</td>
+            <td>${g.market.props?.available ? `${g.market.props.players} players` : html`<span class="note">36h window</span>`}</td>
+          </tr>`)}</tbody></table></div>
+          <div class="card-body"><p class="note">Sportsbook prices and the market’s no-vig consensus are shown separately on the <a class="gold" href="/props">best line board</a>. No PropBetEdge model price is published for the WNBA.</p></div></div>
+      </section>` : ''}
 
       <div class="section split">
         <div>
           <section>
-            <div class="sec-head"><h2 class="sec-title">Research actions</h2></div>
-            <div class="actions">
-              ${firstUpcoming ? html`<a class="action" href="/matchups/${firstUpcoming.game_id}"><span><b>Matchup: ${firstUpcoming.away?.abbr} @ ${firstUpcoming.home?.abbr}</b><small>Pace, form, rest, observed rotations, availability — ${fmtDateTimeET(firstUpcoming.start_utc)}</small></span><span class="arrow">→</span></a>` : ''}
-              <a class="action" href="/props"><span><b>Best line board</b><small>${d.market?.captured_at ? `Sportsbook prices and no-vig consensus · captured ${fmtDateTimeET(d.market.captured_at)}` : 'Market snapshots are captured at 8:00, 1:00 and 6:00 ET'}</small></span><span class="arrow">→</span></a>
-              ${lastFinal ? html`<a class="action" href="/cast/${lastFinal.game_id}"><span><b>Replay: ${lastFinal.away?.abbr} ${lastFinal.away?.score} – ${lastFinal.home?.abbr} ${lastFinal.home?.score}</b><small>Every published play, shot and run from ${fmtDateET(lastFinal.start_utc, { month: 'short', day: 'numeric' })}</small></span><span class="arrow">→</span></a>` : ''}
-              <a class="action" href="/injuries"><span><b>Availability desk</b><small>${d.availability?.count ?? '—'} players on the injury feed · sourced statuses, no invented return dates</small></span><span class="arrow">→</span></a>
-            </div>
+            <div class="sec-head"><h2 class="sec-title bc">PBE Newsroom</h2><a class="sec-link" href="/news">All stories →</a></div>
+            ${moreStories.length ? html`<div class="ngrid">${moreStories.map((c) => articleCard(c))}</div>` : html`<p class="note">${arts.ok ? 'No articles yet — the newsroom publishes only when a record supports a story.' : 'The newsroom lane is unavailable right now.'}</p>`}
           </section>
-
           ${lastResults.length ? html`<section class="section">
-            <div class="sec-head"><h2 class="sec-title">Last results · ${fmtDateET(lastResults[0].start_utc, { weekday: 'short', month: 'short', day: 'numeric' })}</h2><a class="sec-link" href="/standings">Standings →</a></div>
+            <div class="sec-head"><h2 class="sec-title bc">Last results · ${fmtDateET(lastResults[0].start_utc, { weekday: 'short', month: 'short', day: 'numeric' })}</h2><a class="sec-link" href="/standings">Standings →</a></div>
             <div class="slate-grid">${lastResults.map((g) => gameCard(g))}</div>
           </section>` : ''}
-
-          <section class="section">
-            <div class="sec-head"><h2 class="sec-title">WNBA newsroom</h2><a class="sec-link" href="/news">All news →</a></div>
-            <div class="card card-pad">
-              ${deskItems.map((i) => html`<article class="nitem"><div class="nmeta">${badge('pbe', 'PBE Desk')}<span>${relTime(i.published_at)}</span></div><h3><a href="/news/story/${i.id}">${i.headline}</a></h3><div class="nents">${entityChips(i.entities)}</div></article>`)}
-              ${extItems.map((i) => html`<article class="nitem"><div class="nmeta">${badge('ext', i.source.name)}<span>${relTime(i.published_at)}</span><span>${i.kind}</span></div><h3><a href="${i.url}" rel="noopener" target="_blank">${i.headline}</a></h3><div class="nents">${entityChips(i.entities)}</div></article>`)}
-              ${!news.ok ? html`<p class="note">The newsroom lane is unavailable right now. Scores and research are unaffected.</p>` : ''}
-            </div>
-          </section>
         </div>
-
-        <aside>
-          <section>
-            <div class="sec-head"><h2 class="sec-title">What changed</h2></div>
-            <div class="card card-pad">
+        <aside class="grid" style="gap:16px;align-content:start">
+          <section class="card">
+            <div class="card-head"><span class="card-title">What changed</span><a class="sec-link" href="/injuries">Desk →</a></div>
+            <div class="card-body">
               ${changes.length
-                ? changes.slice(0, 8).map((c) => html`<div class="change-row">${avatar({ name: c.name })}<div><a href="${c.athlete_id ? `/players/${c.athlete_id}` : '/injuries'}"><b>${c.name}</b></a><div class="note">${c.status_before || 'Not listed'} <span class="arrow">→</span> ${c.status_after || 'Off feed'}</div></div><span class="note">${relTime(c.captured_at)}</span></div>`)
-                : html`<p class="note">No availability changes recorded yet. A change is reported only when two consecutive captures of the source disagree. ${injuries.ok ? injuries.data.change_ledger : 'The injury feed is unavailable right now.'}</p>`}
+                ? changes.slice(0, 8).map((c) => html`<div class="change-row">${teamLogo({ team_id: c.team_id }, 28)}<div><a href="${c.athlete_id ? `/players/${c.athlete_id}` : '/injuries'}"><b>${c.name}</b></a><div class="note">${c.status_before || 'Not listed'} → ${c.status_after || 'Off feed'}</div></div><span class="note">${relTime(c.captured_at)}</span></div>`)
+                : html`<p class="note">No availability changes recorded yet. A change is reported only when two consecutive captures of the source disagree. ${injuries.ok ? injuries.data.change_ledger : ''}</p>`}
             </div>
           </section>
-
-          ${seeds.length ? html`<section class="section">
-            <div class="sec-head"><h2 class="sec-title">Top seeds</h2><a class="sec-link" href="/standings">Full table →</a></div>
-            <div class="card">
-              ${seeds.map((g) => html`<div class="card-head"><span class="card-title">${g.name}</span></div>
-                <div class="tbl-wrap"><table class="tbl"><tbody>${g.top.map((t) => html`<tr><td class="l"><a class="pname" href="/teams/${t.team_id}">${t.seed ?? '—'} · ${t.name}${t.clincher ? html`<span class="clinch">${t.clincher}</span>` : ''}</a></td><td>${t.wins}-${t.losses}</td><td>${t.games_behind}</td></tr>`)}</tbody></table></div>`)}
-            </div>
+          ${seeds.length ? html`<section class="card">
+            <div class="card-head"><span class="card-title">Top seeds</span><a class="sec-link" href="/standings">Table →</a></div>
+            ${seeds.map((g) => html`<div class="card-body" style="padding-bottom:4px"><span class="note">${g.name}</span>
+              ${g.top.map((t) => html`<a class="change-row" href="/teams/${t.team_id}" style="grid-template-columns:auto minmax(0,1fr) auto">${teamLogo(t, 26)}<span><b>${t.seed ?? '—'} · ${t.short_name || t.name}</b>${t.clincher ? html`<span class="clinch">${t.clincher}</span>` : ''}</span><span class="mono">${t.wins}-${t.losses}</span></a>`)}</div>`)}
           </section>` : ''}
-
-          <section class="section">
-            <div class="card card-pad" style="border-color:var(--gold-line)">
-              <span class="eyebrow">Basketball network</span>
-              <p style="margin-top:10px;color:var(--paper-2)">The same research desk covers the NBA season — WNBA methods, NBA data.</p>
-              <a class="sec-link" style="display:inline-block;margin-top:10px" href="https://nba.propbetedge.ai/">PropBetEdge NBA →</a>
-            </div>
+          <section class="card card-pad" style="border-color:var(--gold-line)">
+            <span class="eyebrow">Basketball network</span>
+            <p style="margin-top:10px;color:var(--paper-2)">The same research desk covers the NBA season.</p>
+            <a class="sec-link" style="display:inline-block;margin-top:10px" href="https://nba.propbetedge.ai/">PropBetEdge NBA →</a>
           </section>
         </aside>
       </div>

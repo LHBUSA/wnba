@@ -106,7 +106,7 @@ export function mountShell(root) {
   return {
     outlet: root.querySelector('main'),
     setActive(id) {
-      const group = { player: 'players', team: 'teams', story: 'news' }[id] || id;
+      const group = { player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news' }[id] || id;
       root.querySelectorAll('[data-nav]').forEach((a) => {
         if (a.dataset.nav === group) a.setAttribute('aria-current', 'page');
         else a.removeAttribute('aria-current');

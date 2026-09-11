@@ -78,6 +78,8 @@ export const api = {
   sources: () => getJson(`${API_BASE}/v1/sources`, { fresh: true, timeoutMs: 30000 }),
   health: () => getJson(`${API_BASE}/health`, { fresh: true }),
   news: (p) => getJson(`${NEWS_BASE}/v1/news${q(p)}`),
+  articles: (p) => getJson(`${NEWS_BASE}/v1/articles${q(p)}`),
+  article: (slug) => getJson(`${NEWS_BASE}/v1/articles/${encodeURIComponent(slug)}`),
   story: (id) => getJson(`${NEWS_BASE}/v1/news/story/${encodeURIComponent(id)}`),
   newsSources: () => getJson(`${NEWS_BASE}/v1/news/sources`)
 };

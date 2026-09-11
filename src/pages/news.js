@@ -1,68 +1,67 @@
-import { html, render, raw } from '../lib/dom.js';
+// WNBA Newsroom hub — PropBetEdge's own articles first; publisher reports are
+// shown only as an attributed "source wire" that feeds the articles.
+import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
-import { pageHead, errorState, skeleton, badge, entityChips, empty } from '../ui/components.js';
+import { pageHead, errorState, skeleton, badge, entityChips } from '../ui/components.js';
+import { articleCard, articleList, KIND_LABEL, KIND_ORDER } from '../ui/articles.js';
 import { relTime, fmtDateTimeET } from '../lib/format.js';
 
-export const title = () => 'WNBA News';
-export const description = () => 'The PropBetEdge WNBA newsroom: WNBA-only stories from official and independent publishers, deduplicated and linked to players, teams and games, plus the PBE Desk.';
-
-const TYPES = [['', 'All'], ['injury', 'Injuries'], ['transaction', 'Transactions'], ['trade', 'Trades'], ['result', 'Results'], ['playoffs', 'Playoffs'], ['performance', 'Performances'], ['league', 'League'], ['preview', 'Previews']];
-const TYPE_LABEL = { injury: 'Injury', transaction: 'Transaction', trade: 'Trade', coaching: 'Coaching', lineup: 'Lineup', playoffs: 'Playoffs', performance: 'Performance', preview: 'Preview', recap: 'Recap', league: 'League', news: 'News', result: 'Result', availability_change: 'Availability', clinch: 'Standings' };
+export const title = (p) => (p.kind ? `${KIND_LABEL[p.kind] || 'News'} · WNBA News` : 'WNBA News');
+export const description = () => 'The PropBetEdge WNBA newsroom: in-house, source-grounded WNBA articles on injuries, transactions, performances, previews and market trends — each with a bettor angle and cited evidence.';
 
 export async function mount(root, ctx) {
-  render(root, html`${pageHead({ eyebrow: 'Newsroom', title: 'WNBA News' })}${skeleton(400)}`);
-  const state = { type: ctx.query.type || '' };
-  const [res, sources] = await Promise.all([api.news({ limit: 100 }), api.newsSources()]);
+  const kind = ctx.params.kind || null;
+  render(root, html`${pageHead({ eyebrow: 'PBE Newsroom', title: 'WNBA News' })}${skeleton(320)}${skeleton(200, 2)}`);
+  const [arts, wire] = await Promise.all([api.articles({ limit: 200, kind: kind || undefined }), api.news({ limit: 20, lane: 'external' })]);
   if (!ctx.isCurrent()) return;
-  if (!res.ok) return render(root, html`${pageHead({ eyebrow: 'Newsroom', title: 'WNBA News' })}${errorState(res, 'The newsroom')}`);
-  const all = res.data.items;
+  if (!arts.ok) return render(root, html`${pageHead({ eyebrow: 'PBE Newsroom', title: 'WNBA News' })}${errorState(arts, 'The newsroom')}`);
+  const items = arts.data.items;
+  const byKind = (k) => items.filter((c) => c.kind === k || (k === 'performance' && c.kind === 'result'));
+  // Lead: newest injury or preview with a market, else newest article.
+  const lead = !kind ? items.find((c) => c.kind === 'injury') || items[0] : items[0];
+  const second = !kind ? items.filter((c) => c.id !== lead?.id).slice(0, 3) : [];
 
   render(root, html`
-    ${pageHead({ eyebrow: 'Newsroom', title: 'WNBA News', sub: 'WNBA-only. Official and independent publishers are ingested every 10 minutes, filtered for genuine WNBA relevance, deduplicated across publishers and linked to players, teams and games. The PBE Desk writes only from cited records — a quiet day stays quiet.' })}
-    <div class="pill-row" style="margin-bottom:16px">${TYPES.map(([k, l]) => html`<button class="pill" type="button" data-type="${k}" aria-pressed="${state.type === k}">${l}</button>`)}</div>
-    <div class="split">
-      <section class="card card-pad" data-feed></section>
+    ${pageHead({ eyebrow: 'PBE Newsroom', title: kind ? KIND_LABEL[kind] || 'WNBA News' : 'WNBA News', sub: 'Written in-house by the PropBetEdge newsroom from cited records: ESPN’s injury feed, transactions, box scores and standings, stored sportsbook snapshots, and attributed publisher reports. Every article carries a bettor angle, its counter-case and its evidence.' })}
+    <div class="pill-row" style="margin-bottom:18px">
+      <a class="pill ${!kind ? 'on' : ''}" href="/news">All</a>
+      ${KIND_ORDER.filter((k) => k !== 'result').map((k) => html`<a class="pill ${kind === k ? 'on' : ''}" href="/news/c/${k}">${KIND_LABEL[k]}</a>`)}
+    </div>
+
+    ${!items.length ? html`<div class="empty"><h3>Nothing in this lane yet</h3><p>The newsroom publishes only when a record supports a story. Quiet days stay quiet.</p></div>` : ''}
+
+    ${!kind && lead ? html`<section class="news-feature">
+      ${articleCard(lead, { lead: true })}
+      <div class="grid" style="gap:12px">${second.map((c) => articleCard(c))}</div>
+    </section>` : ''}
+
+    <div class="split section">
+      <div>
+        ${kind
+          ? articleList(items)
+          : KIND_ORDER.filter((k) => byKind(k).length && k !== 'result').map((k) => html`<section style="margin-bottom:28px">
+              <div class="sec-head"><h2 class="sec-title bc">${KIND_LABEL[k]}</h2><a class="sec-link" href="/news/c/${k}">All ${KIND_LABEL[k].toLowerCase()} →</a></div>
+              ${articleList(byKind(k).filter((c) => c.id !== lead?.id && !second.some((s) => s.id === c.id)).slice(0, 4))}
+            </section>`)}
+      </div>
       <aside class="grid" style="gap:16px;align-content:start">
         <section class="card">
-          <div class="card-head"><span class="card-title">Sources</span><span class="note">every 10 min</span></div>
+          <div class="card-head"><span class="card-title">Source wire</span><span class="note">external · attributed</span></div>
           <div class="card-body">
-            ${(sources.ok ? sources.data.sources : []).map((s) => html`<div class="change-row" style="grid-template-columns:minmax(0,1fr) auto">
-              <div><b>${s.name}</b><div class="note">${s.kind.replace('_', ' ')}${s.wnba_scope === 'mixed_filter_required' ? ' · mixed feed, WNBA-filtered' : ''}</div></div>
-              ${s.last_run ? badge(s.last_run.status === 'PASS' ? 'final' : 'stale', `${s.last_run.status}${s.last_run.accepted !== undefined ? ` · ${s.last_run.accepted}` : ''}`) : s.kind === 'owned' ? badge('pbe', 'Owned') : ''}
-            </div>`)}
-            <p class="note" style="margin-top:10px">Last ingest ${relTime(res.meta.last_ingest_at)}. External stories open on the publisher’s site; we keep only the headline, link and the publisher’s own summary.</p>
+            <p class="note" style="margin-bottom:10px">Publisher reports the newsroom tracks. We keep the headline and the publisher’s own summary only; the reporting belongs to them.</p>
+            ${wire.ok ? wire.data.items.slice(0, 12).map((i) => html`<article class="nitem" style="padding:10px 0">
+              <div class="nmeta">${badge('ext', i.source.name)}<span>${relTime(i.published_at)}</span></div>
+              <h3 style="font-size:15px"><a href="${i.url}" rel="noopener" target="_blank">${i.headline} <span class="note" aria-hidden="true">↗</span></a></h3>
+              <div class="nents">${entityChips(i.entities)}</div>
+            </article>`) : html`<p class="note">Source wire unavailable.</p>`}
           </div>
         </section>
         <section class="card card-pad">
-          <span class="eyebrow">How the PBE Desk writes</span>
-          <p class="note" style="margin-top:10px">Desk stories are generated from structured records — box scores, the availability change ledger, the transactions log, standings marks — and every story lists its evidence. No quotes are invented, no outcomes predicted, no return dates estimated.</p>
+          <span class="eyebrow">How we write</span>
+          <p class="note" style="margin-top:10px">Every article is generated by PropBetEdge from structured records and passes a publication gate before it goes live: each number must appear in a cited record, the only quotes allowed are a publisher’s own headline with the publisher named, no picks or model claims, and every bettor angle must state what argues against it and what is still unknown. Articles that fail are held, not published.</p>
+          <p class="note" style="margin-top:10px">Last newsroom pass ${relTime(arts.meta.last_run_at)} · ${arts.data.total} articles live.</p>
         </section>
       </aside>
     </div>
   `);
-
-  const $feed = root.querySelector('[data-feed]');
-  const draw = () => {
-    const list = all.filter((i) => !state.type || i.kind === state.type || (state.type === 'injury' && i.kind === 'availability_change') || (state.type === 'playoffs' && i.kind === 'clinch'));
-    render($feed, list.length ? html`${list.map((i) => i.lane === 'pbe' ? html`
-      <article class="nitem">
-        <div class="nmeta">${badge('pbe', 'PBE Desk')}<span>${TYPE_LABEL[i.kind] || i.kind}</span><span>${fmtDateTimeET(i.published_at)}</span></div>
-        <h3><a href="/news/story/${i.id}">${i.headline}</a></h3>
-        <p class="nsum">${String(i.body).split('\n\n')[0]}</p>
-        <div class="nents">${entityChips(i.entities)}</div>
-      </article>` : html`
-      <article class="nitem">
-        <div class="nmeta">${badge('ext', i.source.name)}<span>${TYPE_LABEL[i.kind] || i.kind}</span><span title="Published ${fmtDateTimeET(i.published_at)} · captured ${fmtDateTimeET(i.captured_at)}">${relTime(i.published_at)}</span>${i.byline ? html`<span>${i.byline}</span>` : ''}</div>
-        <h3><a href="${i.url}" rel="noopener" target="_blank">${i.headline} <span class="note" aria-hidden="true">↗</span></a></h3>
-        ${i.summary ? html`<p class="nsum">${i.summary}</p>` : ''}
-        <div class="nents">${entityChips(i.entities)}</div>
-        ${i.also_covered_by?.length ? html`<p class="also">Also covered by ${i.also_covered_by.map((a, n) => html`${n ? ', ' : ''}<a href="${a.url}" rel="noopener" target="_blank">${a.source}</a>`)}</p>` : ''}
-      </article>`)}` : empty('Nothing in this lane', 'No WNBA stories of this type in the last three weeks.'));
-  };
-  root.querySelectorAll('[data-type]').forEach((b) => b.addEventListener('click', () => {
-    state.type = b.dataset.type;
-    root.querySelectorAll('[data-type]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    draw();
-  }));
-  draw();
 }

@@ -25,6 +25,7 @@ import { deriveGame, shotChart, possessions } from '../../shared/derive.js';
 import { etCompact, addDays, isCompactDate, gameEtDate, daysBetween } from '../../shared/time.js';
 import { photoFor, photoCoverage } from './photos.js';
 import { PBE_MODEL } from '../../shared/market.js';
+import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './market.js';
 
 const SERVICE = 'wnba-api';
 const VERSION = '1.0.0';
@@ -258,6 +259,7 @@ async function today({ env, ctx, path }) {
     const upcoming = (nx.sb?.games || []).filter((g) => g.status?.state === 'pre' || g.status?.state === 'in');
     slate = { kind: upcoming.length ? 'NEXT' : 'NONE', date: nextDay, games: upcoming, today_date: todayEt };
   }
+  slate.games = await attachMarkets(env, slate.games);
   const recentGames = (recent.sb?.games || []).filter((g) => g.status?.state === 'post').sort((a, b) => String(b.start_utc).localeCompare(String(a.start_utc)));
   const lastDay = recentGames[0] ? gameEtDate(recentGames[0].start_utc) : null;
 
@@ -317,7 +319,7 @@ async function schedule({ env, ctx, url, path }) {
   const sb = r.body ? normalizeScoreboard(r.body) : null;
   if (!sb) return fail('schedule_unavailable', 'Schedule unavailable from source', base(path, { freshness: freshnessOf(r), degraded: degradedFrom(r) }));
   return ok(
-    { requested: { date, from, to, season: seasonYear }, day: sb.day, games: sb.games, summary: slateSemantics(sb.games) },
+    { requested: { date, from, to, season: seasonYear }, day: sb.day, games: await attachMarkets(env, sb.games), summary: slateSemantics(sb.games) },
     base(path, { fetchedAt: r.fetchedAt, freshness: freshnessOf(r), staleAfterS: ttl, cache: r.cache, semantics: 'SCHEDULE', season: sb.season, degraded: degradedFrom(r) }),
     { maxAge: 10 }
   );
@@ -364,8 +366,10 @@ async function game({ env, ctx, params, path }) {
   const L = await loadSummary(env, ctx, params.id);
   if (!L.summary) return fail('game_unavailable', `Game ${params.id} unavailable`, gameMeta(path, L), L.error?.includes('404') ? 404 : 502);
   const d = deriveGame(L.summary);
+  const market = await marketForGame(env, L.summary.game);
+  const history = market ? await marketHistory(env, market.odds_event_id) : [];
   return ok(
-    { game: L.summary.game, linescore: d.linescore, leaders: L.summary.leaders, injuries: L.summary.injuries, season_series: L.summary.season_series, pickcenter: L.summary.pickcenter, pbe_model: PBE_MODEL, event_count: L.summary.plays.length },
+    { game: L.summary.game, linescore: d.linescore, leaders: L.summary.leaders, injuries: L.summary.injuries, season_series: L.summary.season_series, pickcenter: L.summary.pickcenter, market, market_history: history, pbe_model: PBE_MODEL, event_count: L.summary.plays.length },
     gameMeta(path, L),
     { maxAge: cacheFor(L.summary.game) }
   );
@@ -392,6 +396,7 @@ async function gameLive({ env, ctx, url, params, path }) {
       leaders: s.leaders,
       injuries: s.injuries,
       pickcenter: s.pickcenter,
+      market: await marketForGame(env, s.game),
       pbe_model: PBE_MODEL
     },
     gameMeta(path, L),
@@ -495,6 +500,8 @@ async function matchup({ env, ctx, params, path }) {
       season_series: L.summary.season_series,
       teams: teamsOut,
       market: mk ? { ...mk, captured_at: odds.captured_at, semantics: 'LAST_VERIFIED_MARKET' } : null,
+      market_summary: await marketForGame(env, g),
+      market_history: mk ? await marketHistory(env, mk.odds_event_id) : [],
       pbe_model: PBE_MODEL
     },
     base(path, { fetchedAt: L.fetchedAt, freshness: FRESHNESS.CURRENT, staleAfterS: TTL.schedule, cache: L.cache, semantics: 'MATCHUP_RESEARCH', season: g.season, degraded: [stand, leaders, teamStats, inj, ...scheds.map((s) => s.r)].flatMap(degradedFrom) }),
@@ -619,7 +626,7 @@ async function team({ env, ctx, params, path }) {
       coach: roster.coach,
       standing: standingsRows.find((x) => x.team_id === params.id) || null,
       roster: roster.athletes.map((a) => ({ ...a, photo: photoFor(a.athlete_id) })),
-      schedule: sched.games,
+      schedule: await attachMarkets(env, sched.games),
       rotation: await observedRotation(env, ctx, params.id, sched.games),
       season_stats: stats.body ? teamStatsRows(stats.body).find((x) => x.team_id === params.id) || null : null,
       availability: inj.body ? normalizeInjuries(inj.body).filter((x) => x.team_id === params.id) : null

@@ -384,6 +384,14 @@ async function odds(env) {
   await env.WNBA_KV.put('odds:v1:latest', JSON.stringify(snap));
   await env.WNBA_KV.put('props:v1:latest', JSON.stringify({ captured_at: capturedAt, markets: PROP_MARKETS, window_hours: PROPS_WINDOW_H, games: propGames }));
 
+  // Last pre-tip snapshot per ESPN game: after tip the event leaves the Odds API
+  // feed, so this is what game/replay pages show as the closing market.
+  for (const e of events) {
+    if (e.game_id && Date.parse(e.commence_time) > Date.now()) {
+      await env.WNBA_KV.put(`odds:v1:game:${e.game_id}`, JSON.stringify({ captured_at: capturedAt, event: e }), { expirationTtl: 400 * 86400 });
+    }
+  }
+
   // Movement history per event (compact: consensus + best at the modal line).
   for (const e of events) {
     const hk = `odds:v1:hist:${e.odds_event_id}`;

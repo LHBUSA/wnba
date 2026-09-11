@@ -11,7 +11,9 @@
 import { NEWS_SOURCES, PBE_SOURCE } from './sources.js';
 import { parseRss, parseEspnNews, parseWnbaCom, canonicalUrl } from './parse.js';
 import { buildDictionary, linkEntities, relevance, clusterItems, itemId, EDITORIAL_VERSION } from './editorial.js';
-import { availabilityStories, transactionStories, resultStory, clinchStories, DESK_VERSION } from './pbe-desk.js';
+import { DESK_VERSION } from './pbe-desk.js';
+import { runArticles } from './articles-run.js';
+import { ARTICLE_VERSION } from './articles.js';
 
 const SERVICE = 'wnba-news';
 const VERSION = '1.0.0';
@@ -30,13 +32,17 @@ export default {
     if (path === '/v1/news') return feed(env, url);
     if (path === '/v1/news/sources') return sourcesRoute(env);
     if (path === '/v1/news/runs') return runsRoute(env);
+    if (path === '/v1/articles') return articlesRoute(env, url);
+    if (path === '/v1/articles/held') return heldRoute(env);
+    const am = path.match(/^\/v1\/articles\/([a-z0-9-]{6,120})$/);
+    if (am) return articleRoute(env, am[1]);
     const m = path.match(/^\/v1\/news\/story\/(pbe_[a-f0-9]{18})$/);
     if (m) return storyRoute(env, m[1]);
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
-      return j({ ok: true, result: await runIngest(env, 'manual') });
+      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' }) });
     }
-    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/news', '/v1/news/sources', '/v1/news/runs', '/v1/news/story/:id'] }, 404);
+    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
   }
 };
 
@@ -75,7 +81,7 @@ async function fetchSource(src) {
   return parseRss(text);
 }
 
-async function runIngest(env, trigger) {
+async function runIngest(env, trigger, { forceArticles = false } = {}) {
   const startedAt = new Date().toISOString();
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
   const dict = buildDictionary(rawDict);
@@ -144,54 +150,20 @@ async function runIngest(env, trigger) {
   await env.NEWS_KV.put('news:v1:items', JSON.stringify(store));
   await env.NEWS_KV.put('news:v1:clusters', JSON.stringify(clusters));
 
-  // PropBetEdge Desk — owned stories from structured records (needs wnba-api).
-  const desk = { status: 'PASS', generated: 0, new: 0, errors: [] };
-  const deskStore = (await env.NEWS_KV.get('news:v1:desk', 'json')) || {};
+  // PropBetEdge newsroom — in-house articles from structured records (needs wnba-api).
+  // (Replaces the v1 PBE Desk blurbs; same evidence discipline, full article contract.)
+  let articles;
   try {
-    const teamsById = new Map((rawDict.teams || []).map((t) => [String(t.team_id), t]));
-    const stories = [];
-    const inj = await apiGet(env, '/v1/injuries').catch((e) => { desk.errors.push(e.message); return null; });
-    if (inj?.changes?.length) stories.push(...(await availabilityStories(inj.changes.slice(0, 40), teamsById)));
-    const tx = await apiGet(env, '/v1/transactions').catch((e) => { desk.errors.push(e.message); return null; });
-    if (tx?.items) stories.push(...(await transactionStories(tx.items, new Date(Date.now() - 14 * 86400e3).toISOString())));
-    const today = etCompact();
-    const sched = await apiGet(env, `/v1/schedule?from=${addDays(today, -14)}&to=${today}`).catch((e) => { desk.errors.push(e.message); return null; });
-    const finals = (sched?.games || []).filter((g) => g.status?.state === 'post' && g.status?.completed);
-    for (const g of finals.slice(0, 8)) {
-      const existing = Object.values(deskStore).find((s) => s.kind === 'result' && s.generator_version === DESK_VERSION && s.entities.some((e) => e.type === 'game' && e.id === g.game_id));
-      if (existing) continue;
-      const live = await apiGet(env, `/v1/games/${g.game_id}/live`).catch((e) => { desk.errors.push(e.message); return null; });
-      const s = live ? await resultStory(live) : null;
-      if (s) stories.push(s);
-    }
-    const st = await apiGet(env, '/v1/standings').catch((e) => { desk.errors.push(e.message); return null; });
-    if (st?.is_current) {
-      const prevMarks = await env.NEWS_KV.get('desk:v1:clinch_marks', 'json');
-      const cl = await clinchStories(st, prevMarks);
-      stories.push(...cl.stories);
-      await env.NEWS_KV.put('desk:v1:clinch_marks', JSON.stringify(cl.marks));
-    }
-    for (const s of stories) {
-      desk.generated += 1;
-      const prev = deskStore[s.story_id];
-      if (!prev) desk.new += 1;
-      // Same deterministic id + same generator = no rewrite. A new generator
-      // version re-renders the text from the same evidence (timestamps kept).
-      if (!prev || prev.generator_version !== DESK_VERSION) {
-        deskStore[s.story_id] = { ...s, source_id: PBE_SOURCE.source_id, attribution: PBE_SOURCE.attribution, generator_version: DESK_VERSION, first_captured_at: prev?.first_captured_at || startedAt, revised_at: prev ? startedAt : null };
-      }
-    }
-    for (const [k, v] of Object.entries(deskStore)) if (Date.parse(v.published_at) < cutoff) delete deskStore[k];
-    await env.NEWS_KV.put('news:v1:desk', JSON.stringify(deskStore));
-    if (desk.errors.length) desk.status = 'DEGRADED';
+    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: Object.values(store), force: forceArticles });
   } catch (e) {
-    desk.status = 'FAIL';
-    desk.errors.push(e.message);
+    articles = { error: e.message };
   }
+  const desk = { status: articles?.error ? 'FAIL' : articles?.errors?.length ? 'DEGRADED' : 'PASS', articles };
+  const deskStore = {};
 
   await persistSupabase(env, store, clusters, deskStore).catch((e) => runs.push({ source_id: 'supabase', status: 'FAIL', error: e.message }));
 
-  const status = { at: startedAt, trigger, version: VERSION, editorial: EDITORIAL_VERSION, desk_version: DESK_VERSION, dictionary: { fresh: dictFresh, error: dictError || null, players: rawDict.players?.length || 0, captured_at: rawDict.captured_at }, sources: runs, desk, totals: { items: list.length, clusters: clusters.length, desk_stories: Object.keys(deskStore).length }, supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) };
+  const status = { at: startedAt, trigger, version: VERSION, editorial: EDITORIAL_VERSION, desk_version: DESK_VERSION, dictionary: { fresh: dictFresh, error: dictError || null, players: rawDict.players?.length || 0, captured_at: rawDict.captured_at }, sources: runs, desk, totals: { items: list.length, clusters: clusters.length, articles_published: articles?.published_total ?? null }, article_version: ARTICLE_VERSION, supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) };
   await env.NEWS_KV.put('news:v1:status', JSON.stringify(status));
   const hist = (await env.NEWS_KV.get('news:v1:runs', 'json')) || [];
   await env.NEWS_KV.put('news:v1:runs', JSON.stringify([status, ...hist].slice(0, 48)));
@@ -236,7 +208,8 @@ async function feed(env, url) {
 
   const items = store || {};
   const out = [];
-  if (lane !== 'external') {
+  // v1 PBE Desk blurbs are superseded by /v1/articles (full in-house articles).
+  if (false) {
     for (const s of Object.values(desk || {})) {
       if (type && s.kind !== type) continue;
       if (!match(s.entities)) continue;
@@ -292,6 +265,38 @@ function dedupeEntities(list) {
   const m = new Map();
   for (const e of list) if (!m.has(`${e.type}:${e.id}`)) m.set(`${e.type}:${e.id}`, e);
   return [...m.values()];
+}
+
+async function articlesRoute(env, url) {
+  const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+  const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
+  const limit = Math.min(Number(url.searchParams.get('limit') || 40), 200);
+  const cat = url.searchParams.get('kind');
+  const team = url.searchParams.get('team');
+  const player = url.searchParams.get('player');
+  const game = url.searchParams.get('game');
+  const has = (c, t, id) => (c.entities || []).some((e) => e && e.type === t && e.id === id);
+  const list = index.filter((c) => (!cat || c.kind === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
+  return j({ ok: true, data: { items: list.slice(0, limit).map(({ input_hash, ...c }) => c), total: list.length }, meta: { service: SERVICE, version: VERSION, generator: ARTICLE_VERSION, last_run_at: last?.at || null, freshness: last?.at ? (Date.now() - Date.parse(last.at) > 90 * 60e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE', served_at: new Date().toISOString() } }, 200, 30);
+}
+
+async function articleRoute(env, slugOrId) {
+  const id = /^[a-f0-9]{12}$/.test(slugOrId) ? slugOrId : null;
+  let a = id ? await env.NEWS_KV.get(`art:v1:item:${id}`, 'json') : null;
+  if (!a) {
+    const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+    const hit = index.find((c) => c.slug === slugOrId) || index.find((c) => slugOrId.endsWith(`-${c.id.slice(0, 6)}`));
+    if (hit) a = await env.NEWS_KV.get(`art:v1:item:${hit.id}`, 'json');
+  }
+  if (!a) return j({ ok: false, error: 'not_found' }, 404);
+  const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+  const ents = new Set((a.entities || []).filter(Boolean).filter((e) => e.type !== 'game').map((e) => `${e.type}:${e.id}`));
+  const related = index.filter((c) => c.id !== a.id && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => c);
+  return j({ ok: true, data: { article: a, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
+}
+
+async function heldRoute(env) {
+  return j({ ok: true, data: { held: (await env.NEWS_KV.get('art:v1:held', 'json')) || [], last_run: await env.NEWS_KV.get('art:v1:last_run', 'json') }, meta: { service: SERVICE, version: VERSION } }, 200, 30);
 }
 
 async function storyRoute(env, id) {

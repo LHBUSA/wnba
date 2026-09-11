@@ -1,0 +1,417 @@
+{
+ "generated_at": "2026-09-11T18:26:17Z",
+ "source": "ESPN team API logos (rel full+dark)",
+ "usage": "Team identification only. Marks belong to their teams; PropBetEdge is not affiliated with the WNBA or its teams.",
+ "sizes_px": [
+  64,
+  128,
+  320
+ ],
+ "teams": [
+  {
+   "team_id": "20",
+   "abbr": "ATL",
+   "name": "Atlanta Dream",
+   "color": "#e31837",
+   "alt_color": "#5091cc",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/atl.png",
+   "source_sha256": "43f36fe145f3f5d198787106a1570c9097c96c2f1ba40138947ded4b14d4a1eb",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    32,
+    21,
+    468,
+    481
+   ],
+   "square_side_px": 534,
+   "files": {
+    "64": "/media/teams/20/64.webp",
+    "128": "/media/teams/20/128.webp",
+    "320": "/media/teams/20/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "19",
+   "abbr": "CHI",
+   "name": "Chicago Sky",
+   "color": "#5091cd",
+   "alt_color": "#ffd520",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/chi.png",
+   "source_sha256": "a21d5ec3c803087c597da3ec73bb81746b7cbb9e0885762333851f9300e9dbff",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    22,
+    22,
+    478,
+    478
+   ],
+   "square_side_px": 529,
+   "files": {
+    "64": "/media/teams/19/64.webp",
+    "128": "/media/teams/19/128.webp",
+    "320": "/media/teams/19/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "18",
+   "abbr": "CON",
+   "name": "Connecticut Sun",
+   "color": "#f05023",
+   "alt_color": "#0a2240",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/con.png",
+   "source_sha256": "1ef7545b8a9101a868199971d4f6610d897bcfb1efe6a6a18732c52983cc9871",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    43,
+    21,
+    458,
+    479
+   ],
+   "square_side_px": 531,
+   "files": {
+    "64": "/media/teams/18/64.webp",
+    "128": "/media/teams/18/128.webp",
+    "320": "/media/teams/18/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "3",
+   "abbr": "DAL",
+   "name": "Dallas Wings",
+   "color": "#002b5c",
+   "alt_color": "#c4d600",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/dal.png",
+   "source_sha256": "bfb153ffe2313b05e6dee0a5098dcfb32ae63dae206818aac31706cdf36ba7a0",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    21,
+    105,
+    479,
+    395
+   ],
+   "square_side_px": 531,
+   "files": {
+    "64": "/media/teams/3/64.webp",
+    "128": "/media/teams/3/128.webp",
+    "320": "/media/teams/3/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "129689",
+   "abbr": "GS",
+   "name": "Golden State Valkyries",
+   "color": "#b38fcf",
+   "alt_color": "#000000",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/gs.png",
+   "source_sha256": "3e14cd3cea0e5c1a0e2503d3c810f9dc5f996bf55378410096b981d7f06ce860",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    35,
+    20,
+    465,
+    480
+   ],
+   "square_side_px": 534,
+   "files": {
+    "64": "/media/teams/129689/64.webp",
+    "128": "/media/teams/129689/128.webp",
+    "320": "/media/teams/129689/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "5",
+   "abbr": "IND",
+   "name": "Indiana Fever",
+   "color": "#002d62",
+   "alt_color": "#e03a3e",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/ind.png",
+   "source_sha256": "16e6c80bce1bb9a18d4fcfff49e09dc48d7c642355f4f8c3139fca407e04b65e",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    19,
+    26,
+    481,
+    475
+   ],
+   "square_side_px": 536,
+   "files": {
+    "64": "/media/teams/5/64.webp",
+    "128": "/media/teams/5/128.webp",
+    "320": "/media/teams/5/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "17",
+   "abbr": "LV",
+   "name": "Las Vegas Aces",
+   "color": "#a7a8aa",
+   "alt_color": "#000000",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/lv.png",
+   "source_sha256": "d3057fc57ddcd581b22821cab1d5fcc21a6e7b9e9bc7a0dcc57c3ef4e8284523",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    75,
+    19,
+    410,
+    480
+   ],
+   "square_side_px": 535,
+   "files": {
+    "64": "/media/teams/17/64.webp",
+    "128": "/media/teams/17/128.webp",
+    "320": "/media/teams/17/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "6",
+   "abbr": "LA",
+   "name": "Los Angeles Sparks",
+   "color": "#552583",
+   "alt_color": "#fdb927",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/la.png",
+   "source_sha256": "30965d5b486542b19823bf58092211646c8e6767b9888791034c74f985b368d2",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    21,
+    21,
+    479,
+    479
+   ],
+   "square_side_px": 531,
+   "files": {
+    "64": "/media/teams/6/64.webp",
+    "128": "/media/teams/6/128.webp",
+    "320": "/media/teams/6/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "8",
+   "abbr": "MIN",
+   "name": "Minnesota Lynx",
+   "color": "#266092",
+   "alt_color": "#79bc43",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/min.png",
+   "source_sha256": "58e8198b22ff8ad370e20f67efa52f541b1ea566b036846bec8b88692e1fdfa8",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    19,
+    46,
+    481,
+    455
+   ],
+   "square_side_px": 536,
+   "files": {
+    "64": "/media/teams/8/64.webp",
+    "128": "/media/teams/8/128.webp",
+    "320": "/media/teams/8/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "9",
+   "abbr": "NY",
+   "name": "New York Liberty",
+   "color": "#86cebc",
+   "alt_color": "#000000",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/ny.png",
+   "source_sha256": "587230e80f33b6469883a3c0349eac8b16e83b1ebe5f6c5fea586e768d7d55c4",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    62,
+    20,
+    439,
+    480
+   ],
+   "square_side_px": 534,
+   "files": {
+    "64": "/media/teams/9/64.webp",
+    "128": "/media/teams/9/128.webp",
+    "320": "/media/teams/9/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "11",
+   "abbr": "PHX",
+   "name": "Phoenix Mercury",
+   "color": "#3c286e",
+   "alt_color": "#fa4b0a",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/phx.png",
+   "source_sha256": "cabf18c9af751e07c8df012fde18e326da8047d789bc10298be48bfe6f0f3ab7",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    14,
+    20,
+    486,
+    480
+   ],
+   "square_side_px": 548,
+   "files": {
+    "64": "/media/teams/11/64.webp",
+    "128": "/media/teams/11/128.webp",
+    "320": "/media/teams/11/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "132052",
+   "abbr": "POR",
+   "name": "Portland Fire",
+   "color": "#cee5eb",
+   "alt_color": "#000000",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/por.png",
+   "source_sha256": "c71eb40dd14082a40886ad5f441f69ceb4a38f9b72c22af55224d32b4ef92eb1",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    114,
+    20,
+    385,
+    480
+   ],
+   "square_side_px": 534,
+   "files": {
+    "64": "/media/teams/132052/64.webp",
+    "128": "/media/teams/132052/128.webp",
+    "320": "/media/teams/132052/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "14",
+   "abbr": "SEA",
+   "name": "Seattle Storm",
+   "color": "#2c5235",
+   "alt_color": "#fee11a",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/sea.png",
+   "source_sha256": "829b8341438cb2e869be9664a5431f8a805c57edc233ac9aca43e51daec192a2",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    35,
+    20,
+    465,
+    480
+   ],
+   "square_side_px": 534,
+   "files": {
+    "64": "/media/teams/14/64.webp",
+    "128": "/media/teams/14/128.webp",
+    "320": "/media/teams/14/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "131935",
+   "abbr": "TOR",
+   "name": "Toronto Tempo",
+   "color": "#33476D",
+   "alt_color": "#7B1B38",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/tor.png",
+   "source_sha256": "c267ecad210db4c27b89ec841ac9fda384db644d822e3edca919b1acb048d4f5",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    21,
+    135,
+    480,
+    366
+   ],
+   "square_side_px": 532,
+   "files": {
+    "64": "/media/teams/131935/64.webp",
+    "128": "/media/teams/131935/128.webp",
+    "320": "/media/teams/131935/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  },
+  {
+   "team_id": "16",
+   "abbr": "WSH",
+   "name": "Washington Mystics",
+   "color": "#e03a3e",
+   "alt_color": "#002b5c",
+   "variant": "dark",
+   "source_url": "https://a.espncdn.com/i/teamlogos/wnba/500-dark/wsh.png",
+   "source_sha256": "22ab495b2a94a36382998d38c65ca0bde263ef8f7dd2a8cb89feef892f066b4c",
+   "source_size": [
+    500,
+    500
+   ],
+   "trim_bbox": [
+    20,
+    53,
+    480,
+    446
+   ],
+   "square_side_px": 534,
+   "files": {
+    "64": "/media/teams/16/64.webp",
+    "128": "/media/teams/16/128.webp",
+    "320": "/media/teams/16/320.webp"
+   },
+   "fetched_at": "2026-09-11T18:26:17Z"
+  }
+ ]
+}

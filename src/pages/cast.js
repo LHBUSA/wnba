@@ -8,6 +8,9 @@ import { api } from '../data/api.js';
 import { createPoller } from '../lib/poller.js';
 import { gameState, badge, sourceLine, empty, errorState, skeleton, avatar, safeColor, teamDot, periodName, startFreshTicker } from '../ui/components.js';
 import { courtSvg } from '../ui/court.js';
+import { teamLogo } from '../ui/logo.js';
+import { articleMini } from '../ui/articles.js';
+import { marketStrip } from '../ui/components.js';
 import { marginChart, progressionChart } from '../ui/charts.js';
 import { scoringRuns, leadTracker, foulContext, playerProgression, shotChart } from '../../workers/shared/derive.js';
 import { fmtDateET, fmtTimeET, fmtDateTimeET, relTime, american, num } from '../lib/format.js';
@@ -67,8 +70,8 @@ export async function mount(root, ctx) {
     const st = gameState(g);
     return html`<a href="/cast/${g.game_id}" aria-current="${g.game_id === state.gameId ? 'true' : 'false'}">
       <div class="r-top"><span>${st.key === 'sched' ? fmtDateET(g.start_utc, { month: 'short', day: 'numeric' }) : st.label}</span><span>${st.key === 'sched' ? fmtTimeET(g.start_utc) : fmtDateET(g.start_utc, { month: 'short', day: 'numeric' })}</span></div>
-      <div class="r-row"><span>${g.away?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.away?.score ?? ''}</span></div>
-      <div class="r-row"><span>${g.home?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.home?.score ?? ''}</span></div>
+      <div class="r-row"><span style="display:inline-flex;gap:6px;align-items:center">${teamLogo(g.away, 16)}${g.away?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.away?.score ?? ''}</span></div>
+      <div class="r-row"><span style="display:inline-flex;gap:6px;align-items:center">${teamLogo(g.home, 16)}${g.home?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.home?.score ?? ''}</span></div>
     </a>`;
   }
   function renderRail() {
@@ -81,6 +84,9 @@ export async function mount(root, ctx) {
     const cur = $rail.querySelector('[aria-current="true"]');
     if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
+
+  let gameArticles = null;
+  api.articles({ game: state.gameId, limit: 4 }).then((r) => { gameArticles = r.ok ? r.data.items : []; if (state.data && ctx.isCurrent()) draw(); });
 
   // ------------------------------------------------------------ data
   async function load() {
@@ -174,7 +180,7 @@ export async function mount(root, ctx) {
       <section class="card">
         <div class="score-hdr">
           <div class="sh-team away ${awayLost ? 'lost' : ''}">
-            <span class="sh-bar" style="background:${safeColor(away?.color, 'var(--away)')}"></span>
+            ${teamLogo(away, 64)}
             <div class="nm"><b>${away?.name}</b><small>${away?.abbr}${away?.record ? ` · ${away.record}` : ''}${away?.possession ? html` · <span class="poss">POSSESSION (ESPN)</span>` : ''}</small></div>
             <span class="sc">${g.status?.state === 'pre' ? '' : v.score.away ?? ''}</span>
           </div>
@@ -184,7 +190,7 @@ export async function mount(root, ctx) {
             <span class="note">${g.venue?.name || ''}</span>
           </div>
           <div class="sh-team home ${homeLost ? 'lost' : ''}">
-            <span class="sh-bar" style="background:${safeColor(home?.color, 'var(--home)')}"></span>
+            ${teamLogo(home, 64)}
             <div class="nm"><b>${home?.name}</b><small>${home?.abbr}${home?.record ? ` · ${home.record}` : ''}${home?.possession ? html` · <span class="poss">POSSESSION (ESPN)</span>` : ''}</small></div>
             <span class="sc">${g.status?.state === 'pre' ? '' : v.score.home ?? ''}</span>
           </div>
@@ -311,6 +317,7 @@ export async function mount(root, ctx) {
         <div class="tabs" role="tablist" style="padding:0 8px;margin-bottom:0">${TABS.map(([k, l]) => html`<button type="button" role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`)}</div>
         <div class="card-body">${tabBody(v)}</div>
       </section>
+      ${gameArticles?.length ? html`<section class="card" style="margin-top:16px"><div class="card-head"><span class="card-title">PBE Newsroom on this game</span><a class="sec-link" href="/matchups/${g.game_id}">Matchup →</a></div><div class="card-body">${articleMini(gameArticles)}</div></section>` : ''}
     `;
   }
 
@@ -359,7 +366,7 @@ export async function mount(root, ctx) {
 
   function marketTab(d, g) {
     const pc = d.pickcenter || [];
-    return html`${pc.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Line (external)</th><th>Spread</th><th>Total</th><th>${g.away?.abbr} ML</th><th>${g.home?.abbr} ML</th></tr></thead><tbody>
+    return html`${d.market ? html`<div style="margin-bottom:16px"><span class="card-title">PropBetEdge stored snapshot${d.market.semantics === 'LAST_PRE_TIP_SNAPSHOT' ? ' · last pre-tip capture' : ''}</span><div style="margin-top:10px">${marketStrip(d.market, g)}</div></div>` : html`<p class="note" style="margin-bottom:12px">No PropBetEdge market capture for this game (captures began September 11, 2026; they run at 8:00, 1:00 and 6:00 ET).</p>`}${pc.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Line (external)</th><th>Spread</th><th>Total</th><th>${g.away?.abbr} ML</th><th>${g.home?.abbr} ML</th></tr></thead><tbody>
       ${pc.map((o) => html`<tr><td>${o.provider} via ESPN</td><td>${o.details || '—'}</td><td>${o.over_under ?? '—'}</td><td>${american(o.away_moneyline)}</td><td>${american(o.home_moneyline)}</td></tr>`)}
       </tbody></table></div><p class="note" style="margin-top:8px">A single sportsbook's line relayed by ESPN. It is not a PropBetEdge price, consensus or model.</p>` : html`<p class="note">No line published for this game in the source record.</p>`}
       <div class="callout" style="margin-top:14px">PropBetEdge fair value: <b>not published</b>. No validated WNBA model exists yet, so there is no model line or edge here — by design.</div>

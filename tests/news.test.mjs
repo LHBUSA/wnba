@@ -88,3 +88,56 @@ test('quiet final (no notable line, no OT, no comeback) produces no Desk story',
   };
   assert.equal(await resultStory(live), null);
 });
+
+// ---------------------------------------------------------------- publication gate (ported from UFC)
+import { validateArticle } from '../workers/wnba-news/src/gate.js';
+
+const baseArticle = () => ({
+  kind: 'injury',
+  headline: 'Ezi Magbegor listed out for the Storm: what changes',
+  deck: 'The Seattle Storm are without a starter who averaged 6.9 points this season.',
+  body: [Array.from({ length: 30 }, () => 'context').join(' ') + ' She averaged 6.9 points in 20.4 minutes.'],
+  primary_subject: 'Ezi Magbegor',
+  facts: { season: { pts: 6.9, min: 20.4 } },
+  evidence: [{ kind: 'publisher_report', publisher: 'ESPN', headline: "Storm's Ezi Magbegor suffers torn ACL at women's FIBA World Cup" }],
+  bettor_angle: { summary: 'Her minutes have to go somewhere in a thin rotation, which is where prop lines move first.', supporting: [], against: ['Feed status can change.'], unknown: ['Official lineup.'] },
+  market_watch: { text: [], market: null }
+});
+
+test('gate passes a grounded article', () => {
+  const g = validateArticle(baseArticle(), { minWords: 20 });
+  assert.equal(g.ok, true, g.failures.join('; '));
+});
+
+test('gate holds an invented number (class C)', () => {
+  const a = baseArticle();
+  a.body[0] += ' She was averaging 31.5 points before the injury.';
+  const g = validateArticle(a, { minWords: 20 });
+  assert.equal(g.ok, false);
+  assert.ok(g.failures.some((f) => f.includes('class C number "31.5"')));
+});
+
+test('gate allows only a named publisher headline as a quotation', () => {
+  const ok = baseArticle();
+  ok.body.push('ESPN reported it under the headline “Storm\'s Ezi Magbegor suffers torn ACL at women\'s FIBA World Cup”.'.replace("\'", "'"));
+  ok.body[1] = 'ESPN reported it under the headline “Storm' + "'" + 's Ezi Magbegor suffers torn ACL at women' + "'" + 's FIBA World Cup”.';
+  assert.equal(validateArticle(ok, { minWords: 20 }).ok, true);
+  const bad = baseArticle();
+  bad.body.push('Her coach said “we will miss her badly”.');
+  assert.ok(validateArticle(bad, { minWords: 20 }).failures.some((f) => f.startsWith('quotation is not a cited publisher headline')));
+});
+
+test('gate rejects market language without a stored market, and any model claim', () => {
+  const a = baseArticle();
+  a.body.push('The Storm are now 6-point underdogs.');
+  assert.ok(validateArticle(a, { minWords: 20 }).failures.includes('price or market-position language without a stored market'));
+  const b = baseArticle();
+  b.body.push('Our model projects a close game.');
+  assert.ok(validateArticle(b, { minWords: 20 }).failures.some((f) => f.startsWith('model claim')));
+});
+
+test('gate requires a counter-case and an unknown', () => {
+  const a = baseArticle();
+  a.bettor_angle.against = [];
+  assert.ok(validateArticle(a, { minWords: 20 }).failures.includes('bettor_angle needs at least one counter-case'));
+});

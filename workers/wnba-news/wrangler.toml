@@ -23,3 +23,7 @@ service = "wnba-api"
 enabled = true
 
 # Secrets: ADMIN_TOKEN (POST /run), SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (after approval)
+
+# Article passes parse several box scores per run.
+[limits]
+cpu_ms = 120000

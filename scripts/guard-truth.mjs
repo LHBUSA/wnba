@@ -74,6 +74,16 @@ if (fs.existsSync(mediaDir)) {
   for (const d of fs.readdirSync(mediaDir)) if (!approved.has(d)) fail('photo-orphan-derivative', `public/media/players/${d}`);
 }
 
+// 6b. Team logos: every manifest entry is served from our origin and present on disk.
+const logos = JSON.parse(read(path.join(ROOT, 'data', 'team-logos.json')));
+for (const t of logos.teams || []) {
+  for (const [size, f] of Object.entries(t.files || {})) {
+    if (!f.startsWith('/media/teams/')) fail('logo-origin', `${t.abbr} ${size} -> ${f}`);
+    if (!fs.existsSync(path.join(ROOT, 'public', f))) fail('logo-missing', `${t.abbr} ${f}`);
+  }
+}
+if ((logos.teams || []).length < 15) fail('logo-coverage', `${(logos.teams || []).length} team logos`);
+
 // 7. Checkout activation is atomic: links and the server flag flip together.
 const pricing = read(path.join(ROOT, 'src', 'data', 'pricing.js'));
 const hasUrls = /url:\s*'https:\/\/buy\.stripe\.com\//.test(pricing);

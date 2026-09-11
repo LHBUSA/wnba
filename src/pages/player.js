@@ -3,6 +3,8 @@ import { api } from '../data/api.js';
 import { sourceLine, errorState, skeleton, statusBadge, badge, entityChips, safeColor, teamDot } from '../ui/components.js';
 import { fmtDateET, relTime, num, initials, american, bookName } from '../lib/format.js';
 import { sparkline } from '../ui/charts.js';
+import { teamLogo } from '../ui/logo.js';
+import { articleMini } from '../ui/articles.js';
 
 export const title = () => 'Player';
 export const description = () => 'WNBA player page: verified identity, season and recent form, game log, role and minutes trend, availability, WNBA news and props.';
@@ -12,7 +14,7 @@ const MARKET_LABEL = { player_points: 'Points', player_rebounds: 'Rebounds', pla
 export async function mount(root, ctx) {
   const id = ctx.params.playerId;
   render(root, html`<div class="p-hero">${skeleton(360)}${skeleton(360)}</div>`);
-  const [res, news, props] = await Promise.all([api.player(id), api.news({ player: id, limit: 8 }), api.props()]);
+  const [res, news, props, arts] = await Promise.all([api.player(id), api.news({ player: id, limit: 6, lane: 'external' }), api.props(), api.articles({ player: id, limit: 6 })]);
   if (!ctx.isCurrent()) return;
   if (!res.ok) return render(root, errorState(res, 'This player'));
   const d = res.data;
@@ -37,7 +39,7 @@ export async function mount(root, ctx) {
         ${photo ? html`<p class="credit" style="margin-top:8px">${photo.attribution}${photo.capture_date ? ` · ${String(photo.capture_date).slice(0, 4)}` : ''} · <a href="${photo.source_page}" rel="noopener" target="_blank">source</a>${photo.license_url ? html` · <a href="${photo.license_url}" rel="noopener" target="_blank">license</a>` : ''}</p>` : html`<p class="credit" style="margin-top:8px">No verified, licensed photo yet — shown as a neutral card rather than risk the wrong person.</p>`}
       </div>
       <div style="display:flex;flex-direction:column;justify-content:flex-end;min-width:0">
-        <span class="eyebrow">${p.team ? html`<a href="/teams/${p.team.team_id}">${p.team.name}</a>` : 'Free agent'}${p.jersey ? ` · #${p.jersey}` : ''}</span>
+        <span style="display:flex;gap:10px;align-items:center">${p.team ? teamLogo(p.team, 36) : ''}<span class="eyebrow">${p.team ? html`<a href="/teams/${p.team.team_id}">${p.team.name}</a>` : 'Free agent'}${p.jersey ? ` · #${p.jersey}` : ''}</span></span>
         <h1 class="p-name" style="margin-top:10px">${p.name}</h1>
         <div class="p-facts">
           ${p.position_name ? html`<span>Position <b>${p.position_name}</b></span>` : ''}
@@ -75,7 +77,9 @@ export async function mount(root, ctx) {
           </div>
         </section>
         <section class="card">
-          <div class="card-head"><span class="card-title">WNBA news</span><a class="sec-link" href="/news">All →</a></div>
+          <div class="card-head"><span class="card-title">PBE Newsroom</span><a class="sec-link" href="/news">All →</a></div>
+          <div class="card-body">${arts.ok && arts.data.items.length ? articleMini(arts.data.items) : html`<p class="note">No PropBetEdge article on ${p.name} in the current window.</p>`}</div>
+          <div class="card-head" style="border-top:1px solid var(--line)"><span class="card-title">Source wire</span><span class="note">external</span></div>
           <div class="card-body">
             ${news.ok && news.data.items.length ? news.data.items.map((i) => html`<article class="nitem"><div class="nmeta">${i.lane === 'pbe' ? badge('pbe', 'PBE Desk') : badge('ext', i.source.name)}<span>${relTime(i.published_at)}</span></div><h3 style="font-size:16px"><a href="${i.lane === 'pbe' ? `/news/story/${i.id}` : i.url}" ${i.lane === 'pbe' ? '' : raw('rel="noopener" target="_blank"')}>${i.headline}</a></h3></article>`) : html`<p class="note">No WNBA stories linked to ${p.name} in the last three weeks.</p>`}
           </div>
