@@ -156,7 +156,7 @@ async function runIngest(env, trigger) {
     const sched = await apiGet(env, `/v1/schedule?from=${addDays(today, -14)}&to=${today}`).catch((e) => { desk.errors.push(e.message); return null; });
     const finals = (sched?.games || []).filter((g) => g.status?.state === 'post' && g.status?.completed);
     for (const g of finals.slice(0, 8)) {
-      const existing = Object.values(deskStore).find((s) => s.kind === 'result' && s.entities.some((e) => e.type === 'game' && e.id === g.game_id));
+      const existing = Object.values(deskStore).find((s) => s.kind === 'result' && s.generator_version === DESK_VERSION && s.entities.some((e) => e.type === 'game' && e.id === g.game_id));
       if (existing) continue;
       const live = await apiGet(env, `/v1/games/${g.game_id}/live`).catch((e) => { desk.errors.push(e.message); return null; });
       const s = live ? await resultStory(live) : null;

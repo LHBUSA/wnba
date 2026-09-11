@@ -163,6 +163,9 @@ export function clusterItems(items) {
     for (const c of clusters) {
       const dt = Math.abs(Date.parse(it.published_at || 0) - Date.parse(c.first_published || 0));
       if (dt > 48 * 3600e3) continue;
+      // Cross-publisher dedupe only: one publisher's distinct URLs are distinct
+      // articles (e.g. a "quarterfinal preview" and a "semifinal preview").
+      if (c.members.some((m) => m.source_id === it.source_id)) continue;
       const jac = Math.max(...c.members.map((m) => jaccard(tk, m.tk)));
       if (jac >= 0.55 || (pset && c.type === it.story_type && c.members.some((m) => m.pset === pset) && jac >= 0.25)) { home = c; break; }
     }
