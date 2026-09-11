@@ -175,7 +175,10 @@
 .byline .by { color: var(--gold); font-weight: 700; }
 .story-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 44px; margin-top: 28px; align-items: start; }
 .story-body p { font: 400 19px/1.74 var(--f-editorial); color: var(--paper-2); margin: 0 0 1.1em; overflow-wrap: anywhere; }
-.story-body > p:first-child::first-letter { float: left; font: 600 3.4em/.82 var(--f-editorial); margin: .06em .1em 0 0; color: var(--gold); }
+/* first-of-type, not first-child: v1.2.0 opens the body with a section head, so the first
+   paragraph is no longer the first child and the drop cap stopped matching */
+.story-body > p:first-of-type::first-letter { float: left; font: 600 3.4em/.82 var(--f-editorial); margin: .06em .1em 0 0; color: var(--gold); }
+.story-body > h2:first-child { margin-top: 0; }
 .story-aside { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 20px; }
 .aside-title { font: 700 11px/1 var(--f-data); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
 .aside-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
