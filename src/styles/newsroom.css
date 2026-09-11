@@ -169,8 +169,8 @@
 .story-kicker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .story-kicker .cat { font-size: 13px; }
 .story-teams { display: inline-flex; gap: 6px; }
-.story-head h1 { font: 600 clamp(32px, 4.8vw, 56px)/1.05 var(--f-editorial); letter-spacing: -.014em; margin-top: 14px; color: var(--paper); overflow-wrap: anywhere; }
-.story-head .deck { font: 400 clamp(18px, 2.1vw, 22px)/1.45 var(--f-editorial); color: var(--paper-2); margin-top: 16px; }
+.story-head h1 { font: 600 clamp(32px, 4.8vw, 56px)/1.05 var(--f-editorial); letter-spacing: -.014em; margin-top: 14px; color: var(--paper); overflow-wrap: anywhere; text-wrap: balance; }
+.story-head .deck { font: 400 clamp(18px, 2.1vw, 22px)/1.45 var(--f-editorial); color: var(--paper-2); margin-top: 16px; text-wrap: pretty; }
 .byline { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin-top: 20px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font: 500 12px/1.4 var(--f-data); color: var(--faint); }
 .byline .by { color: var(--gold); font-weight: 700; }
 .story-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 44px; margin-top: 28px; align-items: start; }
