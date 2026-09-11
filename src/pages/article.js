@@ -52,7 +52,9 @@ export async function mount(root, ctx) {
 
       <div class="story-layout">
         <div class="story-body art-body">
-          ${a.body.map((p) => html`<p>${p}</p>`)}
+          ${a.sections?.length
+            ? a.sections.map((s) => html`<h2>${s.title}</h2>${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${p}</p>`)}`)
+            : a.body.map((p) => html`<p>${p}</p>`)}
         </div>
         <aside class="story-aside">
           ${players.length ? html`<section><h2 class="aside-title">In this story</h2>

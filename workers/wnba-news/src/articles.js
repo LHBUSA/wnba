@@ -15,8 +15,12 @@
 // matters for bettors", "Market angle", context, evidence, related entities.
 
 import { validateArticle } from './gate.js';
+import { aan } from './prose.js';
+// Synthesis generators (2.0.0-preview) replace the v1 list-style generators for these five kinds.
+// The v1 functions stay exported as *V1 for comparison runs (scripts/newsroom-dryrun.mjs).
+export { injuryDeep as injuryArticles, transactionDeep as transactionArticles, resultDeep as resultArticles, previewDeep as previewArticles, trendDeep as trendArticles } from './deep.js';
 
-export const ARTICLE_VERSION = 'wnba-articles/1.1.0';
+export const ARTICLE_VERSION = 'wnba-articles/1.2.0';
 
 // ------------------------------------------------------------ formatting
 
@@ -69,7 +73,7 @@ function marketText(m, g, forTeamId) {
   const s1 = parts.length ? `In the most recent PropBetEdge market capture for ${away.abbr} at ${home.abbr} (${dShort(g.start_utc)}), ${listJoin(parts)}.` : null;
   const s2 = ml.length ? `Best available moneylines: ${ml.join(', ')}.` : null;
   const s3 = `Prices are the best across ${m.books} books from The Odds API, captured ${dShort(m.captured_at)} at ${tET(m.captured_at)}${m.stale ? ' — older than 12 hours' : ''}.`;
-  const s4 = m.moneyline.home_no_vig !== null ? `With the bookmaker margin removed, the market’s consensus makes the ${nick(home)} a ${f1(m.moneyline.home_no_vig * 100)}% winner — a market benchmark, not a PropBetEdge projection.` : null;
+  const s4 = m.moneyline.home_no_vig !== null ? `With the bookmaker margin removed, the market’s consensus makes the ${nick(home)} ${aan(f1(m.moneyline.home_no_vig * 100))} ${f1(m.moneyline.home_no_vig * 100)}% winner — a market benchmark, not a PropBetEdge projection.` : null;
   return { sentences: [s1, s2, s3, s4].filter(Boolean), facts: { market: m, fav_line: line, home_no_vig_pct: m.moneyline.home_no_vig !== null ? f1(m.moneyline.home_no_vig * 100) : null, game_date: g.start_utc } };
 }
 
@@ -174,11 +178,11 @@ function structureOf(kind, key) {
   return h % n;
 }
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-const aan = (n) => (/^(8|11|18)(\D|$)/.test(String(n)) || /^8\d/.test(String(n)) ? 'an' : 'a'); // an 8-, 11-, 18-, 80-something
+// `aan` now comes from prose.js (it also handles signed numbers: "a −8.9", spoken "a minus …").
 
 // ------------------------------------------------------------ 1. availability / injury
 
-export async function injuryArticles({ api, injuries, externalByPlayer, schedule, standingsById, now }) {
+export async function injuryArticlesV1({ api, injuries, externalByPlayer, schedule, standingsById, now }) {
   const out = [];
   const serious = (i) => /out/i.test(i.status || '') || /day/i.test(i.status || '');
   // One article per player per status episode, newest feed updates first; cap to keep quality.
@@ -317,7 +321,7 @@ function presentTense(sentence) {
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
 
-export async function transactionArticles({ api, transactions, schedule, dict, now }) {
+export async function transactionArticlesV1({ api, transactions, schedule, dict, now }) {
   const byTeamDay = new Map();
   for (const t of transactions || []) {
     if (!t.team?.team_id || !t.date || Date.parse(t.date) < now - 14 * 86400e3) continue;
@@ -410,7 +414,7 @@ export async function transactionArticles({ api, transactions, schedule, dict, n
 const isTD = (r) => (r.pts ?? 0) >= 10 && (r.reb ?? 0) >= 10 && (r.ast ?? 0) >= 10;
 const notable = (r) => (r.pts ?? 0) >= 28 || (r.reb ?? 0) >= 15 || (r.ast ?? 0) >= 12 || isTD(r);
 
-export async function resultArticles({ api, finals, standingsById, now }) {
+export async function resultArticlesV1({ api, finals, standingsById, now }) {
   const out = [];
   for (const g0 of finals) {
     const live = await api(`/v1/games/${g0.game_id}/live`);
@@ -562,7 +566,7 @@ export async function resultArticles({ api, finals, standingsById, now }) {
 
 // ------------------------------------------------------------ 4. previews (upcoming games)
 
-export async function previewArticles({ api, upcoming, now }) {
+export async function previewArticlesV1({ api, upcoming, now }) {
   const out = [];
   for (const g0 of upcoming) {
     const m = await api(`/v1/matchups/${g0.game_id}`);
@@ -638,7 +642,7 @@ export async function previewArticles({ api, upcoming, now }) {
 
 // ------------------------------------------------------------ 5. team market trends (ATS / totals)
 
-export async function trendArticles({ api, finalsByTeam, teams, now }) {
+export async function trendArticlesV1({ api, finalsByTeam, teams, now }) {
   const out = [];
   for (const t of teams) {
     const games = (finalsByTeam.get(t.team_id) || []).slice(0, 10);
@@ -813,3 +817,6 @@ export function cardOf(a) {
     matchup: (() => { const g = a.context?.game || a.context?.next_game; return g?.home?.team_id ? { away_team_id: g.away?.team_id ?? null, home_team_id: g.home.team_id } : null; })()
   };
 }
+
+// Shared with deep.js.
+export { finalize, marketText, standingText, nextGame, gameEntity, hashId };

@@ -4,6 +4,7 @@
 // only when its inputs changed (input_hash) or the generator version moved.
 
 import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, ARTICLE_VERSION } from './articles.js';
+import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
 const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8) + n)); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`; };
@@ -14,8 +15,20 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
   if (!force && last?.at && now - Date.parse(last.at) < 25 * 60e3 && last.version === ARTICLE_VERSION) return { skipped: 'ran_recently', last_at: last.at };
 
-  const soft = async (path) => { try { return await apiGet(path); } catch (e) { errors.push(`${path}: ${e.message}`); return null; } };
   const errors = [];
+  // One fetch per distinct path per run: box scores, team and player records are shared by every generator
+  // that needs them, so the run's subrequest count is the number of DISTINCT records, not of requests.
+  const meterState = { issued: 0, fetched: 0 };
+  const cache = new Map();
+  const soft = (path) => {
+    meterState.issued += 1;
+    if (!cache.has(path)) {
+      meterState.fetched += 1;
+      cache.set(path, apiGet(path).catch((e) => { errors.push(`${path}: ${e.message}`); return null; }));
+    }
+    return cache.get(path);
+  };
+  const meter = () => ({ ...meterState });
   const today = et();
   const [inj, tx, sched, longSched, standings, props] = await Promise.all([
     soft('/v1/injuries'),
@@ -38,7 +51,17 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   for (const v of externalByPlayer.values()) v.sort((a, b) => String(b.published_at).localeCompare(String(a.published_at)));
 
   const api = (path) => soft(path);
-  const ctx = { api, injuries: inj?.items || [], externalByPlayer, schedule: games, standingsById, now, transactions: tx?.items || [], dict, finals, upcoming, finalsByTeam, teams: dict.teamsList || [], props };
+  // Regular-season game ids: a team schedule carries preseason games with the same season.year, so records
+  // computed from team schedules are filtered by the league schedule, where season.type === 2.
+  const season = games[0]?.season?.year || Number(today.slice(0, 4));
+  const regIds = new Set();
+  for (let from = `${season}0501`; from < today;) {
+    const to = [add(from, 59), today].sort()[0];
+    const chunk = await soft(`/v1/schedule?from=${from}&to=${to}`);
+    for (const g of chunk?.games || []) if (g.season?.type === 2) regIds.add(String(g.game_id));
+    from = add(to, 1);
+  }
+  const ctx = { api, injuries: inj?.items || [], externalByPlayer, schedule: games, standingsById, now, transactions: tx?.items || [], dict, finals, upcoming, finalsByTeam, teams: dict.teamsList || [], props, season, regIds, meter, asOf: started };
   const runs = {};
   const produced = [];
   const doTrends = (await env.NEWS_KV.get(`art:v1:trends:${today}`)) === null || force;
@@ -62,9 +85,15 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const byId = new Map(index.map((c) => [c.id, c]));
   const held = [];
   let written = 0;
+  const feed = inj?.items || [];
   for (const a0 of produced) {
     const a = await withSlug(a0);
-    if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, failures: a.gate.failures.slice(0, 6), at: started }); continue; }
+    // Added gate: gate.js validate() has already run inside finalize(); reconcile checks what a number gate
+    // cannot see (season provenance, absence context, injury-feed completeness, co-leaders, market alignment,
+    // rest semantics, provider comment text, prose lint). A failure holds the story.
+    a.reconcile = reconcileArticle(a, { season, injuries: feed });
+    if (!a.reconcile.ok) a.status = 'held';
+    if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, failures: [...a.gate.failures, ...a.reconcile.failures].slice(0, 8), at: started }); continue; }
     const prev = byId.get(a.id);
     const inHash = `${ARTICLE_VERSION}|${a.input_hash || ''}|${a.headline}|${a.deck}`;
     if (prev && prev.input_hash === inHash) continue;
@@ -89,7 +118,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   next.sort((x, y) => String(y.published_at).localeCompare(String(x.published_at)));
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next.slice(0, 400)));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, version: ARTICLE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.length, errors: errors.slice(0, 10) };
+  const status = { at: started, version: ARTICLE_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.length, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }
