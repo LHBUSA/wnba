@@ -14,6 +14,7 @@ import { buildDictionary, linkEntities, relevance, clusterItems, itemId, EDITORI
 import { DESK_VERSION } from './pbe-desk.js';
 import { runArticles } from './articles-run.js';
 import { ARTICLE_VERSION } from './articles.js';
+import { mediaFor, MEDIA_MANIFEST_AT } from './media.js';
 
 const SERVICE = 'wnba-news';
 const VERSION = '1.0.0';
@@ -276,8 +277,8 @@ async function articlesRoute(env, url) {
   const player = url.searchParams.get('player');
   const game = url.searchParams.get('game');
   const has = (c, t, id) => (c.entities || []).some((e) => e && e.type === t && e.id === id);
-  const list = index.filter((c) => (!cat || c.kind === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
-  return j({ ok: true, data: { items: list.slice(0, limit).map(({ input_hash, ...c }) => c), total: list.length }, meta: { service: SERVICE, version: VERSION, generator: ARTICLE_VERSION, last_run_at: last?.at || null, freshness: last?.at ? (Date.now() - Date.parse(last.at) > 90 * 60e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE', served_at: new Date().toISOString() } }, 200, 30);
+  const list = index.filter((c) => !c.superseded_by && (!cat || c.kind === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
+  return j({ ok: true, data: { items: list.slice(0, limit).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) })), total: list.length }, meta: { service: SERVICE, version: VERSION, generator: ARTICLE_VERSION, media_manifest_at: MEDIA_MANIFEST_AT, last_run_at: last?.at || null, freshness: last?.at ? (Date.now() - Date.parse(last.at) > 90 * 60e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE', served_at: new Date().toISOString() } }, 200, 30);
 }
 
 async function articleRoute(env, slugOrId) {
@@ -291,8 +292,8 @@ async function articleRoute(env, slugOrId) {
   if (!a) return j({ ok: false, error: 'not_found' }, 404);
   const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
   const ents = new Set((a.entities || []).filter(Boolean).filter((e) => e.type !== 'game').map((e) => `${e.type}:${e.id}`));
-  const related = index.filter((c) => c.id !== a.id && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => c);
-  return j({ ok: true, data: { article: a, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
+  const related = index.filter((c) => c.id !== a.id && !c.superseded_by && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) }));
+  return j({ ok: true, data: { article: { ...a, media: mediaFor(a) }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
 }
 
 async function heldRoute(env) {

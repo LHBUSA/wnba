@@ -68,11 +68,20 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     const prev = byId.get(a.id);
     const inHash = `${ARTICLE_VERSION}|${a.input_hash || ''}|${a.headline}|${a.deck}`;
     if (prev && prev.input_hash === inHash) continue;
+    if (prev?.slug) a.slug = prev.slug; // a story keeps its first URL even when a new structure rewrites its headline
     a.first_published_at = prev?.first_published_at || started;
     a.revised_at = prev ? started : null;
     await env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 });
     byId.set(a.id, { ...cardOf(a), input_hash: inHash, first_published_at: a.first_published_at });
     written += 1;
+  }
+  // One story per injury episode: when ESPN re-touches the same status, the newest article is the story and
+  // older renders are marked superseded (still reachable at their URLs, dropped from lists).
+  const newestByEpisode = new Map();
+  for (const c of byId.values()) if (c.episode && (!newestByEpisode.has(c.episode) || c.published_at > newestByEpisode.get(c.episode).published_at)) newestByEpisode.set(c.episode, c);
+  for (const c of byId.values()) {
+    const top = c.episode ? newestByEpisode.get(c.episode) : null;
+    if (top && top.id !== c.id) c.superseded_by = top.id; else delete c.superseded_by;
   }
   // Retire: trend articles older than the current day's set; keep 90 days of everything else.
   const cutoff = now - 90 * 86400e3;
