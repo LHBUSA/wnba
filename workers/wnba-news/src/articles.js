@@ -604,7 +604,7 @@ export function cardOf(a) {
     lead_player_id: a.lead_player_id,
     entities: a.entities.filter(Boolean),
     has_market: Boolean(a.market_watch?.market),
-    market: a.market_watch?.market ? { spread: a.market_watch.market.spread?.home_line ?? null, total: a.market_watch.market.total?.line ?? null, books: a.market_watch.market.books, captured_at: a.market_watch.market.captured_at } : null,
+    market: a.market_watch?.market ? { spread: a.market_watch.market.spread?.home_line ?? null, total: a.market_watch.market.total?.line ?? null, books: a.market_watch.market.books, captured_at: a.market_watch.market.captured_at, home_abbr: (a.context?.next_game || a.context?.game)?.home?.abbr || null, away_abbr: (a.context?.next_game || a.context?.game)?.away?.abbr || null } : null,
     sources: [...new Set(a.evidence.map((e) => e.publisher || e.source))].slice(0, 4)
   };
 }

@@ -27,7 +27,7 @@ export function teamLogo(team, size = 32, { cls = '' } = {}) {
   }
   const one = size <= 32 ? e.files['64'] : size <= 64 ? e.files['128'] : e.files['320'];
   const two = size <= 32 ? e.files['128'] : e.files['320'];
-  return html`<img class="tlogo ${cls}" src="${one}" srcset="${one} 1x, ${two} 2x" width="${size}" height="${size}" alt="${label} logo" loading="lazy" decoding="async" />`;
+  return html`<img class="tlogo ${cls}" style="--s:${size}px" src="${one}" srcset="${one} 1x, ${two} 2x" width="${size}" height="${size}" alt="${label} logo" loading="lazy" decoding="async" />`;
 }
 
 export function teamColors(team) {

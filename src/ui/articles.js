@@ -29,7 +29,7 @@ export function articleCard(c, { lead = false } = {}) {
     <h3>${c.headline}</h3>
     ${c.deck ? html`<p class="deck">${c.deck}</p>` : ''}
     ${lead && c.bettor_snippet ? html`<p class="angle"><b style="color:var(--market);font:700 10px/1 var(--f-data);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:4px">Why it matters for bettors</b>${c.bettor_snippet}</p>` : ''}
-    <div class="src"><span>${relTime(c.published_at)}</span>${c.market ? html`<span class="badge market">Market ${c.market.spread !== null ? `${c.market.spread > 0 ? '+' : ''}${c.market.spread}` : ''}${c.market.total !== null ? ` · O/U ${c.market.total}` : ''}</span>` : ''}<span>Sources: ${(c.sources || []).slice(0, 2).join(', ')}</span></div>
+    <div class="src"><span>${relTime(c.published_at)}</span>${c.market ? html`<span class="badge market">${c.market.away_abbr ? `${c.market.away_abbr} @ ${c.market.home_abbr} · ` : ''}${c.market.spread !== null ? `${c.market.home_abbr || 'Home'} ${c.market.spread > 0 ? '+' : ''}${c.market.spread}` : ''}${c.market.total !== null ? ` · O/U ${c.market.total}` : ''}</span>` : ''}<span>Sources: ${(c.sources || []).slice(0, 2).join(', ')}</span></div>
   </a>`;
 }
 
@@ -42,6 +42,6 @@ export function articleList(items, { empty = 'No PropBetEdge articles for this y
 export function articleMini(items) {
   return html`${(items || []).map((c) => html`<a class="change-row" href="/news/${c.slug}" style="grid-template-columns:auto minmax(0,1fr)">
     <span class="nc-logos">${teamsOf(c).slice(0, 1).map((t) => teamLogo({ team_id: t.id, name: t.name }, 28))}</span>
-    <span><span class="cat" style="font:700 9.5px/1 var(--f-data);letter-spacing:.14em;text-transform:uppercase;color:var(--flame)">${KIND_LABEL[c.kind] || c.category}</span><b style="display:block;font:600 15px/1.3 var(--f-editorial);margin-top:4px">${c.headline}</b><span class="note">${relTime(c.published_at)}</span></span>
+    <span><span class="cat" style="font:700 10px/1 var(--f-data);letter-spacing:.14em;text-transform:uppercase;color:var(--flame)">${KIND_LABEL[c.kind] || c.category}</span><b style="display:block;font:600 15px/1.3 var(--f-editorial);margin-top:4px">${c.headline}</b><span class="note">${relTime(c.published_at)}</span></span>
   </a>`)}`;
 }
