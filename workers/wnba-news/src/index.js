@@ -90,6 +90,7 @@ async function runIngest(env, trigger) {
       for (const raw of items) {
         const canonical = canonicalUrl(raw.url);
         if (!canonical) { run.rejected += 1; continue; }
+        if (raw.published_at && Date.parse(raw.published_at) < Date.now() - KEEP_DAYS * 86400e3) { run.outside_window = (run.outside_window || 0) + 1; continue; }
         const id = await itemId(canonical);
         const entities = linkEntities(raw, dict);
         const rel = relevance(raw, entities, src);
@@ -170,9 +171,12 @@ async function runIngest(env, trigger) {
     }
     for (const s of stories) {
       desk.generated += 1;
-      if (!deskStore[s.story_id]) {
-        desk.new += 1;
-        deskStore[s.story_id] = { ...s, source_id: PBE_SOURCE.source_id, attribution: PBE_SOURCE.attribution, generator_version: DESK_VERSION, first_captured_at: startedAt };
+      const prev = deskStore[s.story_id];
+      if (!prev) desk.new += 1;
+      // Same deterministic id + same generator = no rewrite. A new generator
+      // version re-renders the text from the same evidence (timestamps kept).
+      if (!prev || prev.generator_version !== DESK_VERSION) {
+        deskStore[s.story_id] = { ...s, source_id: PBE_SOURCE.source_id, attribution: PBE_SOURCE.attribution, generator_version: DESK_VERSION, first_captured_at: prev?.first_captured_at || startedAt, revised_at: prev ? startedAt : null };
       }
     }
     for (const [k, v] of Object.entries(deskStore)) if (Date.parse(v.published_at) < cutoff) delete deskStore[k];

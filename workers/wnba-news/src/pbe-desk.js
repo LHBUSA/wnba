@@ -6,7 +6,7 @@
 // are invented, no outcomes predicted, no return dates estimated.
 // A quiet day produces no stories — volume is never manufactured.
 
-export const DESK_VERSION = 'pbe-desk/1.0.0';
+export const DESK_VERSION = 'pbe-desk/1.1.0';
 
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' }) : null);
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET' : null);
@@ -87,10 +87,26 @@ export async function transactionStories(items, sinceIso) {
 
 function lineOf(r) {
   const parts = [`${r.pts} points`];
-  if (r.fgm !== null && r.fga !== null) parts[0] += ` (${r.fgm}-${r.fga} FG)`;
+  const shooting = [];
+  if (r.fgm !== null && r.fga !== null) shooting.push(`${r.fgm}-${r.fga} FG`);
+  if (r.fg3a) shooting.push(`${r.fg3m}-${r.fg3a} 3PT`);
+  if (shooting.length) parts[0] += ` (${shooting.join(', ')})`;
   if (r.reb >= 10) parts.push(`${r.reb} rebounds`);
   if (r.ast >= 8) parts.push(`${r.ast} assists`);
   return `${parts.join(', ')} in ${r.min} minutes`;
+}
+
+const isTripleDouble = (r) => (r.pts ?? 0) >= 10 && (r.reb ?? 0) >= 10 && (r.ast ?? 0) >= 10;
+const isNotable = (r) => (r.pts ?? 0) >= 30 || (r.reb ?? 0) >= 15 || (r.ast ?? 0) >= 12 || isTripleDouble(r);
+const notableScore = (r) => (isTripleDouble(r) ? 100 : 0) + (r.pts ?? 0) + 1.2 * Math.max(0, (r.reb ?? 0) - 10) + 1.5 * Math.max(0, (r.ast ?? 0) - 8);
+
+/** Headline fragment naming the stat that made the line notable. */
+function headlineStat(r) {
+  if (isTripleDouble(r)) return `${r.name} triple-double (${r.pts}-${r.reb}-${r.ast})`;
+  if ((r.pts ?? 0) >= 30) return `${r.name} scores ${r.pts}`;
+  if ((r.reb ?? 0) >= 15) return `${r.name} ${r.pts} and ${r.reb} rebounds`;
+  if ((r.ast ?? 0) >= 12) return `${r.name} ${r.ast} assists`;
+  return `${r.name} ${r.pts} points`;
 }
 
 /** A final earns a Desk story only when something notable is in the box score. */
@@ -98,7 +114,7 @@ export async function resultStory(live) {
   const g = live?.game;
   if (!g || g.status?.state !== 'post' || !g.status?.completed) return null;
   const box = live.box?.players || [];
-  const notable = box.filter((r) => (r.pts ?? 0) >= 30 || (r.reb ?? 0) >= 15 || (r.ast ?? 0) >= 12 || ((r.pts ?? 0) >= 10 && (r.reb ?? 0) >= 10 && (r.ast ?? 0) >= 10));
+  const notable = box.filter(isNotable).sort((a, b) => notableScore(b) - notableScore(a));
   const ot = (g.home?.linescores?.length || 0) > 4;
   const lead = live.derived?.lead;
   const winner = g.home?.winner ? g.home : g.away;
@@ -107,12 +123,17 @@ export async function resultStory(live) {
   const comeback = lead?.largest_lead?.[loserSide]?.margin >= 15;
   if (!notable.length && !ot && !comeback) return null;
 
-  const top = [...notable].sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0))[0] || [...box].sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0))[0];
-  const headline = `${winner.short_name} ${winner.score}, ${loser.short_name} ${loser.score}${ot ? ' (OT)' : ''}${top ? `: ${top.name} ${top.pts}${(top.reb ?? 0) >= 10 ? `-${top.reb}` : ''}` : ''}`;
+  const leadScorer = [...box].sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0))[0] || null;
+  const top = notable[0] || leadScorer;
+  const headline = `${winner.short_name} ${winner.score}, ${loser.short_name} ${loser.score}${ot ? ' (OT)' : ''}${top ? `: ${headlineStat(top)}` : ''}`;
   const lines = [`The ${winner.name} beat the ${loser.name} ${winner.score}–${loser.score}${ot ? ` in ${g.home.linescores.length - 4 === 1 ? 'overtime' : `${g.home.linescores.length - 4} overtimes`}` : ''} on ${fmtDate(g.start_utc)}${g.venue?.name ? ` at ${g.venue.name}` : ''}.`];
   for (const r of notable.slice(0, 3)) {
     const team = r.team_id === g.home?.team_id ? g.home : g.away;
     lines.push(`${r.name} (${team?.abbr}) finished with ${lineOf(r)}.`);
+  }
+  if (!notable.length && leadScorer) {
+    const team = leadScorer.team_id === g.home?.team_id ? g.home : g.away;
+    lines.push(`Leading scorer: ${leadScorer.name} (${team?.abbr}) with ${lineOf(leadScorer)}.`);
   }
   if (comeback) lines.push(`The ${loser.name} led by as many as ${lead.largest_lead[loserSide].margin} and lost.`);
   if (lead) lines.push(`Lead changes: ${lead.lead_changes}. Ties: ${lead.ties}.`);
