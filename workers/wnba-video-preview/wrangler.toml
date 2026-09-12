@@ -1,0 +1,28 @@
+name = "wnba-video-preview"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "fd3a233edadd0a60916413c1199f71ee"
+workers_dev = true
+
+# QA-only harness for the official video lane. It runs the SAME modules as
+# workers/wnba-news (../wnba-news/src/videos*.js) over its own KV namespace, with no
+# cron and no newsroom, so a preview never touches production newsroom state, its
+# truth gates, or its KV keys. Production ownership of the lane is wnba-news.
+#
+# Not a production surface: delete this Worker once the lane merges.
+
+[[kv_namespaces]]
+binding = "NEWS_KV"
+id = "4a6a9dbc7aa84ff1aab590c9a80f52b3"
+
+[[services]]
+binding = "API"
+service = "wnba-api"
+
+[observability]
+enabled = true
+
+[limits]
+cpu_ms = 120000
+
+# Secrets: ADMIN_TOKEN (POST /run), YOUTUBE_API_KEY (optional)

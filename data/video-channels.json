@@ -1,0 +1,334 @@
+{
+  "_policy": "Exact YouTube channel IDs only. A channel is ingested only when source_verified AND enabled are both true. Verification is a first-party link: the league's own site (wnba.com) or the team's own official site on the wnba.com domain links the channel URL, and that URL resolves to the recorded externalId. A display name, a handle or a verified badge is never sufficient on its own. scripts/videos/verify-channels.mjs re-proves every row live and fails on any drift.",
+  "_never_ingest": "Fan/highlight compilation accounts, reuploads, mirrors of TikTok/X/Instagram clips, and any channel whose exact ID we have not proved from a first-party link. Video is never downloaded or rehosted: we store provider ids and metadata and construct the privacy-enhanced embed at render time.",
+  "generated_at": "2026-09-11",
+  "region": "US",
+  "pending": [
+    {
+      "provider": "youtube",
+      "channel_id": "UCiWLfSweyRNmLpgEHekhoAg",
+      "name": "ESPN",
+      "channel_class": "broadcast_partner",
+      "source_verified": false,
+      "enabled": false,
+      "checked_at": "2026-09-11",
+      "reason": "ESPN is a WNBA broadcast partner, but no first-party ESPN property we can fetch (espn.com/wnba, espnpressroom.com) publishes a link to a YouTube channel, so the exact channel identity is not proved by our own standard. The ID above is what youtube.com/@ESPN canonicalises to and is recorded only so the row is not re-litigated; it stays disabled. It is also a general-sports firehose, so enabling it would need a WNBA-scoped relevance gate as well as an identity proof."
+    },
+    {
+      "provider": "youtube",
+      "channel_id": null,
+      "name": "espnW",
+      "channel_class": "broadcast_partner",
+      "source_verified": false,
+      "enabled": false,
+      "checked_at": "2026-09-11",
+      "reason": "youtube.com/@espnW returns HTTP 404. No channel to allowlist."
+    }
+  ],
+  "channels": [
+    {
+      "provider": "youtube",
+      "channel_id": "UCO9a_ryN_l7DIDS-VIt-zmw",
+      "name": "WNBA",
+      "channel_class": "league_official",
+      "team_id": null,
+      "feed_title": "WNBA",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 1,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://www.wnba.com/",
+        "linked_as": "https://www.youtube.com/user/wnba",
+        "resolves_to": "UCO9a_ryN_l7DIDS-VIt-zmw",
+        "checked_at": "2026-09-11",
+        "evidence": "The official league site wnba.com (home and /watch) links https://www.youtube.com/user/wnba in its social row; that legacy user URL resolves to externalId UCO9a_ryN_l7DIDS-VIt-zmw, whose Atom feed title is 'WNBA' and whose channel description links wnba.com, twitter.com/WNBA and instagram.com/wnba."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCRNuFQZsMUcmp0o9sVxzaaQ",
+      "name": "Atlanta Dream",
+      "channel_class": "team_official",
+      "team_id": "20",
+      "feed_title": "AtlantaDream",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://dream.wnba.com/",
+        "linked_as": "https://www.youtube.com/c/atlantadream",
+        "resolves_to": "UCRNuFQZsMUcmp0o9sVxzaaQ",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCRNuFQZsMUcmp0o9sVxzaaQ and the channel's Atom feed title is 'AtlantaDream'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UClV7t67vIenYud872co7Z2Q",
+      "name": "Chicago Sky",
+      "channel_class": "team_official",
+      "team_id": "19",
+      "feed_title": "Chicago Sky",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://sky.wnba.com/",
+        "linked_as": "https://www.youtube.com/user/ChicagoSkyBasketball",
+        "resolves_to": "UClV7t67vIenYud872co7Z2Q",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UClV7t67vIenYud872co7Z2Q and the channel's Atom feed title is 'Chicago Sky'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCdv3UUxlSXgkrWU_IGT8cKw",
+      "name": "Connecticut Sun",
+      "channel_class": "team_official",
+      "team_id": "18",
+      "feed_title": "Connecticut Sun",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://sun.wnba.com/",
+        "linked_as": "https://www.youtube.com/connecticutsun",
+        "resolves_to": "UCdv3UUxlSXgkrWU_IGT8cKw",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCdv3UUxlSXgkrWU_IGT8cKw and the channel's Atom feed title is 'Connecticut Sun'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCp_qKS__cK3lqbS1B189K4w",
+      "name": "Dallas Wings",
+      "channel_class": "team_official",
+      "team_id": "3",
+      "feed_title": "Dallas Wings",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://wings.wnba.com/",
+        "linked_as": "https://www.youtube.com/channel/UCp_qKS__cK3lqbS1B189K4w",
+        "resolves_to": "UCp_qKS__cK3lqbS1B189K4w",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCp_qKS__cK3lqbS1B189K4w and the channel's Atom feed title is 'Dallas Wings'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCtEb1qwyeIpdfx0kwulH74A",
+      "name": "Golden State Valkyries",
+      "channel_class": "team_official",
+      "team_id": "129689",
+      "feed_title": "Golden State Valkyries",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://valkyries.wnba.com/",
+        "linked_as": "https://www.youtube.com/@ValkyriesWNBA",
+        "resolves_to": "UCtEb1qwyeIpdfx0kwulH74A",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCtEb1qwyeIpdfx0kwulH74A and the channel's Atom feed title is 'Golden State Valkyries'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UC2FefohmBAtGBvZ8QHiy30A",
+      "name": "Indiana Fever",
+      "channel_class": "team_official",
+      "team_id": "5",
+      "feed_title": "Indiana Fever",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://fever.wnba.com/",
+        "linked_as": "https://www.youtube.com/c/IndianaFever",
+        "resolves_to": "UC2FefohmBAtGBvZ8QHiy30A",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UC2FefohmBAtGBvZ8QHiy30A and the channel's Atom feed title is 'Indiana Fever'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCHRbuUvu9pVUQT6Fv9DGy_Q",
+      "name": "Las Vegas Aces",
+      "channel_class": "team_official",
+      "team_id": "17",
+      "feed_title": "Las Vegas Aces",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://aces.wnba.com/",
+        "linked_as": "https://www.youtube.com/@LVAces",
+        "resolves_to": "UCHRbuUvu9pVUQT6Fv9DGy_Q",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCHRbuUvu9pVUQT6Fv9DGy_Q and the channel's Atom feed title is 'Las Vegas Aces'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCxhSLhRmf_3JDuOF4ezqMKQ",
+      "name": "Los Angeles Sparks",
+      "channel_class": "team_official",
+      "team_id": "6",
+      "feed_title": "The Official Page of the Los Angeles Sparks",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://sparks.wnba.com/",
+        "linked_as": "https://www.youtube.com/user/TheLosAngelesSparks",
+        "resolves_to": "UCxhSLhRmf_3JDuOF4ezqMKQ",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCxhSLhRmf_3JDuOF4ezqMKQ and the channel's Atom feed title is 'The Official Page of the Los Angeles Sparks'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UC3rZAG71b0xSrWdn6NCvbkQ",
+      "name": "Minnesota Lynx",
+      "channel_class": "team_official",
+      "team_id": "8",
+      "feed_title": "Minnesota Lynx",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://lynx.wnba.com/",
+        "linked_as": "https://www.youtube.com/minnesotalynx",
+        "resolves_to": "UC3rZAG71b0xSrWdn6NCvbkQ",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UC3rZAG71b0xSrWdn6NCvbkQ and the channel's Atom feed title is 'Minnesota Lynx'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCWSENPwIesalIOfEdwTGZlw",
+      "name": "New York Liberty",
+      "channel_class": "team_official",
+      "team_id": "9",
+      "feed_title": "New York Liberty",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://liberty.wnba.com/",
+        "linked_as": "https://www.youtube.com/NewYorkLiberty",
+        "resolves_to": "UCWSENPwIesalIOfEdwTGZlw",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCWSENPwIesalIOfEdwTGZlw and the channel's Atom feed title is 'New York Liberty'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCcjwUjOqddcuhf813plJJPg",
+      "name": "Phoenix Mercury",
+      "channel_class": "team_official",
+      "team_id": "11",
+      "feed_title": "Phoenix Mercury",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://mercury.wnba.com/",
+        "linked_as": "https://www.youtube.com/channel/UCcjwUjOqddcuhf813plJJPg",
+        "resolves_to": "UCcjwUjOqddcuhf813plJJPg",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCcjwUjOqddcuhf813plJJPg and the channel's Atom feed title is 'Phoenix Mercury'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UChRPulEHWRKS8RC0OcGrEqw",
+      "name": "Portland Fire",
+      "channel_class": "team_official",
+      "team_id": "132052",
+      "feed_title": "Portland Fire",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://fire.wnba.com/",
+        "linked_as": "https://www.youtube.com/@ThePortlandFire",
+        "resolves_to": "UChRPulEHWRKS8RC0OcGrEqw",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UChRPulEHWRKS8RC0OcGrEqw and the channel's Atom feed title is 'Portland Fire'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCv4xLXLA_aElluuaTWXN1jA",
+      "name": "Seattle Storm",
+      "channel_class": "team_official",
+      "team_id": "14",
+      "feed_title": "Seattle Storm Official",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://storm.wnba.com/",
+        "linked_as": "https://www.youtube.com/@SeattleStormOfficial",
+        "resolves_to": "UCv4xLXLA_aElluuaTWXN1jA",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCv4xLXLA_aElluuaTWXN1jA and the channel's Atom feed title is 'Seattle Storm Official'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCz0TK83I5Lv69Ou0zxb0EpQ",
+      "name": "Toronto Tempo",
+      "channel_class": "team_official",
+      "team_id": "131935",
+      "feed_title": "Toronto Tempo",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://tempo.wnba.com/",
+        "linked_as": "https://www.youtube.com/@torontotempo",
+        "resolves_to": "UCz0TK83I5Lv69Ou0zxb0EpQ",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCz0TK83I5Lv69Ou0zxb0EpQ and the channel's Atom feed title is 'Toronto Tempo'."
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCRha9IKwKJc3i4fZdstGsvQ",
+      "name": "Washington Mystics",
+      "channel_class": "team_official",
+      "team_id": "16",
+      "feed_title": "Washington Mystics",
+      "source_verified": true,
+      "enabled": true,
+      "priority": 2,
+      "verification": {
+        "method": "first_party_link",
+        "first_party_url": "https://mystics.wnba.com/",
+        "linked_as": "https://www.youtube.com/@WashMystics",
+        "resolves_to": "UCRha9IKwKJc3i4fZdstGsvQ",
+        "checked_at": "2026-09-11",
+        "evidence": "The team's own official site on the wnba.com domain links this YouTube URL; it resolves to externalId UCRha9IKwKJc3i4fZdstGsvQ and the channel's Atom feed title is 'Washington Mystics'."
+      }
+    }
+  ]
+}

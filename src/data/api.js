@@ -13,6 +13,7 @@ const MEM_TTL = [
   [/\/live(\?|$)/, 0],
   [/\/v1\/today/, 15000],
   [/\/v1\/news/, 60000],
+  [/\/videos(\?|$)/, 180000],
   [/\/v1\/(standings|teams|players|stats)/, 120000],
   [/.*/, 30000]
 ];
@@ -81,5 +82,12 @@ export const api = {
   articles: (p) => getJson(`${NEWS_BASE}/v1/articles${q(p)}`),
   article: (slug) => getJson(`${NEWS_BASE}/v1/articles/${encodeURIComponent(slug)}`),
   story: (id) => getJson(`${NEWS_BASE}/v1/news/story/${encodeURIComponent(id)}`),
-  newsSources: () => getJson(`${NEWS_BASE}/v1/news/sources`)
+  newsSources: () => getJson(`${NEWS_BASE}/v1/news/sources`),
+  // Official video layer. Normalized rows from our Worker; the browser builds the
+  // privacy-enhanced YouTube embed itself, on click, and never calls a provider API.
+  videos: (p) => getJson(`${NEWS_BASE}/v1/videos${q(p)}`),
+  playerVideos: (id, p) => getJson(`${NEWS_BASE}/v1/players/${encodeURIComponent(id)}/videos${q(p)}`),
+  teamVideos: (id, p) => getJson(`${NEWS_BASE}/v1/teams/${encodeURIComponent(id)}/videos${q(p)}`),
+  gameVideos: (id, p) => getJson(`${NEWS_BASE}/v1/games/${encodeURIComponent(id)}/videos${q(p)}`),
+  videoChannels: () => getJson(`${NEWS_BASE}/v1/videos/channels`)
 };

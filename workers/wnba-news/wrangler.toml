@@ -22,7 +22,15 @@ service = "wnba-api"
 [observability]
 enabled = true
 
-# Secrets: ADMIN_TOKEN (POST /run), SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (after approval)
+# Secrets:
+#   ADMIN_TOKEN                                    POST /run
+#   SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY       after approval
+#   YOUTUBE_API_KEY                                optional. With it the video lane uses
+#     YouTube Data API v3 (uploads playlist -> playlistItems.list -> videos.list) and gets
+#     duration, live state and status.embeddable straight from the provider. Without it the
+#     lane runs the public Atom feed + per-video oEmbed path: a real path, not a stub, but
+#     duration_sec stays null and live_broadcast_state stays 'unknown'. Either way nothing
+#     publishes unless the video is proved embeddable, and only allowlisted channels are polled.
 
 # Article passes parse several box scores per run.
 [limits]

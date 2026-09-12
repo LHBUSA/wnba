@@ -15,6 +15,8 @@ import { DESK_VERSION } from './pbe-desk.js';
 import { runArticles } from './articles-run.js';
 import { ARTICLE_VERSION } from './articles.js';
 import { mediaFor, MEDIA_MANIFEST_AT } from './media.js';
+import { runVideos } from './videos-run.js';
+import { selectVideos, ALLOWED_CHANNELS, PENDING_CHANNELS, VIDEO_VERSION, VIDEO_TYPES, CHANNELS_GENERATED_AT } from './videos.js';
 
 const SERVICE = 'wnba-news';
 const VERSION = '1.0.0';
@@ -34,6 +36,14 @@ export default {
     if (path === '/v1/news/sources') return sourcesRoute(env);
     if (path === '/v1/news/runs') return runsRoute(env);
     if (path === '/v1/articles') return articlesRoute(env, url);
+    if (path === '/v1/videos') return videosRoute(env, url);
+    if (path === '/v1/videos/channels') return videoChannelsRoute(env);
+    const pv = path.match(/^\/v1\/players\/(\d{3,12})\/videos$/);
+    if (pv) return videosRoute(env, url, { player_id: pv[1] });
+    const tv = path.match(/^\/v1\/teams\/(\d{1,8})\/videos$/);
+    if (tv) return videosRoute(env, url, { team_id: tv[1] });
+    const gv = path.match(/^\/v1\/games\/(\d{6,12})\/videos$/);
+    if (gv) return videosRoute(env, url, { game_id: gv[1] });
     if (path === '/v1/articles/held') return heldRoute(env);
     const am = path.match(/^\/v1\/articles\/([a-z0-9-]{6,120})$/);
     if (am) return articleRoute(env, am[1]);
@@ -41,9 +51,10 @@ export default {
     if (m) return storyRoute(env, m[1]);
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
-      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' }) });
+      if (url.searchParams.get('lane') === 'videos') return j({ ok: true, result: await runVideos(env, { apiGet: (pth) => apiGet(env, pth), force: true }) });
+      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force', forceVideos: url.searchParams.get('videos') === 'force' }) });
     }
-    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
+    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs', '/v1/videos', '/v1/videos/channels', '/v1/players/:id/videos', '/v1/teams/:id/videos', '/v1/games/:id/videos'] }, 404);
   }
 };
 
@@ -82,7 +93,7 @@ async function fetchSource(src) {
   return parseRss(text);
 }
 
-async function runIngest(env, trigger, { forceArticles = false } = {}) {
+async function runIngest(env, trigger, { forceArticles = false, forceVideos = false } = {}) {
   const startedAt = new Date().toISOString();
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
   const dict = buildDictionary(rawDict);
@@ -160,11 +171,20 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
     articles = { error: e.message };
   }
   const desk = { status: articles?.error ? 'FAIL' : articles?.errors?.length ? 'DEGRADED' : 'PASS', articles };
+
+  // Official video lane — allowlisted channels only. Rate-limited inside runVideos so
+  // a 10-minute newsroom cron does not poll YouTube every 10 minutes.
+  let video;
+  try {
+    video = await runVideos(env, { apiGet: (pth) => apiGet(env, pth), force: forceVideos });
+  } catch (e) {
+    video = { status: 'FAIL', error: e.message };
+  }
   const deskStore = {};
 
   await persistSupabase(env, store, clusters, deskStore).catch((e) => runs.push({ source_id: 'supabase', status: 'FAIL', error: e.message }));
 
-  const status = { at: startedAt, trigger, version: VERSION, editorial: EDITORIAL_VERSION, desk_version: DESK_VERSION, dictionary: { fresh: dictFresh, error: dictError || null, players: rawDict.players?.length || 0, captured_at: rawDict.captured_at }, sources: runs, desk, totals: { items: list.length, clusters: clusters.length, articles_published: articles?.published_total ?? null }, article_version: ARTICLE_VERSION, supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) };
+  const status = { at: startedAt, trigger, version: VERSION, editorial: EDITORIAL_VERSION, desk_version: DESK_VERSION, dictionary: { fresh: dictFresh, error: dictError || null, players: rawDict.players?.length || 0, captured_at: rawDict.captured_at }, sources: runs, desk, totals: { items: list.length, clusters: clusters.length, articles_published: articles?.published_total ?? null }, article_version: ARTICLE_VERSION, video: video ? { status: video.status, at: video.at, skipped: video.skipped || null, totals: video.totals || null } : null, video_version: VIDEO_VERSION, supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) };
   await env.NEWS_KV.put('news:v1:status', JSON.stringify(status));
   const hist = (await env.NEWS_KV.get('news:v1:runs', 'json')) || [];
   await env.NEWS_KV.put('news:v1:runs', JSON.stringify([status, ...hist].slice(0, 48)));
@@ -296,6 +316,61 @@ async function articleRoute(env, slugOrId) {
   return j({ ok: true, data: { article: { ...a, media: mediaFor(a) }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
 }
 
+// --------------------------------------------------------- official video
+
+// Additive, read-only, owned. The browser never calls the YouTube Data API; it
+// receives normalized rows and builds the privacy-enhanced embed itself on click.
+async function videosRoute(env, url, fixed = {}) {
+  const [store, last] = await Promise.all([
+    env.NEWS_KV.get('vid:v1:items', 'json'),
+    env.NEWS_KV.get('vid:v1:last_run', 'json')
+  ]);
+  const type = url.searchParams.get('type');
+  const filters = {
+    type: VIDEO_TYPES.includes(type) ? type : null,
+    player_id: fixed.player_id || url.searchParams.get('player_id'),
+    team_id: fixed.team_id || url.searchParams.get('team_id'),
+    game_id: fixed.game_id || url.searchParams.get('game_id'),
+    limit: Math.min(Number(url.searchParams.get('limit') || 12), 60)
+  };
+  const sel = selectVideos(store || {}, filters);
+  return j({
+    ok: true,
+    data: { items: sel.items, total: sel.total, pool: sel.pool, filters },
+    meta: {
+      service: SERVICE,
+      version: VERSION,
+      generator: VIDEO_VERSION,
+      types: VIDEO_TYPES,
+      channels_allowlisted: ALLOWED_CHANNELS.length,
+      discovery: last?.discovery || null,
+      last_run_at: last?.at || null,
+      freshness: last?.at ? (Date.now() - Date.parse(last.at) > 6 * 3600e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE',
+      rights: 'Official WNBA, WNBA team and league-authorised channels only. PropBetEdge never downloads or rehosts video: playback runs in YouTube\u2019s own privacy-enhanced player, with YouTube controls and branding intact, and the publisher is credited on every card.',
+      served_at: new Date().toISOString()
+    }
+  }, 200, 60);
+}
+
+async function videoChannelsRoute(env) {
+  const last = await env.NEWS_KV.get('vid:v1:last_run', 'json');
+  const runById = new Map((last?.channels || []).map((r) => [r.channel_id, r]));
+  return j({
+    ok: true,
+    data: {
+      channels: ALLOWED_CHANNELS.map((c) => ({
+        provider: c.provider, channel_id: c.channel_id, name: c.name, channel_class: c.channel_class,
+        team_id: c.team_id || null, source_verified: c.source_verified, verification: c.verification,
+        last_run: runById.get(c.channel_id) || null
+      })),
+      pending: PENDING_CHANNELS,
+      allowlist_generated_at: CHANNELS_GENERATED_AT,
+      totals: last?.totals || null
+    },
+    meta: { service: SERVICE, version: VERSION, generator: VIDEO_VERSION, last_run_at: last?.at || null, served_at: new Date().toISOString() }
+  }, 200, 300);
+}
+
 async function heldRoute(env) {
   return j({ ok: true, data: { held: (await env.NEWS_KV.get('art:v1:held', 'json')) || [], last_run: await env.NEWS_KV.get('art:v1:last_run', 'json') }, meta: { service: SERVICE, version: VERSION } }, 200, 30);
 }
@@ -318,8 +393,8 @@ async function runsRoute(env) {
 }
 
 async function health(env) {
-  const status = await env.NEWS_KV.get('news:v1:status', 'json');
-  return j({ ok: true, service: SERVICE, version: VERSION, runtime: 'cloudflare-workers', scheduler: 'cloudflare-cron */10', kv: Boolean(env.NEWS_KV), api_binding: Boolean(env.API), supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY), last_ingest_at: status?.at || null, totals: status?.totals || null });
+  const [status, vid] = await Promise.all([env.NEWS_KV.get('news:v1:status', 'json'), env.NEWS_KV.get('vid:v1:last_run', 'json')]);
+  return j({ ok: true, service: SERVICE, version: VERSION, runtime: 'cloudflare-workers', scheduler: 'cloudflare-cron */10', kv: Boolean(env.NEWS_KV), api_binding: Boolean(env.API), supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY), last_ingest_at: status?.at || null, totals: status?.totals || null, video: { generator: VIDEO_VERSION, channels_allowlisted: ALLOWED_CHANNELS.length, youtube_api_key: Boolean(env.YOUTUBE_API_KEY), discovery: vid?.discovery || null, last_run_at: vid?.at || null, status: vid?.status || 'NEVER_RUN', totals: vid?.totals || null } });
 }
 
 // ---------------------------------------------------------------- utils
