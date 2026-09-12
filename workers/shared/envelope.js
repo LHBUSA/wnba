@@ -104,14 +104,20 @@ export function fail(code, message, metaBlock, status = 502) {
   return json({ ok: false, error: { code, message }, data: null, meta: metaBlock }, { status });
 }
 
-export function preflight() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'access-control-allow-origin': '*',
-      'access-control-allow-methods': 'GET, OPTIONS',
-      'access-control-allow-headers': 'content-type',
-      'access-control-max-age': '86400'
-    }
-  });
+/**
+ * `credentialed` is the header block a credentialed route decided on (session.js
+ * credentialedCors). A wildcard origin can never carry credentials, so when the caller
+ * is an allowlisted PropBetEdge origin the exact origin is echoed and allow-credentials
+ * is set; every other caller keeps the wildcard and is never sent cookies.
+ */
+export function preflight(credentialed = null) {
+  const h = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, OPTIONS',
+    'access-control-allow-headers': 'content-type',
+    'access-control-max-age': '86400'
+  };
+  if (credentialed?.['access-control-allow-origin']) Object.assign(h, credentialed);
+  else if (credentialed?.vary) h.vary = credentialed.vary;
+  return new Response(null, { status: 204, headers: h });
 }

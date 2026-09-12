@@ -26,6 +26,7 @@ import { etCompact, addDays, isCompactDate, gameEtDate, daysBetween } from '../.
 import { photoFor, photoCoverage } from './photos.js';
 import { PBE_MODEL } from '../../shared/market.js';
 import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './market.js';
+import { accountState, credentialedCors, PRODUCT_KEY } from './session.js';
 
 const SERVICE = 'wnba-api';
 const VERSION = '1.0.0';
@@ -49,7 +50,7 @@ const TTL = {
 
 export default {
   async fetch(request, env, ctx) {
-    if (request.method === 'OPTIONS') return preflight();
+    if (request.method === 'OPTIONS') return preflight(credentialedCors(request));
     if (request.method !== 'GET' && request.method !== 'HEAD') return json({ ok: false, error: { code: 'method_not_allowed' } }, { status: 405 });
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -823,22 +824,33 @@ async function trackRecord({ path }) {
   );
 }
 
-async function account({ env, path }) {
-  // Fail closed. WNBA Pro requires: verified PropBetEdge session -> Supabase
-  // pbe_sport_entitlements (product_key wnba_pro). Neither the session contract
-  // nor the WNBA Stripe objects are live, so every visitor is signed_out.
+async function account({ request, env, path }) {
+  // Fail closed, and server-decided end to end:
+  //   pbe_session cookie (HS256, verified here against the shared secret)
+  //     -> verified email
+  //     -> Supabase pbe_has_sport_entitlement(email, 'wnba_pro') under the service role.
+  // No query parameter, request header, request body or browser storage can influence
+  // the answer; the browser cannot even read the cookie (HttpOnly). Every failure lands
+  // on "not entitled", and a lookup we could not perform is reported as UNAVAILABLE
+  // rather than silently downgrading a paying subscriber into the free state.
+  const state = await accountState(request, env);
   return json(
     {
       ok: true,
       data: {
-        state: 'signed_out',
-        entitled: false,
-        product_key: 'wnba_pro',
+        ...state,
+        product_key: PRODUCT_KEY,
         purchase_activation: env.WNBA_PURCHASE_ACTIVE === 'true' ? 'active' : 'inactive',
-        reason: 'Account verification is not connected for WNBA yet; access is fail-closed.'
+        authority: 'server_session_and_supabase_ledger'
       },
-      meta: base(path, { source: SOURCES.pbe, fetchedAt: nowIso(), freshness: FRESHNESS.CURRENT, semantics: 'ACCOUNT_FAIL_CLOSED' })
+      meta: base(path, {
+        source: SOURCES.pbe,
+        fetchedAt: nowIso(),
+        freshness: FRESHNESS.CURRENT,
+        semantics: state.state === 'pro' ? 'ACCOUNT_ENTITLED' : 'ACCOUNT_FAIL_CLOSED',
+        degraded: state.entitlement_check === 'UNAVAILABLE' ? ['entitlement_lookup_unavailable'] : []
+      })
     },
-    { maxAge: 0 }
+    { maxAge: 0, headers: credentialedCors(request) }
   );
 }

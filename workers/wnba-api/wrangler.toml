@@ -19,5 +19,14 @@ WNBA_PURCHASE_ACTIVE = "false"
 [observability]
 enabled = true
 
-# Optional secrets (bound only after owner approval of the Supabase target):
-#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+# Secrets for /v1/account (all three required before any visitor can reach the
+# `pro` state; any one missing keeps the route fail-closed):
+#   PBE_SESSION_JWT_SECRET   the MAGIC_JWT_SECRET of propbetedge-auth-magic. Used only
+#                            to VERIFY the pbe_session cookie; this Worker never issues
+#                            a session and never writes an entitlement.
+#   SUPABASE_URL             https://rlfyavnhbngwbldebrid.supabase.co (entitlement ledger)
+#   SUPABASE_SERVICE_ROLE_KEY  service role; pbe_has_sport_entitlement is service-role only.
+#
+# The session cookie is scoped Domain=.propbetedge.ai, so /v1/account only ever receives
+# it when this Worker is reached on a propbetedge.ai host. On workers.dev the route is
+# correct but permanently signed_out. See docs/PAYWALL.md gate 15.
