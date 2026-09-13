@@ -15,7 +15,7 @@
 import manifest from '../../../data/newsroom-media.json';
 
 const PLAYERS = manifest.players || {};
-const SINGLE = new Set(['injury', 'transaction', 'performance', 'result', 'props']);
+const SINGLE = new Set(['injury', 'transaction', 'performance', 'result', 'props', 'brief']);
 const MATCHUP = new Set(['preview', 'market']);
 
 function subject(pid) {
