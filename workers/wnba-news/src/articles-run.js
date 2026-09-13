@@ -6,6 +6,7 @@
 import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, ARTICLE_VERSION } from './articles.js';
 import { briefArticles, BRIEF_VERSION } from './briefs.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
+import { mergeArticles } from './lifecycle.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
 const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8) + n)); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`; };
@@ -15,35 +16,8 @@ const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 
 // article cadence. Input hashes below still guarantee unchanged stories are never rewritten.
 export const ARTICLE_RUN_MIN_GAP_MS = 9 * 60e3;
 
-// A newsroom story has two clocks: the source/event clock (`published_at`) can move as
-// evidence changes, while `first_published_at` is the immutable moment PropBetEdge first
-// published that canonical story. Ranking and article-index order use the latter.
-export const articleFirstPublishedAt = (c) => c?.first_published_at || c?.published_at || null;
-
-// ESPN supplies a stable injury record id. Once a current injury has been migrated onto
-// this key, subsequent source-date/status/detail changes revise the same PBE article id
-// instead of manufacturing a fresh headline article every time the feed changes.
-export const injuryIdentity = (a) => {
-  const id = a?.kind === 'injury' ? a?.facts?.injury?.injury_id : null;
-  return id === null || id === undefined || id === '' ? null : String(id);
-};
-
-const injuryEpisode = (a) => (a?.kind === 'injury' && a?.lead_player_id
-  ? `${a.lead_player_id}|${String(a?.facts?.injury?.status || '').toLowerCase()}`
-  : null);
-
-/** Find the canonical predecessor(s) for an injury article, including one-time migration of legacy cards. */
-export function injuryPredecessors(a, cards = []) {
-  if (a?.kind !== 'injury') return [];
-  const key = injuryIdentity(a);
-  const keyed = key ? cards.filter((c) => c?.kind === 'injury' && c.injury_key && String(c.injury_key) === key) : [];
-  if (keyed.length) return keyed;
-  const episode = injuryEpisode(a);
-  if (!episode) return [];
-  // Legacy cards predate injury_key. Restrict this fallback to cards that have not
-  // already been migrated so a future, distinct ESPN injury id cannot collapse into an old event.
-  return cards.filter((c) => c?.kind === 'injury' && !c.injury_key && c.episode === episode);
-}
+// Story identity, editorial-origin clock, duplicate repair and supersession live in lifecycle.js.
+export { articleFirstPublishedAt, injuryIdentity } from './lifecycle.js';
 
 export async function runArticles(env, { apiGet, dict, externalItems, force = false }) {
   const started = new Date().toISOString();
@@ -122,13 +96,8 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   if (doTrends) await env.NEWS_KV.put(`art:v1:trends:${today}`, '1', { expirationTtl: 3 * 86400 });
 
   const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
-  // One-time lifecycle migration: before first_published_at existed, published_at was
-  // the only clock on the card. Preserve that original value instead of stamping the
-  // next rewrite as a brand-new story.
-  for (const c of index) if (!c.first_published_at) c.first_published_at = c.published_at || null;
-  const byId = new Map(index.map((c) => [c.id, c]));
   const held = [];
-  let written = 0;
+  const publishable = [];
   const feed = inj?.items || [];
   for (const a0 of produced) {
     const a = await withSlug(a0);
@@ -138,58 +107,25 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     a.reconcile = reconcileArticle(a, { season, injuries: feed });
     if (!a.reconcile.ok) a.status = 'held';
     if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, failures: [...a.gate.failures, ...a.reconcile.failures].slice(0, 8), at: started }); continue; }
-
-    let prev = byId.get(a.id);
-    let injuryPrev = [];
-    if (a.kind === 'injury') {
-      injuryPrev = injuryPredecessors(a, [...byId.values()]);
-      if (!prev && injuryPrev.length) {
-        prev = injuryPrev.find((c) => !c.superseded_by) || [...injuryPrev].sort((x, y) => String(y.published_at).localeCompare(String(x.published_at)))[0];
-      }
-      // The generator historically included source_updated_at in the hash id. Collapse that
-      // legacy churn onto the existing canonical story id before comparing/writing.
-      if (prev && prev.id !== a.id) a.id = prev.id;
-    }
-
-    const generatorVersion = a.kind === 'brief' ? BRIEF_VERSION : ARTICLE_VERSION;
-    const inHash = `${generatorVersion}|${a.input_hash || ''}|${a.headline}|${a.deck}`;
-    const originPool = a.kind === 'injury' && injuryPrev.length ? injuryPrev : (prev ? [prev] : []);
-    const originTimes = originPool.map(articleFirstPublishedAt).filter((x) => x && Number.isFinite(Date.parse(x))).sort();
-    const firstPublished = originTimes[0] || articleFirstPublishedAt(prev) || started;
-    const iKey = injuryIdentity(a);
-
-    // Collapse all legacy cards for the same current ESPN injury record/episode from the live index.
-    // Their individual KV item payloads may remain reachable by old URLs, but they can no longer compete
-    // with the canonical story in headline ranking.
-    if (a.kind === 'injury' && injuryPrev.length) for (const c of injuryPrev) if (c.id !== a.id) byId.delete(c.id);
-
-    if (prev && prev.input_hash === inHash) {
-      byId.set(a.id, { ...prev, first_published_at: firstPublished, ...(iKey ? { injury_key: iKey } : {}) });
-      continue;
-    }
-    if (prev?.slug) a.slug = prev.slug; // a story keeps its first URL even when a new structure rewrites its headline
-    a.first_published_at = firstPublished;
-    a.revised_at = prev ? started : null;
-    await env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 });
-    byId.set(a.id, { ...cardOf(a), input_hash: inHash, first_published_at: a.first_published_at, revised_at: a.revised_at, ...(iKey ? { injury_key: iKey } : {}) });
-    written += 1;
+    publishable.push(a);
   }
-  // One live injury story per player: the newest source event is the story; older distinct injury events
-  // are marked superseded — still reachable, dropped from lists. Revisions to the same injury now keep one id.
-  const newestByPlayer = new Map();
-  for (const c of byId.values()) if (c.kind === 'injury' && c.lead_player_id && (!newestByPlayer.has(c.lead_player_id) || c.published_at > newestByPlayer.get(c.lead_player_id).published_at)) newestByPlayer.set(c.lead_player_id, c);
-  for (const c of byId.values()) {
-    const top = c.kind === 'injury' && c.lead_player_id ? newestByPlayer.get(c.lead_player_id) : null;
-    if (top && top.id !== c.id) c.superseded_by = top.id; else delete c.superseded_by;
-  }
-  // Retire: keep 90 days of source/event history, but order the newsroom by the immutable
-  // first publication of each canonical PBE story. A revision never floats an old story back to the top.
-  const cutoff = now - 90 * 86400e3;
-  const next = [...byId.values()].filter((c) => Date.parse(c.published_at) > cutoff);
-  next.sort((x, y) => String(articleFirstPublishedAt(y) || '').localeCompare(String(articleFirstPublishedAt(x) || '')));
-  await env.NEWS_KV.put('art:v1:index', JSON.stringify(next.slice(0, 400)));
+
+  // New material event = new story; same event with new data = revision that keeps its editorial origin.
+  // Existing duplicate/poisoned cards are repaired deterministically inside the merge on every pass.
+  const { index: next, written, repairs, events } = await mergeArticles({
+    index,
+    articles: publishable,
+    started,
+    now,
+    feed: Array.isArray(inj?.items) ? inj.items : null,
+    getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'),
+    putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }),
+    versionOf: (a) => (a.kind === 'brief' ? BRIEF_VERSION : ARTICLE_VERSION),
+    cardOf
+  });
+  await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.length, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter((c) => !c.superseded_by).length, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

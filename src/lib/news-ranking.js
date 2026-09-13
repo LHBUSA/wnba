@@ -6,7 +6,10 @@ const TOP_STORY_MAX_AGE = 72 * HOUR;
 // Editorial freshness is the moment PropBetEdge first published this canonical story.
 // A source record can move, a market capture can refresh and the article can be revised,
 // but none of those events make the same story brand-new again.
-export const storyPublishedAt = (c) => Date.parse(c?.first_published_at || c?.published_at || '') || 0;
+// The source clock is only an acceptable stand-in for a legacy card that was never revised; on a revised
+// card it is the revision's data time, so without an origin clock the story claims no freshness at all.
+export const storyOriginIso = (c) => c?.first_published_at || (c?.revised_at ? null : c?.published_at) || null;
+export const storyPublishedAt = (c) => Date.parse(storyOriginIso(c) || '') || 0;
 const group = (c) => (c?.kind === 'result' ? 'performance' : c?.kind);
 const isPhoto = (c) => c?.media && (c.media.layout === 'single' || c.media.layout === 'matchup');
 

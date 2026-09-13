@@ -8,7 +8,7 @@ import { errorState, skeleton, badge, entityChips } from '../ui/components.js';
 import { articleCard, articleRow, KIND_LABEL, DESK } from '../ui/articles.js';
 import { relTime, fmtDateTimeET } from '../lib/format.js';
 import { createPoller } from '../lib/poller.js';
-import { chooseLead, topStories } from '../lib/news-ranking.js';
+import { chooseLead, topStories, storyPublishedAt } from '../lib/news-ranking.js';
 
 export const title = (p) => (p.kind ? `${DESK[p.kind] || KIND_LABEL[p.kind] || 'News'} · WNBA News` : 'WNBA News & Intelligence');
 export const description = () => 'Live, automated WNBA news and intelligence from PropBetEdge: source-grounded reporting on injuries, roster moves, performances, previews and market trends — each with a bettor angle and cited evidence.';
@@ -98,7 +98,8 @@ export async function mount(root, ctx) {
     const lead = chooseLead(items);
     const tops = topStories(items, lead, { limit: 3 });
     const shown = new Set([lead?.id, ...tops.map((c) => c.id)]);
-    const latest = items.filter((c) => !shown.has(c.id)).slice(0, 8);
+    // Latest is newest-first by editorial origin, so a revision never floats old coverage back up the river.
+    const latest = items.filter((c) => !shown.has(c.id)).sort((a, b) => storyPublishedAt(b) - storyPublishedAt(a)).slice(0, 8);
     const deskItems = (k) => ofKind(items, k).filter((c) => !shown.has(c.id));
 
     render(root, html`

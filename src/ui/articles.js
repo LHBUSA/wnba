@@ -7,6 +7,7 @@ import { html } from '../lib/dom.js';
 import { teamLogo } from './logo.js';
 import { relTime } from '../lib/format.js';
 import { storyMedia, storyThumb } from './story-media.js';
+import { storyOriginIso } from '../lib/news-ranking.js';
 
 export const KIND_LABEL = {
   brief: 'News Briefs',
@@ -38,7 +39,7 @@ export const KIND_ORDER = ['brief', 'preview', 'injury', 'performance', 'trend',
 const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').slice(0, 2);
 // The visible story age is canonical newsroom publication time. Source/event timestamps may
 // move when an existing article is revised, but that must not make old coverage look newly published.
-const storyTime = (c) => c?.first_published_at || c?.published_at;
+const storyTime = storyOriginIso;
 // Short source labels for cards (the full, cited list is on the article page).
 const srcLabel = (s) => String(s).replace(/^wnba-api matchup research.*/i, 'PBE matchup research').replace(/\s*\(.*$/, '').replace(/\s*—.*$/, '');
 const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 2).join(', ');

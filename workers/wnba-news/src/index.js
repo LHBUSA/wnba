@@ -291,6 +291,14 @@ async function articleRoute(env, slugOrId) {
   }
   if (!a) return j({ ok: false, error: 'not_found' }, 404);
   const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+  // The index is the lifecycle authority. A collapsed duplicate URL serves its canonical story, and the
+  // canonical editorial origin/revision clocks win over whatever an older item payload stored.
+  let card = index.find((c) => c.id === a.id);
+  if (card?.duplicate_of) {
+    const canonical = await env.NEWS_KV.get(`art:v1:item:${card.duplicate_of}`, 'json');
+    if (canonical) { a = canonical; card = index.find((c) => c.id === a.id); }
+  }
+  if (card) a = { ...a, first_published_at: card.first_published_at || a.first_published_at, revised_at: card.revised_at ?? a.revised_at ?? null };
   const ents = new Set((a.entities || []).filter(Boolean).filter((e) => e.type !== 'game').map((e) => `${e.type}:${e.id}`));
   const related = index.filter((c) => c.id !== a.id && !c.superseded_by && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) }));
   return j({ ok: true, data: { article: { ...a, media: mediaFor(a) }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
