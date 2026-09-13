@@ -1,6 +1,7 @@
 // International women's basketball views — shared by the SPA pages and the wnba-web publishing Worker.
 // Data comes only from the normalized wnba-international contract (never provider shapes).
 import { html } from '../lib/dom.js';
+import { pbpFeed } from '../ui/pbp.js';
 import { pageHead, errorState, empty, avatar } from '../ui/components.js';
 import { fmtDateET, fmtTimeET, relTime, num } from '../lib/format.js';
 
@@ -240,7 +241,7 @@ export function intlGameView({ res }) {
     </section>` : html`<section class="section">${empty(g.status === 'scheduled' ? 'Box score at tip-off' : 'Box score unavailable', g.status === 'scheduled' ? 'The box score fills in live once the game starts.' : 'The provider has not published a box score for this game.')}</section>`}
 
     <section class="section"><div class="sec-head"><h2 class="sec-title bc">Play-by-play</h2><span class="note">${d.plays?.length ? `${d.plays.length} events` : ''}</span></div>
-      ${d.plays?.length ? html`<ol class="ipbp">${[...d.plays].reverse().slice(0, 120).map((p) => html`<li class="${p.scoring ? 'scoring' : ''}"><span class="mono">Q${p.period} ${p.clock || ''}</span><span>${p.text}</span><span class="mono">${p.away_score ?? ''}–${p.home_score ?? ''}</span></li>`)}</ol>` : html`<p class="note">${g.status === 'scheduled' ? 'Play-by-play starts at tip-off.' : 'The provider has not published play-by-play for this game yet; the score and box score above are current.'}</p>`}
+      ${d.plays?.length ? pbpFeed(d.plays, { hrefFor: (p) => { const id = p.primary?.id; const bp = id ? (d.boxscore?.teams || []).flatMap((t) => t.players).find((x) => String(x.provider_ids?.espn || '').replace(/^p-/, '') === String(id) || x.player_id === `p-${id}`) : null; return bp ? playerHref(bp) : null; } }) : html`<p class="note">${g.status === 'scheduled' ? 'Play-by-play starts at tip-off.' : 'The provider has not published play-by-play for this game yet; the score and box score above are current.'}</p>`}
     </section>
     ${freshnessLine(res.meta)}
   `;

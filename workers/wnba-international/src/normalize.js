@@ -1,3 +1,4 @@
+import { semanticPlays, resolversFromSummary } from '../../shared/pbp.js';
 // ESPN (league `fiba`) → canonical international entities. Pure functions: no network, no clock except where
 // passed in. The frontend depends only on these shapes, never on provider responses.
 
@@ -129,22 +130,46 @@ export function normalizeBoxscore(summary) {
 }
 
 export function normalizePlays(summary, teamsByEspnId = new Map()) {
-  return (summary?.plays || []).map((p) => ({
-    play_id: String(p.id),
-    period: num(p.period?.number),
-    clock: p.clock?.displayValue || null,
-    text: p.text || '',
-    type: p.type?.text || null,
-    scoring: Boolean(p.scoringPlay),
-    points: num(p.scoreValue) || 0,
-    home_score: num(p.homeScore),
-    away_score: num(p.awayScore),
-    team_id: p.team?.id ? teamsByEspnId.get(String(p.team.id)) || null : null,
-    player_ids: (p.participants || []).map((x) => `p-${x.athlete?.id}`).filter((x) => x !== 'p-undefined'),
-    // Coordinates are passed through only as published by the provider; never derived.
-    coordinate: p.coordinate && Number.isFinite(p.coordinate.x) && Number.isFinite(p.coordinate.y) ? { x: p.coordinate.x, y: p.coordinate.y } : null,
-    wallclock: p.wallclock || null
-  }));
+  // pbe-pbp/1.0.0 (workers/shared/pbp.js): the play keeps the provider's structured semantics — family, shot type,
+  // made/missed, value, free-throw sequence, assist/steal/block credits, rebound kind, foul/turnover type, score before
+  // and after — in source sequence order. `text` is the deterministic description; `text_raw` keeps the source text.
+  const sem = semanticPlays(summary?.plays || [], resolversFromSummary(summary));
+  return sem.map((p) => {
+    const raw = (summary.plays || []).find((x) => String(x.id) === p.source_id) || {};
+    return {
+      play_id: p.source_id,
+      seq: p.seq,
+      order: p.order,
+      period: p.period,
+      clock: p.clock,
+      text: p.description,
+      text_raw: p.text_raw,
+      description_source: p.description_source,
+      type: p.type_raw,
+      family: p.family,
+      subtype: p.subtype,
+      made: p.made,
+      scoring: p.scoring,
+      points: p.points,
+      shot_value: p.shot_value,
+      free_throw: p.free_throw,
+      assist: p.assist,
+      stolen_by: p.stolen_by,
+      blocked_by: p.blocked_by,
+      rebound: p.rebound,
+      turnover_type: p.turnover_type,
+      foul_type: p.foul_type,
+      home_score: p.home_score,
+      away_score: p.away_score,
+      score_before: p.score_before,
+      team_id: raw.team?.id ? teamsByEspnId.get(String(raw.team.id)) || null : null,
+      primary: p.primary,
+      player_ids: (raw.participants || []).map((x) => `p-${x.athlete?.id}`).filter((x) => x !== 'p-undefined'),
+      // Coordinates are passed through only as published by the provider; never derived.
+      coordinate: raw.coordinate && Number.isFinite(raw.coordinate.x) && Number.isFinite(raw.coordinate.y) ? { x: raw.coordinate.x, y: raw.coordinate.y } : null,
+      wallclock: raw.wallclock || null
+    };
+  });
 }
 
 /** Full game detail from a summary: game (header) + box score + plays. */

@@ -4,6 +4,7 @@ import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
 import { skeleton } from '../ui/components.js';
 import { createPoller } from '../lib/poller.js';
+import { attachPbp } from '../ui/pbp.js';
 import { routeMeta } from '../seo/meta.js';
 import { loadIntlHome, intlHomeView, loadCompetition, competitionView, loadIntlGame, intlGameView, loadNationalTeam, nationalTeamView, loadIntlPlayer, intlPlayerView, playerHref } from '../views/international.js';
 
@@ -22,6 +23,7 @@ export async function mount(root, ctx) {
   render(root, html`${skeleton(260)}${skeleton(200, 2)}`);
   let poller = null;
   let first = true;
+  const pbpState = {}; // filters, anchor and newest-seen play survive every live redraw
 
   const draw = async () => {
     let body = '';
@@ -55,6 +57,7 @@ export async function mount(root, ctx) {
     }
     if (!ctx.isCurrent()) return;
     render(root, body);
+    if (id === 'intl-game') attachPbp(root, pbpState);
     first = false;
     poller?.setInterval(live ? LIVE_POLL_MS : ['international', 'intl-competition', 'intl-game'].includes(id) ? IDLE_POLL_MS : 0);
   };

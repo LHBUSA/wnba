@@ -1,3 +1,4 @@
+import { semanticPlays, resolversFromSummary } from './pbp.js';
 // ESPN -> PropBetEdge WNBA normalization.
 //
 // Every shape here was observed in a real WNBA canary (docs/WNBA_SOURCE_MATRIX.md).
@@ -176,6 +177,11 @@ export function normalizeCoordinate(c) {
   return { x, y };
 }
 
+function withSemantics(play, s) {
+  if (!s) return play;
+  return { ...play, text: s.description, text_raw: play.text, description_source: s.description_source, family: s.family, subtype: s.subtype, shot_value: s.shot_value, free_throw: s.free_throw, assist: s.assist, stolen_by: s.stolen_by, blocked_by: s.blocked_by, rebound: s.rebound, turnover_type: s.turnover_type, foul_type: s.foul_type, score_before: s.score_before, primary: s.primary };
+}
+
 export function normalizePlay(p, athletes = {}) {
   const period = toInt(p.period?.number);
   const clock = str(p.clock?.displayValue);
@@ -265,7 +271,9 @@ export function normalizeSummary(body) {
   const comp = header.competitions?.[0] || {};
   const comps = (comp.competitors || []).map(competitorOf);
   const athletes = athleteIndexFromBox(body?.boxscore);
-  const plays = (body?.plays || []).map((p) => normalizePlay(p, athletes));
+  // pbe-pbp/1.0.0: structured semantics and the deterministic description ride on every play (source order kept).
+  const sem = new Map(semanticPlays(body?.plays || [], resolversFromSummary(body)).map((p) => [p.source_id, p]));
+  const plays = (body?.plays || []).map((p) => withSemantics(normalizePlay(p, athletes), sem.get(String(p.id))));
   const game = {
     game_id: str(header.id),
     source: 'espn',

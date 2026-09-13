@@ -15,11 +15,13 @@ import { marginChart, progressionChart } from '../ui/charts.js';
 import { scoringRuns, leadTracker, foulContext, playerProgression, shotChart } from '../../workers/shared/derive.js';
 import { fmtDateET, fmtTimeET, fmtDateTimeET, relTime, american, num } from '../lib/format.js';
 import { etCompact, addDays } from '../../workers/shared/time.js';
+import { pbpEmphasis } from '../ui/pbp.js';
 
 export const title = (p) => (p.gameId ? 'WNBACast' : 'WNBACast — live WNBA games & replays');
 export const description = () => 'WNBACast: live WNBA scoreboard, real play-by-play, published shot locations, scoring runs, box scores and full replays of completed games.';
 
-const PBP_FILTERS = [['all', 'All'], ['scoring', 'Scoring'], ['shots', 'Shots'], ['fouls', 'Fouls'], ['subs', 'Subs']];
+const PBP_FILTERS = [['all', 'All'], ['scoring', 'Scoring'], ['shots', 'Shots'], ['fouls', 'Fouls'], ['turnovers', 'Turnovers'], ['rebounds', 'Rebounds'], ['subs', 'Subs']];
+const EMPH = { 'lead-change': 'Lead change', tie: 'Tie', 'lead-taken': 'Lead' };
 const TABS = [['box', 'Box score'], ['players', 'Player progression'], ['fouls', 'Fouls'], ['market', 'Line & market']];
 
 export async function mount(root, ctx) {
@@ -31,6 +33,8 @@ export async function mount(root, ctx) {
     cursor: null, // replay index (null = latest)
     playing: false,
     pbpFilter: 'all',
+    pbpPeriod: 'all',
+    pbpScroll: { top: 0, anchor: null, lastSeen: null },
     shotTeam: 'all',
     tab: 'box',
     progPlayer: null,
@@ -241,12 +245,17 @@ export async function mount(root, ctx) {
     const teamOf = (id) => (id === g.home?.team_id ? g.home : id === g.away?.team_id ? g.away : null);
     const plays = [...v.evs].reverse().filter((e) => {
       const f = state.pbpFilter;
+      if (state.pbpPeriod !== 'all' && String(e.period) !== state.pbpPeriod) return false;
+      // Canonical play families (workers/shared/pbp.js), with the provider type as the fallback for older payloads.
       if (f === 'scoring') return e.scoring;
       if (f === 'shots') return e.shooting;
-      if (f === 'fouls') return /foul/i.test(e.type || '');
-      if (f === 'subs') return /substitution/i.test(e.type || '');
+      if (f === 'fouls') return e.family ? e.family === 'foul' : /foul/i.test(e.type || '');
+      if (f === 'turnovers') return e.family ? e.family === 'turnover' : /turnover/i.test(e.type || '');
+      if (f === 'rebounds') return e.family ? e.family === 'rebound' : /rebound/i.test(e.type || '');
+      if (f === 'subs') return e.family ? e.family === 'substitution' : /substitution/i.test(e.type || '');
       return true;
     }).slice(0, 400);
+    const periodsSeen = [...new Set(v.evs.map((e) => e.period).filter(Number.isFinite))];
     const shots = v.shots.shots.filter((s) => state.shotTeam === 'all' || s.team_id === state.shotTeam);
     const lastShotSeq = [...v.evs].reverse().find((e) => e.shooting && e.coordinate)?.seq ?? null;
     const madeBy = (tid) => {
@@ -260,15 +269,18 @@ export async function mount(root, ctx) {
       <div class="cast-grid" style="margin-top:16px">
         <section class="card">
           <div class="card-head"><span class="card-title">Play-by-play</span><span class="note">${v.evs.length} events</span></div>
-          <div class="card-body" style="padding-bottom:8px"><div class="pill-row">${PBP_FILTERS.map(([k, l]) => html`<button class="pill" type="button" data-pbp="${k}" aria-pressed="${state.pbpFilter === k}">${l}</button>`)}</div></div>
-          <div class="pbp" role="log" aria-live="${g.status?.state === 'in' ? 'polite' : 'off'}">
+          <div class="card-body" style="padding-bottom:8px"><div class="pbp-controls"><label class="pbp-select"><span class="sr-only">Show</span><select data-pbp-filter aria-label="Filter plays">${PBP_FILTERS.map(([k, l]) => html`<option value="${k}" ${state.pbpFilter === k ? 'selected' : ''}>${l}</option>`)}</select></label><label class="pbp-select"><span class="sr-only">Period</span><select data-pbp-period aria-label="Filter by period"><option value="all">All periods</option>${periodsSeen.map((n) => html`<option value="${n}" ${state.pbpPeriod === String(n) ? 'selected' : ''}>${periodName(n)}</option>`)}</select></label><button class="pbp-latest" type="button" data-pbp-latest hidden>Jump to latest ↑</button></div></div>
+          <div class="pbp" data-pbp-list role="log" aria-live="${g.status?.state === 'in' ? 'polite' : 'off'}">
             ${plays.length ? plays.map((e) => {
               const t = teamOf(e.team_id);
               const isNew = state.newFrom !== null && e.seq > state.newFrom;
-              return html`<div class="pbp-row ${e.scoring ? 'score' : ''} ${isNew ? 'new' : ''}">
+              const emph = pbpEmphasis(e);
+              const tags = emph.filter((x) => EMPH[x]);
+              const nm = e.primary?.name && e.primary?.id && (e.text || '').startsWith(e.primary.name) ? e.primary : null;
+              return html`<div class="pbp-row ${e.scoring ? 'score' : ''} ${emph.join(' ')} ${isNew ? 'new' : ''}" data-seq="${e.seq}">
                 <span class="t">${periodName(e.period)} ${e.clock ?? ''}</span>
                 <span class="bar" style="background:${t ? safeColor(t.color, 'var(--ink-4)') : 'transparent'}"></span>
-                <span class="txt">${e.text}</span>
+                <span class="txt">${nm ? html`<a class="pbp-name" href="/players/${nm.id}">${nm.name}</a>${e.text.slice(nm.name.length)}` : e.text}${tags.length ? html` <span class="pbp-tag">${tags.map((x) => EMPH[x]).join(' · ')}</span>` : ''}</span>
                 <span class="s">${e.home_score !== null ? `${e.away_score}–${e.home_score}` : ''}</span>
               </div>`;
             }) : html`<p class="note" style="padding:14px">No events match this filter yet.</p>`}
@@ -375,7 +387,31 @@ export async function mount(root, ctx) {
 
   // ------------------------------------------------------------ events
   function bind() {
-    $stage.querySelectorAll('[data-pbp]').forEach((b) => b.addEventListener('click', () => { state.pbpFilter = b.dataset.pbp; state.newFrom = null; draw(); }));
+    const fSel = $stage.querySelector('[data-pbp-filter]');
+    if (fSel) fSel.addEventListener('change', () => { state.pbpFilter = fSel.value; state.newFrom = null; state.pbpScroll = { top: 0, anchor: null, lastSeen: null }; draw(); });
+    const pSel = $stage.querySelector('[data-pbp-period]');
+    if (pSel) pSel.addEventListener('change', () => { state.pbpPeriod = pSel.value; state.newFrom = null; state.pbpScroll = { top: 0, anchor: null, lastSeen: null }; draw(); });
+    // Live follow: a reader scrolled back through the feed keeps the same play in view across polls (anchored by
+    // sequence); newer plays are offered with "Jump to latest" instead of moving the list.
+    const list = $stage.querySelector('[data-pbp-list]');
+    const latest = $stage.querySelector('[data-pbp-latest]');
+    if (list) {
+      const rows = [...list.querySelectorAll('[data-seq]')];
+      const newest = Number(rows[0]?.dataset.seq || 0);
+      const sc = state.pbpScroll;
+      if (sc.top > 40 && sc.anchor) {
+        const row = rows.find((r) => r.dataset.seq === sc.anchor.seq);
+        if (row) list.scrollTop = row.offsetTop - list.offsetTop + sc.anchor.delta;
+        if (sc.lastSeen && newest > sc.lastSeen && latest) latest.hidden = false;
+      } else sc.lastSeen = newest;
+      list.addEventListener('scroll', () => {
+        sc.top = list.scrollTop;
+        const row = rows.find((r) => r.offsetTop - list.offsetTop + r.offsetHeight > list.scrollTop);
+        sc.anchor = row ? { seq: row.dataset.seq, delta: list.scrollTop - (row.offsetTop - list.offsetTop) } : null;
+        if (list.scrollTop <= 40) { sc.lastSeen = newest; if (latest) latest.hidden = true; }
+      }, { passive: true });
+      if (latest) latest.addEventListener('click', () => { list.scrollTop = 0; sc.top = 0; sc.anchor = null; sc.lastSeen = newest; latest.hidden = true; });
+    }
     $stage.querySelectorAll('[data-shot]').forEach((b) => b.addEventListener('click', () => { state.shotTeam = b.dataset.shot; state.newFrom = null; draw(); }));
     $stage.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { state.tab = b.dataset.tab; state.newFrom = null; draw(); }));
     const sel = $stage.querySelector('[data-prog]');
