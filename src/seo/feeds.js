@@ -39,13 +39,16 @@ ${rows.join('\n')}
 `;
 }
 
-export const STATIC_PATHS = ['/', '/news', '/injuries', '/standings', '/stats', '/props', '/matchups', '/players', '/teams', '/cast', '/track-record', ...TRUST_PAGES.map(([p]) => p)];
+export const STATIC_PATHS = ['/', '/news', '/injuries', '/standings', '/stats', '/props', '/matchups', '/players', '/teams', '/cast', '/track-record', '/international', ...TRUST_PAGES.map(([p]) => p)];
+
+const COMBINING = new RegExp('[\u0300-\u036f]', 'g');
+export const intlPlayerPath = (p) => `/international/players/${String(p.player_id).replace(/^p-/, '')}-${String(p.name || '').normalize('NFKD').replace(COMBINING, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
 
 /**
  * @param {object} o { articles, players, teams, games, desks } — desks: kinds that currently have stories.
  * lastmod is emitted only where a real content date exists (article origin / revision); never the build time.
  */
-export function sitemapXml({ articles = [], players = [], teams = [], games = [], desks = Object.keys(DESKS) } = {}) {
+export function sitemapXml({ articles = [], players = [], teams = [], games = [], desks = Object.keys(DESKS), international = null } = {}) {
   const urls = [];
   const add = (path, lastmod) => urls.push(`  <url><loc>${xml(`${SITE}${path}`)}</loc>${lastmod ? `<lastmod>${xml(new Date(ms(lastmod)).toISOString())}</lastmod>` : ''}</url>`);
   const seen = new Set();
@@ -60,6 +63,16 @@ export function sitemapXml({ articles = [], players = [], teams = [], games = []
   for (const t of teams) if (t?.team_id) once(`/teams/${t.team_id}`);
   for (const p of players) if (p?.athlete_id) once(`/players/${p.athlete_id}`);
   for (const g of games) if (g?.game_id) once(`/matchups/${g.game_id}`);
+  if (international) {
+    for (const c of international.competitions || []) {
+      if (c.coverage !== 'full') continue;
+      for (const s of ['', '/games', '/bracket', '/standings', '/leaders', '/teams', '/players']) once(`/international/${c.slug}${s}`);
+    }
+    for (const g of international.games || []) once(`/international/games/${String(g.game_id).replace(/^g-/, '')}`);
+    for (const t of international.teams || []) once(`/international/teams/${t.slug}`);
+    // Thin player pages (one appearance, no WNBA link) are noindex and stay out of the sitemap.
+    for (const p of international.players || []) if (p.games >= 2 || p.wnba) once(intlPlayerPath(p));
+  }
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join('\n')}

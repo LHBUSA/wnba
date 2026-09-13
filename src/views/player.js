@@ -5,15 +5,16 @@ import { fmtDateET, relTime, num, initials, american, bookName } from '../lib/fo
 import { sparkline } from '../ui/charts.js';
 import { teamLogo } from '../ui/logo.js';
 import { articleMini } from '../ui/articles.js';
+import { internationalCareerModule } from './international.js';
 
 const MARKET_LABEL = { player_points: 'Points', player_rebounds: 'Rebounds', player_assists: 'Assists', player_threes: '3PM' };
 
 export async function loadPlayer(api, id) {
-  const [res, news, props, arts] = await Promise.all([api.player(id), api.news({ player: id, limit: 6, lane: 'external' }), api.props(), api.articles({ player: id, limit: 6 })]);
-  return { id, res, news, props, arts };
+  const [res, news, props, arts, intl] = await Promise.all([api.player(id), api.news({ player: id, limit: 6, lane: 'external' }), api.props(), api.articles({ player: id, limit: 6 }), api.intlForWnba ? api.intlForWnba(id) : Promise.resolve(null)]);
+  return { id, res, news, props, arts, intl };
 }
 
-export function playerView({ id, res, news, props, arts }) {
+export function playerView({ id, res, news, props, arts, intl }) {
   if (!res?.ok) return errorState(res, 'This player');
   const d = res.data;
   const p = d.player;
@@ -80,6 +81,7 @@ export function playerView({ id, res, news, props, arts }) {
             ${news?.ok && news.data.items.length ? news.data.items.map((i) => html`<article class="nitem"><div class="nmeta">${i.lane === 'pbe' ? badge('pbe', 'PBE Desk') : badge('ext', i.source.name)}<span>${relTime(i.published_at)}</span></div><h3 style="font-size:16px"><a href="${i.lane === 'pbe' ? `/news/story/${i.id}` : i.url}" ${i.lane === 'pbe' ? '' : raw('rel="noopener" target="_blank"')}>${i.headline}</a></h3></article>`) : html`<p class="note">No WNBA stories linked to ${p.name} in the last three weeks.</p>`}
           </div>
         </section>
+        ${internationalCareerModule(intl)}
         ${p.team ? html`<section class="card"><div class="card-head"><span class="card-title">Explore</span></div><div class="card-body">
           <p><a href="/teams/${p.team.team_id}">${p.team.name}: roster, schedule and matchups →</a></p>
           <p><a href="/injuries">WNBA Injury Desk →</a></p>

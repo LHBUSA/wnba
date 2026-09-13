@@ -1,0 +1,27 @@
+name = "wnba-international"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "fd3a233edadd0a60916413c1199f71ee"
+workers_dev = true
+
+# PropBetEdge international women's basketball data Worker (competition registry, national teams, players,
+# games, box scores, standings, brackets, leaders, WNBA crosswalk). Isolated from wnba-api / wnba-news.
+# Live reads are read-through with a 10 s edge cache; Cron rebuilds aggregates every 2 minutes.
+
+[triggers]
+crons = ["*/2 * * * *"]
+
+[[kv_namespaces]]
+binding = "INTL_KV"
+id = "46cf9e986c7d4c658d440f8a750d8c18"
+
+# WNBA roster (ESPN athlete ids, names, DOB, approved photos) for the deterministic crosswalk.
+[[services]]
+binding = "API"
+service = "wnba-api"
+
+[observability]
+enabled = true
+
+[limits]
+cpu_ms = 60000

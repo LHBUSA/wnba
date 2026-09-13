@@ -219,6 +219,64 @@ export function pageGraph(route, meta, data = {}) {
     case 'today':
       g.push(webPage({ ...meta, url: `${SITE}/` }, 'WebPage', { about: { '@id': IDS.newsroom } }));
       break;
+    case 'international':
+      crumbs.push(['International', '/international']);
+      g.push(webPage(meta, 'CollectionPage'), itemList(meta.url, (data.competitions || []).filter((c) => c.coverage === 'full').map((c) => ({ path: `/international/${c.slug}`, name: c.name }))));
+      break;
+    case 'intl-competition': {
+      const c = data.competition;
+      crumbs.push(['International', '/international'], [c.short_name, `/international/${c.slug}`]);
+      if (meta.path !== `/international/${c.slug}`) crumbs.push([meta.title.split(' | ')[0].replace(`${c.name} `, ''), meta.path]);
+      const evId = `${SITE}/international/${c.slug}#event`;
+      g.push(webPage(meta, 'WebPage', { about: { '@id': evId } }), {
+        '@type': 'SportsEvent', '@id': evId, name: c.name, url: `${SITE}/international/${c.slug}`, sport: 'Basketball',
+        startDate: c.start_date, endDate: c.end_date, eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: c.host ? { '@type': 'Place', name: c.host.city, address: { '@type': 'PostalAddress', addressLocality: c.host.city, addressCountry: c.host.country } } : undefined,
+        organizer: { '@type': 'SportsOrganization', name: 'FIBA', alternateName: 'International Basketball Federation' },
+        competitor: (data.teams || []).map((t) => ({ '@type': 'SportsTeam', '@id': `${SITE}/international/teams/${t.team.slug}#team`, name: `${t.team.name} women’s national basketball team`, url: `${SITE}/international/teams/${t.team.slug}` }))
+      });
+      break;
+    }
+    case 'intl-game': {
+      const gm = data.game;
+      const c = data.competition;
+      crumbs.push(['International', '/international'], [c.short_name, `/international/${c.slug}`], [`${gm.away_team.name} vs ${gm.home_team.name}`, meta.path]);
+      const team = (t) => ({ '@type': 'SportsTeam', '@id': `${SITE}/international/teams/${t.slug}#team`, name: `${t.name} women’s national basketball team`, url: `${SITE}/international/teams/${t.slug}` });
+      g.push(webPage(meta, 'WebPage', { mainEntity: { '@id': `${meta.url}#event` } }), {
+        '@type': 'SportsEvent', '@id': `${meta.url}#event`, name: `${gm.away_team.name} vs ${gm.home_team.name} — ${gm.round_name}`, url: meta.url, sport: 'Basketball', startDate: gm.scheduled_at,
+        eventStatus: `https://schema.org/${gm.status === 'postponed' ? 'EventPostponed' : 'EventScheduled'}`, eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: gm.venue?.name ? { '@type': 'Place', name: gm.venue.name, address: { '@type': 'PostalAddress', addressLocality: gm.venue.city || undefined, addressCountry: gm.venue.country || undefined } } : undefined,
+        homeTeam: team(gm.home_team), awayTeam: team(gm.away_team), competitor: [team(gm.away_team), team(gm.home_team)],
+        superEvent: { '@type': 'SportsEvent', '@id': `${SITE}/international/${c.slug}#event`, name: c.name, url: `${SITE}/international/${c.slug}` },
+        image: meta.image?.url
+      });
+      break;
+    }
+    case 'intl-team': {
+      const t = data.team;
+      crumbs.push(['International', '/international'], [t.name, meta.path]);
+      const roster = (data.competitions || []).flatMap((c) => c.roster || []);
+      g.push(webPage(meta, 'WebPage', { mainEntity: { '@id': `${meta.url}#team` } }), {
+        '@type': 'SportsTeam', '@id': `${meta.url}#team`, name: `${t.name} women’s national basketball team`, url: meta.url, sport: 'Basketball',
+        memberOf: { '@type': 'SportsOrganization', name: 'FIBA' },
+        athlete: [...new Map(roster.map((p) => [p.player_id, p])).values()].map((p) => ({ '@type': 'Person', '@id': `${SITE}/international/players/${String(p.player_id).replace(/^p-/, '')}#person`, name: p.name }))
+      });
+      break;
+    }
+    case 'intl-player': {
+      const p = data.player;
+      crumbs.push(['International', '/international'], [p.team.name, `/international/teams/${p.team.slug}`], [p.name, meta.path]);
+      const pid = String(p.player_id).replace(/^p-/, '');
+      g.push(webPage(meta, 'ProfilePage', { mainEntity: { '@id': `${SITE}/international/players/${pid}#person` } }), {
+        '@type': 'Person', '@id': `${SITE}/international/players/${pid}#person`, name: p.name, url: meta.url,
+        birthDate: p.bio?.dob || undefined, jobTitle: 'Professional basketball player',
+        nationality: p.team.name ? { '@type': 'Country', name: p.team.name } : undefined,
+        memberOf: [{ '@type': 'SportsTeam', '@id': `${SITE}/international/teams/${p.team.slug}#team`, name: `${p.team.name} women’s national basketball team`, url: `${SITE}/international/teams/${p.team.slug}` }, ...(p.wnba?.wnba_team ? [teamRef({ id: p.wnba.wnba_team.team_id, name: p.wnba.wnba_team.name })] : [])],
+        sameAs: p.wnba ? [`${SITE}/players/${p.wnba.wnba_player_id}`] : undefined,
+        image: p.wnba?.photo?.portrait ? abs(p.wnba.photo.portrait) : undefined
+      });
+      break;
+    }
     default: {
       const trust = TRUST_PAGES.find(([p]) => p === meta.path);
       const label = trust?.[1] || meta.title.split(' | ')[0];

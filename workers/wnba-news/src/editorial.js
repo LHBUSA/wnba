@@ -15,7 +15,7 @@ export function norm(s) {
 }
 
 const NCAA = /\b(ncaa|college|collegiate|freshman|sophomore|recruit|recruiting|commit(s|ted)?|transfer portal|big east|sec|acc|big ten|big 12|pac-12|march madness|final four)\b/i;
-const INTERNATIONAL = /\b(fiba|world cup|olympic|olympics|eurobasket|eurocup|euroleague|team usa|national team)\b/i;
+export const INTERNATIONAL = /\b(fiba|world cup|olympic|olympics|eurobasket|eurocup|euroleague|team usa|national team)\b/i;
 const OFF_SPORT = /\b(nfl|nhl|mlb|nwsl|mls|premier league|super bowl|touchdown|quarterback|hockey|soccer|baseball|softball|volleyball|golf|tennis|f1|nascar)\b/i;
 
 export const STORY_TYPES = [

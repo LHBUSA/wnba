@@ -83,5 +83,23 @@ export async function cardModel(kind, key, api) {
       fallback: DEFAULT_SHARE
     };
   }
+  if (kind === 'intl-games') {
+    const res = await api.intlGame(key);
+    if (!res?.ok) return null;
+    const g = res.data.game;
+    const c = res.data.competition;
+    const line = `${g.away_team.country_code} ${g.away_score} – ${g.home_score} ${g.home_team.country_code}`;
+    return {
+      kicker: `${c.short_name} · ${g.round_name}`,
+      title: `${g.away_team.name} vs ${g.home_team.name}`,
+      titleFont: 'display',
+      sub: g.status === 'final' ? `Final · ${line}` : g.status === 'live' ? `Live · ${line}` : dayTime(g.scheduled_at),
+      detail: g.venue?.name ? `${g.venue.name}${g.venue.city ? `, ${g.venue.city}` : ''}` : c.name,
+      footer: 'wnba.propbetedge.ai · international game center',
+      photoPath: null,
+      colors: [color(g.away_team.color, '#2a241c'), color(g.home_team.color, '#3a2f22')],
+      fallback: DEFAULT_SHARE
+    };
+  }
   return null;
 }

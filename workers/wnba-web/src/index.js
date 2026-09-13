@@ -20,7 +20,7 @@ const SECURITY_HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
   'permissions-policy': 'camera=(), microphone=(), geolocation=()',
   'x-frame-options': 'DENY',
-  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://wnba-api.sales-fd3.workers.dev https://wnba-news.sales-fd3.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://buy.stripe.com"
+  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://wnba-api.sales-fd3.workers.dev https://wnba-news.sales-fd3.workers.dev https://wnba-international.sales-fd3.workers.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://buy.stripe.com"
 };
 
 const HTML_CACHE = 'public, max-age=0, s-maxage=60, stale-while-revalidate=300';
@@ -83,7 +83,18 @@ async function feeds(env, url) {
       : respond(newsSitemapXml(arts.data.items), 200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': NEWS_SITEMAP_CACHE });
   }
   const today = etCompact();
-  const [arts, players, teams, schedule] = await Promise.all([api.articles({ limit: 400 }), api.players(), api.teams(), api.schedule({ from: addDays(today, -14), to: addDays(today, 14) })]);
+  const [arts, players, teams, schedule, intl] = await Promise.all([api.articles({ limit: 400 }), api.players(), api.teams(), api.schedule({ from: addDays(today, -14), to: addDays(today, 14) }), api.intl()]);
+  let international = null;
+  if (intl.ok) {
+    const full = intl.data.competitions.filter((c) => c.coverage === 'full');
+    const parts = await Promise.all(full.map(async (c) => ({ schedule: await api.intlCompetition(c.slug, 'schedule'), teams: await api.intlCompetition(c.slug, 'teams'), players: await api.intlCompetition(c.slug, 'players') })));
+    international = {
+      competitions: intl.data.competitions,
+      games: parts.flatMap((x) => (x.schedule.ok ? x.schedule.data.games : [])),
+      teams: parts.flatMap((x) => (x.teams.ok ? x.teams.data.teams.map((t) => t.team) : [])),
+      players: parts.flatMap((x) => (x.players.ok ? x.players.data.players : []))
+    };
+  }
   if (!arts.ok || !teams.ok) return respond('temporarily unavailable', 503, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store', 'retry-after': '300' });
   const liveDesks = Object.keys(DESKS).filter((k) => arts.data.items.some((c) => c.kind === k || (k === 'performance' && c.kind === 'result')));
   const body = sitemapXml({
@@ -91,13 +102,14 @@ async function feeds(env, url) {
     players: players.ok ? players.data.players : [],
     teams: teams.data.teams,
     games: schedule.ok ? schedule.data.games : [],
-    desks: liveDesks
+    desks: liveDesks,
+    international
   });
   return respond(body, 200, { 'content-type': 'application/xml; charset=utf-8', 'cache-control': FEED_CACHE });
 }
 
 async function og(request, env, url, ctx) {
-  const m = url.pathname.match(/^\/og\/(news|players|teams|matchups)\/([a-z0-9-]{1,140})\.png$/);
+  const m = url.pathname.match(/^\/og\/(news|players|teams|matchups|intl-games)\/([a-z0-9-]{1,140})\.png$/);
   if (!m) return respond('not found', 404, { 'content-type': 'text/plain' });
   const cache = caches.default;
   const cacheKey = new Request(`https://wnba-web.internal${url.pathname}${url.search}`);

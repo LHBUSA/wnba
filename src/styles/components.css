@@ -252,3 +252,6 @@ a.chip:hover { border-color: var(--gold-line); color: var(--paper); }
 .btn.gold { color: #1a1406; background: linear-gradient(180deg, var(--gold-bright), var(--gold)); border-color: transparent; }
 .btn[disabled], .btn[aria-disabled='true'] { opacity: .55; cursor: not-allowed; filter: grayscale(.2); }
 .btn.block { width: 100%; }
+
+/* Thirteen primary destinations (International added) fit a 1440 header without clipping. */
+@media (max-width: 1480px) { .nav a { padding: 9px 6px; letter-spacing: .015em; } }

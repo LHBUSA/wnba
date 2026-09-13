@@ -12,6 +12,7 @@ export const NAV = [
   ['standings', '/standings', 'Standings'],
   ['stats', '/stats', 'Stats'],
   ['teams', '/teams', 'Teams'],
+  ['international', '/international', 'International'],
   ['track-record', '/track-record', 'Track Record']
 ];
 
@@ -117,7 +118,7 @@ export function mountShell(root) {
   return {
     outlet: root.querySelector('main'),
     setActive(id) {
-      const group = { player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news' }[id] || id;
+      const group = { player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' }[id] || id;
       root.querySelectorAll('[data-nav]').forEach((a) => {
         if (a.dataset.nav === group) a.setAttribute('aria-current', 'page');
         else a.removeAttribute('aria-current');

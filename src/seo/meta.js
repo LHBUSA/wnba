@@ -163,6 +163,64 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: `Methodology: How PropBetEdge WNBA Builds Its Data | ${BRAND}`, description: 'How PropBetEdge WNBA computes rotations, form, rest, pace, market snapshots and no-vig consensus, and how the newsroom decides what is a new story.' });
     case 'story':
       return m({ title: `PropBetEdge WNBA Desk Note | ${BRAND}`, robots: NOINDEX_ROBOTS });
+    case 'international':
+      return m({ title: `International Women’s Basketball: World Cup, Olympics & FIBA | ${BRAND}`, description: 'National-team women’s basketball — FIBA World Cup, Olympics, qualifiers and continental championships — with live scores, box scores, standings and links to the WNBA players involved.' });
+    case 'intl-competition': {
+      const c = data?.competition;
+      if (!c) return m({ title: `International Competition | ${BRAND}`, robots: NOINDEX_ROBOTS });
+      const sec = params.section || '';
+      const SUFFIX = { '': 'Live Scores, Schedule & Stats', games: 'Schedule & Results', bracket: 'Bracket & Knockout Results', standings: 'Group Standings', leaders: 'Stat Leaders', teams: 'Teams & Records', players: 'Player Stats' };
+      const n = data.counts;
+      const when = c.start_date ? `${new Date(`${c.start_date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}–${new Date(`${c.end_date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : String(c.season);
+      return m({
+        path: `/international/${c.slug}${sec ? `/${sec}` : ''}`,
+        title: `${c.name} ${SUFFIX[sec] || SUFFIX['']} | ${BRAND}`,
+        description: clip(`${c.name}${c.host ? `, ${c.host.city}` : ''}, ${when}: ${n ? `${n.games} games, ${n.teams} teams, ${n.wnba_mapped} WNBA players. ` : ''}Live scores, box scores, bracket, group standings, tournament leaders and the WNBA players at the tournament.`, 300),
+        robots: c.coverage === 'full' ? INDEX_ROBOTS : NOINDEX_ROBOTS
+      });
+    }
+    case 'intl-game': {
+      const g = data?.game;
+      if (!g) return m({ title: `International Game | ${BRAND}`, robots: NOINDEX_ROBOTS });
+      const c = data.competition;
+      const state = g.status === 'final' ? 'Final Score & Box Score' : g.status === 'live' ? 'Live Score & Box Score' : 'Preview, Rosters & Tip Time';
+      const score = g.status === 'final' || g.status === 'live' ? ` ${g.away_team.name} ${g.away_score}, ${g.home_team.name} ${g.home_score}${g.status === 'final' ? ' (final)' : ' (live)'}.` : '';
+      return m({
+        path: `/international/games/${g.provider_ids?.espn || String(g.game_id).replace(/^g-/, '')}`,
+        title: `${g.away_team.name} vs ${g.home_team.name} — ${c.short_name} ${g.round_name}: ${state} | ${BRAND}`,
+        description: clip(`${g.away_team.name} vs ${g.home_team.name}, ${g.round_name} of the ${c.name}${g.venue?.name ? ` at ${g.venue.name}` : ''}.${score} Quarter scores, full box score, play-by-play and WNBA players in the game.`, 300),
+        image: shareImage(`/og/intl-games/${g.provider_ids?.espn || String(g.game_id).replace(/^g-/, '')}.png`, `${g.away_team.name} vs ${g.home_team.name}, ${g.round_name} — PropBetEdge international game card`)
+      });
+    }
+    case 'intl-team': {
+      const t = data?.team;
+      if (!t) return m({ title: `National Team | ${BRAND}`, robots: NOINDEX_ROBOTS });
+      const c0 = data.competitions?.[0];
+      const noun = t.country_code === 'USA' ? 'USA Women’s Basketball' : `${t.name} Women’s Basketball National Team`;
+      return m({
+        path: `/international/teams/${t.slug}`,
+        title: `${noun}: Roster, Schedule & Results | ${BRAND}`,
+        description: clip(`${noun}${c0 ? ` at the ${c0.competition.name}: ${c0.record.wins}-${c0.record.losses}, ${one(c0.averages.pts)} points per game` : ''}. Roster and player stats, results, box scores${data.wnba_players?.length ? ` and ${data.wnba_players.length} WNBA players` : ''}.`, 300)
+      });
+    }
+    case 'intl-player': {
+      const p = data?.player;
+      if (!p) return m({ title: `International Player | ${BRAND}`, robots: NOINDEX_ROBOTS });
+      const c0 = data.competitions?.[0];
+      const games = (data.competitions || []).reduce((s, c) => s + (c.games || 0), 0);
+      const pid = String(p.player_id).replace(/^p-/, '');
+      const slug = String(p.name || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      return m({
+        path: `/international/players/${pid}-${slug}`,
+        title: p.wnba ? `${p.name} International Basketball Stats & WNBA Profile | ${BRAND}` : `${p.name} (${p.team.name}) International Stats & Game Log | ${BRAND}`,
+        description: clip(`${p.name}, ${p.team.name}${c0 ? ` at the ${c0.competition.name}: ${one(c0.averages.pts)} points, ${one(c0.averages.reb)} rebounds and ${one(c0.averages.ast)} assists per game in ${c0.games} games` : ''}.${p.wnba ? ` WNBA: ${p.wnba.wnba_team?.name || 'profile'}.` : ''} Game log, highs and box scores.`, 300),
+        type: 'profile',
+        // A single appearance with no WNBA connection is too thin to index.
+        robots: games >= 2 || p.wnba ? INDEX_ROBOTS : NOINDEX_ROBOTS
+      });
+    }
+    case 'world-cup':
+      return m({ title: `FIBA Women’s Basketball World Cup | ${BRAND}`, robots: NOINDEX_ROBOTS });
     default:
       return notFound(base.path);
   }

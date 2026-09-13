@@ -19,6 +19,9 @@ import { loadInjuries, injuriesView, loadStandings, standingsView, loadTeams, te
 import { loadToday, todayView } from '../../../src/views/today.js';
 import { TRUST_VIEWS, sourcesHead, sourcesRegistryView } from '../../../src/views/trust.js';
 import { fmtDateET, fmtTimeET } from '../../../src/lib/format.js';
+import { loadIntlHome, intlHomeView, loadCompetition, competitionView, loadIntlGame, intlGameView, loadNationalTeam, nationalTeamView, loadIntlPlayer, intlPlayerView, playerHref } from '../../../src/views/international.js';
+
+export const CURRENT_WORLD_CUP = 'world-cup-2026';
 
 const intro = (eyebrow, title, sub, links = []) => html`${pageHead({ eyebrow, title, sub })}${links.length ? html`<p class="pill-row">${links.map(([href, label]) => html`<a class="pill" href="${href}">${label}</a>`)}</p>` : ''}`;
 const notFoundBody = () => html`<div class="empty" style="margin-top:40px"><h3>That page isn’t on the court</h3><p>Try <a class="gold" href="/">Today</a>, <a class="gold" href="/cast">WNBACast</a> or <a class="gold" href="/news">News</a>.</p></div>`;
@@ -132,6 +135,36 @@ export async function renderRoute(pathname, api) {
     case 'corrections':
     case 'methodology':
       return out(200, routeMeta(id, { path }), TRUST_VIEWS[id]());
+    case 'world-cup':
+      return { status: 301, redirect: `/international/${CURRENT_WORLD_CUP}`, route: id };
+    case 'international': {
+      const data = await loadIntlHome(api);
+      if (!data.home?.ok) return unavailable('International data', data.home);
+      return out(200, routeMeta(id, { path }), intlHomeView(data), data.home.data);
+    }
+    case 'intl-competition': {
+      if (params.competition === 'world-cup') return { status: 301, redirect: `/international/${CURRENT_WORLD_CUP}${params.section ? `/${params.section}` : ''}`, route: id };
+      const data = await loadCompetition(api, params.competition, params.section || null);
+      if (!data.ov?.ok) return unavailable('This competition', data.ov);
+      return out(200, routeMeta(id, { path, params, data: data.ov.data }), competitionView(data), data.ov.data);
+    }
+    case 'intl-game': {
+      const data = await loadIntlGame(api, params.gameId);
+      if (!data.res?.ok) return unavailable('This game', data.res);
+      return out(200, routeMeta(id, { path, params, data: data.res.data }), intlGameView(data), data.res.data);
+    }
+    case 'intl-team': {
+      const data = await loadNationalTeam(api, params.teamSlug);
+      if (!data.res?.ok) return unavailable('This national team', data.res);
+      return out(200, routeMeta(id, { path, params, data: data.res.data }), nationalTeamView(data), data.res.data);
+    }
+    case 'intl-player': {
+      const data = await loadIntlPlayer(api, params.playerId);
+      if (!data.res?.ok) return unavailable('This player', data.res);
+      const canonical = playerHref(data.res.data.player);
+      if (path !== canonical) return { status: 301, redirect: canonical, route: id };
+      return out(200, routeMeta(id, { path, params, data: data.res.data }), intlPlayerView(data), data.res.data);
+    }
     case 'story':
       return out(200, routeMeta(id, { path }), intro('PropBetEdge Desk', 'Desk note', 'A legacy PropBetEdge desk note. Current coverage lives in the newsroom.', [['/news', 'Newsroom']]), null);
     default:

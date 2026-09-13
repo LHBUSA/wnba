@@ -10,7 +10,7 @@
 
 import { NEWS_SOURCES, PBE_SOURCE } from './sources.js';
 import { parseRss, parseEspnNews, parseWnbaCom, canonicalUrl } from './parse.js';
-import { buildDictionary, linkEntities, relevance, clusterItems, itemId, EDITORIAL_VERSION } from './editorial.js';
+import { buildDictionary, linkEntities, relevance, clusterItems, itemId, EDITORIAL_VERSION, INTERNATIONAL } from './editorial.js';
 import { DESK_VERSION } from './pbe-desk.js';
 import { runArticles } from './articles-run.js';
 import { ARTICLE_VERSION } from './articles.js';
@@ -87,6 +87,9 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
   const dict = buildDictionary(rawDict);
   const store = (await env.NEWS_KV.get('news:v1:items', 'json')) || {};
+  // International lane: national-team / FIBA / Olympic items. The WNBA relevance guard is unchanged — these items
+  // do not enter the WNBA feed unless they already qualify — but they are kept, attributed, for the international desk.
+  const intlStore = (await env.NEWS_KV.get('news:v1:intl-items', 'json')) || {};
   const runs = [];
 
   for (const src of NEWS_SOURCES) {
@@ -101,6 +104,11 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
         const id = await itemId(canonical);
         const entities = linkEntities(raw, dict);
         const rel = relevance(raw, entities, src);
+        if (INTERNATIONAL.test(`${raw.headline} ${raw.summary || ''}`)) {
+          const prevIntl = intlStore[id];
+          intlStore[id] = { item_id: id, source_id: src.source_id, source_name: src.name, source_kind: src.kind, attribution: src.attribution, priority: src.priority, canonical_url: canonical, headline: raw.headline, summary: raw.summary, byline: raw.byline, published_at: raw.published_at || prevIntl?.published_at || startedAt, source_updated_at: raw.updated_at || null, first_captured_at: prevIntl?.first_captured_at || startedAt, last_captured_at: startedAt, story_type: rel.type, relevance: rel.score, relevance_reasons: rel.reasons, entities, lane: 'international', wnba_accepted: rel.accept, rights: 'headline_link_summary' };
+          run.international = (run.international || 0) + 1;
+        }
         if (!rel.accept) {
           run.rejected += 1;
           // A rule change can un-accept an item we stored earlier; it leaves the feed.
@@ -144,6 +152,8 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
   // Retention window, then dedupe clusters over what remains.
   const cutoff = Date.now() - KEEP_DAYS * 86400e3;
   for (const [k, v] of Object.entries(store)) if (Date.parse(v.published_at) < cutoff) delete store[k];
+  for (const [k, v] of Object.entries(intlStore)) if (Date.parse(v.published_at) < cutoff) delete intlStore[k];
+  await env.NEWS_KV.put('news:v1:intl-items', JSON.stringify(intlStore));
   const list = Object.values(store);
   const clusters = clusterItems(list);
   const byId = Object.fromEntries(list.map((x) => [x.item_id, x]));
@@ -193,18 +203,19 @@ async function persistSupabase(env, store, clusters, deskStore) {
 // ---------------------------------------------------------------- read API
 
 async function feed(env, url) {
-  const [store, clusters, desk, status] = await Promise.all([
+  const [store, clusters, desk, status, intlStore] = await Promise.all([
     env.NEWS_KV.get('news:v1:items', 'json'),
     env.NEWS_KV.get('news:v1:clusters', 'json'),
     env.NEWS_KV.get('news:v1:desk', 'json'),
-    env.NEWS_KV.get('news:v1:status', 'json')
+    env.NEWS_KV.get('news:v1:status', 'json'),
+    env.NEWS_KV.get('news:v1:intl-items', 'json')
   ]);
   const limit = Math.min(Number(url.searchParams.get('limit') || 40), 100);
   const type = url.searchParams.get('type');
   const player = url.searchParams.get('player');
   const team = url.searchParams.get('team');
   const game = url.searchParams.get('game');
-  const lane = url.searchParams.get('lane'); // pbe | external
+  const lane = url.searchParams.get('lane'); // pbe | external | international
   const match = (ents) => (!player || ents.some((e) => e.type === 'player' && e.id === player)) && (!team || ents.some((e) => e.type === 'team' && e.id === team)) && (!game || ents.some((e) => e.type === 'game' && e.id === game));
 
   const items = store || {};
@@ -217,7 +228,13 @@ async function feed(env, url) {
       out.push({ lane: 'pbe', id: s.story_id, kind: s.kind, headline: s.headline, body: s.body, published_at: s.published_at, captured_at: s.first_captured_at, entities: s.entities, evidence: s.evidence, attribution: s.attribution, generator_version: s.generator_version });
     }
   }
-  if (lane !== 'pbe') {
+  if (lane === 'international') {
+    for (const it of Object.values(intlStore || {})) {
+      if (type && it.story_type !== type) continue;
+      if (!match(it.entities || [])) continue;
+      out.push({ lane: 'international', id: it.item_id, kind: it.story_type, headline: it.headline, url: it.canonical_url, source: { id: it.source_id, name: it.source_name, kind: it.source_kind, attribution: it.attribution }, byline: it.byline, published_at: it.published_at, source_updated_at: it.source_updated_at, captured_at: it.first_captured_at, entities: it.entities || [], wnba_accepted: Boolean(it.wnba_accepted) });
+    }
+  } else if (lane !== 'pbe') {
     for (const c of clusters || []) {
       const canon = items[c.canonical_item_id] || items[c.members[0]];
       if (!canon) continue;

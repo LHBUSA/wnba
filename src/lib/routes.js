@@ -23,7 +23,13 @@ export const ROUTE_TABLE = [
   { id: 'about', re: /^\/about$/ },
   { id: 'editorial-policy', re: /^\/editorial-policy$/ },
   { id: 'corrections', re: /^\/corrections$/ },
-  { id: 'methodology', re: /^\/methodology$/ }
+  { id: 'methodology', re: /^\/methodology$/ },
+  { id: 'international', re: /^\/international$/ },
+  { id: 'intl-game', re: /^\/international\/games\/(\d{6,12})$/, keys: ['gameId'] },
+  { id: 'intl-team', re: /^\/international\/teams\/([a-z0-9-]{2,60})$/, keys: ['teamSlug'] },
+  { id: 'intl-player', re: /^\/international\/players\/(\d{3,12})(?:-([a-z0-9-]*))?$/, keys: ['playerId', 'playerSlug'] },
+  { id: 'intl-competition', re: /^\/international\/([a-z0-9-]+-\d{4}|world-cup)(?:\/(games|bracket|standings|leaders|teams|players))?$/, keys: ['competition', 'section'] },
+  { id: 'world-cup', re: /^\/world-cup$/ }
 ];
 
 /** { id, params, path } — id is 'not-found' when nothing matches. */

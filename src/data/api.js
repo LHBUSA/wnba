@@ -4,6 +4,7 @@
 
 export const API_BASE = import.meta.env.VITE_WNBA_API || 'https://wnba-api.sales-fd3.workers.dev';
 export const NEWS_BASE = import.meta.env.VITE_WNBA_NEWS || 'https://wnba-news.sales-fd3.workers.dev';
+export const INTL_BASE = import.meta.env.VITE_WNBA_INTL || 'https://wnba-international.sales-fd3.workers.dev';
 
 const mem = new Map(); // url -> { at, body }
 const inflight = new Map();
@@ -11,6 +12,7 @@ const inflight = new Map();
 // Client-side memory windows (ms). Short: the Worker owns real caching.
 const MEM_TTL = [
   [/\/live(\?|$)/, 0],
+  [/\/v1\/international\/(games|competitions)/, 4000],
   [/\/v1\/today/, 15000],
   [/\/v1\/news/, 60000],
   [/\/v1\/(standings|teams|players|stats)/, 120000],
@@ -81,5 +83,11 @@ export const api = {
   articles: (p) => getJson(`${NEWS_BASE}/v1/articles${q(p)}`),
   article: (slug) => getJson(`${NEWS_BASE}/v1/articles/${encodeURIComponent(slug)}`),
   story: (id) => getJson(`${NEWS_BASE}/v1/news/story/${encodeURIComponent(id)}`),
-  newsSources: () => getJson(`${NEWS_BASE}/v1/news/sources`)
+  newsSources: () => getJson(`${NEWS_BASE}/v1/news/sources`),
+  intl: () => getJson(`${INTL_BASE}/v1/international`),
+  intlCompetition: (id, view) => getJson(`${INTL_BASE}/v1/international/competitions/${encodeURIComponent(id)}${view ? `/${view}` : ''}`),
+  intlGame: (id, opts) => getJson(`${INTL_BASE}/v1/international/games/${encodeURIComponent(id)}`, opts),
+  intlTeam: (id) => getJson(`${INTL_BASE}/v1/international/teams/${encodeURIComponent(id)}`),
+  intlPlayer: (id) => getJson(`${INTL_BASE}/v1/international/players/${encodeURIComponent(id)}`),
+  intlForWnba: (id) => getJson(`${INTL_BASE}/v1/international/wnba/${encodeURIComponent(id)}`)
 };

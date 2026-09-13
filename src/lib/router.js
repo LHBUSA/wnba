@@ -34,6 +34,12 @@ const PAGES = {
   'editorial-policy': () => import('../pages/trust.js'),
   corrections: () => import('../pages/trust.js'),
   methodology: () => import('../pages/trust.js'),
+  international: () => import('../pages/international.js'),
+  'intl-game': () => import('../pages/international.js'),
+  'intl-team': () => import('../pages/international.js'),
+  'intl-player': () => import('../pages/international.js'),
+  'intl-competition': () => import('../pages/international.js'),
+  'world-cup': () => import('../pages/international.js'),
   'not-found': () => import('../pages/not-found.js')
 };
 

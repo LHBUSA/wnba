@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-09-13T15:02:15.875Z",
+  "source": "Wikimedia Commons",
+  "rule": "National flags only; public-domain files; self-hosted with provenance.",
+  "flags": {
+    "USA": {
+      "file": "/media/flags/usa.svg",
+      "commons_file": "File:Flag of the United States.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_the_United_States.svg",
+      "license": "Public domain",
+      "bytes": 823
+    },
+    "FRA": {
+      "file": "/media/flags/fra.svg",
+      "commons_file": "File:Flag of France.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_France.svg",
+      "license": "Public domain",
+      "bytes": 193
+    },
+    "ESP": {
+      "file": "/media/flags/esp.svg",
+      "commons_file": "File:Flag of Spain.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Spain.svg",
+      "license": "Public domain",
+      "bytes": 155900
+    },
+    "GER": {
+      "file": "/media/flags/ger.svg",
+      "commons_file": "File:Flag of Germany.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Germany.svg",
+      "license": "Public domain",
+      "bytes": 502
+    },
+    "JPN": {
+      "file": "/media/flags/jpn.svg",
+      "commons_file": "File:Flag of Japan.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Japan.svg",
+      "license": "Public domain",
+      "bytes": 209
+    },
+    "MLI": {
+      "file": "/media/flags/mli.svg",
+      "commons_file": "File:Flag of Mali.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Mali.svg",
+      "license": "Public domain",
+      "bytes": 197
+    },
+    "HUN": {
+      "file": "/media/flags/hun.svg",
+      "commons_file": "File:Flag of Hungary.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Hungary.svg",
+      "license": "Public domain",
+      "bytes": 197
+    },
+    "KOR": {
+      "file": "/media/flags/kor.svg",
+      "commons_file": "File:Flag of South Korea.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_South_Korea.svg",
+      "license": "Public domain",
+      "bytes": 589
+    },
+    "NGR": {
+      "file": "/media/flags/ngr.svg",
+      "commons_file": "File:Flag of Nigeria.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Nigeria.svg",
+      "license": "Public domain",
+      "bytes": 201
+    },
+    "BEL": {
+      "file": "/media/flags/bel.svg",
+      "commons_file": "File:Flag of Belgium (civil).svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Belgium_(civil).svg",
+      "license": "Public domain",
+      "bytes": 182
+    },
+    "AUS": {
+      "file": "/media/flags/aus.svg",
+      "commons_file": "File:Flag of Australia (converted).svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Australia_(converted).svg",
+      "license": "Public domain",
+      "bytes": 1587
+    },
+    "PUR": {
+      "file": "/media/flags/pur.svg",
+      "commons_file": "File:Flag of Puerto Rico.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Puerto_Rico.svg",
+      "license": "Public domain",
+      "bytes": 269
+    },
+    "TUR": {
+      "file": "/media/flags/tur.svg",
+      "commons_file": "File:Flag of Turkey.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Turkey.svg",
+      "license": "Public domain",
+      "bytes": 324
+    },
+    "CHN": {
+      "file": "/media/flags/chn.svg",
+      "commons_file": "File:Flag of the People's Republic of China.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_the_People%27s_Republic_of_China.svg",
+      "license": "Public domain",
+      "bytes": 563
+    },
+    "ITA": {
+      "file": "/media/flags/ita.svg",
+      "commons_file": "File:Flag of Italy.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_Italy.svg",
+      "license": "Public domain",
+      "bytes": 273
+    },
+    "CZE": {
+      "file": "/media/flags/cze.svg",
+      "commons_file": "File:Flag of the Czech Republic.svg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Flag_of_the_Czech_Republic.svg",
+      "license": "Public domain",
+      "bytes": 275
+    }
+  }
+}

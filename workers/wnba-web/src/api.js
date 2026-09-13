@@ -28,6 +28,7 @@ export function bindingApi(env, { timeoutMs = 9000 } = {}) {
   };
   const A = (path) => get(env.API, 'wnba-api', path);
   const N = (path) => get(env.NEWS, 'wnba-news', path);
+  const I = (path) => get(env.INTL, 'wnba-international', path);
   return {
     today: () => A('/v1/today'),
     schedule: (p) => A(`/v1/schedule${qs(p)}`),
@@ -44,6 +45,12 @@ export function bindingApi(env, { timeoutMs = 9000 } = {}) {
     props: () => A('/v1/props'),
     news: (p) => N(`/v1/news${qs(p)}`),
     articles: (p) => N(`/v1/articles${qs(p)}`),
-    article: (slug) => N(`/v1/articles/${encodeURIComponent(slug)}`)
+    article: (slug) => N(`/v1/articles/${encodeURIComponent(slug)}`),
+    intl: () => I('/v1/international'),
+    intlCompetition: (id, view) => I(`/v1/international/competitions/${encodeURIComponent(id)}${view ? `/${view}` : ''}`),
+    intlGame: (id) => I(`/v1/international/games/${encodeURIComponent(id)}`),
+    intlTeam: (id) => I(`/v1/international/teams/${encodeURIComponent(id)}`),
+    intlPlayer: (id) => I(`/v1/international/players/${encodeURIComponent(id)}`),
+    intlForWnba: (id) => I(`/v1/international/wnba/${encodeURIComponent(id)}`)
   };
 }

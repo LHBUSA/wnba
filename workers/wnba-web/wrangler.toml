@@ -16,6 +16,10 @@ service = "wnba-api"
 binding = "NEWS"
 service = "wnba-news"
 
+[[services]]
+binding = "INTL"
+service = "wnba-international"
+
 # Share-card fonts (OFL: Newsreader, Barlow Condensed, Inter) are bundled as binary data for satori.
 [[rules]]
 type = "Data"
