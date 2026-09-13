@@ -3,29 +3,33 @@
 const HOUR = 3600e3;
 const TOP_STORY_MAX_AGE = 72 * HOUR;
 
-const publishedAt = (c) => Date.parse(c?.published_at || '') || 0;
+// Editorial freshness is the moment PropBetEdge first published this canonical story.
+// A source record can move, a market capture can refresh and the article can be revised,
+// but none of those events make the same story brand-new again.
+export const storyPublishedAt = (c) => Date.parse(c?.first_published_at || c?.published_at || '') || 0;
 const group = (c) => (c?.kind === 'result' ? 'performance' : c?.kind);
 const isPhoto = (c) => c?.media && (c.media.layout === 'single' || c.media.layout === 'matchup');
 
 /**
- * Lead selection is freshness-first. A newly published material News Brief is
- * always allowed to take the lead immediately. For the structured desks,
- * editorial priority can break a near-tie only inside the newest hour.
+ * Lead selection is freshness-first by canonical newsroom publication time.
+ * A newly published material News Brief is always allowed to take the lead.
+ * Revisions to an existing story never reset its headline age. For genuinely
+ * new structured stories, editorial priority may break a near-tie inside one hour.
  */
 export function chooseLead(items, { tieWindowMs = HOUR } = {}) {
   if (!items?.length) return null;
-  const ranked = [...items].sort((a, b) => publishedAt(b) - publishedAt(a));
+  const ranked = [...items].sort((a, b) => storyPublishedAt(b) - storyPublishedAt(a));
   const newest = ranked[0];
   if (group(newest) === 'brief') return newest;
 
-  const newestAt = publishedAt(newest);
-  const near = ranked.filter((c) => newestAt - publishedAt(c) <= tieWindowMs);
+  const newestAt = storyPublishedAt(newest);
+  const near = ranked.filter((c) => newestAt - storyPublishedAt(c) <= tieWindowMs);
 
   for (const kind of ['injury', 'performance', 'preview']) {
     const pool = near.filter((c) => group(c) === kind);
     if (!pool.length) continue;
-    const newestKindAt = publishedAt(pool[0]);
-    const sameMoment = pool.filter((c) => newestKindAt - publishedAt(c) <= tieWindowMs);
+    const newestKindAt = storyPublishedAt(pool[0]);
+    const sameMoment = pool.filter((c) => newestKindAt - storyPublishedAt(c) <= tieWindowMs);
     return sameMoment.find(isPhoto) || pool[0];
   }
 
@@ -34,15 +38,16 @@ export function chooseLead(items, { tieWindowMs = HOUR } = {}) {
 
 /**
  * Top Stories is intentionally current. Variety is useful only among stories
- * that are actually fresh; old coverage is never promoted to fill the rail.
+ * that were actually published recently; revising old coverage does not make
+ * it fresh enough to re-enter this rail.
  */
 export function topStories(items, lead, { limit = 3, maxAgeMs = TOP_STORY_MAX_AGE, now = Date.now() } = {}) {
   const fresh = [...(items || [])]
     .filter((c) => {
-      const at = publishedAt(c);
+      const at = storyPublishedAt(c);
       return at > 0 && now - at <= maxAgeMs;
     })
-    .sort((a, b) => publishedAt(b) - publishedAt(a));
+    .sort((a, b) => storyPublishedAt(b) - storyPublishedAt(a));
 
   const out = [];
   const seen = new Set(lead ? [group(lead)] : []);
