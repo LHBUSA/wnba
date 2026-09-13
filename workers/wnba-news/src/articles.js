@@ -15,6 +15,7 @@
 // matters for bettors", "Market angle", context, evidence, related entities.
 
 import { validateArticle } from './gate.js';
+import { decideIntelligence, intelligenceFailures, intelligenceOf } from '../../../src/lib/intelligence.js';
 import { aan } from './prose.js';
 // Synthesis generators (2.0.0-preview) replace the v1 list-style generators for these five kinds.
 // The v1 functions stay exported as *V1 for comparison runs (scripts/newsroom-dryrun.mjs).
@@ -142,19 +143,32 @@ const MIN_WORDS = { injury: 110, preview: 110, performance: 100, result: 90, tra
 function finalize(a) {
   const c = CAVEATS[a.kind] || CAVEATS.result;
   a.facts = { ...(a.facts || {}), policy: POLICY };
-  a.bettor_angle = {
-    summary: a.bettor[0],
-    supporting: a.bettor.slice(1),
+  // ONE betting-relevance decision (src/lib/intelligence.js). The bettor module, market module, markets-touched labels
+  // and sportsbook links are all derived from it below; no generator list and no renderer can disagree with it.
+  const intel = decideIntelligence({ kind: a.kind, entities: a.entities, market: a.market_angle, international: a.kind === 'international' });
+  const copy = (a.bettor || []).filter(Boolean);
+  a.bettor_angle = intel.market_relevance === 'none' || !copy.length ? null : {
+    summary: copy[0],
+    supporting: copy.slice(1),
     against: a.against || c.against,
     unknown: a.unknown || c.unknown,
-    markets: a.markets || c.markets,
+    // Markets touched are the markets in the attached capture — never the generator's wish list.
+    markets: intel.markets_touched,
     odds_status: a.market_angle?.market ? 'snapshot' : a.market_angle?.line ? 'reference_line' : 'unavailable',
     model_status: 'unavailable'
   };
-  a.market_watch = a.market_angle;
+  a.intelligence = { ...intel, render: { ...intel.render, intelligence: intel.render.intelligence && Boolean(a.bettor_angle), betting_relevance: intel.render.betting_relevance && Boolean(a.bettor_angle), context: intel.render.context && Boolean(a.bettor_angle) } };
+  a.market_watch = intel.market_relevance === 'none' ? { text: [], market: null, game_id: null } : a.market_angle;
+  delete a.markets;
   delete a.bettor;
   delete a.market_angle;
-  a.gate = validateArticle(a, { minWords: MIN_WORDS[a.kind] ?? 100 });
+  // gate.js is the reviewed, byte-pinned number/quotation/absence gate and still runs unchanged. The Intelligence
+  // contract sits on top of it: where the shared decision says there is no betting module, the gate's "missing
+  // bettor_angle" requirement does not apply (a clean article with no betting relevance must not grow boilerplate to
+  // pass), and every article is additionally checked for contradictions against that decision.
+  const g = validateArticle(a, { minWords: MIN_WORDS[a.kind] ?? 100 });
+  const failures = [...g.failures.filter((f) => !(f === 'missing bettor_angle' && !a.intelligence.render.intelligence)), ...intelligenceFailures(a)];
+  a.gate = { ok: failures.length === 0, failures };
   a.status = a.gate.ok ? 'published' : 'held';
   return a;
 }
@@ -814,7 +828,11 @@ export function cardOf(a) {
     category: a.category,
     headline: a.headline,
     deck: a.deck,
-    bettor_snippet: a.bettor_angle?.summary || null,
+    // Cards follow the same Intelligence decision as the article: a bettor read appears only for actionable relevance.
+    bettor_snippet: intelligenceOf(a).market_relevance === 'actionable' ? a.bettor_angle?.summary || null : null,
+    intelligence: { market_relevance: intelligenceOf(a).market_relevance, market_data_status: intelligenceOf(a).market_data_status },
+    // International game identity for cards, related stories and share images (the media resolver reads it).
+    intl: a.context?.international ? { competition: a.context.international.competition, round: a.context.international.round, medal: a.context.international.medal, winner: a.context.international.winner, loser: a.context.international.loser, featured: a.context.international.featured } : null,
     status: a.status,
     published_at: a.published_at,
     updated_at: a.updated_at,

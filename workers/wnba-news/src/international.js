@@ -1,138 +1,152 @@
-// International desk — deterministic PropBetEdge stories from wnba-international structured data.
+// International desk — deterministic PropBetEdge game stories from wnba-international structured data.
 //
-// Material events only: a medal game (final or bronze) that has gone final within the last 12 hours. One story per
-// game (id = hash of the game id): a later box-score correction revises it; a game that finished earlier is never
-// promoted into a "new" story after the fact. Copy is built only from the normalized game, box score and the
-// WNBA crosswalk; every number is in `facts`, so the publication gate and reconcile checks apply unchanged.
+// wnba-international-desk/2.0.0:
+//   * Material events: knockout games (qualification round, quarterfinal, semifinal, bronze, final) that went final
+//     within the last 12 hours. One story per game (id = hash of the game id): later data revises it; a game that
+//     finished earlier is never promoted into a "new" story after the fact. A backfill pass may REGENERATE a story
+//     that already exists (same id, slug and origin), never create one.
+//   * The article is written by game-story.js from the game record, linescores, box score, play-by-play (when the
+//     provider publishes it), the competition schedule and earlier box scores — see that module for the fact contract.
+//   * Participation is read from the box score itself (ESPN's FIBA feed omits minutes), so a current WNBA player who
+//     played is never reported as absent.
+//   * Betting relevance is not decided here: finalize() applies the shared PropBetEdge Intelligence decision. This
+//     desk supplies no betting copy — the WNBA connection, when there is one, is part of the article.
+//   * Provenance: `published_at` is the moment the source record was observed (never an estimated game end), and the
+//     generation cutoff is taken after every input has been gathered.
 
 import { finalize, hashId } from './articles.js';
-import { dLong, listJoin, poss } from './prose.js';
+import { buildGameFacts, writeGameStory, depthFailures, wordCount, GAME_STORY_VERSION, participated } from './game-story.js';
 
-export const INTL_VERSION = 'wnba-international-desk/1.0.0';
+export const INTL_VERSION = 'wnba-international-desk/2.0.0';
 export const INTL_STORY_WINDOW_MS = 12 * 3600e3;
 const GAME_LENGTH_MS = 2.5 * 3600e3;
-const MEDAL = { FINAL: { gold: 'gold', loser: 'silver' }, BRONZE: { gold: 'bronze', loser: null } };
+export const MATERIAL_ROUNDS = new Set(['FINAL', 'BRONZE', 'SF', 'QF', 'QQF']);
 
-const f1 = (v) => (Number.isFinite(v) ? (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '') : null);
-// ESPN's FIBA box scores sometimes omit minutes (or rebounds/assists) for a player: a missing stat is left out of the
-// sentence, never printed as "null".
-const line = (p) => {
-  const n = (v) => Number.isFinite(v);
-  const parts = [`${p.pts} points`, n(p.reb) ? `${p.reb} rebounds` : null, n(p.ast) ? `${p.ast} assists` : null].filter(Boolean);
-  const stats = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
-  return n(p.min) && p.min > 0 ? `${stats} in ${p.min} minutes` : stats;
-};
-
-/** Medal games finished within the window, newest first. `now` is injected for tests. */
+/** Knockout games finished within the window, newest first. `now` is injected for tests. */
 export function materialInternationalGames(overview, now = Date.now()) {
   const games = [...(overview?.bracket?.rounds || []).flatMap((r) => r.games), overview?.bracket?.bronze_game].filter(Boolean);
+  const seen = new Set();
   return games
-    .filter((g) => MEDAL[g.round] && g.status === 'final' && g.winner)
+    .filter((g) => { const k = g.game_id || g.provider_ids?.espn; if (seen.has(k)) return false; seen.add(k); return true; })
+    .filter((g) => MATERIAL_ROUNDS.has(g.round) && g.status === 'final' && g.winner)
     .filter((g) => { const end = Date.parse(g.scheduled_at) + GAME_LENGTH_MS; return now - end <= INTL_STORY_WINDOW_MS && now >= Date.parse(g.scheduled_at); })
     .sort((a, b) => Date.parse(b.scheduled_at) - Date.parse(a.scheduled_at));
 }
 
-export async function internationalArticles({ intlGet, now = Date.now(), competitions = ['world-cup-2026'] }) {
+/** The story id for a game — stable across regenerations. */
+export const intlStoryId = (espnId) => hashId(['intl-result', `g-${String(espnId).replace(/^g-/, '')}`]);
+
+/**
+ * @param intlGet  (path) => data
+ * @param now      run instant (window test)
+ * @param backfill optional Set of ESPN game ids whose EXISTING stories should be regenerated regardless of the window
+ * @param clock    () => ISO — the generation cutoff, read after inputs are gathered (injectable for tests)
+ */
+export async function internationalArticles({ intlGet, now = Date.now(), competitions = ['world-cup-2026'], backfill = null, clock = () => new Date().toISOString() }) {
   if (!intlGet) return [];
   const out = [];
   for (const slug of competitions) {
     const ov = await intlGet(`/v1/international/competitions/${slug}`).catch(() => null);
     if (!ov?.competition || !ov.bracket) continue;
-    for (const g of materialInternationalGames(ov, now)) {
-      const detail = await intlGet(`/v1/international/games/${g.provider_ids.espn}`).catch(() => null);
-      if (!detail?.boxscore?.teams?.length || detail.game?.status !== 'final') continue;
-      out.push(await storyFor(ov.competition, detail, ov.bracket));
+    const fresh = materialInternationalGames(ov, now);
+    const all = [...(ov.bracket.rounds || []).flatMap((r) => r.games), ov.bracket.bronze_game].filter(Boolean);
+    const extra = backfill ? all.filter((g) => backfill.has(String(g.provider_ids?.espn)) && g.status === 'final' && !fresh.includes(g)) : [];
+    const targets = [...fresh, ...extra];
+    if (!targets.length) continue;
+    const schedule = (await intlGet(`/v1/international/competitions/${slug}/schedule`).catch(() => null))?.games || [];
+    for (const g of targets) {
+      const espn = g.provider_ids?.espn;
+      const detail = await intlGet(`/v1/international/games/${espn}`).catch(() => null);
+      if (!detail?.game || detail.game.status !== 'final') continue;
+      if (detail.plays_available && !(detail.plays || []).length) detail.plays = (await intlGet(`/v1/international/games/${espn}/playbyplay`).catch(() => null))?.plays || [];
+      else if (detail.plays_available) {
+        // The detail route caps plays; the play-by-play route carries the whole game.
+        const full = (await intlGet(`/v1/international/games/${espn}/playbyplay`).catch(() => null))?.plays;
+        if (full?.length > (detail.plays || []).length) detail.plays = full;
+      }
+      const priorDetails = {};
+      const teams = [detail.game.home_team_id, detail.game.away_team_id];
+      for (const x of schedule.filter((s) => s.status === 'final' && Date.parse(s.scheduled_at) < Date.parse(detail.game.scheduled_at) && teams.some((t) => [s.home_team_id, s.away_team_id].includes(t)))) {
+        const d = await intlGet(`/v1/international/games/${x.provider_ids?.espn}`).catch(() => null);
+        if (d?.boxscore) priorDetails[x.provider_ids.espn] = d;
+      }
+      const cutoff = clock();
+      const story = await storyFor({ competition: ov.competition, detail, schedule, priorDetails, medals: ov.bracket.medals, cutoff, backfill: extra.includes(g) });
+      if (story) out.push(story);
     }
   }
   return out;
 }
 
-async function storyFor(comp, detail, bracket) {
+/** Build one game story. Exported for tests and the regeneration audit. */
+export async function storyFor({ competition, detail, schedule = [], priorDetails = {}, medals = null, cutoff, backfill = false }) {
+  const built = buildGameFacts({ competition, detail, schedule, priorDetails, cutoff, medals });
+  if (built.error) return null;
+  const f = built.facts;
   const g = detail.game;
-  const home = g.winner === g.home_team_id;
-  const winner = home ? g.home_team : g.away_team;
-  const loser = home ? g.away_team : g.home_team;
-  const ws = home ? g.home_score : g.away_score;
-  const ls = home ? g.away_score : g.home_score;
-  const medal = MEDAL[g.round];
-  const box = (t) => detail.boxscore.teams.find((x) => x.team.team_id === t.team_id);
-  const top = (t) => [...(box(t)?.players || [])].filter((p) => Number.isFinite(p.pts)).sort((a, b) => b.pts - a.pts || (b.reb || 0) - (a.reb || 0));
-  const wTop = top(winner);
-  const lTop = top(loser);
-  const wnbaPlayers = detail.boxscore.teams.flatMap((t) => t.players.filter((p) => p.wnba && Number.isFinite(p.min) && p.min > 0).map((p) => ({ ...p, team: t.team })));
-  const wnbaWinners = wnbaPlayers.filter((p) => p.team.team_id === winner.team_id).sort((a, b) => b.pts - a.pts);
-  const lead = wnbaWinners[0] || null;
-  const medalText = medal.gold === 'gold' ? 'gold' : 'bronze';
+  const story = writeGameStory(f);
+  const espn = String(g.provider_ids?.espn || g.game_id).replace(/^g-/, '');
+  const wnbaPlayers = (f.wnba || []).filter((p) => p.wnba?.player_id);
+  const observed = f.provenance.source_observed_at || cutoff;
 
-  const headline = medal.gold === 'gold'
-    ? `${winner.name} beat ${loser.name} ${ws}–${ls} to win gold at the ${comp.name}`
-    : `${winner.name} beat ${loser.name} ${ws}–${ls} to take bronze at the ${comp.name}`;
-  const deck = `${wTop[0].name} led ${winner.name} with ${wTop[0].pts} points; ${wnbaPlayers.length ? `${wnbaPlayers.length} WNBA players appeared in the ${g.round_name.toLowerCase()}.` : `${lTop[0].name} scored ${lTop[0].pts} for ${loser.name}.`}`;
-
-  const body = [];
-  const sections = [];
-  const section = (title, paras) => { const ps = paras.filter(Boolean); if (!ps.length) return; sections.push({ title, first: body.length, count: ps.length }); body.push(...ps); };
-  section('The result', [
-    `${winner.name} won the ${g.round_name.toLowerCase()} of the ${comp.name} ${ws}–${ls} over ${loser.name}${g.venue?.name ? ` at ${g.venue.name}${g.venue.city ? ` in ${g.venue.city}` : ''}` : ''} on ${dLong(g.scheduled_at)}, taking ${medalText}${medal.loser ? ` and leaving ${loser.name} with ${medal.loser}` : ''}.`,
-    bracket?.medals?.gold && bracket?.medals?.silver && bracket?.medals?.bronze ? `The final medal order: gold ${bracket.medals.gold.name}, silver ${bracket.medals.silver.name}, bronze ${bracket.medals.bronze.name}.` : null
-  ]);
-  section('Who delivered', [
-    `${wTop[0].name} led ${winner.name} with ${line(wTop[0])}${wTop[1] ? `, and ${wTop[1].name} added ${wTop[1].pts} points` : ''}.`,
-    `For ${loser.name}, ${lTop[0].name} finished with ${line(lTop[0])}${lTop[1] ? ` and ${lTop[1].name} scored ${lTop[1].pts}` : ''}.`
-  ]);
-  section('WNBA players in the game', wnbaPlayers.length ? [
-    `${wnbaPlayers.length === 1 ? 'One WNBA player' : `${wnbaPlayers.length} WNBA players`} logged minutes: ${listJoin(wnbaPlayers.sort((a, b) => b.pts - a.pts).map((p) => `${p.name} (${p.team.country_code}, ${p.wnba.wnba_team?.name || 'WNBA'}) ${p.pts} points in ${p.min} minutes`))}.`,
-    `Each is linked to her PropBetEdge WNBA profile by an identical ESPN athlete ID, and her full international game log sits on the international player page.`
-  ] : [`No player on a current WNBA roster logged minutes in this game.`]);
-  section('Box score context', [
-    `${winner.name} shot ${box(winner).totals.fgm} of ${box(winner).totals.fga} from the field and ${box(winner).totals.fg3m} of ${box(winner).totals.fg3a} from three, with ${box(winner).totals.reb} rebounds and ${box(winner).totals.tov} turnovers; ${loser.name} shot ${box(loser).totals.fgm} of ${box(loser).totals.fga} and ${box(loser).totals.fg3m} of ${box(loser).totals.fg3a} from three, with ${box(loser).totals.reb} rebounds and ${box(loser).totals.tov} turnovers.`
-  ]);
-
-  const facts = {
-    international: { competition_id: comp.competition_id, game_id: g.game_id, round: g.round, scores: { winner: ws, loser: ls }, medals: bracket?.medals ? { gold: bracket.medals.gold?.name || null, silver: bracket.medals.silver?.name || null, bronze: bracket.medals.bronze?.name || null } : null },
-    box: detail.boxscore.teams.map((t) => ({ team: t.team.name, totals: t.totals, players: t.players.map((p) => ({ name: p.name, min: p.min, pts: p.pts, reb: p.reb, ast: p.ast })) })),
-    wnba_players: wnbaPlayers.map((p) => ({ name: p.name, min: p.min, pts: p.pts, wnba_team: p.wnba.wnba_team?.name || null })),
-    wnba_player_count: wnbaPlayers.length,
-    wnba_minutes_total: wnbaPlayers.reduce((s, p) => s + p.min, 0)
-  };
-  const input_hash = [INTL_VERSION, g.game_id, ws, ls, ...detail.boxscore.teams.map((t) => `${t.team.team_id}:${t.totals.fgm}/${t.totals.fga}:${t.players.map((p) => `${p.player_id}=${p.pts}`).join(',')}`)].join('|');
-  const minutes = wnbaPlayers.reduce((s, p) => s + p.min, 0);
-
-  return finalize({
-    id: await hashId(['intl-result', g.game_id]),
+  const a = finalize({
+    id: await intlStoryId(espn),
     kind: 'international',
     category: 'International',
     structure: 0,
-    headline,
-    deck,
-    body,
-    sections,
+    headline: story.headline,
+    deck: story.deck,
+    body: story.body,
+    sections: story.sections,
     method: [
-      `Built by PropBetEdge from the ${comp.name} game record and box score (ESPN public data, not an official FIBA feed), normalized by the PropBetEdge international data service. One story per medal game; later box-score corrections revise it in place.`
+      `Built by PropBetEdge from the ${competition.name} game record${f.quarters ? ', quarter scores' : ''}, box score${f.pbp ? `, ${f.provenance.plays_used} play-by-play events` : ''} and the competition schedule (ESPN public data, not an official FIBA feed), normalized by the PropBetEdge international data service.`,
+      `Derived figures — margins, separators, runs, lead changes and earlier-game averages — are computed deterministically from those records. Participation is read from the box score; ${f.minutes_published ? 'minutes are as published' : 'this box score publishes no minutes, so none are stated'}.${f.pbp ? '' : ' No play-by-play was published for this game when the story was generated, so the game flow is told from quarter scores.'}`,
+      'One story per knockout game; later box-score or play-by-play updates revise it in place.'
     ],
-    bettor: [wnbaPlayers.length
-      ? `For WNBA bettors this is workload and form context, not a market signal: the ${wnbaPlayers.length} WNBA players here logged ${minutes} combined minutes in a medal game before rejoining their clubs.`
-      : `For WNBA bettors this result is international context only: no current WNBA player logged minutes, so nothing here bears on a WNBA line or prop.`],
-    against: ['National-team roles, minutes and systems differ from WNBA roles, so an international line is not a projection for a WNBA game.'],
-    unknown: [wnbaPlayers.length ? `When each WNBA player in this game rejoins her club, and whether the tournament workload shows up in her next WNBA minutes.` : 'Whether any player in this game joins a WNBA roster later.'],
-    markets: ['player_workload'],
+    bettor: [],
+    against: [],
+    unknown: [],
+    markets: [],
     market_angle: { text: [], market: null, game_id: null },
     lead_team_id: null,
-    lead_player_id: lead ? lead.wnba.wnba_player_id : null,
-    primary_subject: winner.name,
-    published_at: new Date(Date.parse(g.scheduled_at) + GAME_LENGTH_MS).toISOString(),
-    context: { international: { competition: { slug: comp.slug, name: comp.name }, game_id: g.provider_ids?.espn, winner: { name: winner.name, slug: winner.slug }, loser: { name: loser.name, slug: loser.slug } } },
+    lead_player_id: null,
+    primary_subject: f.winner.name,
+    // The source clock is when the record was observed — never an estimated end of game.
+    published_at: observed,
+    provenance: { source_event_at: f.provenance.source_event_at, source_observed_at: observed, generated_at: cutoff, generator: GAME_STORY_VERSION },
+    context: {
+      international: {
+        competition: { slug: competition.slug, name: competition.name, short_name: competition.short_name || null },
+        game_id: espn,
+        round: { code: g.round, name: g.round_name },
+        story_class: f.story_class,
+        winner: { name: f.winner.name, slug: f.winner.slug, code: f.winner.code, flag: f.winner.flag, color: f.winner.color, score: f.winner.score },
+        loser: { name: f.loser.name, slug: f.loser.slug, code: f.loser.code, flag: f.loser.flag, color: f.loser.color, score: f.loser.score },
+        medal: f.medal?.winner || null,
+        // Players the article features, in editorial order, for the media resolver (approved photo of a real subject).
+        featured: [...(f.lines?.winner || []).slice(0, 4), ...(f.lines?.loser || []).slice(0, 2)].filter((p) => story.body.some((t) => t.includes(p.name))).map((p) => ({ espn_id: p.espn_id, name: p.name, team: p.team }))
+      },
+      depth: { words: wordCount(story.body), coverage: story.coverage, story_class: f.story_class },
+      regeneration: backfill ? 'editorial_upgrade' : null
+    },
     entities: [
-      ...wnbaPlayers.map((p) => ({ type: 'player', id: p.wnba.wnba_player_id, name: p.name })),
-      { type: 'intl_game', id: String(g.provider_ids?.espn), name: `${g.away_team.name} vs ${g.home_team.name}` },
-      { type: 'intl_team', id: winner.slug, name: winner.name },
-      { type: 'intl_team', id: loser.slug, name: loser.name }
+      // A `player` entity is emitted only for a current WNBA roster player who appeared — the shared relevance decision
+      // reads these, so participation (not minutes) decides whether a WNBA connection exists.
+      ...wnbaPlayers.map((p) => ({ type: 'player', id: p.wnba.player_id, name: p.name })),
+      { type: 'intl_game', id: espn, name: `${g.away_team.name} vs ${g.home_team.name}` },
+      { type: 'intl_team', id: f.winner.slug, name: f.winner.name },
+      { type: 'intl_team', id: f.loser.slug, name: f.loser.name }
     ],
-    facts,
+    facts: { game: f, box_lines: f.box_lines, headline_stat: f.headline_stat, wnba_player_count: wnbaPlayers.length },
     evidence: [
-      { kind: 'record', source: `${comp.name} game record and box score (ESPN public data)`, url: `https://wnba.propbetedge.ai/international/games/${g.provider_ids?.espn}`, captured_at: detail.fetched_at || null, record: { final: { [winner.name]: ws, [loser.name]: ls }, round: g.round_name } },
-      { kind: 'record', source: 'PropBetEdge international ↔ WNBA crosswalk (identical ESPN athlete IDs)', url: `https://wnba.propbetedge.ai/international/${comp.slug}`, record: { wnba_players: wnbaPlayers.length } }
+      { kind: 'record', source: `${competition.name} game record, quarter scores and box score (ESPN public data)`, url: `https://wnba.propbetedge.ai/international/games/${espn}`, event_at: g.scheduled_at, captured_at: observed, record: { final: { [f.winner.name]: f.winner.score, [f.loser.name]: f.loser.score }, round: g.round_name } },
+      ...(f.pbp ? [{ kind: 'record', source: `${competition.name} play-by-play (${f.provenance.plays_used} events)`, url: `https://wnba.propbetedge.ai/international/games/${espn}`, captured_at: observed, record: { lead_changes: f.pbp.lead_changes, ties: f.pbp.ties } }] : []),
+      ...(f.path?.winner?.games?.length ? [{ kind: 'record', source: `${competition.name} schedule and results`, url: `https://wnba.propbetedge.ai/international/${competition.slug}/games`, captured_at: observed, record: { games_before: f.path.winner.games.length + f.path.loser.games.length } }] : []),
+      { kind: 'record', source: 'PropBetEdge international ↔ WNBA crosswalk (identical ESPN athlete IDs)', url: `https://wnba.propbetedge.ai/international/${competition.slug}/players`, captured_at: observed, record: { wnba_players_appeared: wnbaPlayers.length } }
     ],
-    input_hash
+    input_hash: [INTL_VERSION, GAME_STORY_VERSION, espn, f.winner.score, f.loser.score, f.provenance.plays_used, ...(detail.boxscore?.teams || []).map((t) => `${t.team.team_id}:${t.totals.fgm}/${t.totals.fga}:${t.players.filter(participated).map((p) => `${p.player_id}=${p.pts}`).join(',')}`), f.champion ? `${f.champion.gold}>${f.champion.silver}` : ''].join('|')
   });
+  a.depth_failures = depthFailures({ facts: f, coverage: story.coverage, body: story.body, sections: story.sections });
+  if (a.depth_failures.length) { a.status = 'held'; a.gate.ok = false; a.gate.failures.push(...a.depth_failures); }
+  return a;
 }

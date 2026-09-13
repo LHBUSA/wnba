@@ -12,12 +12,27 @@ const clip = (s, n) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); 
 const one = (v) => (Number.isFinite(Number(v)) ? Number(v).toFixed(1) : null);
 const color = (c, fb) => (/^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : fb);
 export const DEFAULT_SHARE = '/share/propbetedge-wnba-social-v2.jpg';
+const FLAG_PATH = /^\/media\/flags\/[a-z]{3}\.svg$/;
 
 export async function cardModel(kind, key, api) {
   if (kind === 'news') {
     const res = await api.article(key);
     if (!res?.ok) return null;
     const a = res.data.article;
+    const v = a.media?.visual?.kind === 'intl_scoreboard' ? a.media.visual : null;
+    if (v) {
+      // International stories share the same scoreboard identity as the article hero and cards.
+      const photoPath = a.media.layout === 'intl_photo' ? a.media.og || null : null;
+      return {
+        kicker: [v.medal ? `${v.medal === 'gold' ? 'Gold' : 'Bronze'} medal` : v.round, 'International'].filter(Boolean).join(' · '),
+        title: clip(a.headline, 150),
+        footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
+        photoPath,
+        scoreboard: { competition: v.competition_name || v.competition, rows: v.teams.map((t) => ({ name: t.name, score: t.score, flagPath: FLAG_PATH.test(t.flag || '') ? t.flag : null })) },
+        colors: [color(v.teams[0].color, '#2a241c'), color(v.teams[1].color, '#3a2f22')],
+        fallback: photoPath || DEFAULT_SHARE
+      };
+    }
     const photoPath = a.media?.og || null;
     const teams = (a.media?.teams || []).map((t) => teamColors({ team_id: t }).color);
     return {

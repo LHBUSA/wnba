@@ -8,7 +8,7 @@
 // wnba-api is down (entity dictionary falls back to its last good copy; Desk
 // stories pause). Its own KV namespace, its own deploy, its own cron.
 
-import { NEWS_SOURCES, PBE_SOURCE, AUDITED_NOT_INGESTED, SOURCE_REGISTRY_VERSION } from './sources.js';
+import { NEWS_SOURCES, PBE_SOURCE, AUDITED_NOT_INGESTED, SOURCE_REGISTRY_VERSION, publicItem, withheldBySourcePolicy } from './sources.js';
 import { PARSE_VERSION } from './parse.js';
 import { buildDictionary, EDITORIAL_VERSION } from './editorial.js';
 import { classify, TAXONOMY_VERSION, LANES, EVENT_TYPES } from './taxonomy.js';
@@ -51,7 +51,7 @@ export default {
     if (m) return storyRoute(env, m[1]);
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
-      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' }) });
+      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international' }) });
     }
     return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
   }
@@ -90,7 +90,7 @@ async function dictionary(env) {
   }
 }
 
-async function runIngest(env, trigger, { forceArticles = false } = {}) {
+async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false } = {}) {
   const startedAt = new Date().toISOString();
   const now = Date.parse(startedAt);
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
@@ -188,13 +188,14 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
   const breaking = created
     .map((e) => clusterById.get(e.event_id))
     // Only a fresh event can be breaking: a backlog post surfaced by a newly added source never triggers a pass.
-    .filter((c) => c?.materiality?.material && now - Date.parse(c.first_seen_at) <= BRIEF_MAX_AGE_MS && ['roster', 'injuries', 'league'].includes(c.lane) && (c.members.some((m) => byId[m]?.priority === 1) || c.materiality.level === 'high'))
+    // Only sources cleared for public use can trigger it (sources under policy review never create stories).
+    .filter((c) => c?.materiality?.material && now - Date.parse(c.first_seen_at) <= BRIEF_MAX_AGE_MS && ['roster', 'injuries', 'league'].includes(c.lane) && c.materiality.level === 'high' && c.members.some((m) => byId[m] && publicItem(byId[m])))
     .map((c) => ({ event_id: c.cluster_id, event_type: c.event_type, headline: c.headline }));
 
   // PropBetEdge newsroom — in-house articles from structured records (needs wnba-api).
   let articles;
   try {
-    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), intlGet: env.INTL ? (p) => intlGet(env, p) : null, dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: list, force: forceArticles, breaking: breaking.length > 0 });
+    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), intlGet: env.INTL ? (p) => intlGet(env, p) : null, dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: list, force: forceArticles, breaking: breaking.length > 0, backfillInternational, mediaFor });
   } catch (e) {
     articles = { error: e.message };
   }
@@ -270,15 +271,17 @@ async function feed(env, url) {
   }
   if (lane === 'international') {
     for (const it of Object.values(intlStore || {})) {
+      if (!publicItem(it)) continue;
       if (type && it.story_type !== type) continue;
       if (!match(it.entities || [])) continue;
       out.push({ lane: 'international', id: it.item_id, kind: it.story_type, event_type: it.event_type || null, headline: it.headline, url: it.canonical_url, source: { id: it.source_id, name: it.source_name, kind: it.source_kind, attribution: it.attribution }, byline: it.byline, published_at: it.published_at, source_updated_at: it.source_updated_at, captured_at: it.first_captured_at, entities: it.entities || [], wnba_accepted: Boolean(it.wnba_accepted) });
     }
   } else if (lane !== 'pbe') {
     for (const c of clusters || []) {
-      const canon = items[c.canonical_item_id] || items[c.members[0]];
+      // Public surfaces show only sources cleared for public use; an event reported only by sources under policy review is not listed.
+      const members = c.members.map((m) => items[m]).filter(Boolean).filter(publicItem);
+      const canon = members.find((m) => m.item_id === c.canonical_item_id) || [...members].sort((x, y) => (x.priority ?? 9) - (y.priority ?? 9) || String(x.published_at).localeCompare(String(y.published_at)))[0];
       if (!canon) continue;
-      const members = c.members.map((m) => items[m]).filter(Boolean);
       const ents = dedupeEntities(members.flatMap((m) => m.entities));
       if (type && canon.story_type !== type && c.event_type !== type) continue;
       if (deskFilter && c.lane !== deskFilter) continue;
@@ -292,8 +295,8 @@ async function feed(env, url) {
         kind: canon.story_type,
         event_type: c.event_type || canon.event_type || null,
         desk: c.lane || canon.lane || null,
-        materiality: c.materiality || null,
-        publishers: c.publishers || members.length,
+        materiality: members.length === c.members.length ? c.materiality || null : null,
+        publishers: new Set(members.map((m) => m.source_id)).size,
         headline: canon.headline,
         summary: canon.summary,
         url: canon.canonical_url,
@@ -333,7 +336,7 @@ function dedupeEntities(list) {
 }
 
 async function articlesRoute(env, url) {
-  const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+  const index = ((await env.NEWS_KV.get('art:v1:index', 'json')) || []).filter((c) => !withheldBySourcePolicy(c));
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
   const limit = Math.min(Number(url.searchParams.get('limit') || 40), 400);
   const cat = url.searchParams.get('kind');
@@ -354,6 +357,7 @@ async function articleRoute(env, slugOrId) {
     if (hit) a = await env.NEWS_KV.get(`art:v1:item:${hit.id}`, 'json');
   }
   if (!a) return j({ ok: false, error: 'not_found' }, 404);
+  if (withheldBySourcePolicy({ kind: a.kind, sources: [...new Set((a.evidence || []).map((e) => e.publisher || e.source))] })) return j({ ok: false, error: 'not_found', reason: 'withheld_source_policy_review' }, 404);
   const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
   // The index is the lifecycle authority. A collapsed duplicate URL serves its canonical story, and the
   // canonical editorial origin/revision clocks win over whatever an older item payload stored.
@@ -362,9 +366,9 @@ async function articleRoute(env, slugOrId) {
     const canonical = await env.NEWS_KV.get(`art:v1:item:${card.duplicate_of}`, 'json');
     if (canonical) { a = canonical; card = index.find((c) => c.id === a.id); }
   }
-  if (card) a = { ...a, first_published_at: card.first_published_at || a.first_published_at, revised_at: card.revised_at ?? a.revised_at ?? null };
+  if (card) a = { ...a, first_published_at: card.first_published_at || a.first_published_at, revised_at: card.revised_at ?? a.revised_at ?? null, revisions: card.revisions ?? a.revisions ?? [] };
   const ents = new Set((a.entities || []).filter(Boolean).filter((e) => e.type !== 'game').map((e) => `${e.type}:${e.id}`));
-  const related = index.filter((c) => c.id !== a.id && !c.superseded_by && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) }));
+  const related = index.filter((c) => c.id !== a.id && !c.superseded_by && !withheldBySourcePolicy(c) && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) }));
   return j({ ok: true, data: { article: { ...a, media: mediaFor(a) }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
 }
 

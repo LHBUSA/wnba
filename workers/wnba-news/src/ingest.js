@@ -61,7 +61,8 @@ export async function normalizeItem(raw, src, dict, { startedAt, prev = null, no
     relevance: rel.score,
     relevance_reasons: rel.reasons,
     entities,
-    rights: src.summary_policy === 'none' ? 'headline_link' : 'headline_link_summary'
+    rights: src.summary_policy === 'none' ? 'headline_link' : 'headline_link_summary',
+    policy_status: src.policy_status || 'approved'
   };
   return { id, record, rel, international: INTERNATIONAL.test(`${raw.headline} ${raw.summary || ''}`) };
 }

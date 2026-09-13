@@ -9,6 +9,7 @@ import { teamLogo } from '../ui/logo.js';
 import { KIND_LABEL, DESK, articleCard, headlineText } from '../ui/articles.js';
 import { storyMedia, creditLine } from '../ui/story-media.js';
 import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
+import { intelligenceOf } from '../lib/intelligence.js';
 
 export const loadArticle = async (api, slug) => api.article(slug);
 
@@ -26,20 +27,66 @@ const DESK_LINKS = {
   international: [['/international', 'International women’s basketball'], ['/news/c/international', 'More international stories']]
 };
 
+const MARKET_NAME = { spread: 'Spread', total: 'Total', moneyline: 'Moneyline', 'player props': 'Player props', line: 'Line' };
+
+/**
+ * Timestamps shown on a story. Published = the newsroom's first publication (immutable); Updated = the latest
+ * revision; "Source data as of" = when the evidence was observed. A source observation later than the time the
+ * displayed version was produced is impossible, so it is never shown (legacy stories stored an event/estimate clock
+ * in published_at; that value is not an observation).
+ */
+export function storyClock(a) {
+  const published = a.first_published_at || a.published_at;
+  const revised = a.revised_at && Date.parse(a.revised_at) > Date.parse(published || 0) ? a.revised_at : null;
+  const version = revised || published;
+  const obs = a.provenance?.source_observed_at || null;
+  const showObserved = obs && Date.parse(obs) <= Date.parse(version || 0) ? obs : null;
+  return { published, revised, observed: showObserved };
+}
+
+/**
+ * PropBetEdge Intelligence — ONE module, driven only by the shared decision (src/lib/intelligence.js). Relevance
+ * "none" renders nothing; "contextual" renders context without market labels or sportsbook links; "actionable" may
+ * render betting relevance, market evidence and markets touched. Subsections render only with real content.
+ */
+export function intelligenceView(a) {
+  const intel = intelligenceOf(a);
+  const b = a.bettor_angle;
+  if (!intel.render.intelligence || !b) return '';
+  const mw = a.market_watch || {};
+  const ng = a.context?.next_game || a.context?.game || null;
+  const gameForStrip = ng ? { home: ng.home, away: ng.away } : null;
+  const actionable = intel.market_relevance === 'actionable';
+  const evidence = actionable && intel.render.market_evidence && ((mw.text || []).length || (mw.market && gameForStrip));
+  return html`<section class="pbe-intel" data-relevance="${intel.market_relevance}">
+    <div class="pbe-intel-head"><span class="module-kicker">PropBetEdge Intelligence</span><h2>${intel.label}</h2></div>
+    <div class="pbe-intel-grid">
+      <div class="pbe-intel-main">
+        <p class="bettor-summary">${b.summary}</p>
+        ${(b.supporting || []).map((x) => html`<p>${x}</p>`)}
+        ${intel.render.markets_touched ? html`<p class="module-note">Markets touched: ${intel.markets_touched.map((m) => MARKET_NAME[m] || m).join(' · ')}</p>` : ''}
+      </div>
+      ${evidence ? html`<div class="pbe-intel-market"><h3>Market evidence</h3>${(mw.text || []).map((x) => html`<p>${x}</p>`)}${mw.market && gameForStrip ? html`<div class="strip-wrap">${marketStrip(mw.market, gameForStrip)}</div>` : ''}${intel.render.sportsbook_links && mw.game_id ? html`<p class="module-links"><a class="sec-link" href="/matchups/${mw.game_id}">Full matchup and line context →</a></p>` : ''}</div>` : ''}
+    </div>
+    ${(b.against || []).length || (b.unknown || []).length ? html`<div class="counter">
+      ${(b.against || []).length ? html`<div><h3>What argues against it</h3>${b.against.map((x) => html`<p>${x}</p>`)}</div>` : ''}
+      ${(b.unknown || []).length ? html`<div><h3>Unknowns</h3>${b.unknown.map((x) => html`<p>${x}</p>`)}</div>` : ''}
+    </div>` : ''}
+  </section>`;
+}
+
 export function articleView({ article: a, related = [] }) {
   const teams = (a.entities || []).filter((e) => e && e.type === 'team');
   const players = (a.entities || []).filter((e) => e && e.type === 'player');
   const games = (a.entities || []).filter((e) => e && e.type === 'game');
   const intl = (a.entities || []).filter((e) => e && (e.type === 'intl_team' || e.type === 'intl_game'));
-  const b = a.bettor_angle || {};
   const mw = a.market_watch || {};
   const ng = a.context?.next_game || a.context?.game || null;
-  const gameForStrip = ng ? { home: ng.home, away: ng.away } : null;
+  const intel = intelligenceOf(a);
   const deskKind = a.kind === 'result' ? 'performance' : a.kind;
   const pictured = new Set((a.media?.subjects || []).map((s) => s.player_id));
   const photoOf = (p) => (a.media?.subjects || []).find((s) => s.player_id === String(p.id));
-  const published = a.first_published_at || a.published_at;
-  const revised = a.revised_at && Date.parse(a.revised_at) > Date.parse(published || 0) ? a.revised_at : null;
+  const { published, revised, observed } = storyClock(a);
   const gameLinks = games.length ? games : mw.game_id ? [{ id: mw.game_id, name: ng ? `${ng.away?.abbr || ''} @ ${ng.home?.abbr || ''}` : 'This game', start_utc: ng?.start_utc }] : [];
 
   return html`
@@ -57,14 +104,14 @@ export function articleView({ article: a, related = [] }) {
           <span class="by">By the <a href="/about">PropBetEdge WNBA Newsroom</a></span>
           <span>Published <time datetime="${published}">${fmtDateTimeET(published)}</time></span>
           ${revised ? html`<span>Updated <time datetime="${revised}">${fmtDateTimeET(revised)}</time></span>` : ''}
-          <span>Source record ${fmtDateTimeET(a.published_at)}</span>
+          ${observed ? html`<span>Source data as of ${fmtDateTimeET(observed)}</span>` : ''}
         </div>
       </header>
 
       <div class="story-layout">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? a.sections.map((s) => html`<h2>${s.title}</h2>${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${p}</p>`)}`)
+            ? a.sections.map((s) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${p}</p>`)}`)
             : a.body.map((p) => html`<p>${p}</p>`)}
         </div>
         <aside class="story-aside">
@@ -81,36 +128,19 @@ export function articleView({ article: a, related = [] }) {
         </aside>
       </div>
 
-      <section class="premium">
-        <div class="bettor-box">
-          <span class="module-kicker">Bettor angle</span>
-          <h2>Why it matters for bettors</h2>
-          <p class="bettor-summary">${b.summary}</p>
-          ${(b.supporting || []).map((x) => html`<p>${x}</p>`)}
-          <div class="counter">
-            <div><h3>What argues against it</h3>${(b.against || []).map((x) => html`<p>${x}</p>`)}</div>
-            <div><h3>Still unknown</h3>${(b.unknown || []).map((x) => html`<p>${x}</p>`)}</div>
-          </div>
-          <p class="module-note">Markets touched: ${(b.markets || []).join(' · ').replaceAll('_', ' ')}</p>
-        </div>
-        <div class="takeaway">
-          <span class="module-kicker">Market angle</span>
-          <h2>What the market shows</h2>
-          ${(mw.text || []).length ? (mw.text || []).map((x) => html`<p>${x}</p>`) : html`<p>No stored market capture is attached to this story. Market context lives on the <a href="/props">best-line board</a>, captured at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET.</p>`}
-          ${mw.market && gameForStrip ? html`<div class="strip-wrap">${marketStrip(mw.market, gameForStrip)}</div>` : ''}
-          ${mw.game_id ? html`<p class="module-links"><a class="sec-link" href="/matchups/${mw.game_id}">Full matchup and line context →</a><a class="sec-link" href="/cast/${mw.game_id}">WNBACast →</a></p>` : ''}
-        </div>
-      </section>
+      ${intelligenceView(a)}
 
-      <section class="trust-layer">
-        <h2 class="sec-title bc">Evidence &amp; method</h2>
-        <ol class="evidence">
-          ${(a.evidence || []).map((e) => html`<li><b>${e.kind === 'publisher_report' ? `${e.publisher} (publisher report)` : e.source}</b>${e.headline ? html` — “${e.headline}”` : ''}${e.published_at ? ` · published ${fmtDateTimeET(e.published_at)}` : ''}${e.captured_at ? ` · captured ${fmtDateTimeET(e.captured_at)}` : ''}${e.url ? html` · <a href="${e.url}" rel="noopener" target="_blank">source ↗</a>` : ''}</li>`)}
-        </ol>
-        ${(a.method || []).map((x) => html`<p class="note">${x}</p>`)}
-        <p class="note">Written by PropBetEdge’s deterministic newsroom generator (${a.generator?.version}) from the records above and checked by the publication gate: every number traces to a cited record, publisher reporting stays attributed to the publisher, and a story that fails the gate is held rather than published.</p>
-        ${a.media?.subjects?.length ? html`<p class="note">Photograph: ${creditLine(a.media)}. The pictured player is matched to her Wikidata entry by exact name and date of birth, and the photo is reviewed before use; the frame is a PropBetEdge composition of the licensed original.</p>` : html`<p class="note">No licensed photograph of this story’s subject is approved yet, so the story runs with a team composition rather than a stand-in.</p>`}
-        <p class="note trust-links"><a href="/editorial-policy">Editorial policy</a> · <a href="/corrections">Corrections &amp; revisions</a> · <a href="/methodology">Methodology</a> · <a href="/sources">Sources</a></p>
+      <section class="trust-layer" id="evidence">
+        <details class="evidence-method">
+          <summary><span class="sec-title bc">Evidence &amp; methodology</span><span class="note">${(a.evidence || []).length} cited ${(a.evidence || []).length === 1 ? 'record' : 'records'} · how this story was built</span></summary>
+          <ol class="evidence">
+            ${(a.evidence || []).map((e) => html`<li><b>${e.kind === 'publisher_report' ? `${e.publisher} (publisher report)` : e.source}</b>${e.headline ? html` — “${e.headline}”` : ''}${e.published_at ? ` · published ${fmtDateTimeET(e.published_at)}` : ''}${e.captured_at ? ` · observed ${fmtDateTimeET(e.captured_at)}` : ''}${e.url ? html` · <a href="${e.url}" rel="noopener" target="_blank">source ↗</a>` : ''}</li>`)}
+          </ol>
+          ${(a.method || []).map((x) => html`<p class="note">${x}</p>`)}
+          ${a.media?.subjects?.length ? html`<p class="note">${creditLine(a.media, { compact: true })}${a.media.caption ? '' : ''}.</p>` : ''}
+          <p class="note">Generated by PropBetEdge’s deterministic newsroom (${a.generator?.version}${a.provenance?.generator ? ` · ${a.provenance.generator}` : ''}) and checked by the publication gate before release${intel.market_relevance === 'none' ? '' : `; betting relevance: ${intel.market_relevance}`}.${(a.revisions || []).length ? ` Revision history: ${a.revisions.map((r) => `${fmtDateTimeET(r.at)} ${r.kind.replaceAll('_', ' ')}`).join('; ')}.` : ''}</p>
+          <p class="note trust-links"><a href="/editorial-policy">Editorial policy</a> · <a href="/corrections">Corrections &amp; revisions</a> · <a href="/methodology">Methodology</a> · <a href="/sources">Sources</a></p>
+        </details>
       </section>
 
       ${related.length ? html`<section class="section related">

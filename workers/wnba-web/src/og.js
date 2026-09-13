@@ -75,7 +75,26 @@ function background(model) {
   ];
 }
 
+function scoreboardLayout(model) {
+  const sb = model.scoreboard;
+  const photo = Boolean(model.photo);
+  const row = (t, win) => h({ alignItems: 'center', marginTop: 18, width: photo ? 560 : 1000 },
+    t.flag ? { type: 'img', props: { src: t.flag, width: photo ? 84 : 120, height: photo ? 56 : 80, style: { borderRadius: 6, marginRight: 26 } } } : h({ width: photo ? 84 : 120, height: photo ? 56 : 80, marginRight: 26, backgroundColor: '#2a241c', borderRadius: 6 }),
+    text({ fontFamily: 'Barlow Condensed', fontSize: photo ? 60 : 92, color: win ? PAPER : MUTED, textTransform: 'uppercase', flexGrow: 1 }, t.name),
+    text({ fontFamily: 'Barlow Condensed', fontSize: photo ? 76 : 116, color: win ? GOLD : MUTED }, String(t.score ?? '')));
+  return h({ width: 1200, height: 630, position: 'relative', backgroundColor: INK },
+    ...background(model),
+    h({ position: 'absolute', left: 56, top: 52 }, brand()),
+    h({ position: 'absolute', left: 56, top: 150, flexDirection: 'column' },
+      text({ fontFamily: 'Barlow Condensed', fontSize: 30, color: ORANGE, letterSpacing: 2, textTransform: 'uppercase' }, model.kicker),
+      row(sb.rows[0], true),
+      row(sb.rows[1], false),
+      text({ fontFamily: 'Inter', fontWeight: 700, fontSize: 24, color: MUTED, marginTop: 24, width: photo ? 600 : 1000 }, sb.competition || '')),
+    footer(model.footer));
+}
+
 function layout(model) {
+  if (model.scoreboard) return scoreboardLayout(model);
   const size = model.title.length <= 60 ? 58 : model.title.length <= 95 ? 48 : 40;
   const titleStyle = model.titleFont === 'display'
     ? { fontFamily: 'Barlow Condensed', fontSize: model.title.length <= 18 ? 96 : 76, lineHeight: 0.95, color: PAPER, textTransform: 'uppercase' }
@@ -111,6 +130,13 @@ const b64 = (buf) => {
 export async function ogResponse(kind, key, deps) {
   const model = await cardModel(kind, key, deps.api);
   if (!model) return null;
+  if (model.scoreboard) {
+    for (const row of model.scoreboard.rows) {
+      if (!row.flagPath) continue;
+      const r = await deps.fetchAsset(row.flagPath);
+      if (r.ok) row.flag = `data:image/svg+xml;base64,${b64(await r.arrayBuffer())}`;
+    }
+  }
   if (model.photoPath) {
     const r = await deps.fetchAsset(model.photoPath);
     if (r.ok) model.photo = `data:image/jpeg;base64,${b64(await r.arrayBuffer())}`;

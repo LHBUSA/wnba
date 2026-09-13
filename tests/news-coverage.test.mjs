@@ -169,32 +169,36 @@ test('materiality gate: official roster and injury news is material; opinion, li
 
 // ------------------------------------------------------------ event identity + stories
 
-test('an official team event creates one canonical PropBetEdge story filed to the Injury Desk', async () => {
+test('source policy: an official team post is detected internally, but while under review it never creates, corroborates or appears in a story', async () => {
   const off = await storm(90);
   assert.equal(off.source_kind, 'team_official');
+  assert.equal(off.policy_status, 'review_required');
   assert.ok(off.entities.some((e) => e.type === 'team' && e.id === '14' && e.method === 'source_team'), 'official site links its own team');
   assert.ok(off.entities.some((e) => e.type === 'player' && e.id === '4420318'));
   assert.equal(off.event_type, 'injury');
-  assert.equal(off.materiality.material, true);
   assert.equal(off.summary, null, 'team-site excerpts are not stored');
-  const { clusters, items } = withEvents([off]);
-  assert.equal(clusters.length, 1);
-  assert.equal(clusters[0].canonical_item_id, off.item_id);
-  const out = await briefArticles({ externalItems: items, structured: [], now: NOW });
-  assert.equal(out.length, 1);
-  const a = out[0];
+  const alone = withEvents([off]);
+  assert.equal(alone.clusters.length, 1, 'the event is still detected for internal monitoring');
+  assert.equal((await briefArticles({ externalItems: alone.items, structured: [], now: NOW })).length, 0, 'no story from a source under policy review');
+  // An approved national report of the same event creates the story; the official post neither appears nor counts.
+  const both = withEvents([off, await cbs(60)]);
+  assert.equal(both.clusters.length, 1);
+  const [a] = await briefArticles({ externalItems: both.items, structured: [], now: NOW });
   assert.equal(a.status, 'published', a.gate.failures.join('\n'));
   assert.equal(a.lead_player_id, '4420318', 'the story pictures the linked player (single-subject media path)');
   assert.equal(a.context.brief.event_type, 'injury');
   assert.equal(cardOf(await withSlug(a)).desk, 'injury');
-  assert.ok(a.evidence.some((e) => e.kind === 'publisher_report' && /Seattle Storm \(official\)/.test(e.publisher)));
+  assert.ok(!a.evidence.some((e) => /official/i.test(e.publisher || '')), 'no review-required source is cited');
+  assert.ok(!JSON.stringify(a).includes('storm.wnba.com'), 'no link to the review-required source');
+  assert.ok(NEWS_SOURCES.filter((s) => s.kind === 'team_official' || s.kind === 'official').every((s) => s.policy_status === 'review_required'));
+  assert.ok(NEWS_SOURCES.filter((s) => s.tier !== 'official').every((s) => s.policy_status === 'approved'), 'unrelated sources stay approved');
 });
 
 test('national and beat follow-ups revise the same story: one event, one id, first publication immutable, revision stamped', async () => {
-  const first = withEvents([await storm(90)]);
+  const first = withEvents([await cbs(90)]);
   const [v1] = await briefArticles({ externalItems: first.items, structured: [], now: NOW });
-  // Three more publishers report the same event over the next hour; the registry carries forward.
-  const later = [await storm(90), await cbs(60), await jws(45), await times(30)];
+  // More publishers report the same event over the next hour; the registry carries forward.
+  const later = [await cbs(90), await storm(70), await jws(45), await times(30)];
   const second = withEvents(later, first.reg);
   assert.equal(second.clusters.length, 1, 'duplicate publishers do not create duplicate events');
   assert.equal(second.clusters[0].cluster_id, first.clusters[0].cluster_id);
@@ -241,8 +245,8 @@ test('transaction identity is stable: a newly added source with an earlier repor
 });
 
 test('different facts stay different events: a replacement signing after an injury is a new story', async () => {
-  const inj = await storm(120);
-  const sign = await ingest({ headline: 'Storm Sign Kalani Brown to Hardship Contract', url: 'https://storm.wnba.com/news/storm-sign-brown', published_at: iso(60), tags: ['Player Movement'] }, 'team_storm');
+  const inj = await cbs(120);
+  const sign = await ingest({ headline: 'Storm sign Kalani Brown to hardship contract', url: 'https://www.cbssports.com/wnba/news/storm-sign-brown/', published_at: iso(60), tags: ['WNBA'] }, 'cbs_wnba');
   const { clusters, items } = withEvents([inj, sign]);
   assert.equal(clusters.length, 2);
   const out = await briefArticles({ externalItems: items, structured: [], now: NOW });
@@ -261,7 +265,7 @@ test('a shared player is not a shared event: an honour and a record for the same
 });
 
 test('an old article cannot become fresh: late-discovered old reports and late corroboration create no new story', async () => {
-  const old = await ingest({ headline: 'Storm Sign Kalani Brown to Hardship Contract', url: 'https://storm.wnba.com/news/old-signing', published_at: new Date(NOW - BRIEF_MAX_AGE_MS - 3 * 3600e3).toISOString(), tags: [] }, 'team_storm');
+  const old = await ingest({ headline: 'Storm sign Kalani Brown to hardship contract', url: 'https://www.cbssports.com/wnba/news/old-signing/', published_at: new Date(NOW - BRIEF_MAX_AGE_MS - 3 * 3600e3).toISOString(), tags: ['WNBA'] }, 'cbs_wnba');
   assert.equal(old.materiality.material, true, 'material, but old');
   const late = await ingest({ headline: 'Kalani Brown joins Storm on hardship deal', url: 'https://www.reviewjournal.com/sports/aces/brown-hardship/', published_at: iso(10), tags: [] }, 'lvrj_aces');
   const { items } = withEvents([old, late]);

@@ -17,7 +17,7 @@ const page = (here, head, sections) => html`
 export const SOURCE_REGISTRY = [
   ['ESPN public WNBA data', 'Schedules, scores, play-by-play, published shot locations, box scores, rosters, standings, team and player statistics, transactions and the injury feed. Used as structured records; statuses stay ESPN’s and are labelled as such.'],
   ['The Odds API', 'Sportsbook prices stored by PropBetEdge at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET, and player props inside 36 hours of tip. A page view never requests new prices.'],
-  ['Official league and team announcements', 'WNBA.com news and press releases and all fifteen official team sites, read from the structured post data those pages publish: headline, link, categories and timestamps. Embedded article bodies are discarded. Official team announcements are authoritative for that team’s roster and injury news.'],
+  ['Official league and team sites (review required)', 'WNBA.com and the fifteen WNBA-hosted team sites are classified review required: the WNBA.com Terms of Use restrict commercial reuse and links from commercial sites without written permission, and that review is unresolved. They are monitored for source health and internal event detection only — nothing from them is displayed, cited, linked or used to create a story, no article bodies are read, and no WNBA.com statistics are used.'],
   ['Publisher source wire', 'ESPN, NBC Sports, CBS Sports, Just Women’s Sports, The IX, the Las Vegas Review-Journal, the New York Post, the Los Angeles Times, High Post Hoops, Swish Appeal, Winsidr and Her Hoop Stats: headline, link and — where the publisher allows automated reuse — its own short summary. Article bodies are never stored or reproduced; links open on the publisher’s site. Paywalled and aggregator sources are not ingested.'],
   ['Wikimedia Commons', 'Player photographs used under their stated Creative Commons or public-domain licenses, credited on every image, matched to the player by Wikidata identity and reviewed before use.'],
   ['PropBetEdge WNBA Newsroom', 'Stories written by the deterministic PropBetEdge generator from the structured records cited in each story’s evidence list.']
@@ -55,7 +55,7 @@ export function newsHealthView(news, { now = Date.now() } = {}) {
           const h = s.health;
           const [key, label] = STATUS_BADGE[h.last_status] || ['stale', h.last_status];
           return html`<tr>
-            <td class="l"><a href="${s.home_url}" rel="noopener nofollow" target="_blank">${s.name}</a><div class="note">${s.format === 'news_sitemap' ? 'news sitemap (daily)' : s.format === 'wnba_platform' ? 'official page data' : s.format === 'espn_json' ? 'provider JSON' : 'RSS / Atom'} · ${h.timestamp_quality && (h.timestamp_quality.date_only || 0) > 0 ? 'date-only timestamps' : s.timestamp_quality}</div></td>
+            <td class="l">${s.policy_status === 'review_required' ? html`<b>${s.name}</b> ${badge('stale', 'Review required')}` : html`<a href="${s.home_url}" rel="noopener nofollow" target="_blank">${s.name}</a>`}<div class="note">${s.format === 'news_sitemap' ? 'news sitemap (daily)' : s.format === 'wnba_platform' ? 'official page data' : s.format === 'espn_json' ? 'provider JSON' : 'RSS / Atom'} · ${h.timestamp_quality && (h.timestamp_quality.date_only || 0) > 0 ? 'date-only timestamps' : s.timestamp_quality}</div></td>
             <td>${badge(key, label)}</td>
             <td>${h.http_status ?? '—'}</td>
             <td>${ago(h.last_success_at, now)}</td>

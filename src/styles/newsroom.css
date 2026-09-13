@@ -44,6 +44,47 @@
 .sm-thumb--team { display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tc) 45%, var(--ink-2)), var(--ink-2)); }
 .sm-thumb--team img { width: 62%; height: auto; }
 
+/* PropBetEdge International scoreboard — flags, names, score, medal/round, competition. Sized in container units so
+   the same composition is legible as a 1000px hero, a 300px card and a share image. */
+.sm--intl .sm-frame { container-type: inline-size; }
+.ib { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: center; gap: 2.4cqw; padding: 5cqw 6cqw; color: var(--paper); }
+.ib--full { background:
+  radial-gradient(ellipse 60% 90% at 88% 20%, color-mix(in srgb, var(--c1) 38%, transparent), transparent 70%),
+  radial-gradient(ellipse 55% 80% at 92% 100%, color-mix(in srgb, var(--c2) 30%, transparent), transparent 72%),
+  linear-gradient(135deg, #15110d 0%, #0f0d0a 60%, #1a150f 100%); }
+.ib--full .sm-court { color: rgba(212, 175, 55, .08); }
+.ib-kicker { position: relative; display: inline-flex; align-items: center; gap: 1.4cqw; font: 800 3.1cqw/1 var(--f-display); letter-spacing: .16em; text-transform: uppercase; color: var(--gold-bright); }
+.ib-medal { width: 2.6cqw; height: 2.6cqw; border-radius: 50%; box-shadow: inset 0 0 0 .35cqw rgba(0,0,0,.25); }
+.ib-medal--gold { background: radial-gradient(circle at 35% 30%, #fff3b0, #d4af37 55%, #8a6a12); }
+.ib-medal--bronze { background: radial-gradient(circle at 35% 30%, #ffd6ae, #c47a3a 55%, #6e3e16); }
+.ib-rows { position: relative; display: grid; gap: 1.6cqw; }
+.ib-row { display: grid; grid-template-columns: 9cqw minmax(0, 1fr) auto; align-items: center; gap: 2.4cqw; padding-bottom: 1.6cqw; border-bottom: .2cqw solid rgba(245, 241, 235, .12); }
+.ib-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.ib-flag { width: 9cqw; height: 6cqw; object-fit: cover; border-radius: .6cqw; box-shadow: 0 .6cqw 2cqw rgba(0,0,0,.45), 0 0 0 .15cqw rgba(255,255,255,.18); }
+.ib-flag--none { display: block; background: var(--ink-3); }
+.ib-name { font: 800 6.4cqw/1 var(--f-display); letter-spacing: .02em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ib-score { font: 800 8.4cqw/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.ib-row:not(.ib-row--win) .ib-name, .ib-row:not(.ib-row--win) .ib-score { color: rgba(245, 241, 235, .62); }
+.ib-row--win .ib-score { color: var(--gold-bright); }
+.ib-foot { position: relative; display: flex; justify-content: space-between; align-items: baseline; gap: 2cqw; font: 600 2.3cqw/1.2 var(--f-data); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+.ib-brand { color: var(--gold); white-space: nowrap; }
+.ib-comp { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ib--hero .ib-foot { font-size: 1.9cqw; }
+/* Band over an approved photograph: compact, bottom-left, the photo stays the subject. */
+.ib--band { inset: auto 0 0 0; justify-content: flex-end; gap: 1.2cqw; padding: 10cqw 4.5cqw 3.6cqw; background: linear-gradient(180deg, rgba(15,13,10,0) 0%, rgba(15,13,10,.78) 42%, rgba(15,13,10,.94) 100%); }
+.ib--band .ib-rows { width: min(62cqw, 100%); gap: .8cqw; }
+.ib--band .ib-row { grid-template-columns: 6cqw minmax(0, 1fr) auto; gap: 1.8cqw; padding-bottom: .8cqw; }
+.ib--band .ib-flag { width: 6cqw; height: 4cqw; }
+.ib--band .ib-name { font-size: 4.2cqw; }
+.ib--band .ib-score { font-size: 5.2cqw; }
+.ib--band .ib-kicker { font-size: 2.4cqw; }
+.ib--band .ib-foot { display: none; }
+/* Small cards: keep the score legible, drop the fine print. */
+.ib--small .ib-foot, .ib--card.ib--band .ib-kicker { display: none; }
+.sm-thumb--intl { display: grid; place-items: center; align-content: center; gap: 3px; border-radius: 10px; background: linear-gradient(135deg, #1a150f, #0f0d0a); border: 1px solid var(--line); }
+.sm-thumb--intl img { width: 44%; height: auto; border-radius: 2px; }
+.sm-thumb--intl b { font: 800 13px/1 var(--f-display); color: var(--gold-bright); letter-spacing: .02em; }
+
 /* ---------------------------------------------------------------- story cards */
 .scard { position: relative; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .scard-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -141,6 +182,17 @@
     linear-gradient(0deg, rgba(15, 13, 10, .7), transparent 42%); }
   .front-lead .scard--lead .sm-credit { position: absolute; top: 12px; right: 14px; margin: 0; max-width: 46%; justify-content: flex-end; text-align: right; color: rgba(245, 241, 235, .8); text-shadow: 0 1px 3px rgba(0, 0, 0, .8); padding: 5px 9px; border-radius: 6px; background: rgba(15, 13, 10, .58); }   /* backing keeps the credit legible over bright photo areas */
   .front-lead .scard--lead .sm-credit a { color: rgba(245, 241, 235, .9); }
+  /* International lead: the scoreboard takes the right half, the headline keeps the open left side. */
+  .front-lead .scard--lead .ib--full { left: 50%; padding: 4cqw 4cqw 4cqw 2cqw; gap: 1.6cqw; background: transparent; }
+  .front-lead .scard--lead .ib--full .sm-court, .front-lead .scard--lead .ib--full .ib-foot { display: none; }
+  .front-lead .scard--lead .ib--full .ib-kicker { font-size: 1.8cqw; }
+  .front-lead .scard--lead .ib--full .ib-row { grid-template-columns: 5.4cqw minmax(0, 1fr) auto; gap: 1.6cqw; }
+  .front-lead .scard--lead .ib--full .ib-flag { width: 5.4cqw; height: 3.6cqw; }
+  .front-lead .scard--lead .ib--full .ib-name { font-size: 3.8cqw; }
+  .front-lead .scard--lead .ib--full .ib-score { font-size: 5cqw; }
+  .front-lead .scard--lead.sm--intl-board .sm-frame::after, .front-lead .scard--lead .sm--intl-board .sm-frame { background: linear-gradient(135deg, #15110d 0%, #0f0d0a 50%, color-mix(in srgb, var(--c1) 34%, #0f0d0a) 100%); }
+  .front-lead .scard--lead .ib--band { inset: 0 auto auto 0; width: 44%; padding: 3.2cqw; justify-content: flex-start; background: none; }
+  .front-lead .scard--lead .ib--band .ib-kicker { display: inline-flex; }
   .front-lead .scard--lead .scard-meta { color: var(--dim); }
 }
 .scard-foot { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin-top: 4px; }
@@ -221,8 +273,26 @@
 .module-links { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px !important; }
 .strip-wrap { margin-top: 12px; min-width: 0; overflow-x: auto; }
 
-.trust-layer { margin-top: 36px; padding: 22px 24px; border-radius: 16px; border: 1px solid var(--line); background: var(--ink-1); }
+/* PropBetEdge Intelligence — one module, rendered only when the shared relevance decision allows it. */
+.pbe-intel { margin-top: 28px; padding: 22px 24px; border-radius: 18px; border: 1px solid rgba(185, 156, 255, .28); background: linear-gradient(180deg, rgba(185, 156, 255, .08), rgba(185, 156, 255, .02)); }
+.pbe-intel[data-relevance='contextual'] { border-color: var(--gold-line); background: linear-gradient(180deg, rgba(212, 175, 55, .07), rgba(212, 175, 55, .02)); }
+.pbe-intel h2 { font: 600 24px/1.2 var(--f-editorial); color: var(--paper); margin: 8px 0 12px; text-transform: none; }
+.pbe-intel p { font-size: 15.5px; line-height: 1.6; color: var(--paper-2); margin: 0 0 .8em; }
+.pbe-intel-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; }
+.pbe-intel-grid > :only-child { grid-column: 1 / -1; }
+.pbe-intel-market h3 { font: 700 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+@media (max-width: 760px) { .pbe-intel-grid, .pbe-intel .counter { grid-template-columns: 1fr; } .pbe-intel { padding: 18px 16px; } }
+
+.trust-layer { margin-top: 36px; padding: 16px 24px; border-radius: 16px; border: 1px solid var(--line); background: var(--ink-1); }
 .trust-layer .sec-title { margin-bottom: 14px; }
+/* Evidence & methodology: present in the page (and crawlable), visually subordinate to the article. */
+.evidence-method > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; padding: 6px 0; }
+.evidence-method > summary::-webkit-details-marker { display: none; }
+.evidence-method > summary .sec-title { margin: 0; font-size: 15px; }
+.evidence-method > summary .sec-title::after { content: ' +'; color: var(--gold); }
+.evidence-method[open] > summary .sec-title::after { content: ' –'; }
+.evidence-method > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 6px; }
+.evidence-method[open] > summary { margin-bottom: 12px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
 .trust-layer .evidence { padding-left: 18px; }
 .trust-layer .evidence li { overflow-wrap: anywhere; }
 .trust-layer .note { margin-top: 10px; line-height: 1.55; }

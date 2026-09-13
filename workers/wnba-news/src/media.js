@@ -13,30 +13,24 @@
 // Every photo carries its credit (author, license, source page) and a "Pictured:" caption.
 
 import manifest from '../../../data/newsroom-media.json';
+import { subjectFrom, internationalMediaFrom } from './media-resolve.js';
 
 const PLAYERS = manifest.players || {};
 const SINGLE = new Set(['injury', 'transaction', 'performance', 'result', 'props', 'brief']);
 const MATCHUP = new Set(['preview', 'market']);
 
-function subject(pid) {
-  const e = pid !== null && pid !== undefined ? PLAYERS[String(pid)] : null;
-  if (!e || !e.slots?.wide?.length) return null;
-  return {
-    player_id: String(pid),
-    name: e.name,
-    team_id: String(e.team_id),
-    team_abbr: e.team_abbr,
-    wide: e.slots.wide,
-    half: e.slots.half || [],
-    og: e.slots.og?.[0]?.src || null,
-    square: `/media/players/${pid}/square.webp`,
-    credit: { author: e.artist || null, license: e.license, license_url: e.license_url || null, source_page: e.source_page_url, text: e.attribution }
-  };
-}
+const subject = (pid) => subjectFrom(PLAYERS, pid);
 
 const ids = (xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').map(String);
 
+/** International story media — see media-resolve.js for the priority rules. */
+export const internationalMedia = (a) => internationalMediaFrom(PLAYERS, a);
+
 export function mediaFor(a) {
+  if (a.kind === 'international') {
+    const m = internationalMedia(a);
+    if (m) return m;
+  }
   const ents = (a.entities || []).filter(Boolean);
   const teamIds = ents.filter((e) => e.type === 'team').map((e) => e.id);
   if (SINGLE.has(a.kind)) {

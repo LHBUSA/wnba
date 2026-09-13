@@ -13,8 +13,8 @@ import { relTime, fmtDateTimeET } from '../lib/format.js';
 import { chooseLead, topStories, storyPublishedAt } from '../lib/news-ranking.js';
 
 export const DESKS = [
-  ['injury', 'Injury Desk', 'Status changes from ESPN’s injury feed and official team injury updates: the minutes at stake and what argues against the obvious read.'],
-  ['transaction', 'Roster Moves', 'Signings, waivers, trades and hardship contracts from ESPN’s transactions log and the teams’ own announcements.'],
+  ['injury', 'Injury Desk', 'Status changes from ESPN’s injury feed and attributed reporting: the minutes at stake and what argues against the obvious read.'],
+  ['transaction', 'Roster Moves', 'Signings, waivers, trades and hardship contracts from ESPN’s transactions log and attributed reporting.'],
   ['league', 'League', 'Awards, coaching and front-office changes, the playoff picture, expansion and labor — material league events, attributed and checked against PropBetEdge’s records.'],
   ['preview', 'Previews', 'Form, rest, availability and the stored market for the next slate.'],
   ['performance', 'Performances', 'Box-score stories: who carried the night and how it compares with her season.'],
@@ -95,7 +95,7 @@ function teamNewsView({ team, teams, arts, wire }) {
   const mast = html`<header class="masthead">
     <div class="mast-row"><span class="eyebrow">PropBetEdge · WNBA · Team news</span><span class="mast-date">${dateline()}${lastRun ? ` · AUTO · updated ${relTime(lastRun)}` : ''}</span></div>
     <h1 class="mast-title">${team.name} News</h1>
-    <p class="mast-sub">PropBetEdge stories on the ${team.name} — injuries, roster moves, previews and recaps — plus the team’s official announcements and beat coverage, attributed to the publisher. <a class="gold" href="/teams/${team.team_id}">${team.short_name || team.name} team page →</a></p>
+    <p class="mast-sub">PropBetEdge stories on the ${team.name} — injuries, roster moves, previews and recaps — plus attributed beat and national coverage. <a class="gold" href="/teams/${team.team_id}">${team.short_name || team.name} team page →</a></p>
     ${deskNav({ teamId: team.team_id, teams })}
   </header>`;
   const empty = !items.length && !(wire?.ok && wire.data.items.length);
@@ -106,7 +106,7 @@ function teamNewsView({ team, teams, arts, wire }) {
       ${first ? html`<section class="front-lead front-lead--desk">${articleCard(first, { size: 'lead', eager: true })}</section>
         ${rest.length ? html`<div class="ngrid section">${rest.slice(0, 12).map((c) => articleCard(c))}</div>` : ''}` : html`<div class="empty"><h3>No PropBetEdge stories on the ${team.name} in the current window</h3><p>The newsroom publishes only when a record supports a story. Official announcements and beat reports are below.</p></div>`}
       <section class="wire-wrap section">
-        <div class="sec-head"><div><h2 class="sec-title bc">Official &amp; beat reports</h2><p class="desk-sub">${official ? `${official} official ${official === 1 ? 'announcement' : 'announcements'} from the ${team.short_name || team.name} and the league, plus attributed beat and national reports.` : 'The team’s official announcements and attributed beat and national reports — headline and link only; the reporting is theirs.'}</p></div></div>
+        <div class="sec-head"><div><h2 class="sec-title bc">Beat &amp; national reports</h2><p class="desk-sub">Attributed beat and national reports — headline and link only; the reporting is theirs.</p></div></div>
         ${sourceWire(wire, { limit: 20 })}
       </section>
       <p class="note section">Auto-updating · last newsroom pass ${lastRun ? relTime(lastRun) : 'unknown'} · <a href="/sources">Source status</a></p>`
@@ -123,7 +123,7 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
   const mast = html`<header class="masthead">
     <div class="mast-row"><span class="eyebrow">PropBetEdge · WNBA</span><span class="mast-date">${dateline()} · ${autoStatus}</span></div>
     <h1 class="mast-title">${kind ? DESK[kind] || KIND_LABEL[kind] : 'WNBA News & Intelligence'}</h1>
-    <p class="mast-sub">${kind ? (DESKS.find(([k]) => k === kind)?.[2] || 'Stories from this desk, newest first.') : 'Automated, source-grounded WNBA reporting and market intelligence — continuously refreshed from official league and team announcements, injuries, transactions, box scores, standings and sportsbook captures.'}</p>
+    <p class="mast-sub">${kind ? (DESKS.find(([k]) => k === kind)?.[2] || 'Stories from this desk, newest first.') : 'Automated, source-grounded WNBA reporting and market intelligence — continuously refreshed from injuries, transactions, box scores, standings, attributed publisher reporting and sportsbook captures.'}</p>
     ${deskNav({ kind, teams })}
   </header>`;
 
@@ -182,7 +182,7 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
       })}
 
       <section class="wire-wrap section">
-        <div class="sec-head"><div><h2 class="sec-title bc">Source wire</h2><p class="desk-sub">Official league and team announcements and the external publishers the newsroom tracks — attributed, headline and link only. This is their reporting, not PropBetEdge’s. <a href="/sources">Source status →</a></p></div></div>
+        <div class="sec-head"><div><h2 class="sec-title bc">Source wire</h2><p class="desk-sub">The external publishers the newsroom tracks — attributed, headline and link only. This is their reporting, not PropBetEdge’s. <a href="/sources">Source status →</a></p></div></div>
         ${sourceWire(wire)}
       </section>
 

@@ -16,6 +16,17 @@
 
 const UA_NOTE = 'PropBetEdge-WNBA-News UA; no login, no paywall, no private credentials.';
 
+// Source policy status (engineering classification, not a legal conclusion):
+//   approved         may appear on public surfaces and support PropBetEdge stories.
+//   review_required  WNBA.com and the WNBA-hosted team sites. The WNBA.com Terms of Use restrict commercial reuse of
+//                    site materials and links from commercial sites without the operator's written permission; that
+//                    permission / legal review is unresolved. These sources are polled for internal event detection
+//                    and source health only: nothing from them is shown publicly, cited, quoted or used to create or
+//                    corroborate a story, no article bodies are read, and no WNBA.com statistics feed any sportsbook,
+//                    model or database input. Their dependence may not grow while the review is open.
+export const REVIEW_NOTE = 'Review required: WNBA.com Terms of Use restrict commercial reuse and links from commercial sites without written permission; permission/legal review unresolved. Internal event detection and health monitoring only — not displayed, cited or used to create stories.';
+export const PUBLIC_REVIEW_REQUIRED = false;
+
 const team = (slug, name, extra = {}) => ({
   source_id: `team_${slug}`,
   name: `${name} (official)`,
@@ -36,10 +47,12 @@ const team = (slug, name, extra = {}) => ({
   failure_behavior: 'Source marked FAIL in health; last-good items stay; other sources unaffected.',
   cadence_min: 7 * 24 * 60,
   usage_policy: 'Official team news: headline, link, categories and timestamps. No body text, no images.',
+  policy_status: 'review_required',
+  policy_note: REVIEW_NOTE,
   ...extra
 });
 
-export const NEWS_SOURCES = [
+const REGISTRY = [
   // ---------------------------------------------------------------- official league
   {
     source_id: 'wnba_com',
@@ -59,7 +72,9 @@ export const NEWS_SOURCES = [
     priority: 1,
     failure_behavior: 'Source marked FAIL; last-good items stay.',
     cadence_min: 3 * 24 * 60,
-    usage_policy: 'Official league news: headline, link, excerpt, timestamps. No body text, no images.'
+    usage_policy: 'Official league news: headline, link, excerpt, timestamps. No body text, no images.',
+    policy_status: 'review_required',
+    policy_note: REVIEW_NOTE
   },
   {
     source_id: 'wnba_com_press',
@@ -79,7 +94,9 @@ export const NEWS_SOURCES = [
     priority: 1,
     failure_behavior: 'Source marked FAIL; last-good items stay.',
     cadence_min: 14 * 24 * 60,
-    usage_policy: 'Official league press releases: headline, link, excerpt, timestamps.'
+    usage_policy: 'Official league press releases: headline, link, excerpt, timestamps.',
+    policy_status: 'review_required',
+    policy_note: REVIEW_NOTE
   },
   // ---------------------------------------------------------------- official teams (all 15)
   team('aces', 'Las Vegas Aces'),
@@ -361,6 +378,25 @@ export const NEWS_SOURCES = [
 ];
 
 /** Candidates probed and deliberately not ingested (kept for the source-health page and the audit). */
+/** Every source carries a policy status; anything not explicitly under review is approved. */
+export const NEWS_SOURCES = REGISTRY.map((s) => ({ policy_status: 'approved', ...s }));
+/** May an item from this source appear publicly or support a story? */
+export const publicSource = (s) => Boolean(s) && (s.policy_status !== 'review_required' || PUBLIC_REVIEW_REQUIRED);
+const BY_ID = new Map(NEWS_SOURCES.map((s) => [s.source_id, s]));
+export const sourcePolicy = (sourceId) => BY_ID.get(sourceId)?.policy_status || 'approved';
+export const publicItem = (it) => sourcePolicy(it?.source_id) !== 'review_required' || PUBLIC_REVIEW_REQUIRED;
+const PUBLISHER_NAMES = new Set(NEWS_SOURCES.map((s) => s.name));
+const REVIEW_NAMES = new Set(NEWS_SOURCES.filter((s) => s.policy_status === 'review_required').map((s) => s.name));
+/**
+ * A News Brief whose publisher reports all come from sources under policy review is withheld from every public surface
+ * (index, desks, article URL, sitemaps, feeds) until the review resolves. Read-time and reversible: nothing is deleted.
+ */
+export const withheldBySourcePolicy = (card) => {
+  if (PUBLIC_REVIEW_REQUIRED || card?.kind !== 'brief') return false;
+  const reports = (card.sources || []).filter((n) => PUBLISHER_NAMES.has(n));
+  return reports.length > 0 && reports.every((n) => REVIEW_NAMES.has(n));
+};
+
 export const AUDITED_NOT_INGESTED = [
   { source_id: 'seattle_times_storm', name: 'The Seattle Times', decision: 'rejected', reason: 'Storm feed answers 403 to Cloudflare Worker egress (200 from a residential probe); not fetchable from the runtime without a workaround, and its robots rules opt out of automated reuse.' },
   { source_id: 'athletic_wnba', name: 'The Athletic', decision: 'rejected', reason: 'Paywalled; NYT RSS terms prohibit commercial use without written permission.' },
@@ -385,5 +421,5 @@ export const PBE_SOURCE = {
   wnba_scope: 'wnba_only'
 };
 
-export const SOURCE_REGISTRY_VERSION = 'news-sources/2.0.0';
+export const SOURCE_REGISTRY_VERSION = 'news-sources/2.1.0';
 export const SOURCE_UA_NOTE = UA_NOTE;

@@ -186,7 +186,7 @@ test('re-listing after the player left the feed is a new event; a brief feed gap
 });
 
 test('News Brief: the same cluster revises one story; a different cluster is a new story', async () => {
-  const wire = (o = {}) => ({ item_id: 'item-a', cluster_id: 'c_item-a', source_id: 'wnba_com', source_name: 'WNBA.com', priority: 1, canonical_url: 'https://www.wnba.com/news/league-update', headline: 'WNBA announces a new league operations update', published_at: ago(70), source_updated_at: null, story_type: 'league', relevance: 5, entities: [], ...o });
+  const wire = (o = {}) => ({ item_id: 'item-a', cluster_id: 'c_item-a', source_id: 'nbc_sports_wnba', source_name: 'NBC Sports', priority: 2, canonical_url: 'https://www.nbcsports.com/wnba/news/league-update', headline: 'WNBA announces a new league operations update', published_at: ago(70), source_updated_at: null, story_type: 'league', relevance: 5, entities: [], ...o });
   const items = new Map();
   const first = await briefArticles({ externalItems: [wire()], structured: [], now: Date.parse(ago(60)) });
   let r = await pass({ items, index: [], articles: first, minutesAgo: 60 });
@@ -198,7 +198,7 @@ test('News Brief: the same cluster revises one story; a different cluster is a n
   assert.equal(r.index[0].first_published_at, origin);
   assert.equal(r.index[0].revised_at, ago(10));
 
-  const other = await briefArticles({ externalItems: [wire({ item_id: 'item-c', cluster_id: 'c_item-c', canonical_url: 'https://www.wnba.com/news/second-event', headline: 'WNBA announces a separate expansion update', published_at: ago(8) })], structured: [], now: Date.parse(ago(5)) });
+  const other = await briefArticles({ externalItems: [wire({ item_id: 'item-c', cluster_id: 'c_item-c', canonical_url: 'https://www.nbcsports.com/wnba/news/second-event', headline: 'WNBA announces a separate expansion update', published_at: ago(8) })], structured: [], now: Date.parse(ago(5)) });
   r = await pass({ items, index: r.index, articles: other, minutesAgo: 5 });
   assert.equal(live(r.index).length, 2);
   const fresh = r.index.find((c) => c.first_published_at === ago(5));

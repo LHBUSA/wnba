@@ -8,6 +8,7 @@ import { briefArticles, BRIEF_VERSION } from './briefs.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles } from './lifecycle.js';
+import { qualityFailures } from './quality.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
 const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8) + n)); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`; };
@@ -20,7 +21,7 @@ export const ARTICLE_RUN_MIN_GAP_MS = 9 * 60e3;
 // Story identity, editorial-origin clock, duplicate repair and supersession live in lifecycle.js.
 export { articleFirstPublishedAt, injuryIdentity } from './lifecycle.js';
 
-export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false }) {
+export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false, backfillInternational = false, mediaFor = null }) {
   const started = new Date().toISOString();
   const now = Date.now();
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
@@ -78,12 +79,14 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const runs = {};
   const produced = [];
   const priorIndex = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+  // Backfill: regenerate EXISTING international stories (same id, slug, origin) with the current generator.
+  const backfill = backfillInternational ? new Set(priorIndex.filter((c) => c.kind === 'international' && !c.superseded_by).map((c) => (c.entities || []).find((e) => e?.type === 'intl_game')?.id).filter(Boolean).map(String)) : null;
   const doTrends = (await env.NEWS_KV.get(`art:v1:trends:${today}`)) === null || force;
   for (const [name, fn, on] of [
     ['injury', injuryArticles, true], ['transaction', transactionArticles, true], ['result', resultArticles, true],
     ['preview', previewArticles, true], ['trend', trendArticles, doTrends], ['props', propArticles, true], ['market', marketMoveArticles, true],
     // International desk: medal-game results from wnba-international (material events only, 12-hour window).
-    ['international', () => internationalArticles({ intlGet, now }), Boolean(intlGet)],
+    ['international', () => internationalArticles({ intlGet, now, backfill }), Boolean(intlGet)],
     // Material source-wire events run last so the brief generator can suppress events already covered by a
     // structured injury/transaction story. A source cluster is one stable brief: corroboration revises it,
     // while a different material cluster becomes a genuinely new newsroom article.
@@ -112,6 +115,9 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     // rest semantics, provider comment text, prose lint). A failure holds the story.
     a.reconcile = reconcileArticle(a, { season, injuries: feed });
     if (!a.reconcile.ok) a.status = 'held';
+    // Provenance chronology, resolved visuals and the Intelligence contract.
+    a.quality = qualityFailures(a, { media: mediaFor ? mediaFor(a) : null, generatedAt: a.provenance?.generated_at || a.updated_at });
+    if (a.quality.length) { a.status = 'held'; a.reconcile.failures.push(...a.quality); }
     if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, failures: [...a.gate.failures, ...a.reconcile.failures].slice(0, 8), at: started }); continue; }
     publishable.push(a);
   }
@@ -131,7 +137,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   });
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: breaking ? 'breaking' : force ? 'forced' : 'cadence', version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter((c) => !c.superseded_by).length, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter((c) => !c.superseded_by).length, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

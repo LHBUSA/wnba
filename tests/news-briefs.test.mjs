@@ -9,10 +9,11 @@ const iso = (minutesAgo) => new Date(NOW - minutesAgo * 60e3).toISOString();
 const item = (overrides = {}) => ({
   item_id: 'item-a',
   cluster_id: 'c_item-a',
-  source_id: 'wnba_com',
-  source_name: 'WNBA.com',
-  priority: 1,
-  canonical_url: 'https://www.wnba.com/news/league-update',
+  // An approved national publisher (WNBA.com is under source-policy review and never supports a brief).
+  source_id: 'nbc_sports_wnba',
+  source_name: 'NBC Sports',
+  priority: 2,
+  canonical_url: 'https://www.nbcsports.com/wnba/news/league-update',
   headline: 'WNBA announces a new league operations update',
   published_at: iso(5),
   source_updated_at: null,
@@ -30,9 +31,9 @@ test('a fresh material source cluster becomes a publishable PBE News Brief', asy
   assert.equal(out[0].status, 'published');
   assert.equal(out[0].gate.ok, true, out[0].gate.failures?.join('\n'));
   // The headline is PropBetEdge's own; the originating publisher and its exact headline are attributed in the deck.
-  assert.doesNotMatch(out[0].headline, /^WNBA\.com:/);
+  assert.doesNotMatch(out[0].headline, /^NBC Sports:/);
   assert.ok(!out[0].headline.includes('WNBA announces a new league operations update'));
-  assert.match(out[0].deck, /^WNBA\.com published “WNBA announces a new league operations update”\./);
+  assert.match(out[0].deck, /^NBC Sports published “WNBA announces a new league operations update”\./);
   assert.equal(out[0].published_at, iso(5));
 });
 
@@ -59,7 +60,7 @@ test('a different material cluster creates a genuinely new article id', async ()
   const other = item({
     item_id: 'item-c',
     cluster_id: 'c_item-c',
-    canonical_url: 'https://www.wnba.com/news/second-event',
+    canonical_url: 'https://www.nbcsports.com/wnba/news/second-event',
     headline: 'WNBA announces a separate expansion update',
     published_at: iso(1)
   });
@@ -92,6 +93,11 @@ test('a different named player transaction on the same team is not suppressed', 
 
   assert.equal(out.length, 1);
   assert.equal(out[0].kind, 'brief');
+});
+
+test('a report from a source under policy review (WNBA.com) creates no brief', async () => {
+  const out = await briefArticles({ externalItems: [item({ source_id: 'wnba_com', source_name: 'WNBA.com', priority: 1, canonical_url: 'https://www.wnba.com/news/league-update' })], structured: [], now: NOW });
+  assert.equal(out.length, 0);
 });
 
 test('old source-wire events do not get promoted into new briefs', async () => {

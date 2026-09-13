@@ -252,12 +252,22 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
     if (prev?.slug) a.slug = prev.slug; // a story keeps its URL when a revision rewrites its headline
     a.first_published_at = firstPublished;
     a.revised_at = prev ? started : null;
+    // Revision history survives every rewrite. A regeneration by a better generator is an editorial upgrade, not a
+    // correction; a change of timestamp semantics is recorded separately as a metadata correction.
+    const history = [...(prev?.revisions || [])];
+    if (prev) {
+      if (a.provenance && !prev.provenance_contract) history.push({ at: started, kind: 'metadata_correction', note: 'Source time now records when the source record was observed; the earlier version showed an estimated event time.' });
+      history.push({ at: started, kind: a.context?.regeneration === 'editorial_upgrade' ? 'editorial_upgrade' : 'data_update', generator: versionOf(a) });
+    }
+    a.revisions = history.slice(-20);
     await putItem(a);
     byId.set(a.id, {
       ...cardOf(a),
       input_hash: inHash,
       first_published_at: a.first_published_at,
       revised_at: a.revised_at,
+      revisions: a.revisions,
+      ...(a.provenance ? { provenance_contract: 'v1' } : {}),
       ...lifecycle,
       ...(prev?.listing_seen_at ? { listing_seen_at: prev.listing_seen_at } : {}),
       ...(relistedAfter ? { relisted_after: relistedAfter } : {})

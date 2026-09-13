@@ -16,6 +16,7 @@
 
 import { finalize, hashId } from './articles.js';
 import { eventMateriality, laneOf, legacyType, EVENT_TYPES } from './taxonomy.js';
+import { publicItem } from './sources.js';
 import { seasonLog } from './deep.js';
 import { dShort, dLong, tET, f1, listJoin, nick, poss } from './prose.js';
 
@@ -262,7 +263,9 @@ function writeBrief({ source, sourceHeadline, sourceAt, others, names, player, t
 /** Build at most one PBE brief per material source-wire cluster. `ctx` supplies structured records when available. */
 export async function briefArticles({ externalItems = [], structured = [], now = Date.now(), ctx = {}, existingIds = null } = {}) {
   const existing = existingIds instanceof Set ? existingIds : new Set(existingIds || []);
-  const withIds = await Promise.all(grouped(externalItems).map(async (g) => ({ ...g, canon: canonical(g.members), briefId: await hashId(['brief', g.cluster_id]) })));
+  // Sources under policy review (WNBA.com, WNBA-hosted team sites) never create, corroborate or appear in a brief.
+  const usable = (externalItems || []).filter(publicItem);
+  const withIds = await Promise.all(grouped(usable).map(async (g) => ({ ...g, canon: canonical(g.members), briefId: await hashId(['brief', g.cluster_id]) })));
   const candidates = withIds
     .filter((g) => g.canon && material(g.canon, g.members))
     // Freshness is the EVENT's origin: its earliest report. A newly added source that surfaces an old report, or a

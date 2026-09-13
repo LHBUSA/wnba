@@ -66,7 +66,7 @@ export function articleCard(c, { lead = false, size = null, eager = false } = {}
       ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
     </div>
     ${sz === 'lead' ? html`<div class="scard-foot">
-      ${c.bettor_snippet ? html`<p class="angle"><b>Why it matters for bettors</b>${c.bettor_snippet}</p>` : ''}
+      ${c.bettor_snippet && (c.intelligence ? c.intelligence.market_relevance === 'actionable' : c.has_market) ? html`<p class="angle"><b>Why it matters for bettors</b>${c.bettor_snippet}</p>` : ''}
       <div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>
     </div>` : ''}
   </article>`;

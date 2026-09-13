@@ -55,6 +55,18 @@ function teamPanel(tid, { side = null } = {}) {
   </span>`;
 }
 
+const safeColor = (c, fb) => (/^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : fb);
+const flagSrc = (f) => (/^\/media\/flags\/[a-z]{3}\.svg$/.test(String(f || '')) ? f : null);
+const MEDAL_LABEL = { gold: 'Gold medal', bronze: 'Bronze medal' };
+
+/** The international scoreboard: flags, names, score, round/medal, competition. Scales with its box (container units). */
+function intlBoard(v, { slot = 'card', compact = false } = {}) {
+  const [w, l] = v.teams;
+  const row = (t, win) => html`<span class="ib-row ${win ? 'ib-row--win' : ''}">${flagSrc(t.flag) ? html`<img class="ib-flag" src="${flagSrc(t.flag)}" alt="" width="60" height="40" decoding="async" />` : html`<span class="ib-flag ib-flag--none"></span>`}<span class="ib-name">${t.name}</span><span class="ib-score">${t.score ?? ''}</span></span>`;
+  const kicker = [v.medal ? MEDAL_LABEL[v.medal] : v.round, v.status].filter(Boolean).join(' · ');
+  return html`<span class="ib ${compact ? 'ib--band' : 'ib--full'} ib--${slot}" role="img" aria-label="${`${w.name} ${w.score}, ${l.name} ${l.score}. ${kicker}. ${v.competition_name || v.competition || ''}`}">${compact ? '' : COURT}<span class="ib-kicker">${v.medal ? html`<span class="ib-medal ib-medal--${v.medal}" aria-hidden="true"></span>` : ''}${kicker}</span><span class="ib-rows">${row(w, true)}${row(l, false)}</span><span class="ib-foot"><span class="ib-comp">${slot === 'hero' || slot === 'lead' ? v.competition_name || v.competition || '' : v.competition || v.competition_name || ''}</span><span class="ib-brand">PropBetEdge International</span></span></span>`;
+}
+
 const COURT = html`<svg class="sm-court" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2"><rect x="-10" y="18" width="340" height="150"/><line x1="160" y1="18" x2="160" y2="168"/><circle cx="160" cy="93" r="26"/><path d="M-10 48h58a45 45 0 0 1 0 90h-58M330 48h-58a45 45 0 0 0 0 90h58"/></g></svg>`;
 
 /**
@@ -65,6 +77,17 @@ export function storyMedia(media, { slot = 'card', eager = false, credit = true,
   const m = media || { layout: 'team', teams: [], subjects: [] };
   let inner;
   let cls = `sm sm--${slot}`;
+  if ((m.layout === 'intl_game' || m.layout === 'intl_photo') && m.visual?.teams?.length === 2) {
+    // PropBetEdge International: the approved subject photograph under a scoreboard band, or — when no approved
+    // photograph exists — the full scoreboard composition. Same data, same identity on heroes, cards and share images.
+    const photo = m.layout === 'intl_photo' && m.subjects?.[0]?.wide?.length;
+    const board = intlBoard(m.visual, { slot, compact: Boolean(photo) });
+    inner = photo ? html`${wideImg(m.subjects[0], slot, eager)}${board}` : board;
+    cls += photo ? ' sm--photo sm--intl sm--intl-photo' : ' sm--intl sm--intl-board';
+    const cap = credit && photo ? html`<figcaption class="sm-credit">${creditLine(m, { compact: slot === 'card' || slot === 'small' })}</figcaption>` : '';
+    const [w, l] = m.visual.teams;
+    return html`<figure class="${cls}" style="--c1:${safeColor(w.color, '#c8102e')};--c2:${safeColor(l.color, '#1d3f8f')}">${label ? html`<span class="sm-label">${label}</span>` : ''}<span class="sm-frame">${inner}</span>${cap}</figure>`;
+  }
   if (m.layout === 'single' && m.subjects?.[0]?.wide?.length) {
     inner = wideImg(m.subjects[0], slot, eager);
     cls += ' sm--photo';
@@ -87,7 +110,11 @@ export function storyMedia(media, { slot = 'card', eager = false, credit = true,
 
 /** 1:1 thumbnail for rivers/lists: the reviewed square crop of the pictured player, else the team mark. */
 export function storyThumb(media, size = 72) {
-  const s = media?.layout === 'single' ? media.subjects?.[0] : media?.layout === 'matchup' ? media.subjects?.[1] : null;
+  if (media?.layout === 'intl_game' && media.visual?.teams?.length === 2) {
+    const [w, l] = media.visual.teams;
+    return html`<span class="sm-thumb sm-thumb--intl" style="width:${size}px;height:${size}px" role="img" aria-label="${`${w.name} ${w.score}, ${l.name} ${l.score}`}">${flagSrc(w.flag) ? html`<img src="${flagSrc(w.flag)}" alt="" width="30" height="20" loading="lazy" decoding="async" />` : ''}<b>${w.score}–${l.score}</b>${flagSrc(l.flag) ? html`<img src="${flagSrc(l.flag)}" alt="" width="30" height="20" loading="lazy" decoding="async" />` : ''}</span>`;
+  }
+  const s = media?.layout === 'single' || media?.layout === 'intl_photo' ? media.subjects?.[0] : media?.layout === 'matchup' ? media.subjects?.[1] : null;
   if (s?.square) return html`<img class="sm-thumb" src="${s.square}" width="${size}" height="${size}" alt="${s.name}" loading="lazy" decoding="async" />`;
   const e = logoEntry((media?.teams || [])[0]);
   const c = teamColors({ team_id: (media?.teams || [])[0] }).color || '#d4af37';

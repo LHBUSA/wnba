@@ -265,8 +265,9 @@ const medalFixture = () => {
   const byPlayer = new Map(stats.players.map((p) => [p.player_id, p]));
   const boxscore = { teams: d.boxscore.teams.map((t) => ({ ...t, players: t.players.map((p) => ({ ...p, wnba: byPlayer.get(p.player_id)?.wnba || null })) })) };
   const overview = { competition: compSummary, bracket: { rounds: [{ round: 'FINAL', games: [game] }], bronze_game: null, medals: null } };
-  const detail = { game, boxscore, fetched_at: '2026-09-12T20:40:00Z' };
-  const intlGet = async (path) => (path.includes('/competitions/') ? overview : path.includes('/games/401917257') ? detail : null);
+  // The desk reads the competition schedule (tournament path) and the play-by-play, as production does.
+  const detail = { game, boxscore, plays: d.plays || [], plays_available: Boolean(d.plays?.length), fetched_at: '2026-09-12T20:40:00Z' };
+  const intlGet = async (path) => (path.endsWith('/schedule') ? { games } : path.includes('/competitions/') ? overview : path.includes('/games/401917257') ? detail : null);
   return { game, intlGet };
 };
 
@@ -277,15 +278,18 @@ test('international desk: a medal game that just ended becomes one gated story; 
   assert.equal(rest.length, 0);
   assert.equal(story.status, 'published', story.gate.failures.join('\n'));
   assert.equal(story.kind, 'international');
-  assert.equal(story.headline, 'United States beat Spain 76–66 to win gold at the FIBA Women’s Basketball World Cup 2026');
+  // wnba-game-story/1.0.0: national-team names take their article ("The United States").
+  assert.equal(story.headline, 'The United States beat Spain 76–66 to win gold at the FIBA Women’s Basketball World Cup 2026');
   assert.ok(story.entities.some((e) => e.type === 'player' && e.id === '4433403'), 'WNBA player linked to her WNBA profile');
   assert.ok(story.entities.some((e) => e.type === 'intl_team' && e.id === 'usa'));
-  assert.match(story.body.join(' '), /Caitlin Clark \(USA, Indiana Fever\)/);
+  assert.match(story.body.join(' '), /Caitlin Clark \(Indiana Fever\)[^.]*for the United States/);
   const rec = reconcileArticle(story, { season: 2026, injuries: [] });
   assert.equal(rec.ok, true, rec.failures.join('\n'));
 
   assert.deepEqual(await internationalArticles({ intlGet, now: Date.parse(game.scheduled_at) + 20 * 3600e3 }), [], 'a game that ended more than 12 hours ago is not promoted into a new story');
-  assert.equal(materialInternationalGames({ bracket: { rounds: [{ games: [{ ...game, round: 'SF' }] }] } }, justAfter).length, 0, 'semi-finals are not medal games');
+  // Desk 2.0.0: every knockout game (qualification round → final) is material; group-stage games are not.
+  assert.equal(materialInternationalGames({ bracket: { rounds: [{ games: [{ ...game, round: 'GROUP' }] }] } }, justAfter).length, 0, 'group-stage games are not promoted');
+  assert.equal(materialInternationalGames({ bracket: { rounds: [{ games: [{ ...game, round: 'SF' }] }] } }, justAfter).length, 1, 'a semifinal is an elimination game story');
   assert.equal(materialInternationalGames({ bracket: { rounds: [{ games: [{ ...game, status: 'live', winner: null }] }] } }, justAfter).length, 0, 'no result story before the game is final');
 
   // Same game, later pass with a box-score correction: same story id, a revision that keeps its origin.

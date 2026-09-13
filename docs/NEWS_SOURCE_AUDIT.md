@@ -11,7 +11,16 @@ Probed 2026-09-13 with the Worker's own user agent (`PropBetEdge-WNBA-News/1.0 (
   * the official team sites, whose excerpts are usually truncated body text;
   * publishers whose robots rules opt out of automated reuse: the New York Post and the Los Angeles Times.
 * **Rejected:** sources needing login, paywall bypass or private credentials; HTML scraping where a better source exists; and aggregators that republish other publishers' work.
-* **Terms-of-use note for the owner:** WNBA.com's terms restrict commercial reuse of site materials "without the written permission of the Operator". WNBA.com was already a production source before this release. Official team items are ingested as headline + link + timestamps only. A legal read on displaying official headlines commercially is recommended.
+* **Source policy status (news-sources/2.1.0, 2026-09-13):** WNBA.com (news, press releases) and all fifteen WNBA-hosted team sites are classified **`review_required`**.
+  * WNBA.com's Terms of Use restrict commercial reuse of site materials, and links from commercial sites, without the Operator's written permission. That permission / legal review is **unresolved**. This is an engineering classification, not a legal conclusion.
+  * What `review_required` means in the code:
+    * **Allowed:** polled for internal event detection and source-health monitoring only.
+    * **Never displayed publicly:** not in the source wire, team news pages, brief evidence or quotations.
+    * **Never supports a story:** never creates or corroborates one, and never triggers the breaking article path.
+    * **Never read or used:** no article bodies are read, and no WNBA.com statistics are used as sportsbook, model or database inputs.
+    * **Published briefs:** a brief whose only publisher reports came from these sources is withheld on every public surface. One brief was affected: `6e369338b45b`, from the Storm's official site.
+  * Dependence on these sources may not grow while the review is open. The switch is `PUBLIC_REVIEW_REQUIRED` in `workers/wnba-news/src/sources.js`, and it stays `false` until written permission or legal review resolves.
+  * All other sources remain `approved`; the research below is preserved unchanged.
 
 ## 2. Source registry (ingested)
 

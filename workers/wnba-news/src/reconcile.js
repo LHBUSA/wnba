@@ -38,6 +38,9 @@ export const LINT_RULES = [
   ['double space', /\S {2,}\S/],
   ['space before punctuation', / [,.;:!?](?:\s|$)/],
   ['placeholder text', /\b(undefined|NaN|null)\b|\[object /],
+  // Deterministic singular/plural agreement for counted stat nouns: "1 assists" and "3 assist" never ship.
+  ['singular count with a plural noun', /(?<![\d.,])1 (points|rebounds|assists|steals|blocks|turnovers|fouls|minutes|three-pointers|free throws|games|starts|offensive rebounds|defensive rebounds|lead changes|ties|wins|losses)\b/i],
+  ['plural count with a singular noun', /(?<![\d.,])(?:[02-9]|\d{2,}) (point|rebound|assist|steal|block|turnover|foul|minute|three-pointer|free throw|offensive rebound|lead change)(?![-\w])/i],
   ['repeated word', /\b([A-Za-z]{3,}) \1\b/i],
   ['derived rest wording ("days before tip")', /\bdays? before (?:this |the )?tip\b/i],
   ['definitive availability from an estimate', /\b(?:will|is expected to|are expected to|is set to|are set to|is slated to|are slated to) (?:return|play|be back|be available)\b/i]
