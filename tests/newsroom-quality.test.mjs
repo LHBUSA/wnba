@@ -296,3 +296,18 @@ test('source policy: a brief whose only publisher report is a review-required so
   assert.equal(publicItem({ source_id: 'espn_wnba' }), true);
   for (const s of NEWS_SOURCES.filter((x) => x.policy_status === 'review_required')) assert.match(s.policy_note, /written permission|legal review/i);
 });
+
+test('backfill through the desk labels a regeneration as an editorial upgrade even inside the fresh window', async () => {
+  const { internationalArticles } = await import('../workers/wnba-news/src/international.js');
+  const overview = { competition: FX.competition, bracket: { rounds: [], bronze_game: FX.bronze_game, medals: FX.medals } };
+  const intlGet = async (path) => (path.endsWith('/schedule') ? { games: FX.schedule } : path.includes('/competitions/') ? overview : path.endsWith('/401917259') ? FX.detail : path.endsWith('/playbyplay') ? { plays: [] } : FX.prior[path.split('/').pop()] ? { ...FX.prior[path.split('/').pop()], game: {} } : null);
+  const clock = () => CUTOFF;
+  const inWindow = Date.parse(FX.detail.game.scheduled_at) + 3 * 3600e3;
+  const [fresh] = await internationalArticles({ intlGet, now: inWindow, clock });
+  assert.equal(fresh.context.regeneration, null, 'a normal pass is not an upgrade');
+  const [up] = await internationalArticles({ intlGet, now: inWindow, clock, backfill: new Set(['401917259']) });
+  assert.equal(up.context.regeneration, 'editorial_upgrade');
+  const [late] = await internationalArticles({ intlGet, now: inWindow + 48 * 3600e3, clock, backfill: new Set(['401917259']) });
+  assert.equal(late.context.regeneration, 'editorial_upgrade', 'outside the window only backfill regenerates it');
+  assert.deepEqual(await internationalArticles({ intlGet, now: inWindow + 48 * 3600e3, clock }), [], 'and nothing new is created without backfill');
+});

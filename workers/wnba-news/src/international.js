@@ -71,7 +71,7 @@ export async function internationalArticles({ intlGet, now = Date.now(), competi
         if (d?.boxscore) priorDetails[x.provider_ids.espn] = d;
       }
       const cutoff = clock();
-      const story = await storyFor({ competition: ov.competition, detail, schedule, priorDetails, medals: ov.bracket.medals, cutoff, backfill: extra.includes(g) });
+      const story = await storyFor({ competition: ov.competition, detail, schedule, priorDetails, medals: ov.bracket.medals, cutoff, backfill: Boolean(backfill?.has(String(espn))) });
       if (story) out.push(story);
     }
   }
