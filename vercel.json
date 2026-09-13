@@ -6,6 +6,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/",
+      "destination": "https://wnba-web.sales-fd3.workers.dev/"
+    },
+    {
       "source": "/:path*",
       "destination": "https://wnba-web.sales-fd3.workers.dev/:path*"
     }
