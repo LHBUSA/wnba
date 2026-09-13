@@ -291,6 +291,15 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
       byId.set(prev.id, { ...prev, first_published_at: firstPublished, ...lifecycle, ...(a.depth?.class && !prev.depth_class ? { depth_class: a.depth.class } : {}), ...(prev.desk === undefined && card.desk !== undefined ? { desk: card.desk, event_type: card.event_type ?? null } : {}) });
       continue;
     }
+    // A changed input key with nothing a reader or the record would see differently (same body, headline, deck, facts and
+    // source observation) is not a revision: re-key the card, keep the stored version.
+    if (prev && getItem) {
+      const stored = await getItem(prev.id).catch(() => null);
+      if (stored && JSON.stringify(stored.body) === JSON.stringify(a.body) && stored.headline === a.headline && stored.deck === a.deck && sharedFactsUnchanged(stored, a) && (stored.provenance?.source_observed_at || null) === (a.provenance?.source_observed_at || null)) {
+        byId.set(prev.id, { ...prev, input_hash: inHash, first_published_at: firstPublished, ...lifecycle });
+        continue;
+      }
+    }
     if (prev?.slug) a.slug = prev.slug; // a story keeps its URL when a revision rewrites its headline
     // The version goes live at the merge, which is never earlier than the moment it was generated (provenance:
     // source_observed_at ≤ generated_at ≤ published/revised). The run start can precede a late generation cutoff.
