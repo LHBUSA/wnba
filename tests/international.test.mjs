@@ -299,3 +299,11 @@ test('international desk: a medal game that just ended becomes one gated story; 
   assert.equal(second.index[0].first_published_at, new Date(justAfter).toISOString());
   assert.equal(second.index[0].revised_at, new Date(justAfter + 600e3).toISOString());
 });
+
+test('a registry-only competition page never promises scores or stats in its title and is noindex', () => {
+  const reg = COMPETITIONS.find((c) => c.coverage === 'registry_only');
+  const meta = routeMeta('intl-competition', { path: `/international/${reg.slug}`, params: { competition: reg.slug }, data: { competition: { ...reg, status: 'upcoming' } } });
+  assert.equal(meta.title, `${reg.name} | PropBetEdge`);
+  assert.equal(meta.robots, 'noindex, follow');
+  assert.ok(COMPETITIONS.filter((c) => c.coverage === 'registry_only').every((c) => !c.start_date && !c.qualification_relationships.length), 'no unverified dates or qualification links');
+});

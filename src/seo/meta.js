@@ -176,7 +176,8 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       const when = c.start_date ? `${new Date(`${c.start_date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}–${new Date(`${c.end_date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : String(c.season);
       return m({
         path: `/international/${c.slug}${sec ? `/${sec}` : ''}`,
-        title: `${c.name} ${SUFFIX[sec] || SUFFIX['']} | ${BRAND}`,
+        // Registry-only competitions have no data yet: the title must not promise scores or stats.
+        title: c.coverage === 'full' ? `${c.name} ${SUFFIX[sec] || SUFFIX['']} | ${BRAND}` : `${c.name} | ${BRAND}`,
         description: clip(`${c.name}${c.host ? `, ${c.host.city}` : ''}, ${when}: ${n ? `${n.games} games, ${n.teams} teams, ${n.wnba_mapped} WNBA players. ` : ''}Live scores, box scores, bracket, group standings, tournament leaders and the WNBA players at the tournament.`, 300),
         robots: c.coverage === 'full' ? INDEX_ROBOTS : NOINDEX_ROBOTS
       });
