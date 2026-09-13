@@ -249,6 +249,17 @@ test('different facts stay different events: a replacement signing after an inju
   assert.equal(new Set(out.map((a) => a.id)).size, 2);
 });
 
+test('a shared player is not a shared event: an honour and a record for the same player stay separate', async () => {
+  const d = buildDictionary({ players: [{ athlete_id: '4433402', name: 'Angel Reese', team_id: '20' }], teams: [{ team_id: '20', name: 'Atlanta Dream', short_name: 'Dream' }] });
+  const mk = async (raw, id) => (await normalizeItem(raw, src(id), d, { startedAt: new Date(NOW).toISOString(), now: NOW })).record;
+  const honour = await mk({ headline: 'ANGEL REESE NAMED WNBA EASTERN CONFERENCE PLAYER OF THE WEEK FOR SECOND CONSECUTIVE WEEK', url: 'https://dream.wnba.com/news/reese-potw-2', published_at: iso(300), tags: [] }, 'team_dream');
+  const record = await mk({ headline: 'Angel Reese breaks WNBA record with 29th double-double', url: 'https://www.espn.com/wnba/story/reese-record', published_at: iso(240), tags: [] }, 'espn_wnba');
+  assert.equal(honour.event_type, 'awards');
+  assert.equal(honour.materiality.material, false, 'a weekly honour is not a story');
+  assert.equal(withEvents([honour, record]).clusters.length, 2);
+  assert.equal(eventType('Natalie Nakase Named WNBA Coach of the Month for August'), 'awards', 'a monthly honour is not a coaching change');
+});
+
 test('an old article cannot become fresh: late-discovered old reports and late corroboration create no new story', async () => {
   const old = await ingest({ headline: 'Storm Sign Kalani Brown to Hardship Contract', url: 'https://storm.wnba.com/news/old-signing', published_at: new Date(NOW - BRIEF_MAX_AGE_MS - 3 * 3600e3).toISOString(), tags: [] }, 'team_storm');
   assert.equal(old.materiality.material, true, 'material, but old');
