@@ -14,6 +14,7 @@ import { cachedJson } from '../../shared/fetcher.js';
 import { ok, fail, meta, preflight, FRESHNESS, SOURCES } from '../../shared/envelope.js';
 import { COMPETITIONS, competitionById, competitionStatus, currentEdition } from './registry.js';
 import { normalizeGame, normalizeSummary } from './normalize.js';
+import { PBP_VERSION } from '../../shared/pbp.js';
 import { groupStandings, bracket, playerAndTeamStats, leaders, teamRecords, dedupeGames } from './aggregate.js';
 import { linkInternationalPlayers } from './crosswalk.js';
 
@@ -55,10 +56,14 @@ export async function loadScoreboard(env, comp, ctx, { ttlS } = {}) {
 export async function loadGameDetail(env, comp, espnId, ctx, { live = true } = {}) {
   const kvKey = `box:${espnId}`;
   const stored = await env.INTL_KV.get(kvKey, 'json');
-  if (stored?.game?.status === 'final') return { ...stored, cache: 'kv' };
+  // A stored final is immutable game data, but its NORMALIZATION is versioned: a detail written before the current play
+  // normalizer is rebuilt once from the provider summary (the stored copy is served if the provider is unreachable).
+  if (stored?.game?.status === 'final' && stored.normalizer === PBP_VERSION) return { ...stored, cache: 'kv' };
   const r = await cachedJson({ url: `${ESPN}/${comp.provider_ids.espn.league}/summary?event=${espnId}`, ttlS: live ? LIVE_TTL_S : IDLE_TTL_S, keepS: 86400, validate: (b) => Boolean(b?.header?.competitions?.length), ctx, timeoutMs: 8000 });
   if (r.body) {
-    const detail = { ...normalizeSummary(r.body, { competitionId: comp.competition_id, eventId: espnId, fetchedAt: r.fetchedAt }), fetched_at: r.fetchedAt };
+    // Re-normalizing a stored final keeps its original observation time: the game record did not change, only its shape.
+    const observed = stored?.game?.status === 'final' && stored.fetched_at ? stored.fetched_at : r.fetchedAt;
+    const detail = { ...normalizeSummary(r.body, { competitionId: comp.competition_id, eventId: espnId, fetchedAt: observed }), fetched_at: observed, normalizer: PBP_VERSION };
     if (detail.game.status === 'final' && detail.boxscore) {
       const write = env.INTL_KV.put(kvKey, JSON.stringify(detail));
       if (ctx) ctx.waitUntil(write); else await write;

@@ -144,3 +144,15 @@ test('feed UI: compact filters and period selector, restrained emphasis, linked 
   const first = html.indexOf('data-seq=');
   assert.ok(first > 0);
 });
+
+test('stored finals and archives upgrade: plays normalized before pbe-pbp/1.0.0 get the same semantics from their own fields', async () => {
+  const { upgradeNormalizedPlays } = await import('../workers/shared/pbp.js');
+  // Shape of a wnba-api archive written before this version: normalized fields, old text, no semantics.
+  const old = normalizeSummary(WNBA).plays.map(({ family, subtype, shot_value, free_throw, assist, stolen_by, blocked_by, rebound, turnover_type, foul_type, score_before, primary, description_source, text_raw, ...p }) => ({ ...p, text: text_raw }));
+  assert.ok(!old[0].family);
+  const box = normalizeSummary(WNBA).box;
+  const up = upgradeNormalizedPlays(old, { names: new Map(box.players.map((r) => [String(r.athlete_id), r.name])) });
+  const fresh = normalizeSummary(WNBA).plays;
+  assert.deepEqual(up.map((p) => p.text), fresh.map((p) => p.text), 'archived plays render exactly as freshly normalized plays');
+  assert.equal(upgradeNormalizedPlays(fresh), fresh, 'already-upgraded plays are left alone');
+});

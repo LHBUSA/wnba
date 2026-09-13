@@ -240,3 +240,20 @@ export function pbpQuality(plays, { homeTeamId = null } = {}) {
     score_inconsistencies: inconsistent
   };
 }
+
+/**
+ * Upgrade plays that were normalized before pbe-pbp/1.0.0 (stored archives). The normalized play kept the provider's
+ * structured fields (type, short description, shooting/scoring flags, points, points attempted, participants, sequence,
+ * scores), so the same semantics are rebuilt from them — nothing is re-fetched and nothing is invented.
+ * `names` maps athlete id → display name (from the archived box score); `teams` maps team id → name.
+ */
+export function upgradeNormalizedPlays(plays, { names = new Map(), teams = new Map() } = {}) {
+  if (!Array.isArray(plays) || !plays.length || plays[0].family) return plays;
+  const raw = plays.map((p) => ({ id: p.id ?? p.play_id, sequenceNumber: p.seq, type: { id: p.type_id ?? null, text: p.type ?? null }, text: p.text_raw ?? p.text, shortDescription: p.short ?? null, scoringPlay: p.scoring, shootingPlay: p.shooting, scoreValue: p.points, pointsAttempted: p.points_attempted, participants: (p.athlete_ids || []).map((id) => ({ athlete: { id } })), team: { id: p.team_id }, homeScore: p.home_score, awayScore: p.away_score, period: { number: p.period }, clock: { displayValue: p.clock } }));
+  const sem = new Map(semanticPlays(raw, { athleteName: (id) => names.get(String(id)) || null, teamName: (id) => teams.get(String(id)) || null }).map((s) => [String(s.source_id), s]));
+  return plays.map((p) => {
+    const s = sem.get(String(p.id ?? p.play_id));
+    if (!s) return p;
+    return { ...p, text: s.description, text_raw: p.text_raw ?? p.text, description_source: s.description_source, family: s.family, subtype: s.subtype, shot_value: s.shot_value, free_throw: s.free_throw, assist: s.assist, stolen_by: s.stolen_by, blocked_by: s.blocked_by, rebound: s.rebound, turnover_type: s.turnover_type, foul_type: s.foul_type, score_before: s.score_before, primary: s.primary };
+  });
+}

@@ -25,6 +25,7 @@ import { deriveGame, shotChart, possessions } from '../../shared/derive.js';
 import { etCompact, addDays, isCompactDate, gameEtDate, daysBetween } from '../../shared/time.js';
 import { photoFor, photoCoverage } from './photos.js';
 import { PBE_MODEL } from '../../shared/market.js';
+import { upgradeNormalizedPlays } from '../../shared/pbp.js';
 import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './market.js';
 
 const SERVICE = 'wnba-api';
@@ -330,7 +331,13 @@ async function schedule({ env, ctx, url, path }) {
 async function loadSummary(env, ctx, id) {
   // First look for an immutable archive (written by wnba-ingest for final games).
   const archived = env.WNBA_KV ? await env.WNBA_KV.get(`game:v1:final:${id}`, 'json') : null;
-  if (archived?.summary) return { summary: archived.summary, fetchedAt: archived.archived_at, cache: 'archive', error: null, archived: true };
+  if (archived?.summary) {
+    // Archives written before pbe-pbp/1.0.0 carry the structured play fields; the semantics are rebuilt from them.
+    const s = archived.summary;
+    const names = new Map((s.box?.players || []).filter((r) => r.athlete_id).map((r) => [String(r.athlete_id), r.name]));
+    const teams = new Map([s.game?.home, s.game?.away].filter(Boolean).map((t) => [String(t.team_id), t.name]));
+    return { summary: { ...s, plays: upgradeNormalizedPlays(s.plays, { names, teams }) }, fetchedAt: archived.archived_at, cache: 'archive', error: null, archived: true };
+  }
   const probe = await cachedJson({ url: `${ESPN.site}/summary?event=${id}`, ttlS: TTL.summaryLive, ctx, validate: (b) => b?.header?.id });
   if (!probe.body) return { summary: null, fetchedAt: null, cache: probe.cache, error: probe.error };
   const summary = normalizeSummary(probe.body);
