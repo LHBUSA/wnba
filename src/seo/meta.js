@@ -27,6 +27,7 @@ const clip = (s, n) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); 
 
 const DESK_TITLES = {
   brief: 'WNBA News Briefs',
+  international: 'International Women’s Basketball News: World Cup, Olympics & FIBA',
   injury: 'WNBA Injury News & Availability Analysis',
   transaction: 'WNBA Transactions & Roster Moves',
   performance: 'WNBA Game Recaps & Performances',
@@ -37,6 +38,7 @@ const DESK_TITLES = {
 };
 const DESK_DESCRIPTIONS = {
   brief: 'PropBetEdge News Briefs on material WNBA events, with the originating publisher attributed and PropBetEdge’s own structured records alongside.',
+  international: 'PropBetEdge international desk: medal-game results and national-team stories built from structured box scores, with every WNBA player linked to her WNBA profile.',
   injury: 'WNBA injury and availability stories from ESPN’s injury feed: the minutes at stake, who absorbs them and what the records do not show.',
   transaction: 'WNBA signings, waivers, hardship contracts and roster moves from the transactions log, with rotation context.',
   performance: 'WNBA game recaps and standout performances built from box scores and compared with each player’s season.',

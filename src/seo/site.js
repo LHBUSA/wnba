@@ -36,6 +36,7 @@ export function canonicalPath(pathname) {
 // Newsroom desks as published at /news/c/:kind (the crawlable category pages).
 export const DESKS = Object.freeze({
   brief: 'News Briefs',
+  international: 'International',
   injury: 'Injury Desk',
   transaction: 'Roster Moves',
   performance: 'Performances',

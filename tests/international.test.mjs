@@ -248,3 +248,54 @@ test('the WNBA news relevance guard is unchanged: international-only items stay 
   assert.equal(r.accept, false);
   assert.ok(INTERNATIONAL.test('FIBA Women’s World Cup final'));
 });
+
+// ------------------------------------------------------------ international desk (wnba-news)
+
+import { internationalArticles, materialInternationalGames, INTL_VERSION } from '../workers/wnba-news/src/international.js';
+import { reconcileArticle } from '../workers/wnba-news/src/reconcile.js';
+import { mergeArticles } from '../workers/wnba-news/src/lifecycle.js';
+import { cardOf } from '../workers/wnba-news/src/articles.js';
+
+const medalFixture = () => {
+  // Test fixture: the real semi-final box score relabeled as the gold-medal game.
+  const d = normalizeSummary(FINAL, { competitionId: COMP.competition_id, eventId: '401917257' });
+  const game = { ...byEspn('401917257'), round: 'FINAL', round_name: 'Final · Gold Medal Game' };
+  const stats = playerAndTeamStats([{ game, boxscore: d.boxscore }]);
+  linkInternationalPlayers(stats.players, [{ athlete_id: '4433403', name: 'Caitlin Clark', team: { team_id: '5', abbr: 'IND', name: 'Indiana Fever' } }, { athlete_id: '5345325', name: 'Awa Fam', team: { team_id: '14', abbr: 'SEA', name: 'Seattle Storm' } }]);
+  const byPlayer = new Map(stats.players.map((p) => [p.player_id, p]));
+  const boxscore = { teams: d.boxscore.teams.map((t) => ({ ...t, players: t.players.map((p) => ({ ...p, wnba: byPlayer.get(p.player_id)?.wnba || null })) })) };
+  const overview = { competition: compSummary, bracket: { rounds: [{ round: 'FINAL', games: [game] }], bronze_game: null, medals: null } };
+  const detail = { game, boxscore, fetched_at: '2026-09-12T20:40:00Z' };
+  const intlGet = async (path) => (path.includes('/competitions/') ? overview : path.includes('/games/401917257') ? detail : null);
+  return { game, intlGet };
+};
+
+test('international desk: a medal game that just ended becomes one gated story; old or non-medal games never do', async () => {
+  const { game, intlGet } = medalFixture();
+  const justAfter = Date.parse(game.scheduled_at) + 3 * 3600e3;
+  const [story, ...rest] = await internationalArticles({ intlGet, now: justAfter });
+  assert.equal(rest.length, 0);
+  assert.equal(story.status, 'published', story.gate.failures.join('\n'));
+  assert.equal(story.kind, 'international');
+  assert.equal(story.headline, 'United States beat Spain 76–66 to win gold at the FIBA Women’s Basketball World Cup 2026');
+  assert.ok(story.entities.some((e) => e.type === 'player' && e.id === '4433403'), 'WNBA player linked to her WNBA profile');
+  assert.ok(story.entities.some((e) => e.type === 'intl_team' && e.id === 'usa'));
+  assert.match(story.body.join(' '), /Caitlin Clark \(USA, Indiana Fever\)/);
+  const rec = reconcileArticle(story, { season: 2026, injuries: [] });
+  assert.equal(rec.ok, true, rec.failures.join('\n'));
+
+  assert.deepEqual(await internationalArticles({ intlGet, now: Date.parse(game.scheduled_at) + 20 * 3600e3 }), [], 'a game that ended more than 12 hours ago is not promoted into a new story');
+  assert.equal(materialInternationalGames({ bracket: { rounds: [{ games: [{ ...game, round: 'SF' }] }] } }, justAfter).length, 0, 'semi-finals are not medal games');
+  assert.equal(materialInternationalGames({ bracket: { rounds: [{ games: [{ ...game, status: 'live', winner: null }] }] } }, justAfter).length, 0, 'no result story before the game is final');
+
+  // Same game, later pass with a box-score correction: same story id, a revision that keeps its origin.
+  const [again] = await internationalArticles({ intlGet, now: justAfter + 600e3 });
+  assert.equal(again.id, story.id);
+  const items = new Map();
+  const first = await mergeArticles({ index: [], articles: [story], started: new Date(justAfter).toISOString(), now: justAfter, feed: null, getItem: async () => null, putItem: async (a) => items.set(a.id, a), versionOf: () => INTL_VERSION, cardOf });
+  const corrected = { ...again, input_hash: `${again.input_hash}|corrected` };
+  const second = await mergeArticles({ index: first.index, articles: [corrected], started: new Date(justAfter + 600e3).toISOString(), now: justAfter + 600e3, feed: null, getItem: async () => null, putItem: async (a) => items.set(a.id, a), versionOf: () => INTL_VERSION, cardOf });
+  assert.equal(second.index.length, 1);
+  assert.equal(second.index[0].first_published_at, new Date(justAfter).toISOString());
+  assert.equal(second.index[0].revised_at, new Date(justAfter + 600e3).toISOString());
+});

@@ -34,7 +34,15 @@ export const COMPETITIONS = Object.freeze([
     coverage: 'full',
     provider_ids: { espn: { sport: 'basketball', league: 'fiba', league_id: '53', dates: '20260904-20260914', note_prefix: 'FIBA Women' } },
     qualification_relationships: []
-  }
+  },
+  // Registry-only editions: listed in the directory, pages noindex, until a structured provider covers them.
+  // No dates or qualification links are recorded here without a verified source.
+  { competition_id: 'womens-olympic-basketball-2028', slug: 'olympics-2028', alias_slugs: [], name: 'Women’s Olympic Basketball Tournament — Los Angeles 2028', short_name: 'Olympics 2028', competition_type: 'olympics', governing_body: 'IOC / FIBA', region: 'World', season: 2028, host: { city: 'Los Angeles', country: 'United States', country_code: 'USA' }, start_date: null, end_date: null, coverage: 'registry_only', provider_ids: {}, qualification_relationships: [] },
+  { competition_id: 'womens-olympic-basketball-2024', slug: 'olympics-2024', alias_slugs: [], name: 'Women’s Olympic Basketball Tournament — Paris 2024', short_name: 'Olympics 2024', competition_type: 'olympics', governing_body: 'IOC / FIBA', region: 'World', season: 2024, host: { city: 'Paris', country: 'France', country_code: 'FRA' }, start_date: null, end_date: null, coverage: 'registry_only', provider_ids: {}, qualification_relationships: [] },
+  { competition_id: 'fiba-womens-eurobasket-2025', slug: 'eurobasket-2025', alias_slugs: [], name: 'FIBA Women’s EuroBasket 2025', short_name: 'EuroBasket 2025', competition_type: 'eurobasket', governing_body: 'FIBA Europe', region: 'Europe', season: 2025, host: null, start_date: null, end_date: null, coverage: 'registry_only', provider_ids: {}, qualification_relationships: [] },
+  { competition_id: 'fiba-womens-americup-2025', slug: 'americup-2025', alias_slugs: [], name: 'FIBA Women’s AmeriCup 2025', short_name: 'AmeriCup 2025', competition_type: 'americup', governing_body: 'FIBA Americas', region: 'Americas', season: 2025, host: null, start_date: null, end_date: null, coverage: 'registry_only', provider_ids: {}, qualification_relationships: [] },
+  { competition_id: 'fiba-womens-asia-cup-2025', slug: 'asia-cup-2025', alias_slugs: [], name: 'FIBA Women’s Asia Cup 2025', short_name: 'Asia Cup 2025', competition_type: 'asia_cup', governing_body: 'FIBA Asia', region: 'Asia and Oceania', season: 2025, host: null, start_date: null, end_date: null, coverage: 'registry_only', provider_ids: {}, qualification_relationships: [] },
+  { competition_id: 'fiba-womens-afrobasket-2025', slug: 'afrobasket-2025', alias_slugs: [], name: 'FIBA Women’s AfroBasket 2025', short_name: 'AfroBasket 2025', competition_type: 'afrobasket', governing_body: 'FIBA Africa', region: 'Africa', season: 2025, host: null, start_date: null, end_date: null, coverage: 'registry_only', provider_ids: {}, qualification_relationships: [] }
 ]);
 
 export const competitionById = (id) => COMPETITIONS.find((c) => c.competition_id === id || c.slug === id || (c.alias_slugs || []).includes(id)) || null;

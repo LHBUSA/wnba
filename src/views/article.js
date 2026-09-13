@@ -22,13 +22,15 @@ const DESK_LINKS = {
   trend: [['/news/c/trend', 'More team trends'], ['/props', 'Best-line board']],
   props: [['/props', 'Player props & best lines'], ['/news/c/props', 'More Prop Watch']],
   market: [['/props', 'Best-line board'], ['/news/c/market', 'More Market Watch']],
-  brief: [['/news/c/brief', 'More News Briefs'], ['/injuries', 'Injury Desk']]
+  brief: [['/news/c/brief', 'More News Briefs'], ['/injuries', 'Injury Desk']],
+  international: [['/international', 'International women’s basketball'], ['/news/c/international', 'More international stories']]
 };
 
 export function articleView({ article: a, related = [] }) {
   const teams = (a.entities || []).filter((e) => e && e.type === 'team');
   const players = (a.entities || []).filter((e) => e && e.type === 'player');
   const games = (a.entities || []).filter((e) => e && e.type === 'game');
+  const intl = (a.entities || []).filter((e) => e && (e.type === 'intl_team' || e.type === 'intl_game'));
   const b = a.bettor_angle || {};
   const mw = a.market_watch || {};
   const ng = a.context?.next_game || a.context?.game || null;
@@ -71,6 +73,7 @@ export function articleView({ article: a, related = [] }) {
           </section>` : ''}
           ${teams.length ? html`<section><h2 class="aside-title">Teams</h2>${teams.map((t) => html`<a class="aside-row" href="/teams/${t.id}">${teamLogo({ team_id: t.id, name: t.name }, 28)}<b>${t.name}</b></a>`)}</section>` : ''}
           ${gameLinks.length ? html`<section><h2 class="aside-title">Game</h2>${gameLinks.map((g) => html`<a class="aside-row" href="/matchups/${g.id}"><b>${g.name}</b><span class="note">${g.start_utc ? `${fmtDateET(g.start_utc, { month: 'short', day: 'numeric' })} · ` : ''}Matchup research →</span></a><a class="aside-row" href="/cast/${g.id}"><b>WNBACast</b><span class="note">Live game &amp; replay →</span></a>`)}</section>` : ''}
+          ${intl.length ? html`<section><h2 class="aside-title">International</h2>${intl.map((e) => html`<a class="aside-row" href="${e.type === 'intl_team' ? `/international/teams/${e.id}` : `/international/games/${e.id}`}"><b>${e.name}</b><span class="note">${e.type === 'intl_team' ? 'National team →' : 'Box score & play-by-play →'}</span></a>`)}</section>` : ''}
           <section><h2 class="aside-title">Keep reading</h2>
             ${(DESK_LINKS[a.kind] || []).map(([href, label]) => html`<a class="aside-row" href="${href}"><b>${label}</b></a>`)}
             <a class="aside-row" href="/news"><b>WNBA newsroom front page</b></a>

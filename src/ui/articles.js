@@ -11,6 +11,7 @@ import { storyOriginIso } from '../lib/news-ranking.js';
 
 export const KIND_LABEL = {
   brief: 'News Briefs',
+  international: 'International',
   injury: 'Injuries',
   transaction: 'Transactions',
   performance: 'Performances',
@@ -24,6 +25,7 @@ export const KIND_LABEL = {
 // Desk names used on the front page (editorial voice), keyed by kind.
 export const DESK = {
   brief: 'News Briefs',
+  international: 'International',
   injury: 'Injury Desk',
   transaction: 'Roster Moves',
   performance: 'Performances',
@@ -34,7 +36,7 @@ export const DESK = {
   market: 'Market Watch'
 };
 
-export const KIND_ORDER = ['brief', 'preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];
+export const KIND_ORDER = ['brief', 'international', 'preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];
 
 const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').slice(0, 2);
 // The visible story age is canonical newsroom publication time. Source/event timestamps may

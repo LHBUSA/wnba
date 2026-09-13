@@ -57,6 +57,13 @@ async function apiGet(env, path) {
   return body.data;
 }
 
+async function intlGet(env, path) {
+  const res = await env.INTL.fetch(`https://wnba-international.internal${path}`, { headers: { 'user-agent': UA } });
+  const body = await res.json();
+  if (!body?.ok) throw new Error(`intl_${path}_${body?.error?.code || res.status}`);
+  return body.data;
+}
+
 async function dictionary(env) {
   try {
     const d = await apiGet(env, '/v1/players');
@@ -165,7 +172,7 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
   // (Replaces the v1 PBE Desk blurbs; same evidence discipline, full article contract.)
   let articles;
   try {
-    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: Object.values(store), force: forceArticles });
+    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), intlGet: env.INTL ? (p) => intlGet(env, p) : null, dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: Object.values(store), force: forceArticles });
   } catch (e) {
     articles = { error: e.message };
   }

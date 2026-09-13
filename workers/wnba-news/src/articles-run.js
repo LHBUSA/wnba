@@ -6,6 +6,7 @@
 import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, ARTICLE_VERSION } from './articles.js';
 import { briefArticles, BRIEF_VERSION } from './briefs.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
+import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles } from './lifecycle.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
@@ -19,7 +20,7 @@ export const ARTICLE_RUN_MIN_GAP_MS = 9 * 60e3;
 // Story identity, editorial-origin clock, duplicate repair and supersession live in lifecycle.js.
 export { articleFirstPublishedAt, injuryIdentity } from './lifecycle.js';
 
-export async function runArticles(env, { apiGet, dict, externalItems, force = false }) {
+export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null }) {
   const started = new Date().toISOString();
   const now = Date.now();
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
@@ -78,6 +79,8 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   for (const [name, fn, on] of [
     ['injury', injuryArticles, true], ['transaction', transactionArticles, true], ['result', resultArticles, true],
     ['preview', previewArticles, true], ['trend', trendArticles, doTrends], ['props', propArticles, true], ['market', marketMoveArticles, true],
+    // International desk: medal-game results from wnba-international (material events only, 12-hour window).
+    ['international', () => internationalArticles({ intlGet, now }), Boolean(intlGet)],
     // Material source-wire events run last so the brief generator can suppress events already covered by a
     // structured injury/transaction story. A source cluster is one stable brief: corroboration revises it,
     // while a different material cluster becomes a genuinely new newsroom article.
@@ -120,7 +123,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     feed: Array.isArray(inj?.items) ? inj.items : null,
     getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'),
     putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }),
-    versionOf: (a) => (a.kind === 'brief' ? BRIEF_VERSION : ARTICLE_VERSION),
+    versionOf: (a) => (a.kind === 'brief' ? BRIEF_VERSION : a.kind === 'international' ? INTL_VERSION : ARTICLE_VERSION),
     cardOf
   });
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));

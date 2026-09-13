@@ -16,7 +16,7 @@ export const DESKS = [
   ['trend', 'Team Trends', 'Against-the-spread and totals runs, measured against a named sportsbook’s lines.'],
   ['transaction', 'Roster Moves', 'Signings, waivers and hardship contracts from ESPN’s transactions log.']
 ];
-export const DESK_KINDS = ['brief', 'injury', 'preview', 'performance', 'trend', 'transaction', 'props', 'market'];
+export const DESK_KINDS = ['brief', 'international', 'injury', 'preview', 'performance', 'trend', 'transaction', 'props', 'market'];
 
 const dateline = () => new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 const ofKind = (items, k) => items.filter((c) => c.kind === k || (k === 'performance' && c.kind === 'result'));

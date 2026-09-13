@@ -19,6 +19,11 @@ id = "c35ed1b81eda4e939c21dfcd831664d9"
 binding = "API"
 service = "wnba-api"
 
+# International desk (medal-game results). If wnba-international is down, the WNBA newsroom is unaffected.
+[[services]]
+binding = "INTL"
+service = "wnba-international"
+
 [observability]
 enabled = true
 
