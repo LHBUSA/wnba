@@ -644,7 +644,8 @@ export async function transactionDeep(ctx) {
     const incomingBig = profiles.some((p) => /[FC]/.test(p.position || ''));
     if (rot?.rows?.length) {
       const outIds = new Set((feed || []).map((x) => x.athlete_id));
-      const group = rot.rows.filter((r) => !outIds.has(r.athlete_id) && r.appearances > 0 && (incomingBig ? /[FC]/.test(r.position || '') : true)).slice(0, 5);
+      const moved = new Set(profiles.map((p) => String(p.athlete_id)));
+      const group = rot.rows.filter((r) => !outIds.has(r.athlete_id) && !moved.has(String(r.athlete_id)) && r.appearances > 0 && (incomingBig ? /[FC]/.test(r.position || '') : true)).slice(0, 5);
       const tail = rot.rows.filter((r) => r.appearances > 0).slice(-3);
       if (group.length) ctxParas.push(`Where the minutes are: the ${feed ? 'healthy ' : ''}${incomingBig ? 'forwards and centers' : 'players'} who played in the ${poss(n)} last ${wordN(rot.sample)} games were ${listJoin(group.map((r) => `${r.name} (${f1(r.min)} min)`))}.${tail.length === 3 ? ` The three lightest-used players in that window averaged ${listJoin(tail.map((r) => f1(r.min)))} minutes.` : ''}`);
     }
