@@ -6,14 +6,29 @@ import { articleCard, articleMini } from '../ui/articles.js';
 import { HERO_ART } from '../ui/art.js';
 import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, plural, fmtTimeET, american, bookName } from '../lib/format.js';
 import logoManifest from '../../data/team-logos.json' with { type: 'json' };
+import { buildTicker } from '../lib/ticker.js';
 
 export async function loadToday(api) {
-  const [today, arts, injuries, standings] = await Promise.all([api.today(), api.articles({ limit: 12 }), api.injuries(), api.standings()]);
-  return { today, arts, injuries, standings };
+  // The ticker reads the international canonical layer too (live, recent finals, next games); a failure there only
+  // removes international items, never the page.
+  const [today, arts, injuries, standings, intl] = await Promise.all([api.today(), api.articles({ limit: 12 }), api.injuries(), api.standings(), api.intl ? api.intl().catch(() => null) : Promise.resolve(null)]);
+  return { today, arts, injuries, standings, intl };
 }
 
 /** Returns { body, live } — `live` lets the page pick its poll interval. */
-export function todayView({ today, arts, injuries, standings }) {
+/** The top rail as HTML: game state first (WNBA, then international), headlines only when no game item exists. */
+export function tickerRail(ticker, { freshness = null } = {}) {
+  const items = ticker.items;
+  const lead = ticker.mode === 'live' ? ['tk-live', 'Live'] : ticker.mode === 'next' ? ['tk-next', 'Next'] : ticker.mode === 'final' ? ['tk-final', 'Final'] : ['tk-next', 'Headlines'];
+  const item = (x, dup = false) => html`<a class="tk-item tk-${x.item_type} ${x.sport_scope === 'international' ? 'tk-intl' : ''}" href="${x.destination_url}" tabindex="${dup ? '-1' : '0'}" aria-hidden="${dup ? 'true' : 'false'}"><b class="tk-tag">${x.label}</b><span class="tk-text">${x.text}</span>${x.meta ? html`<span class="tk-meta">${x.meta}</span>` : ''}</a>`;
+  return html`<div class="ticker" aria-label="${ticker.mode === 'headlines' ? 'Headlines' : 'Games: live, next and final'}" data-ticker-mode="${ticker.mode}">
+      <span class="${lead[0]}">${lead[1]}</span>
+      <span class="tk-scroll"><span class="tk-scroll-in ${items.length <= 2 ? 'tk-static' : ''}">${items.map((x) => item(x))}${items.length > 2 ? items.map((x) => item(x, true)) : ''}</span></span>
+      ${freshness ? html`<span class="tk-fresh">${freshness}</span>` : ''}
+    </div>`;
+}
+
+export function todayView({ today, arts, injuries, standings, intl = null }) {
   if (!today?.ok) return { body: errorState(today, 'The WNBA slate'), live: false };
   const d = today.data;
   const slate = d.slate;
@@ -31,18 +46,20 @@ export function todayView({ today, arts, injuries, standings }) {
   const heroTitle = slate.kind === 'TODAY'
     ? live ? html`<em>Live</em> WNBA, priced and in context` : html`Tonight’s <em>WNBA</em> slate, priced and in context`
     : slate.kind === 'NEXT' ? html`No games today. <em>${slate.games.length} games</em> ${fmtCompactDate(slate.date, { weekday: 'long' })}.` : html`The <em>WNBA</em> intelligence desk`;
-  const tickerItems = [
-    ...games.map((g) => `${g.away.abbr} @ ${g.home.abbr} ${g.status.state === 'pre' ? fmtTimeET(g.start_utc) : `${g.away.score}-${g.home.score}`}${g.market?.spread?.home_line !== null && g.market ? ` · ${g.home.abbr} ${g.market.spread.home_line > 0 ? '+' : ''}${g.market.spread.home_line} · O/U ${g.market.total.line}` : ''}`),
-    ...stories.slice(0, 4).map((c) => c.headline)
-  ];
+  const I = intl?.ok ? intl.data : null;
+  const ticker = buildTicker({
+    wnbaGames: games,
+    wnbaRecent: lastResults,
+    intlLive: I?.live || [],
+    intlUpcoming: (I?.competitions || []).flatMap((c) => c.next_games || []),
+    intlRecent: I?.recent || [],
+    stories
+  });
+  const intlLive = ticker.items.some((x) => x.sport_scope === 'international' && x.item_type === 'live_game');
 
 
-  return { live, body: html`
-    <div class="ticker" aria-label="Headlines">
-      <span class="${live ? 'tk-live' : 'tk-next'}">${live ? 'Live' : slate.kind === 'TODAY' ? 'Today' : 'Next slate'}</span>
-      <span class="tk-scroll"><span class="tk-scroll-in">${[...tickerItems, ...tickerItems].map((t) => html`<span>${t}</span>`)}</span></span>
-      <span>${d.market?.captured_at ? `Market ${relTime(d.market.captured_at)}` : 'No market yet'}</span>
-    </div>
+  return { live: live || intlLive, body: html`
+    ${tickerRail(ticker, { freshness: today.meta?.served_at ? `Updated ${relTime(today.meta.served_at)}` : null })}
 
     <section class="hero2">
       ${raw(HERO_ART)}
