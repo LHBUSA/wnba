@@ -1,8 +1,9 @@
 // Article view — the single renderer for a newsroom story. The SPA page (src/pages/article.js) and the
 // wnba-web publishing Worker both call articleView(), so the first HTTP response and the hydrated page
 // carry the same headline, copy, timestamps, evidence and links.
-//   photographic hero + credit → desk → headline → deck → byline + timestamps → body → story links →
-//   bettor modules → evidence & method (trust layer) → related coverage.
+//   photographic hero + credit → desk → headline → deck → byline + timestamps → body (Game Highlights after the
+//   opening section when a verified official video exists) → story links → bettor modules → evidence & method
+//   (trust layer) → related coverage.
 import { html } from '../lib/dom.js';
 import { marketStrip, avatar } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
@@ -10,6 +11,7 @@ import { KIND_LABEL, DESK, articleCard, headlineText } from '../ui/articles.js';
 import { storyMedia, creditLine } from '../ui/story-media.js';
 import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
 import { intelligenceOf } from '../lib/intelligence.js';
+import { gameHighlights } from '../ui/video.js';
 
 export const loadArticle = async (api, slug) => api.article(slug);
 
@@ -118,8 +120,8 @@ export function articleView({ article: a, related = [] }) {
       <div class="story-layout">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? a.sections.map((s) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${p}</p>`)}`)
-            : a.body.map((p) => html`<p>${p}</p>`)}
+            ? a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${p}</p>`)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)
+            : a.body.map((p) => html`<p>${p}</p>`)}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">
           ${players.length ? html`<section><h2 class="aside-title">In this story</h2>

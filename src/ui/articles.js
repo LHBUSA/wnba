@@ -60,7 +60,7 @@ export function articleCard(c, { lead = false, size = null, eager = false } = {}
   return html`<article class="scard scard--${sz}">
     ${storyMedia(c.media, { slot, eager })}
     <div class="scard-body">
-      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span></div>
+      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
       <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
       ${sz !== 'compact' && c.deck ? html`<p class="deck">${headlineText(c.deck)}</p>` : ''}
       ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
@@ -89,7 +89,7 @@ export function articleRow(c) {
   return html`<article class="srow">
     ${storyThumb(c.media, 64)}
     <div class="srow-body">
-      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span></div>
+      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
       <h3 class="srow-h"><a href="/news/${c.slug}">${headlineText(c.headline)}</a></h3>
       ${thumbCredit(c.media)}
     </div>

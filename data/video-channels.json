@@ -1,0 +1,156 @@
+{
+  "_policy": "Official video channel allowlist for the WNBA newsroom video layer. Identity is the exact YouTube channel ID; handles are evidence only. enabled=true requires verified=true (scripts/video/verify_channels.mjs). Channels are never deleted: a channel that fails verification is disabled with its evidence. Fan channels, aggregators, reuploads and compilation channels are never listed. Adding a channel needs no resolver change: namespace and team scope are data.",
+  "version": "wnba-video-channels/1.0.0",
+  "channels": [
+    {
+      "provider": "youtube",
+      "channel_id": "UCO9a_ryN_l7DIDS-VIt-zmw",
+      "name": "WNBA",
+      "handle": "@WNBA",
+      "channel_class": "league_official",
+      "namespace": "wnba",
+      "team_scope": null,
+      "priority": 1,
+      "official_site": "https://www.wnba.com/",
+      "expected_feed_title": "WNBA",
+      "enabled": true,
+      "verified": true,
+      "verification": {
+        "method": "official_site_link+canonical+feed_title",
+        "checks": {
+          "official_site_link": {
+            "pass": true,
+            "site": "https://www.wnba.com/",
+            "site_status": 200,
+            "link": "https://www.youtube.com/user/wnba",
+            "links_seen": [
+              "https://www.youtube.com/user/wnba"
+            ]
+          },
+          "canonical": {
+            "pass": true,
+            "canonical": "https://www.youtube.com/channel/UCO9a_ryN_l7DIDS-VIt-zmw",
+            "vanity": "http://www.youtube.com/@WNBA"
+          },
+          "feed_title": {
+            "pass": true,
+            "status": 200,
+            "title": "WNBA",
+            "entries": 15
+          },
+          "verified_badge_in_html": {
+            "observed": false,
+            "note": "Supporting evidence only; YouTube does not always server-render the badge."
+          }
+        },
+        "checked_at": "2026-09-13T20:27:18.082Z"
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCtInrnU3QbWqFGsdKT1GZtg",
+      "name": "FIBA Basketball",
+      "handle": "@FIBA",
+      "channel_class": "federation_official",
+      "namespace": "intl",
+      "competition_scope": null,
+      "team_scope": null,
+      "priority": 1,
+      "official_site": "https://www.fiba.basketball/en",
+      "expected_feed_title": "FIBA Basketball",
+      "enabled": true,
+      "verified": true,
+      "verification": {
+        "method": "official_site_link+canonical+feed_title",
+        "checks": {
+          "official_site_link": {
+            "pass": true,
+            "site": "https://www.fiba.basketball/en",
+            "site_status": 200,
+            "link": "https://www.youtube.com/fiba",
+            "links_seen": [
+              "https://www.youtube.com/fiba"
+            ]
+          },
+          "canonical": {
+            "pass": true,
+            "canonical": "https://www.youtube.com/channel/UCtInrnU3QbWqFGsdKT1GZtg",
+            "vanity": "http://www.youtube.com/@FIBA"
+          },
+          "feed_title": {
+            "pass": true,
+            "status": 200,
+            "title": "FIBA Basketball",
+            "entries": 15
+          },
+          "verified_badge_in_html": {
+            "observed": false,
+            "note": "Supporting evidence only; YouTube does not always server-render the badge."
+          }
+        },
+        "checked_at": "2026-09-13T20:27:20.311Z"
+      }
+    },
+    {
+      "provider": "youtube",
+      "channel_id": "UCBo3XgAVBeE74Zw0T77aDhw",
+      "name": "USA Basketball",
+      "handle": "@usabasketball",
+      "channel_class": "national_federation",
+      "namespace": "intl",
+      "competition_scope": null,
+      "team_scope": [
+        "usa"
+      ],
+      "priority": 2,
+      "official_site": "https://www.usab.com/",
+      "expected_feed_title": "USA Basketball",
+      "enabled": true,
+      "verified": true,
+      "verification": {
+        "method": "official_site_link+canonical+feed_title",
+        "checks": {
+          "official_site_link": {
+            "pass": true,
+            "site": "https://www.usab.com/",
+            "site_status": 200,
+            "link": "http://www.youtube.com/user/therealusabasketball",
+            "links_seen": [
+              "http://www.youtube.com/user/therealusabasketball"
+            ]
+          },
+          "canonical": {
+            "pass": true,
+            "canonical": "https://www.youtube.com/channel/UCBo3XgAVBeE74Zw0T77aDhw",
+            "vanity": "http://www.youtube.com/@usabasketball"
+          },
+          "feed_title": {
+            "pass": true,
+            "status": 200,
+            "title": "USA Basketball",
+            "entries": 15
+          },
+          "verified_badge_in_html": {
+            "observed": true,
+            "note": "Supporting evidence only; YouTube does not always server-render the badge."
+          }
+        },
+        "checked_at": "2026-09-13T20:27:21.577Z"
+      }
+    }
+  ],
+  "_not_enabled": [
+    {
+      "name": "WNBA team channels",
+      "reason": "Not needed in V1: the league channel publishes a highlight package for every game. Each team channel must be verified individually before it is added."
+    },
+    {
+      "name": "ESPN",
+      "reason": "Not verified in this pass as a publisher of per-game WNBA highlight packages; not listed."
+    },
+    {
+      "name": "Olympics",
+      "reason": "No Olympic competition is in the international registry yet; verify the channel ID when one is added."
+    }
+  ]
+}

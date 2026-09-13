@@ -21,6 +21,8 @@ import { runArticles } from './articles-run.js';
 import { BRIEF_MAX_AGE_MS } from './briefs.js';
 import { ARTICLE_VERSION } from './articles.js';
 import { mediaFor, MEDIA_MANIFEST_AT } from './media.js';
+import videoChannels from '../../../data/video-channels.json';
+import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
 
 const SERVICE = 'wnba-news';
 const VERSION = '2.0.0';
@@ -46,15 +48,17 @@ export default {
     if (path === '/v1/news/runs') return runsRoute(env);
     if (path === '/v1/articles') return articlesRoute(env, url);
     if (path === '/v1/articles/held') return heldRoute(env);
+    if (path === '/v1/articles/videos') return videosRoute(env);
     const am = path.match(/^\/v1\/articles\/([a-z0-9-]{6,120})$/);
     if (am) return articleRoute(env, am[1]);
     const m = path.match(/^\/v1\/news\/story\/(pbe_[a-f0-9]{18})$/);
     if (m) return storyRoute(env, m[1]);
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
+      if (url.searchParams.get('video') === 'force') return j({ ok: true, result: await runVideoPass(env, { channelsDoc: videoChannels, teams: ((await env.NEWS_KV.get('dict:v1', 'json')) || {}).teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null, force: true }) });
       return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international' }) });
     }
-    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
+    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/articles/videos', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
   }
 };
 
@@ -201,6 +205,14 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
     articles = { error: e.message };
   }
   const desk = { status: articles?.error ? 'FAIL' : articles?.errors?.length ? 'DEGRADED' : 'PASS', articles };
+
+  // Official game highlights: its own bounded pass on its own cadence; a failure never touches the articles.
+  let video;
+  try {
+    video = await runVideoPass(env, { channelsDoc: videoChannels, teams: rawDict.teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null });
+  } catch (e) {
+    video = { error: String(e.message || e).slice(0, 160) };
+  }
   const deskStore = {};
 
   await persistSupabase(env, store, clusters, deskStore).catch((e) => runs.push({ source_id: 'supabase', status: 'FAIL', error: e.message }));
@@ -213,6 +225,7 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
     desk,
     totals: { items: list.length, events: clusters.length, clusters: clusters.length, material_events: clusters.filter((c) => c.materiality?.material).length, articles_published: articles?.published_total ?? null, sources: NEWS_SOURCES.length, sources_ok: runs.filter((r) => ['PASS', 'NOT_MODIFIED', 'SKIPPED'].includes(r.status)).length },
     article_version: ARTICLE_VERSION,
+    video,
     supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
   };
   await env.NEWS_KV.put('news:v1:status', JSON.stringify(status));
@@ -346,7 +359,8 @@ async function articlesRoute(env, url) {
   const game = url.searchParams.get('game');
   const has = (c, t, id) => (c.entities || []).some((e) => e && e.type === t && e.id === id);
   const list = index.filter((c) => listedCard(c) && (!cat || c.kind === cat || c.desk === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
-  return j({ ok: true, data: { items: list.slice(0, limit).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) })), total: list.length }, meta: { service: SERVICE, version: VERSION, generator: ARTICLE_VERSION, media_manifest_at: MEDIA_MANIFEST_AT, last_run_at: last?.at || null, freshness: last?.at ? (Date.now() - Date.parse(last.at) > 90 * 60e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE', served_at: new Date().toISOString() } }, 200, 30);
+  const links = (await env.NEWS_KV.get('video:v1:links', 'json'))?.decisions || {};
+  return j({ ok: true, data: { items: list.slice(0, limit).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c), video: cardVideo(links[c.id]) })), total: list.length }, meta: { service: SERVICE, version: VERSION, generator: ARTICLE_VERSION, media_manifest_at: MEDIA_MANIFEST_AT, last_run_at: last?.at || null, freshness: last?.at ? (Date.now() - Date.parse(last.at) > 90 * 60e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE', served_at: new Date().toISOString() } }, 200, 30);
 }
 
 async function articleRoute(env, slugOrId) {
@@ -370,8 +384,25 @@ async function articleRoute(env, slugOrId) {
   if (card) a = { ...a, first_published_at: card.first_published_at || a.first_published_at, revised_at: card.revised_at ?? a.revised_at ?? null, revisions: card.revisions ?? a.revisions ?? [], quality_state: card.quality_state || null, quality_review: card.quality_review || null };
   const ents = new Set((a.entities || []).filter(Boolean).filter((e) => e.type !== 'game').map((e) => `${e.type}:${e.id}`));
   if (card?.status === 'external_coverage' && !a.external_coverage) a = { ...a, status: 'external_coverage', external_coverage: { at: card.demoted_at || null, reason: card.coverage_review?.reason || null, source_url: a.context?.brief?.source_url || null, source_name: a.context?.brief?.source_name || null } };
-  const related = index.filter((c) => c.id !== a.id && listedCard(c) && !withheldBySourcePolicy(c) && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) }));
-  return j({ ok: true, data: { article: { ...a, media: mediaFor(a) }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
+  const links = (await env.NEWS_KV.get('video:v1:links', 'json'))?.decisions || {};
+  const related = index.filter((c) => c.id !== a.id && listedCard(c) && !withheldBySourcePolicy(c) && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c), video: cardVideo(links[c.id]) }));
+  // A retired or external-coverage page is kept as a record; it is not enriched with video.
+  const video = card?.quality_state === 'retired_from_index' || a.status === 'external_coverage' ? null : servedVideo(links[a.id]);
+  return j({ ok: true, data: { article: { ...a, media: mediaFor(a), video }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
+}
+
+/** Cards carry only whether a verified highlight exists (no player, no third-party request on list pages). */
+function cardVideo(decision) {
+  const v = servedVideo(decision);
+  return v ? { title: v.title, channel_name: v.channel_name } : null;
+}
+
+/** Audit: every story's video decision with its reason and match evidence. */
+async function videosRoute(env) {
+  const [links, status] = await Promise.all([env.NEWS_KV.get('video:v1:links', 'json'), env.NEWS_KV.get('video:v1:status', 'json')]);
+  const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+  const rows = index.map((c) => ({ id: c.id, slug: c.slug, kind: c.kind, headline: c.headline, listed: listedCard(c), decision: links?.decisions?.[c.id] || null, served: Boolean(servedVideo(links?.decisions?.[c.id])) }));
+  return j({ ok: true, data: { rows, channels: allowedChannels(videoChannels).map((c) => ({ channel_id: c.channel_id, name: c.name, handle: c.handle, channel_class: c.channel_class, namespace: c.namespace, team_scope: c.team_scope || null, verification: { method: c.verification?.method, checked_at: c.verification?.checked_at, official_site_link: c.verification?.checks?.official_site_link?.link || null } })), status }, meta: { service: SERVICE, version: VERSION, video: VIDEO_VERSION, cadence_minutes: VIDEO_PASS_MINUTES, links_at: links?.at || null, served_at: new Date().toISOString() } }, 200, 60);
 }
 
 async function heldRoute(env) {

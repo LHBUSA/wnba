@@ -5,6 +5,7 @@ import { api } from '../data/api.js';
 import { errorState, skeleton } from '../ui/components.js';
 import { articleView, loadArticle } from '../views/article.js';
 import { routeMeta } from '../seo/meta.js';
+import { attachVideo } from '../ui/video.js';
 
 export const title = () => 'WNBA News';
 
@@ -18,4 +19,5 @@ export async function mount(root, ctx) {
   if (a.slug && ctx.path !== `/news/${a.slug}`) history.replaceState({}, '', `/news/${a.slug}`);
   ctx.setMeta(routeMeta('article', { path: `/news/${a.slug}`, data: a }));
   render(root, articleView({ article: a, related: res.data.related || [] }));
+  attachVideo(root);
 }

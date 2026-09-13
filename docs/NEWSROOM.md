@@ -64,4 +64,130 @@ Not reused (by decision): the MLB/NFL/NBA sports desk `propbet-news-enrich` — 
 
 **The added gate** (`wnba-reconcile/1.0.0`, `workers/wnba-news/src/reconcile.js`) runs after `gate.js` `validate()` — which is unchanged — and holds a story on season-year leakage, an incomplete injury-feed description (checked against the full feed, not the generator's own list), a headline naming one of several materially equivalent lines, a bettor analysis aimed at the wrong market, a rest figure that is not the source's `rest_days`, provider comment text in prose, or a prose-lint failure. `node --test tests/newsroom-synthesis.test.mjs` covers all of it offline against a captured fixture. There is no standings archive, so a historical regeneration serves no standings and says less rather than borrowing today's table. A story keeps its first URL when a new structure rewrites its headline. One live injury story per player: the newest render is the story; older ones (earlier feed updates or statuses that have left the feed) are marked `superseded_by` and drop from lists (their URLs still resolve).
 
-**No third-party browser requests**: the web fonts (SIL OFL) are self-hosted (`scripts/fonts/selfhost_fonts.py`, `public/fonts/`), the CSP allows fonts and images from our origin only, and data comes from the owned Workers.
+**No third-party browser requests** on page load: the web fonts (SIL OFL) are self-hosted (`scripts/fonts/selfhost_fonts.py`, `public/fonts/`), the CSP allows fonts and images from our origin only, and data comes from the owned Workers. The one intentional exception is the official video player below, which loads only after a reader presses play.
+
+## Official game highlights (`wnba-video/1.0.0`)
+
+A story about ONE completed game may carry that game's official highlight package from YouTube. If the match can't be proven, no video is shown. The pattern comes from the UFC official-video layer (`LHBUSA/UFC docs/videos.md`):
+- verified channel allowlist;
+- discovery ahead of serving;
+- deterministic linking;
+- poster-first player;
+- graceful fallback;
+- nothing downloaded or rehosted.
+
+It is ported as a pattern only. WNBA has its own Worker code (`workers/wnba-news/src/video.js`), KV keys, allowlist and cron. No NBA or NHL runtime is involved.
+
+### Channel allowlist
+
+`data/video-channels.json`. Identity is the exact channel ID; handles are evidence only. A channel stays `enabled` only while `scripts/video/verify_channels.mjs` re-proves all three required checks:
+1. The organization's own website links to a YouTube URL that resolves to that channel ID.
+2. The channel page's canonical URL is `/channel/<id>`.
+3. The upload feed carries the expected channel title.
+
+- The verified badge is recorded as supporting evidence when YouTube server-renders it.
+- A channel that fails is disabled with its evidence, never deleted.
+- Each channel carries its `namespace` (`wnba` or `intl`), an optional `team_scope` or `competition_scope`, and a `priority`.
+- Adding a channel is a data change, not a resolver change.
+
+| Channel | Channel ID | Class | Namespace / scope | Proof (2026-09-13) |
+|---|---|---|---|---|
+| WNBA | `UCO9a_ryN_l7DIDS-VIt-zmw` | league_official | wnba | wnba.com → youtube.com/user/wnba → this ID; canonical; feed title "WNBA" |
+| FIBA Basketball | `UCtInrnU3QbWqFGsdKT1GZtg` | federation_official | intl | fiba.basketball → youtube.com/fiba → this ID; canonical; feed title |
+| USA Basketball | `UCBo3XgAVBeE74Zw0T77aDhw` | national_federation | intl, USA games only | usab.com → youtube.com/user/therealusabasketball → this ID; canonical; feed title; verified badge |
+
+Not listed:
+- **Team channels**: not needed while the league channel publishes every game; each would need its own proof.
+- **ESPN**: not verified as a per-game WNBA highlight publisher.
+- **Olympics**: no Olympic competition is in the registry yet.
+
+Fan channels, aggregators, reuploads and compilation channels are never listed.
+
+### Discovery
+
+Runs inside the `wnba-news` cron every 20 minutes. It is bounded, never runs in the browser and never uses `search.list`.
+- **With the optional secret `YOUTUBE_API_KEY`:** Data API v3.
+  - Calls: `channels.list` (uploads playlist, cached) → `playlistItems.list` (newest 50) → `videos.list` (snippet, contentDetails, status, liveStreamingDetails).
+  - Quota: about 2 units per channel per pass (3 on the first), so about 430 units a day for three channels against the default 10,000.
+  - Region restriction, privacy, upload status, live state and duration are all known.
+- **Without the key (current):**
+  - Each channel's public upload feed: newest 15 entries, 3 GETs per pass.
+  - An oEmbed check for only the videos a story actually matches: at most 25 per pass, re-checked every 6 h.
+  - oEmbed 200 proves a video is embeddable, not that it plays in a given region, so these videos are `embeddable_region_unverified`. The player's own error report covers the rest (see Availability below).
+
+Storage and operations:
+- **`NEWS_KV` keys:**
+  - `video:v1:catalog`: 45 days, at most 900 videos. Per video: id, channel, title, description excerpt, publish time, thumbnail metadata, duration/live/privacy when known, discovery method and embed check.
+  - `video:v1:links`: a decision for every story.
+  - `video:v1:status`.
+- **Audit:** `GET /v1/articles/videos` lists every story's decision with its reason and match evidence, plus the channel verification.
+- **Manual pass:** `POST /run?video=force` with the admin token.
+
+### Eligibility (`videoTargetOf`)
+
+The game always comes from the article's structured context, never from prose.
+
+Eligible:
+- `result` (final game recap) and `performance` (one game): from `context.game`, with final scores.
+- `international`: from `context.international`, only when a current WNBA player appeared.
+
+Not eligible: injury updates, transactions, previews, team trends (many games), prop and market stories, news briefs, and retired or external-coverage pages.
+
+### Game resolver (`evaluateVideo` / `resolveGameVideo`)
+
+Games live in two namespaces, `wnba:<game_id>` and `intl:<competition>:<game_id>`, and they never mix: a channel only matches games in its own namespace.
+
+Every check must hold:
+- **Channel:** allowlisted, verified and in scope.
+- **Teams:** both named (whole-word, accent-insensitive), and no third team named.
+- **Title type:** a game highlight package (full game, game or extended highlights). Rejected: press conferences, interviews, mic'd-up clips, podcasts, reactions, live streams, montages, player packages, previews and hashtag clips.
+- **Format:** not a Short.
+- **Timing:** published between 1 h and 7 days after tip-off.
+- **WNBA date:** the title's date equals the game's ET date. No date means no match.
+- **International date or round:**
+  - either a title date equals the game date,
+  - or, for an undated title, it names the same round AND the competition and was published within 72 h.
+  - A title naming another competition, year or round is rejected.
+
+Ambiguity is never guessed:
+- Two matching videos on one channel, or on two channels of equal priority → `review`, nothing attached.
+- One video matching two different games → `review` on both.
+
+Each decision stores the game key, teams, date, round, the checks that passed and the rejected candidates.
+
+### Availability: fail closed
+
+No player is shown for:
+- a malformed ID;
+- a deleted or private video (oEmbed 400/404, or API privacy);
+- embedding disabled (oEmbed 401/403, or `embeddable=false`);
+- live or upcoming streams;
+- a region block for the US;
+- an unchecked video (timeout or network error);
+- an embed check older than 24 h. This is re-evaluated at serve time, so a stopped cron removes players instead of leaving stale ones.
+
+The article and its photo media are unaffected. In the browser, if the player reports error 100, 101 or 150 (not found, or embedding refused), the player is removed and the reader sees "This video can't be played here · Watch on YouTube".
+
+### Rendering
+
+Article page:
+- A "Game Highlights" section sits after the body's opening section, or after the whole body when it has only one section.
+- It shows our own poster: team marks or flags and the final score from the story's context, the video title and the official source.
+- Nothing plays automatically, and nothing is requested from YouTube until the reader presses play.
+- On play, a `https://www.youtube-nocookie.com/embed/<id>` iframe loads:
+  - autoplay is on only because the reader just pressed play;
+  - `enablejsapi` is set so the player can report errors;
+  - the referrer policy is strict-origin-when-cross-origin.
+- The player is 16:9 at every width.
+
+Cards and lists show only a small "▶ Highlights" label: no YouTube posters, no iframes. A story without a verified video renders byte-identically to before.
+
+### Privacy / CSP exception
+
+- **The only CSP change:** `frame-src https://www.youtube-nocookie.com`, in both the Vercel headers and the `wnba-web` SSR Worker.
+- **Unchanged:** `default-src`, `script-src`, `img-src` and `connect-src`. Posters are ours, YouTube thumbnails are not loaded, and there is no YouTube JS SDK.
+- **Result:** page load makes no third-party request. The privacy-enhanced player and its media hosts load only after the click.
+
+### Editorial rule
+
+Video is enrichment, never evidence. Nothing in a video title, thumbnail or description becomes an article fact. `gate.js` and `reconcile.js` are unchanged.
