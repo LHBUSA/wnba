@@ -45,3 +45,46 @@ export function internationalMediaFrom(PLAYERS, a) {
   return { layout: 'intl_game', subjects: [], teams: [], visual, caption: null, og: null, resolved: 'deterministic_scoreboard' };
 }
 
+
+const SINGLE = new Set(['injury', 'transaction', 'performance', 'result', 'props', 'brief']);
+const MATCHUP = new Set(['preview', 'market']);
+const DESK_VISUAL = { injury: 'Injury Desk', transaction: 'Roster Moves', performance: 'Game Recap', result: 'Game Recap', preview: 'Matchup Preview', trend: 'Team Trends', props: 'Prop Watch', market: 'Market Watch', brief: 'News Brief', international: 'International' };
+const idsOf = (xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').map(String);
+
+/**
+ * Newsroom story media for every desk. Priority, per story type:
+ *   1. an approved photograph of the story's own subject (single-subject desks), or one approved photo per team for a
+ *      matchup — never a stand-in;
+ *   2. an approved team composition (the story's team marks and colours);
+ *   3. the deterministic PropBetEdge WNBA story visual (desk label + brand), for league-wide stories with no team.
+ * International games use internationalMediaFrom. No standalone story resolves to a blank hero.
+ */
+export function newsroomMediaFrom(PLAYERS, a) {
+  if (a.kind === 'international') {
+    const m = internationalMediaFrom(PLAYERS, a);
+    if (m) return m;
+  }
+  const subject = (pid) => subjectFrom(PLAYERS, pid);
+  const ents = (a.entities || []).filter(Boolean);
+  const teamIds = ents.filter((e) => e.type === 'team').map((e) => e.id);
+  const brand = () => ({ layout: 'brand', subjects: [], teams: [], caption: null, og: null, visual: { kind: 'brand', desk: DESK_VISUAL[a.kind] || 'WNBA Newsroom' }, resolved: 'deterministic_story_visual' });
+  if (SINGLE.has(a.kind)) {
+    const s = subject(a.lead_player_id);
+    if (s) return { layout: 'single', subjects: [s], teams: idsOf([s.team_id]), caption: `Pictured: ${s.name}`, og: s.og, resolved: 'approved_subject_photo' };
+    const teams = idsOf([a.lead_team_id, ...teamIds]).slice(0, 1);
+    return teams.length ? { layout: 'team', subjects: [], teams, caption: null, og: null, resolved: 'team_composition' } : brand();
+  }
+  if (MATCHUP.has(a.kind)) {
+    const g = a.context?.game || a.context?.next_game || null;
+    const away = String(a.matchup?.away_team_id ?? g?.away?.team_id ?? teamIds[0] ?? '');
+    const home = String(a.matchup?.home_team_id ?? g?.home?.team_id ?? teamIds[1] ?? '');
+    const pick = (tid) => ents.filter((e) => e.type === 'player').map((e) => subject(e.id)).find((s) => s && s.team_id === tid) || null;
+    const A = away ? pick(away) : null;
+    const H = home ? pick(home) : null;
+    if (A && H) return { layout: 'matchup', subjects: [A, H], teams: [away, home], caption: `Pictured: ${A.name} (${A.team_abbr}) and ${H.name} (${H.team_abbr})`, og: H.og, resolved: 'approved_subject_photos' };
+    const teams = idsOf([away, home]);
+    return teams.length ? { layout: 'team_matchup', subjects: [], teams, caption: null, og: null, resolved: 'team_composition' } : brand();
+  }
+  const teams = idsOf([a.lead_team_id, ...teamIds]).slice(0, 1);
+  return teams.length ? { layout: 'team', subjects: [], teams, caption: null, og: null, resolved: 'team_composition' } : brand();
+}

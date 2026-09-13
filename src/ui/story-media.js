@@ -95,6 +95,10 @@ export function storyMedia(media, { slot = 'card', eager = false, credit = true,
     const [A, H] = m.subjects;
     inner = html`<span class="sm-half sm-half--a">${halfImg(A, slot, eager)}</span><span class="sm-half sm-half--h">${halfImg(H, slot, eager)}</span><span class="sm-vs" aria-hidden="true">at</span>`;
     cls += ' sm--duo sm--photo';
+  } else if (m.layout === 'brand' || !(m.teams || []).length) {
+    // Deterministic PropBetEdge story visual for league-wide stories with no team: desk label and brand on the court.
+    inner = html`${COURT}<span class="sm-brand"><span class="sm-brand-desk">${m.visual?.desk || 'WNBA Newsroom'}</span><span class="sm-brand-mark">PropBetEdge WNBA</span></span>`;
+    cls += ' sm--brand';
   } else if ((m.teams || []).length >= 2) {
     inner = html`${COURT}${teamPanel(m.teams[0], { side: 'a' })}${teamPanel(m.teams[1], { side: 'h' })}<span class="sm-vs" aria-hidden="true">at</span>`;
     cls += ' sm--teams';
@@ -116,6 +120,7 @@ export function storyThumb(media, size = 72) {
   }
   const s = media?.layout === 'single' || media?.layout === 'intl_photo' ? media.subjects?.[0] : media?.layout === 'matchup' ? media.subjects?.[1] : null;
   if (s?.square) return html`<img class="sm-thumb" src="${s.square}" width="${size}" height="${size}" alt="${s.name}" loading="lazy" decoding="async" />`;
+  if (!(media?.teams || []).length) return html`<span class="sm-thumb sm-thumb--brand" style="width:${size}px;height:${size}px" role="img" aria-label="${media?.visual?.desk || 'PropBetEdge WNBA'}"><b>PBE</b></span>`;
   const e = logoEntry((media?.teams || [])[0]);
   const c = teamColors({ team_id: (media?.teams || [])[0] }).color || '#d4af37';
   return html`<span class="sm-thumb sm-thumb--team" style="--tc:${c};width:${size}px;height:${size}px">${e ? html`<img src="${e.files['128']}" alt="" width="64" height="64" loading="lazy" decoding="async" />` : ''}</span>`;

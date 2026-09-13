@@ -13,42 +13,15 @@
 // Every photo carries its credit (author, license, source page) and a "Pictured:" caption.
 
 import manifest from '../../../data/newsroom-media.json';
-import { subjectFrom, internationalMediaFrom } from './media-resolve.js';
+import { internationalMediaFrom, newsroomMediaFrom } from './media-resolve.js';
 
 const PLAYERS = manifest.players || {};
-const SINGLE = new Set(['injury', 'transaction', 'performance', 'result', 'props', 'brief']);
-const MATCHUP = new Set(['preview', 'market']);
-
-const subject = (pid) => subjectFrom(PLAYERS, pid);
-
-const ids = (xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').map(String);
 
 /** International story media — see media-resolve.js for the priority rules. */
 export const internationalMedia = (a) => internationalMediaFrom(PLAYERS, a);
 
 export function mediaFor(a) {
-  if (a.kind === 'international') {
-    const m = internationalMedia(a);
-    if (m) return m;
-  }
-  const ents = (a.entities || []).filter(Boolean);
-  const teamIds = ents.filter((e) => e.type === 'team').map((e) => e.id);
-  if (SINGLE.has(a.kind)) {
-    const s = subject(a.lead_player_id);
-    if (s) return { layout: 'single', subjects: [s], teams: ids([s.team_id]), caption: `Pictured: ${s.name}`, og: s.og };
-    return { layout: 'team', subjects: [], teams: ids([a.lead_team_id]), caption: null, og: null };
-  }
-  if (MATCHUP.has(a.kind)) {
-    const g = a.context?.game || a.context?.next_game || null;
-    const away = String(a.matchup?.away_team_id ?? g?.away?.team_id ?? teamIds[0] ?? '');
-    const home = String(a.matchup?.home_team_id ?? g?.home?.team_id ?? teamIds[1] ?? '');
-    const pick = (tid) => ents.filter((e) => e.type === 'player').map((e) => subject(e.id)).find((s) => s && s.team_id === tid) || null;
-    const A = away ? pick(away) : null;
-    const H = home ? pick(home) : null;
-    if (A && H) return { layout: 'matchup', subjects: [A, H], teams: [away, home], caption: `Pictured: ${A.name} (${A.team_abbr}) and ${H.name} (${H.team_abbr})`, og: H.og };
-    return { layout: 'team_matchup', subjects: [], teams: ids([away, home]), caption: null, og: null };
-  }
-  return { layout: 'team', subjects: [], teams: ids([a.lead_team_id]), caption: null, og: null };
+  return newsroomMediaFrom(PLAYERS, a);
 }
 
 export const MEDIA_MANIFEST_AT = manifest.generated_at || null;

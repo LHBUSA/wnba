@@ -203,13 +203,15 @@ test('12 · play-by-play and source records observed after the cutoff cannot lea
 test('13 · a rich-data medal-game story fails the depth gate when it is only a short summary', async () => {
   const built = buildGameFacts({ competition: FX.competition, detail: FX.detail, schedule: FX.schedule, priorDetails: FX.prior, cutoff: CUTOFF, medals: FX.medals });
   const s = writeGameStory(built.facts);
-  // No play-by-play was published for this game, so the data-aware requirement is below the full 800.
+  // No play-by-play was published for this game, so the data-aware word TARGET is below the full 800 — a diagnostic
+  // since wnba-depth/1.0.0; publication is decided by substance.
   assert.equal(requiredWords(built.facts), 710);
   assert.deepEqual(depthFailures({ facts: built.facts, coverage: s.coverage, body: s.body, sections: s.sections }), []);
   const shallow = { body: s.body.slice(0, 3), sections: s.sections.slice(0, 2), coverage: ['lede', 'flow'] };
   const f = depthFailures({ facts: built.facts, ...shallow });
-  assert.ok(f.some((x) => /medal story has \d+ words; the available data requires at least 710/.test(x)));
-  assert.ok(f.includes('depth: missing why coverage'));
+  assert.ok(f.some((x) => /below the Deep floor of 480/.test(x)), f.join('\n'));
+  assert.ok(f.some((x) => /missing core substance: .*statistical_explanation.*player_performances/.test(x)), f.join('\n'));
+  assert.ok(f.some((x) => /substance score 0\.\d+ is below the Deep threshold/.test(x)), f.join('\n'));
   // …and the desk holds such a story rather than publishing it.
   const a = await spain();
   assert.equal(a.status, 'published', a.gate.failures.join('\n'));

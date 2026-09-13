@@ -1,6 +1,6 @@
 # Newsroom quality contract
 
-Applies to intelligence `pbe-intelligence/1.0.0`, game-story `wnba-game-story/1.0.0`, international desk `wnba-international-desk/2.0.0` and quality `wnba-quality/1.0.0`.
+Applies to depth ladder `wnba-depth/1.0.0`, briefs `wnba-briefs/2.0.0`, intelligence `pbe-intelligence/1.1.0`, game-story `wnba-game-story/1.0.0`, international desk `wnba-international-desk/2.0.0` and quality `wnba-quality/1.0.0`.
 
 ## 1. One betting-relevance decision
 
@@ -50,14 +50,7 @@ The international desk wrote "nothing here bears on a WNBA line" while the other
 
 **Sections render only when their facts exist.** The possible sections are: lede, How the game unfolded, The stretch that decided it, Why X won, Who delivered, What Y couldn't overcome, What gold/bronze means / What it means, WNBA connection.
 
-**Depth gate** (`depthFailures`):
-* **Story classes:** medal, elimination, recap and breaking.
-* **Required words scale with the data present:**
-  * base: medal 400, elimination 330, recap 280;
-  * add: quarters +100, play-by-play +90, schedule path +90, earlier box scores +120;
-  * cap: medal 800, elimination 650, recap 550.
-* **Also required:** each class's substance keys, no duplicate sections or paragraphs.
-* **Breaking:** a story with no box score needs 60 words.
+**Depth gate** (`depthFailures`): the newsroom depth ladder (section 7) applied to the game facts. `requiredWords` remains only as the diagnostic word target (base: medal 400, elimination 330, recap 280; + quarters 100, play-by-play 90, schedule path 90, earlier box scores 120; capped at the class minimum). It no longer decides publication: Australia–Italy (632 words against a 640 target) is judged on substance.
 
 ## 3. Media
 
@@ -99,3 +92,39 @@ The byline shows "Source data as of" only when that time is not later than the d
 * same id (hash of the game id), same slug, same `first_published_at`;
 * `revisions[]` gains `metadata_correction` (timestamp semantics) and `editorial_upgrade` entries;
 * no historical fact changes.
+
+## 7. Depth ladder (`workers/wnba-news/src/depth.js`)
+
+Every story gets a deterministic class from its FACT BLOCK (never its prose), then is scored against its desk's substance contract.
+
+| Class | Guidance | Floor | Pass score | Sections (developed) | When |
+|---|---|---|---|---|---|
+| Flash | 150–350 | 40 | 0.60 | 1 (0) | Developing event (≤3h, no PropBetEdge record yet, or an international result without a box score) with ≤3 evidence dimensions. Provisional; upgrades at the same id/URL. |
+| Brief | 350–650 | 170 | 0.75 | 2 (1) | Legitimate event, limited verified records. External reporting stays Brief until a PropBetEdge record or a second publisher confirms it and ≥5 value dimensions exist. |
+| Full | 650–1,100 | 320 | 0.80 | 4 (2) | Default: ≥6 evidence dimensions, or importance ≥2 with ≥4. |
+| Deep | 1,000–1,600 | 480 | 0.85 | 5 (3) | Importance 3 (medal game, trade, fresh star injury, CBA/expansion) with ≥6 dimensions. |
+
+*Evidence dimensions:* primary record, corroboration, player season, player recent form, rotation, injury feed, team standing, schedule, box score, play-by-play, history, market, transaction log, observed absence (international: game record, quarters, box score, play-by-play, tournament path, earlier-game form, WNBA crosswalk).
+
+*Publication:* no hard failure, every supported core element met, score ≥ class threshold. Word count is a diagnostic against the range.
+
+*Hard failures:* below the class floor; duplicate paragraphs; repeated sentences; phrase-repetition ratio > 0.10; empty or duplicate sections; Intelligence restating the body; play-by-play language without play-by-play; unsupported characterisation (momentum, "wanted it more", …).
+
+*Contracts:* international (result + star lede, game flow, decisive stretch, statistical explanation, performances, opponent, tournament context, WNBA-connection decision), game (performers, flow, separators, both teams, lead changes, team context, next), injury (what changed, role, minutes, recent form, rotation, team context, schedule, market), transaction (the move, player profile/production, roster context, availability, team context, recent moves, schedule), preview (availability, matchup, form, rest, series, market, counter-case, next), market (evidence, counter-case, game log, next), external report (the development, underlying event, original value, records developed, why it matters, next). All: sections developed, evidence cited.
+
+## 8. External reports (`briefs.js`, wnba-briefs/2.0.0)
+
+* **Another publisher writing an article is not an event.** `underlyingEvent`: the event type must be a development (injury, availability, trade, signing, waiver, roster move, coaching, front office, awards, record, playoff, expansion, CBA, draft, league, lineup) and not every report may be commentary (opinion, speculative, explainer, recycled, promo, community, question, minor honour). Otherwise the item stays external coverage (source wire, player/team pages).
+* **Original value:** `originalValue` counts PropBetEdge record dimensions (season production, recent form, rotation role, availability listing, transaction record, team standing, schedule). A story needs ≥1 of them, or a second independent publisher, or to be a developing (≤3h) report about a linked WNBA player/team.
+* **Demotion:** a published brief whose source was only coverage is demoted once per brief version (`demoteExternalCoverage`): the card leaves every listing, the item keeps its URL with a "Moved to external coverage" notice and noindex, and a `demoted_to_external_coverage` revision is recorded. Nothing is deleted.
+
+## 9. Intelligence has its own job (pbe-intelligence/1.1.0)
+
+The body reports; the module adds. `additiveCopy` keeps a bettor-copy sentence only when it is not boilerplate, does not restate the headline/deck/body (`src/lib/semantic.js`), and — without an attached market — introduces a figure the article does not state. With no additive summary the module does not render; the reviewed `bettor_angle` stays on the record for the gate.
+
+## 10. Lifecycle and media
+
+* A version goes live at `max(run start, provenance.generated_at)`, so `source_observed_at ≤ generated_at ≤ published/revised`.
+* Revision kinds: `data_update`, `editorial_upgrade` (international backfill), `editorial_quality_upgrade` (newer generator, same facts digest), `depth_upgrade` (class rose, e.g. Flash → Full, same URL), `metadata_correction`, `demoted_to_external_coverage`.
+* Media for every desk (`newsroomMediaFrom`): approved subject photo (or one per team for a matchup) → team composition → deterministic PropBetEdge story visual (desk + brand). `visualFailures` holds any standalone story with no resolved hero.
+* Run status carries `newsroom_health` (live class distribution, per-desk median words/dimensions/sections, upgrades, substance holds, external coverage) and `coverage_decisions`.

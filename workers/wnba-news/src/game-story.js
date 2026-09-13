@@ -12,6 +12,7 @@
 
 import { dLong, listJoin, poss, sc, f1, cap, aan } from './prose.js';
 import { coLeaders } from './reconcile.js';
+import { assessDepth } from './depth.js';
 
 export const GAME_STORY_VERSION = 'wnba-game-story/1.0.0';
 
@@ -560,11 +561,10 @@ export function writeGameStory(f) {
 /** Words of substance in the body (headings excluded). */
 export const wordCount = (body) => (body || []).join(' ').split(/\s+/).filter(Boolean).length;
 
-/** The depth gate for a game story. Returns failure strings. */
 /**
- * Words a story must reach given the data that actually exists. A box score alone supports a base; each further
- * record (quarter scores, play-by-play, the tournament schedule, earlier box scores) raises the requirement, capped at
- * the class minimum. Rich data with a thin story fails; genuinely sparse data is not forced to pad.
+ * Target words for the data that actually exists — a DIAGNOSTIC reported with the depth assessment, never a publication
+ * cliff (wnba-depth/1.0.0). A box score alone supports a base; each further record (quarter scores, play-by-play, the
+ * tournament schedule, earlier box scores) raises the target, capped at the class minimum.
  */
 export function requiredWords(facts) {
   const rule = DEPTH_RULES[facts?.story_class] || DEPTH_RULES.breaking;
@@ -574,21 +574,15 @@ export function requiredWords(facts) {
   return Math.min(rule.min_words, base + extra);
 }
 
-export function depthFailures({ facts, coverage, body, sections }) {
-  const rule = DEPTH_RULES[facts?.story_class] || DEPTH_RULES.breaking;
-  const out = [];
-  const words = wordCount(body);
-  const need = requiredWords(facts);
-  if (words < need) out.push(`depth: ${facts.story_class} story has ${words} words; the available data requires at least ${need}`);
-  for (const k of rule.requires) {
-    if (k === 'decisive' && !facts.quarters && !facts.pbp) continue;
-    if (k === 'context' && !(facts.path?.winner?.games?.length || facts.medal || facts.next)) continue;
-    if (k === 'opponent' && !facts.lines?.loser?.length) continue;
-    if (!coverage.includes(k)) out.push(`depth: missing ${k} coverage`);
-  }
-  const titles = (sections || []).map((s) => s.title).filter(Boolean);
-  if (new Set(titles).size !== titles.length) out.push('depth: duplicate section titles');
-  const paras = (body || []).map((p) => p.trim());
-  if (new Set(paras).size !== paras.length) out.push('depth: duplicate paragraphs');
-  return out;
+/**
+ * The depth gate for a game story: the newsroom depth ladder (depth.js) applied to the game facts. Substance decides
+ * publication — result and star in the lede, game flow, statistical explanation, several performances, tournament
+ * context, a correct WNBA-connection decision, developed sections — plus the hard checks (shallowness floor,
+ * repetition, play-by-play language without play-by-play). Word count is reported only as a diagnostic.
+ */
+export function depthAssessmentOf({ facts, body, sections, evidence, now }) {
+  return assessDepth({ kind: 'international', facts: { game: facts }, body, sections, evidence }, { now: now ?? (Date.parse(facts?.provenance?.generated_at || '') || Date.now()) });
+}
+export function depthFailures(input) {
+  return depthAssessmentOf(input).failures;
 }

@@ -344,7 +344,7 @@ async function articlesRoute(env, url) {
   const player = url.searchParams.get('player');
   const game = url.searchParams.get('game');
   const has = (c, t, id) => (c.entities || []).some((e) => e && e.type === t && e.id === id);
-  const list = index.filter((c) => !c.superseded_by && (!cat || c.kind === cat || c.desk === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
+  const list = index.filter((c) => !c.superseded_by && c.status !== 'external_coverage' && (!cat || c.kind === cat || c.desk === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
   return j({ ok: true, data: { items: list.slice(0, limit).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) })), total: list.length }, meta: { service: SERVICE, version: VERSION, generator: ARTICLE_VERSION, media_manifest_at: MEDIA_MANIFEST_AT, last_run_at: last?.at || null, freshness: last?.at ? (Date.now() - Date.parse(last.at) > 90 * 60e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE', served_at: new Date().toISOString() } }, 200, 30);
 }
 
@@ -368,7 +368,8 @@ async function articleRoute(env, slugOrId) {
   }
   if (card) a = { ...a, first_published_at: card.first_published_at || a.first_published_at, revised_at: card.revised_at ?? a.revised_at ?? null, revisions: card.revisions ?? a.revisions ?? [] };
   const ents = new Set((a.entities || []).filter(Boolean).filter((e) => e.type !== 'game').map((e) => `${e.type}:${e.id}`));
-  const related = index.filter((c) => c.id !== a.id && !c.superseded_by && !withheldBySourcePolicy(c) && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) }));
+  if (card?.status === 'external_coverage' && !a.external_coverage) a = { ...a, status: 'external_coverage', external_coverage: { at: card.demoted_at || null, reason: card.coverage_review?.reason || null, source_url: a.context?.brief?.source_url || null, source_name: a.context?.brief?.source_name || null } };
+  const related = index.filter((c) => c.id !== a.id && !c.superseded_by && c.status !== 'external_coverage' && !withheldBySourcePolicy(c) && (c.entities || []).some((e) => e && ents.has(`${e.type}:${e.id}`))).slice(0, 6).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) }));
   return j({ ok: true, data: { article: { ...a, media: mediaFor(a) }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
 }
 

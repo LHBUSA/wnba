@@ -15,7 +15,7 @@
 // matters for bettors", "Market angle", context, evidence, related entities.
 
 import { validateArticle } from './gate.js';
-import { decideIntelligence, intelligenceFailures, intelligenceOf } from '../../../src/lib/intelligence.js';
+import { decideIntelligence, intelligenceFailures, intelligenceOf, additiveCopy } from '../../../src/lib/intelligence.js';
 import { aan } from './prose.js';
 // Synthesis generators (2.0.0-preview) replace the v1 list-style generators for these five kinds.
 // The v1 functions stay exported as *V1 for comparison runs (scripts/newsroom-dryrun.mjs).
@@ -138,7 +138,9 @@ const CAVEATS = {
   }
 };
 
-const MIN_WORDS = { injury: 110, preview: 110, performance: 100, result: 90, transaction: 80, trend: 60, props: 60, market: 50 };
+// A floor against empty output only. Story length policy lives in the depth ladder (depth.js): a developing Flash may be
+// short because its facts are; richer classes carry their own floors and substance contracts.
+const MIN_WORDS = { injury: 110, preview: 110, performance: 100, result: 90, transaction: 80, trend: 60, props: 60, market: 50, brief: 40 };
 
 function finalize(a) {
   const c = CAVEATS[a.kind] || CAVEATS.result;
@@ -157,7 +159,11 @@ function finalize(a) {
     odds_status: a.market_angle?.market ? 'snapshot' : a.market_angle?.line ? 'reference_line' : 'unavailable',
     model_status: 'unavailable'
   };
-  a.intelligence = { ...intel, render: { ...intel.render, intelligence: intel.render.intelligence && Boolean(a.bettor_angle), betting_relevance: intel.render.betting_relevance && Boolean(a.bettor_angle), context: intel.render.context && Boolean(a.bettor_angle) } };
+  // The module renders only what it ADDS to the body (pbe-intelligence/1.1.0): no additive read, no module. The full
+  // bettor_angle stays on the record as the reviewed analysis the gate and reconcile checks read.
+  const shownCopy = a.bettor_angle ? additiveCopy({ ...a, market_watch: intel.market_relevance === 'none' ? null : a.market_angle }, { relevance: intel.market_relevance }) : null;
+  const shown = Boolean(shownCopy?.summary);
+  a.intelligence = { ...intel, copy: shownCopy, render: { ...intel.render, intelligence: intel.render.intelligence && shown, betting_relevance: intel.render.betting_relevance && shown, context: intel.render.context && shown, market_evidence: intel.render.market_evidence && shown, markets_touched: intel.render.markets_touched && shown, sportsbook_links: intel.render.sportsbook_links && shown } };
   a.market_watch = intel.market_relevance === 'none' ? { text: [], market: null, game_id: null } : a.market_angle;
   delete a.markets;
   delete a.bettor;
@@ -829,11 +835,12 @@ export function cardOf(a) {
     headline: a.headline,
     deck: a.deck,
     // Cards follow the same Intelligence decision as the article: a bettor read appears only for actionable relevance.
-    bettor_snippet: intelligenceOf(a).market_relevance === 'actionable' ? a.bettor_angle?.summary || null : null,
+    bettor_snippet: intelligenceOf(a).market_relevance === 'actionable' && intelligenceOf(a).render.intelligence ? intelligenceOf(a).copy?.summary || null : null,
     intelligence: { market_relevance: intelligenceOf(a).market_relevance, market_data_status: intelligenceOf(a).market_data_status },
     // International game identity for cards, related stories and share images (the media resolver reads it).
     intl: a.context?.international ? { competition: a.context.international.competition, round: a.context.international.round, medal: a.context.international.medal, winner: a.context.international.winner, loser: a.context.international.loser, featured: a.context.international.featured } : null,
     status: a.status,
+    depth: a.depth?.class ? { class: a.depth.class, provisional: a.depth.provisional, score: a.depth.score, words: a.depth.words, contract: a.depth.contract } : null,
     published_at: a.published_at,
     updated_at: a.updated_at,
     lead_team_id: a.lead_team_id,

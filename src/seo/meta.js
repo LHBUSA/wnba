@@ -95,7 +95,9 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
         type: 'article',
         published: a.first_published_at || a.published_at,
         modified,
-        section: DESKS[deskOf(a.kind)] || 'Newsroom'
+        section: DESKS[deskOf(a.kind)] || 'Newsroom',
+        // A story moved to external coverage keeps its URL and record but is no longer a newsroom page for search.
+        ...(a.external_coverage ? { robots: NOINDEX_ROBOTS } : {})
       });
     }
     case 'player': {

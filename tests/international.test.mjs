@@ -274,7 +274,8 @@ const medalFixture = () => {
 test('international desk: a medal game that just ended becomes one gated story; old or non-medal games never do', async () => {
   const { game, intlGet } = medalFixture();
   const justAfter = Date.parse(game.scheduled_at) + 3 * 3600e3;
-  const [story, ...rest] = await internationalArticles({ intlGet, now: justAfter });
+  // Generation happens on the same clock as the pass that publishes it (source_observed ≤ generated ≤ published).
+  const [story, ...rest] = await internationalArticles({ intlGet, now: justAfter, clock: () => new Date(justAfter - 30e3).toISOString() });
   assert.equal(rest.length, 0);
   assert.equal(story.status, 'published', story.gate.failures.join('\n'));
   assert.equal(story.kind, 'international');
@@ -293,7 +294,7 @@ test('international desk: a medal game that just ended becomes one gated story; 
   assert.equal(materialInternationalGames({ bracket: { rounds: [{ games: [{ ...game, status: 'live', winner: null }] }] } }, justAfter).length, 0, 'no result story before the game is final');
 
   // Same game, later pass with a box-score correction: same story id, a revision that keeps its origin.
-  const [again] = await internationalArticles({ intlGet, now: justAfter + 600e3 });
+  const [again] = await internationalArticles({ intlGet, now: justAfter + 600e3, clock: () => new Date(justAfter + 600e3 - 30e3).toISOString() });
   assert.equal(again.id, story.id);
   const items = new Map();
   const first = await mergeArticles({ index: [], articles: [story], started: new Date(justAfter).toISOString(), now: justAfter, feed: null, getItem: async () => null, putItem: async (a) => items.set(a.id, a), versionOf: () => INTL_VERSION, cardOf });

@@ -46,7 +46,7 @@
 
 /* PropBetEdge International scoreboard — flags, names, score, medal/round, competition. Sized in container units so
    the same composition is legible as a 1000px hero, a 300px card and a share image. */
-.sm--intl .sm-frame { container-type: inline-size; }
+.sm--intl .sm-frame, .sm--brand .sm-frame { container-type: inline-size; }
 .ib { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: center; gap: 2.4cqw; padding: 5cqw 6cqw; color: var(--paper); }
 .ib--full { background:
   radial-gradient(ellipse 60% 90% at 88% 20%, color-mix(in srgb, var(--c1) 38%, transparent), transparent 70%),
@@ -290,7 +290,19 @@
 .pbe-intel-market h3 { font: 700 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
 @media (max-width: 760px) { .pbe-intel-grid, .pbe-intel .counter { grid-template-columns: 1fr; } .pbe-intel { padding: 18px 16px; } }
 
-.trust-layer { margin-top: 36px; padding: 16px 24px; border-radius: 16px; border: 1px solid var(--line); background: var(--ink-1); }
+/* Trust layer: accessible and complete, but visually subordinate to the journalism above it. */
+.trust-layer { margin-top: 32px; padding: 10px 0 0; border-top: 1px solid var(--line); background: none; }
+.trust-layer .em-h { font: 700 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--paper-3, var(--paper-2)); margin: 16px 0 8px; }
+.trust-layer .evidence, .trust-layer .revisions { font-size: 13px; color: var(--paper-2); }
+.trust-layer .revisions { padding-left: 18px; margin: 0; }
+/* Deterministic story visual (league-wide stories with no team). */
+.sm--brand .sm-frame { background: radial-gradient(120% 90% at 20% 10%, rgba(212, 175, 55, .22), transparent 60%), var(--ink-1); color: rgba(212, 175, 55, .28); }
+.sm-brand { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 6px; padding: 7% 8%; }
+.sm-brand-desk { font: 700 clamp(10px, 2.4cqw, 13px)/1 var(--f-data); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+.sm-brand-mark { font: 700 clamp(18px, 6cqw, 40px)/1 var(--f-editorial); color: var(--paper); }
+.sm-thumb--brand { display: inline-grid; place-items: center; border-radius: 10px; background: var(--ink-1); border: 1px solid var(--gold-line); color: var(--gold); font: 700 13px/1 var(--f-data); letter-spacing: .08em; }
+.coverage-note { margin: 0 0 18px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--gold-line); background: rgba(212, 175, 55, .06); font-size: 14.5px; line-height: 1.5; color: var(--paper-2); }
+.coverage-note a { color: var(--gold); }
 .trust-layer .sec-title { margin-bottom: 14px; }
 /* Evidence & methodology: present in the page (and crawlable), visually subordinate to the article. */
 .evidence-method > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; padding: 6px 0; }

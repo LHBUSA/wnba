@@ -18,7 +18,9 @@
 // listed "Markets touched: player workload" and rendered a Market Angle advertising the props board — three
 // modules, three independent inferences.
 
-export const INTELLIGENCE_VERSION = 'pbe-intelligence/1.0.0';
+import { sentencesOf, numbersOf, restates } from './semantic.js';
+
+export const INTELLIGENCE_VERSION = 'pbe-intelligence/1.1.0';
 
 // Kinds whose article is built on a stored sportsbook capture by definition.
 const MARKET_KINDS = new Set(['props', 'market', 'trend']);
@@ -68,10 +70,38 @@ export function decideIntelligence({ kind, entities = [], market = null, interna
   };
 }
 
+// Sentences that carry no information of their own: standing disclaimers and process notes. They never justify a module.
+export const INTELLIGENCE_BOILERPLATE = /(context,? (rather than|not) a signal|matters (for a line or prop )?only if|is revised when one does|captured only inside 36 hours|check the availability panel|^next up:|no closing line is available|depth moves rarely move a game line|one game is a sample of one|provider status,? not the league’s official|every comparison (here|in this preview) describes the past|details not present in PropBetEdge structured records|whether this development changes official availability|read it as a description of the (spread )?pricing, not a forecast)/i;
+
+/**
+ * pbe-intelligence/1.1.0 — the article body and PropBetEdge Intelligence have distinct jobs. The body reports; the
+ * module may only ADD derived or market intelligence. Every sentence of the generator's bettor copy is kept only when
+ * it is not boilerplate and does not restate the body (src/lib/semantic.js restates). Without an attached market
+ * (contextual relevance) a sentence must also introduce a figure the body does not state — context the article already
+ * explains is not repeated as "intelligence". No additive summary → no module.
+ */
+export function additiveCopy(a, { relevance = null } = {}) {
+  const b = a?.bettor_angle;
+  if (!b) return null;
+  const corpus = sentencesOf([a.headline, a.deck, ...(a.body || [])].filter(Boolean).join(' '));
+  const nums = new Set(corpus.flatMap(numbersOf));
+  const rel = relevance || decideIntelligence({ kind: a.kind, entities: a.entities, market: a.market_watch || a.market_angle || null }).market_relevance;
+  const newFigure = (x) => numbersOf(x).some((n) => !/^[0-5]$/.test(n) && !nums.has(n));
+  const keep = (x) => x && !INTELLIGENCE_BOILERPLATE.test(x) && !restates(x, corpus, nums) && (rel === 'actionable' || newFigure(x));
+  const read = [b.summary, ...(b.supporting || [])].filter(Boolean).flatMap(sentencesOf);
+  const kept = read.filter(keep);
+  const against = (b.against || []).filter(keep);
+  const unknown = (b.unknown || []).filter(keep);
+  return { summary: kept[0] || null, supporting: kept.slice(1), against, unknown, dropped: read.length - kept.length + (b.against || []).length - against.length + (b.unknown || []).length - unknown.length };
+}
+
 /** The stored decision, or the same decision recomputed for an article written before the contract existed. */
 export function intelligenceOf(a) {
-  if (a?.intelligence?.version && a.intelligence.render) return a.intelligence;
-  return decideIntelligence({ kind: a?.kind, entities: a?.entities, market: a?.market_watch || a?.market_angle || null, international: a?.kind === 'international' });
+  const base = a?.intelligence?.version && a.intelligence.render ? a.intelligence : decideIntelligence({ kind: a?.kind, entities: a?.entities, market: a?.market_watch || a?.market_angle || null, international: a?.kind === 'international' });
+  if (base.copy !== undefined) return base;
+  // Legacy record: the module renders only the additive part of its copy.
+  const copy = base.render.intelligence ? additiveCopy(a, { relevance: base.market_relevance }) : null;
+  return { ...base, copy, render: { ...base.render, intelligence: base.render.intelligence && Boolean(copy?.summary) } };
 }
 
 // Language that sells a market position. Allowed only when relevance is actionable; never for context or none.

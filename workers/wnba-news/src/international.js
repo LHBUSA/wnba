@@ -15,7 +15,8 @@
 //     generation cutoff is taken after every input has been gathered.
 
 import { finalize, hashId } from './articles.js';
-import { buildGameFacts, writeGameStory, depthFailures, wordCount, GAME_STORY_VERSION, participated } from './game-story.js';
+import { buildGameFacts, writeGameStory, wordCount, requiredWords, GAME_STORY_VERSION, participated } from './game-story.js';
+import { assessDepth } from './depth.js';
 
 export const INTL_VERSION = 'wnba-international-desk/2.0.0';
 export const INTL_STORY_WINDOW_MS = 12 * 3600e3;
@@ -126,7 +127,7 @@ export async function storyFor({ competition, detail, schedule = [], priorDetail
         // Players the article features, in editorial order, for the media resolver (approved photo of a real subject).
         featured: [...(f.lines?.winner || []).slice(0, 4), ...(f.lines?.loser || []).slice(0, 2)].filter((p) => story.body.some((t) => t.includes(p.name))).map((p) => ({ espn_id: p.espn_id, name: p.name, team: p.team }))
       },
-      depth: { words: wordCount(story.body), coverage: story.coverage, story_class: f.story_class },
+      depth: { words: wordCount(story.body), coverage: story.coverage, story_class: f.story_class, target_words: requiredWords(f) },
       regeneration: backfill ? 'editorial_upgrade' : null
     },
     entities: [
@@ -146,7 +147,8 @@ export async function storyFor({ competition, detail, schedule = [], priorDetail
     ],
     input_hash: [INTL_VERSION, GAME_STORY_VERSION, espn, f.winner.score, f.loser.score, f.provenance.plays_used, ...(detail.boxscore?.teams || []).map((t) => `${t.team.team_id}:${t.totals.fgm}/${t.totals.fga}:${t.players.filter(participated).map((p) => `${p.player_id}=${p.pts}`).join(',')}`), f.champion ? `${f.champion.gold}>${f.champion.silver}` : ''].join('|')
   });
-  a.depth_failures = depthFailures({ facts: f, coverage: story.coverage, body: story.body, sections: story.sections });
+  a.depth = assessDepth(a, { now: Date.parse(cutoff) });
+  a.depth_failures = a.depth.failures;
   if (a.depth_failures.length) { a.status = 'held'; a.gate.ok = false; a.gate.failures.push(...a.depth_failures); }
   return a;
 }

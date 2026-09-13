@@ -188,17 +188,19 @@ test('re-listing after the player left the feed is a new event; a brief feed gap
 test('News Brief: the same cluster revises one story; a different cluster is a new story', async () => {
   const wire = (o = {}) => ({ item_id: 'item-a', cluster_id: 'c_item-a', source_id: 'nbc_sports_wnba', source_name: 'NBC Sports', priority: 2, canonical_url: 'https://www.nbcsports.com/wnba/news/league-update', headline: 'WNBA announces a new league operations update', published_at: ago(70), source_updated_at: null, story_type: 'league', relevance: 5, entities: [], ...o });
   const items = new Map();
-  const first = await briefArticles({ externalItems: [wire()], structured: [], now: Date.parse(ago(60)) });
+  // wnba-briefs/2.0.0: a league report with no linked WNBA subject needs an independent second publisher to stand alone.
+  const cbs = wire({ item_id: 'item-a2', source_id: 'cbs_wnba', source_name: 'CBS Sports', canonical_url: 'https://www.cbssports.com/wnba/news/league-update', headline: 'WNBA league operations update confirmed', published_at: ago(68) });
+  const first = await briefArticles({ externalItems: [wire(), cbs], structured: [], now: Date.parse(ago(60)) });
   let r = await pass({ items, index: [], articles: first, minutesAgo: 60 });
   const origin = r.index[0].first_published_at;
 
-  const corroborated = await briefArticles({ externalItems: [wire(), wire({ item_id: 'item-b', source_id: 'espn_wnba', source_name: 'ESPN', priority: 2, canonical_url: 'https://www.espn.com/wnba/story/update', headline: 'WNBA league operations update draws new details', published_at: ago(20) })], structured: [], now: Date.parse(ago(10)) });
+  const corroborated = await briefArticles({ externalItems: [wire(), cbs, wire({ item_id: 'item-b', source_id: 'espn_wnba', source_name: 'ESPN', priority: 2, canonical_url: 'https://www.espn.com/wnba/story/update', headline: 'WNBA league operations update draws new details', published_at: ago(20) })], structured: [], now: Date.parse(ago(10)) });
   r = await pass({ items, index: r.index, articles: corroborated, minutesAgo: 10 });
   assert.equal(r.index.length, 1, 'no duplicate brief');
   assert.equal(r.index[0].first_published_at, origin);
   assert.equal(r.index[0].revised_at, ago(10));
 
-  const other = await briefArticles({ externalItems: [wire({ item_id: 'item-c', cluster_id: 'c_item-c', canonical_url: 'https://www.nbcsports.com/wnba/news/second-event', headline: 'WNBA announces a separate expansion update', published_at: ago(8) })], structured: [], now: Date.parse(ago(5)) });
+  const other = await briefArticles({ externalItems: [wire({ item_id: 'item-c', cluster_id: 'c_item-c', canonical_url: 'https://www.nbcsports.com/wnba/news/second-event', headline: 'WNBA announces a separate expansion update', published_at: ago(8) }), wire({ item_id: 'item-c2', cluster_id: 'c_item-c', source_id: 'cbs_wnba', source_name: 'CBS Sports', canonical_url: 'https://www.cbssports.com/wnba/news/expansion-update', headline: 'WNBA expansion update confirmed', published_at: ago(7) })], structured: [], now: Date.parse(ago(5)) });
   r = await pass({ items, index: r.index, articles: other, minutesAgo: 5 });
   assert.equal(live(r.index).length, 2);
   const fresh = r.index.find((c) => c.first_published_at === ago(5));

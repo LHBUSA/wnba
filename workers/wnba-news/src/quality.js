@@ -27,9 +27,13 @@ export function provenanceFailures(a, { generatedAt = a.provenance?.generated_at
   return out;
 }
 
-/** Visual resolution for story kinds that must never run blank. */
+/** Visual resolution: no standalone story runs blank (approved subject photo, team composition or the deterministic story visual). */
 export function visualFailures(a, media) {
-  if (a.kind !== 'international' || media === undefined) return [];
+  if (media === undefined) return [];
+  if (a.kind !== 'international') {
+    const ok = media && ((media.subjects || []).length || (media.teams || []).length || (media.layout === 'brand' && media.visual?.desk));
+    return ok ? [] : ['visual: story has no resolved hero (approved photo, team composition or story visual)'];
+  }
   if (!media || !['intl_photo', 'intl_game'].includes(media.layout) || !media.visual?.teams?.length) return ['visual: international story has no resolved hero (approved photo or scoreboard)'];
   const [w, l] = media.visual.teams;
   if (!w.name || !l.name || !Number.isFinite(w.score) || !Number.isFinite(l.score)) return ['visual: scoreboard is missing teams or score'];

@@ -23,8 +23,15 @@ const item = (overrides = {}) => ({
   ...overrides
 });
 
+// wnba-briefs/2.0.0: a single uncorroborated league report with nothing PropBetEdge can verify is a link, not a story;
+// an independent second publisher corroborates the event and the brief publishes.
+const corroboration = (overrides = {}) => item({ item_id: 'item-a2', source_id: 'espn_wnba', source_name: 'ESPN', canonical_url: 'https://www.espn.com/wnba/story/league-update', headline: 'WNBA league operations update confirmed', published_at: iso(4), ...overrides });
+
 test('a fresh material source cluster becomes a publishable PBE News Brief', async () => {
-  const out = await briefArticles({ externalItems: [item()], structured: [], now: NOW });
+  const alone = await briefArticles({ externalItems: [item()], structured: [], now: NOW });
+  assert.equal(alone.length, 0, 'one uncorroborated report with no PropBetEdge record to add is not a standalone story');
+  assert.equal(alone.decisions[0].decision, 'external_coverage');
+  const out = await briefArticles({ externalItems: [item(), corroboration()], structured: [], now: NOW });
   assert.equal(out.length, 1);
   assert.equal(out[0].kind, 'brief');
   assert.equal(out[0].category, 'News Briefs');
@@ -33,12 +40,16 @@ test('a fresh material source cluster becomes a publishable PBE News Brief', asy
   // The headline is PropBetEdge's own; the originating publisher and its exact headline are attributed in the deck.
   assert.doesNotMatch(out[0].headline, /^NBC Sports:/);
   assert.ok(!out[0].headline.includes('WNBA announces a new league operations update'));
-  assert.match(out[0].deck, /^NBC Sports published “WNBA announces a new league operations update”\./);
+  // The deck says what happened and who reported it; the publisher's exact headline is quoted once, in the body.
+  assert.match(out[0].deck, /Reported by NBC Sports on Sep 13\.$/);
+  assert.match(out[0].body[0], /^NBC Sports reported a league development on Sunday, September 13, under the headline “WNBA announces a new league operations update”\.$/);
+  assert.match(out[0].body[1], /^ESPN followed at \d{1,2}:\d{2} [AP]M ET with “WNBA league operations update confirmed”\.$/);
   assert.equal(out[0].published_at, iso(5));
+  assert.equal(out[0].bettor_angle, null, 'no stored market: no standing betting disclaimer');
 });
 
 test('corroboration revises one stable brief instead of creating a duplicate story', async () => {
-  const first = await briefArticles({ externalItems: [item()], structured: [], now: NOW });
+  const first = await briefArticles({ externalItems: [item(), corroboration()], structured: [], now: NOW });
   const secondSource = item({
     item_id: 'item-b',
     source_id: 'espn_wnba',
@@ -48,7 +59,7 @@ test('corroboration revises one stable brief instead of creating a duplicate sto
     headline: 'WNBA league operations update draws new details',
     published_at: iso(2)
   });
-  const revised = await briefArticles({ externalItems: [item(), secondSource], structured: [], now: NOW });
+  const revised = await briefArticles({ externalItems: [item(), corroboration(), secondSource], structured: [], now: NOW });
 
   assert.equal(first.length, 1);
   assert.equal(revised.length, 1);
@@ -64,7 +75,8 @@ test('a different material cluster creates a genuinely new article id', async ()
     headline: 'WNBA announces a separate expansion update',
     published_at: iso(1)
   });
-  const out = await briefArticles({ externalItems: [item(), other], structured: [], now: NOW });
+  const otherToo = corroboration({ item_id: 'item-c2', cluster_id: 'c_item-c', canonical_url: 'https://www.espn.com/wnba/story/expansion-update', headline: 'WNBA expansion update confirmed' });
+  const out = await briefArticles({ externalItems: [item(), corroboration(), other, otherToo], structured: [], now: NOW });
 
   assert.equal(out.length, 2);
   assert.notEqual(out[0].id, out[1].id);
@@ -133,35 +145,62 @@ const carlaCtx = {
   dict: { teamById: new Map([['132052', { name: 'Portland Fire' }]]) }
 };
 
-test('a material brief is an original PBE article: own headline, attributed deck, verified sections, method out of the body', async () => {
-  const [a] = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW, ctx: carlaCtx });
+test('Carla Leite acceptance: a feature about a player is publisher coverage, not a newsroom event', async () => {
+  const out = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW, ctx: carlaCtx });
+  assert.equal(out.length, 0, 'Swish Appeal publishing a profile creates no standalone PropBetEdge story');
+  assert.deepEqual(out.decisions.map((d) => d.decision), ['external_coverage']);
+  assert.match(out.decisions[0].reason, /event type "news" is coverage, not a development/);
+  // …even with full PropBetEdge records available: original value cannot manufacture an event.
+  const bare = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW });
+  assert.equal(bare.length, 0);
+});
+
+const carlaSigning = item({
+  item_id: 'carla-ext-01', cluster_id: 'c_carla-ext-01', source_id: 'swish_appeal', source_name: 'Swish Appeal', priority: 2,
+  canonical_url: 'https://www.swishappeal.com/wnba/carla-leite-extension', headline: 'Portland Fire sign Carla Leite to contract extension', story_type: 'transaction', relevance: 4, published_at: iso(60),
+  summary: 'Publisher summary text that must never appear in PropBetEdge prose.',
+  entities: [CARLA, FIRE]
+});
+
+test('a material brief is an original PBE article: development headline, records developed, method out of the body', async () => {
+  const [a] = await briefArticles({ externalItems: [carlaSigning], structured: [], now: NOW, ctx: carlaCtx });
   assert.equal(a.status, 'published', a.gate.failures.join('\n'));
-  assert.equal(a.headline, 'Carla Leite in focus for the Portland Fire: the report and her season in numbers');
-  assert.doesNotMatch(a.headline, /^Swish Appeal:/);
-  assert.match(a.deck, /^Swish Appeal published “Carla Leite is the special talent firing up the relaunched Portland Fire”\. PropBetEdge’s records: 16\.4 points and 6 assists per game across 7 games for the Portland Fire this season\.$/);
-  assert.deepEqual(a.sections.map((s) => s.title), ['What happened', 'What PropBetEdge can verify', 'Why it matters', 'What comes next']);
+  assert.equal(a.headline, 'Carla Leite roster move for the Portland Fire: 16.4 points a game and the role behind them');
+  assert.doesNotMatch(a.headline, /^Swish Appeal:|the report and/);
+  assert.match(a.deck, /^Carla Leite has averaged 16\.4 points and 6 assists in 27\.4 minutes across 7 games for the Portland Fire, 18\.6 points over her last five\. First reported by Swish Appeal on Sep 13\.$/);
+  assert.deepEqual(a.sections.map((s) => s.title), ['The development', 'What PropBetEdge’s records show', 'Where the team stands', 'Why it matters', 'What comes next']);
   const text = a.body.join('\n');
+  assert.match(text, /under the headline “Portland Fire sign Carla Leite to contract extension”/);
+  assert.match(text, /ESPN’s transactions log does not yet record the move for the Portland Fire/);
   assert.match(text, /has played 7 games for the Portland Fire this season, averaging 16\.4 points/);
-  assert.match(text, /ESPN’s injury feed lists Carla Leite as Out/);
+  assert.match(text, /Her last five games have run hotter: 18\.6 points in 29\.2 minutes, 2\.2 points above her season average/);
+  assert.match(text, /ESPN’s injury feed lists her as Out/);
   assert.match(text, /The Portland Fire are 14–22, No\. 9 in the Western Conference/);
   assert.match(text, /next play the Golden State Valkyries at home/);
-  // Source-rights boilerplate lives in the method layer, not the article body; publisher summaries never appear.
+  // No boilerplate, no duplicated betting disclaimer, no source-rights text in the body; publisher summaries never appear.
+  assert.doesNotMatch(text, /context,? (rather than|not) a signal|does not restate it as PropBetEdge fact/i);
+  assert.equal(a.bettor_angle, null);
   assert.doesNotMatch(text, /does not reproduce the publisher'?s article body/i);
   assert.doesNotMatch(text, /Publisher summary text/);
   assert.ok(a.method.some((m) => /does not reproduce the article body/.test(m)));
+  assert.ok(a.method.some((m) => /not a feature or commentary piece/.test(m)));
   assert.ok(a.evidence.some((e) => e.kind === 'publisher_report' && e.publisher === 'Swish Appeal'));
   assert.ok(a.evidence.some((e) => e.kind === 'record' && /ESPN game log \(2026 Regular Season\)/.test(e.source)));
   assert.ok(a.entities.some((e) => e.type === 'game' && e.id === '401857199'));
-  // The added reconciliation gate also passes (season provenance, comment-text shingles, lint).
+  assert.deepEqual(a.facts.brief.value.dimensions, ['season_production', 'recent_form', 'availability_listing', 'team_standing', 'schedule']);
   const rec = reconcileArticle(a, { season: 2026, injuries: carlaCtx.injuries });
   assert.equal(rec.ok, true, rec.failures.join('\n'));
 });
 
-test('a brief with no structured context still publishes truthfully and keeps its story identity', async () => {
-  const [bare] = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW });
-  const [rich] = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW, ctx: carlaCtx });
+test('a developing brief with no structured context still publishes truthfully and keeps its story identity', async () => {
+  const [bare] = await briefArticles({ externalItems: [carlaSigning], structured: [], now: NOW });
+  const [rich] = await briefArticles({ externalItems: [carlaSigning], structured: [], now: NOW, ctx: carlaCtx });
   assert.equal(bare.status, 'published', bare.gate.failures.join('\n'));
   assert.equal(bare.id, rich.id, 'structured context changes the copy, never the story id');
   assert.notEqual(bare.input_hash, rich.input_hash, 'a records change is a revision of the same story');
   assert.doesNotMatch(bare.body.join(' '), /\d+\.\d+ points/);
+  // A bare report older than the developing window, with nothing PropBetEdge can add, does not publish.
+  const stale = await briefArticles({ externalItems: [{ ...carlaSigning, published_at: iso(4 * 60) }], structured: [], now: NOW });
+  assert.equal(stale.length, 0);
+  assert.equal(stale.decisions.at(-1).decision, 'external_coverage');
 });

@@ -19,6 +19,29 @@
 
 export const RELIST_GAP_MS = 12 * 3600e3;
 
+const DEPTH_RANK = { flash: 0, brief: 1, full: 2, deep: 3 };
+
+/** Stable digest of an article's fact block (the records it was written from), so a regeneration can tell new facts from new prose. */
+export function factsDigest(a) {
+  const strip = (x) => (Array.isArray(x) ? x.map(strip) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).filter(([k]) => k !== 'policy').sort(([p], [q]) => p.localeCompare(q)).map(([k, v]) => [k, strip(v)])) : x);
+  const s = JSON.stringify(strip(a?.facts || {})) + JSON.stringify((a?.evidence || []).map((e) => e.record ?? e.headline ?? null));
+  let h = 5381;
+  for (let i = 0; i < s.length; i += 1) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(16);
+}
+
+/** The revision kind for a rewrite of `prev` by `a`. */
+export function revisionKind(a, prev, version) {
+  if (a.context?.regeneration === 'editorial_upgrade') return { kind: 'editorial_upgrade' };
+  const from = prev.depth_class;
+  const to = a.depth?.class;
+  if (from && to && DEPTH_RANK[to] > DEPTH_RANK[from]) return { kind: 'depth_upgrade', from, to };
+  const prevVersion = String(prev.input_hash || '').split('|')[0];
+  const sameFacts = prev.facts_digest ? prev.facts_digest === factsDigest(a) : true;
+  if (prevVersion && prevVersion !== version && sameFacts) return { kind: 'editorial_quality_upgrade', from_generator: prevVersion };
+  return { kind: 'data_update' };
+}
+
 const ms = (x) => { const v = Date.parse(x || ''); return Number.isFinite(v) ? v : null; };
 const earliest = (xs) => xs.filter((x) => ms(x) !== null).sort((a, b) => ms(a) - ms(b))[0] || null;
 const latest = (xs) => xs.filter((x) => ms(x) !== null).sort((a, b) => ms(b) - ms(a))[0] || null;
@@ -246,18 +269,21 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
       // Unchanged story: no rewrite, no revision stamp. Card-only routing metadata added after it was written (its
       // newsroom desk) is filled in so the desks are complete without faking an update.
       const card = cardOf(a);
-      byId.set(prev.id, { ...prev, first_published_at: firstPublished, ...lifecycle, ...(prev.desk === undefined && card.desk !== undefined ? { desk: card.desk, event_type: card.event_type ?? null } : {}) });
+      byId.set(prev.id, { ...prev, first_published_at: firstPublished, ...lifecycle, ...(a.depth?.class && !prev.depth_class ? { depth_class: a.depth.class } : {}), ...(prev.desk === undefined && card.desk !== undefined ? { desk: card.desk, event_type: card.event_type ?? null } : {}) });
       continue;
     }
     if (prev?.slug) a.slug = prev.slug; // a story keeps its URL when a revision rewrites its headline
-    a.first_published_at = firstPublished;
-    a.revised_at = prev ? started : null;
+    // The version goes live at the merge, which is never earlier than the moment it was generated (provenance:
+    // source_observed_at ≤ generated_at ≤ published/revised). The run start can precede a late generation cutoff.
+    const liveAt = latest([started, a.provenance?.generated_at]) || started;
+    a.first_published_at = prev ? firstPublished : latest([firstPublished, liveAt]);
+    a.revised_at = prev ? liveAt : null;
     // Revision history survives every rewrite. A regeneration by a better generator is an editorial upgrade, not a
     // correction; a change of timestamp semantics is recorded separately as a metadata correction.
     const history = [...(prev?.revisions || [])];
     if (prev) {
-      if (a.provenance && !prev.provenance_contract) history.push({ at: started, kind: 'metadata_correction', note: 'Source time now records when the source record was observed; the earlier version showed an estimated event time.' });
-      history.push({ at: started, kind: a.context?.regeneration === 'editorial_upgrade' ? 'editorial_upgrade' : 'data_update', generator: versionOf(a) });
+      if (a.provenance && !prev.provenance_contract) history.push({ at: liveAt, kind: 'metadata_correction', note: 'Source time now records when the source record was observed; the earlier version showed an estimated event time.' });
+      history.push({ at: liveAt, ...revisionKind(a, prev, versionOf(a)), generator: versionOf(a), ...(a.depth?.class ? { depth_class: a.depth.class } : {}) });
     }
     a.revisions = history.slice(-20);
     await putItem(a);
@@ -267,6 +293,8 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
       first_published_at: a.first_published_at,
       revised_at: a.revised_at,
       revisions: a.revisions,
+      facts_digest: factsDigest(a),
+      ...(a.depth?.class ? { depth_class: a.depth.class } : {}),
       ...(a.provenance ? { provenance_contract: 'v1' } : {}),
       ...lifecycle,
       ...(prev?.listing_seen_at ? { listing_seen_at: prev.listing_seen_at } : {}),
