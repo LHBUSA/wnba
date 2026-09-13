@@ -9,11 +9,16 @@ import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
 const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8) + n)); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`; };
 
+// The Worker is scheduled every 10 minutes. Keep the guard slightly below the cron interval so
+// normal Cloudflare scheduling jitter cannot turn a 10-minute source cadence into a 20/30-minute
+// article cadence. Input hashes below still guarantee unchanged stories are never rewritten.
+export const ARTICLE_RUN_MIN_GAP_MS = 9 * 60e3;
+
 export async function runArticles(env, { apiGet, dict, externalItems, force = false }) {
   const started = new Date().toISOString();
   const now = Date.now();
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
-  if (!force && last?.at && now - Date.parse(last.at) < 25 * 60e3 && last.version === ARTICLE_VERSION) return { skipped: 'ran_recently', last_at: last.at };
+  if (!force && last?.at && now - Date.parse(last.at) < ARTICLE_RUN_MIN_GAP_MS && last.version === ARTICLE_VERSION) return { skipped: 'ran_recently', last_at: last.at };
 
   const errors = [];
   // One fetch per distinct path per run: box scores, team and player records are shared by every generator
