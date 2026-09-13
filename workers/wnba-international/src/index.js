@@ -15,6 +15,9 @@ import { ok, fail, meta, preflight, FRESHNESS, SOURCES } from '../../shared/enve
 import { COMPETITIONS, competitionById, competitionStatus, currentEdition } from './registry.js';
 import { normalizeGame, normalizeSummary } from './normalize.js';
 import { PBP_VERSION } from '../../shared/pbp.js';
+
+// v2: a stored final's observation time changes whenever the re-fetched provider record differs.
+const OBSERVATION_RULE = 2;
 import { groupStandings, bracket, playerAndTeamStats, leaders, teamRecords, dedupeGames } from './aggregate.js';
 import { linkInternationalPlayers } from './crosswalk.js';
 
@@ -58,12 +61,17 @@ export async function loadGameDetail(env, comp, espnId, ctx, { live = true } = {
   const stored = await env.INTL_KV.get(kvKey, 'json');
   // A stored final is immutable game data, but its NORMALIZATION is versioned: a detail written before the current play
   // normalizer is rebuilt once from the provider summary (the stored copy is served if the provider is unreachable).
-  if (stored?.game?.status === 'final' && stored.normalizer === PBP_VERSION) return { ...stored, cache: 'kv' };
+  if (stored?.game?.status === 'final' && stored.normalizer === PBP_VERSION && stored.observation_rule === OBSERVATION_RULE) return { ...stored, cache: 'kv' };
   const r = await cachedJson({ url: `${ESPN}/${comp.provider_ids.espn.league}/summary?event=${espnId}`, ttlS: live ? LIVE_TTL_S : IDLE_TTL_S, keepS: 86400, validate: (b) => Boolean(b?.header?.competitions?.length), ctx, timeoutMs: 8000 });
   if (r.body) {
-    // Re-normalizing a stored final keeps its original observation time: the game record did not change, only its shape.
-    const observed = stored?.game?.status === 'final' && stored.fetched_at ? stored.fetched_at : r.fetchedAt;
-    const detail = { ...normalizeSummary(r.body, { competitionId: comp.competition_id, eventId: espnId, fetchedAt: observed }), fetched_at: observed, normalizer: PBP_VERSION };
+    // Observation time = when the data being served was fetched. Re-normalizing a stored final keeps the original time
+    // ONLY when the provider record is unchanged (same game, score and box score); a corrected box score is a later
+    // observation. Records written before this rule (normalizer set, no observation_rule) cannot prove they are
+    // unchanged, so they take the new fetch time — later, never falsely early.
+    const fresh = normalizeSummary(r.body, { competitionId: comp.competition_id, eventId: espnId, fetchedAt: r.fetchedAt });
+    const sameRecord = stored?.game?.status === 'final' && stored.fetched_at && stored.observation_rule === OBSERVATION_RULE && JSON.stringify(stored.boxscore) === JSON.stringify(fresh.boxscore) && stored.game?.home_score === fresh.game?.home_score && stored.game?.away_score === fresh.game?.away_score;
+    const observed = sameRecord || (stored?.game?.status === 'final' && stored.fetched_at && !stored.normalizer && JSON.stringify(stored.boxscore) === JSON.stringify(fresh.boxscore)) ? stored.fetched_at : r.fetchedAt;
+    const detail = { ...fresh, game: { ...fresh.game, fetched_at: observed }, fetched_at: observed, normalizer: PBP_VERSION, observation_rule: OBSERVATION_RULE };
     if (detail.game.status === 'final' && detail.boxscore) {
       const write = env.INTL_KV.put(kvKey, JSON.stringify(detail));
       if (ctx) ctx.waitUntil(write); else await write;

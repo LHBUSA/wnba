@@ -145,7 +145,7 @@ export async function storyFor({ competition, detail, schedule = [], priorDetail
       ...(f.path?.winner?.games?.length ? [{ kind: 'record', source: `${competition.name} schedule and results`, url: `https://wnba.propbetedge.ai/international/${competition.slug}/games`, captured_at: observed, record: { games_before: f.path.winner.games.length + f.path.loser.games.length } }] : []),
       { kind: 'record', source: 'PropBetEdge international ↔ WNBA crosswalk (identical ESPN athlete IDs)', url: `https://wnba.propbetedge.ai/international/${competition.slug}/players`, captured_at: observed, record: { wnba_players_appeared: wnbaPlayers.length } }
     ],
-    input_hash: [INTL_VERSION, GAME_STORY_VERSION, espn, f.winner.score, f.loser.score, f.provenance.plays_used, ...(detail.boxscore?.teams || []).map((t) => `${t.team.team_id}:${t.totals.fgm}/${t.totals.fga}:${t.players.filter(participated).map((p) => `${p.player_id}=${p.pts}`).join(',')}`), f.champion ? `${f.champion.gold}>${f.champion.silver}` : ''].join('|')
+    input_hash: [INTL_VERSION, GAME_STORY_VERSION, espn, observed, f.winner.score, f.loser.score, f.provenance.plays_used, ...(detail.boxscore?.teams || []).map((t) => `${t.team.team_id}:${t.totals.fgm}/${t.totals.fga}:${t.players.filter(participated).map((p) => `${p.player_id}=${p.pts}`).join(',')}`), f.champion ? `${f.champion.gold}>${f.champion.silver}` : ''].join('|')
   });
   a.depth = assessDepth(a, { now: Date.parse(cutoff) });
   a.depth_failures = a.depth.failures;

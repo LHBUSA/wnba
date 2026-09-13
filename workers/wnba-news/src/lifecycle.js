@@ -42,7 +42,7 @@ export function sharedFactsUnchanged(prevItem, a) {
   const keys = Object.keys(p).filter((k) => k in n && !SHARED_EXCLUDE.has(k));
   if (!keys.length) return false;
   // Order-insensitive (a feed can list the same players in a different order) and rounding-stable.
-  const canon = (x) => (Array.isArray(x) ? x.map(canon).sort((p, q) => JSON.stringify(p).localeCompare(JSON.stringify(q))) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).filter(([k]) => !/(captured_at|fetched_at|age_s|stale)$/.test(k)).sort(([p], [q]) => p.localeCompare(q)).map(([k, v]) => [k, canon(v)])) : typeof x === 'number' ? Math.round(x * 1000) / 1000 : x);
+  const canon = (x) => (Array.isArray(x) ? x.map(canon).sort((p, q) => JSON.stringify(p).localeCompare(JSON.stringify(q))) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).filter(([k]) => !/(captured_at|fetched_at|age_s|stale|generation_cutoff|generated_at|source_observed_at)$/.test(k)).sort(([p], [q]) => p.localeCompare(q)).map(([k, v]) => [k, canon(v)])) : typeof x === 'number' ? Math.round(x * 1000) / 1000 : x);
   const norm = (x) => JSON.stringify(canon(x));
   return keys.every((k) => norm(p[k]) === norm(n[k]));
 }
@@ -56,6 +56,8 @@ export function revisionKind(a, prev, version, prevItem = null) {
   const prevVersion = String(prev.input_hash || '').split('|')[0];
   const sameFacts = prevItem ? sharedFactsUnchanged(prevItem, a) : prev.facts_digest ? prev.facts_digest === factsDigest(a) : false;
   if (prevVersion && prevVersion !== version && sameFacts) return { kind: 'editorial_quality_upgrade', from_generator: prevVersion };
+  // Same generator, same facts, different source observation time: the provenance record was corrected, not the story.
+  if (sameFacts && prevItem?.provenance?.source_observed_at && a.provenance?.source_observed_at && prevItem.provenance.source_observed_at !== a.provenance.source_observed_at) return { kind: 'metadata_correction', note: `Source observation time corrected from ${prevItem.provenance.source_observed_at} to ${a.provenance.source_observed_at}.` };
   return { kind: 'data_update' };
 }
 

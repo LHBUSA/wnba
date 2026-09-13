@@ -259,3 +259,15 @@ test('13 · semantic duplication catches paraphrases, not only repeated strings'
   assert.deepEqual([...ideaOf('The key consideration for bettors is player availability.').concepts], ['availability']);
   assert.deepEqual(duplicatedIdeas(['For bettors, the injury listing is what matters most.'], ['ESPN’s injury feed lists her as Out.']), ['For bettors, the injury listing is what matters most.']);
 });
+
+test('a provenance-only change (same facts, corrected source observation) is recorded as a metadata correction', async () => {
+  const { revisionKind } = await import('../workers/wnba-news/src/lifecycle.js');
+  const facts = { game: { winner: { score: 97 } } };
+  const prev = { input_hash: 'wnba-international-desk/2.0.0|x' };
+  const prevItem = { facts, provenance: { source_observed_at: '2026-09-13T19:49:55.801Z' } };
+  const a = { facts, provenance: { source_observed_at: '2026-09-13T20:05:12.000Z' } };
+  const r = revisionKind(a, prev, 'wnba-international-desk/2.0.0', prevItem);
+  assert.equal(r.kind, 'metadata_correction');
+  assert.match(r.note, /corrected from 2026-09-13T19:49:55\.801Z to 2026-09-13T20:05:12\.000Z/);
+  assert.equal(revisionKind({ ...a, facts: { game: { winner: { score: 98 } } } }, prev, 'wnba-international-desk/2.0.0', prevItem).kind, 'data_update', 'changed facts stay a data update');
+});
