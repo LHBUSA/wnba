@@ -16,6 +16,15 @@ test('lead selection is freshness-first outside the one-hour tie window', () => 
   assert.equal(chooseLead([olderInjury, preview, newerPerformance]).id, 'perf-new');
 });
 
+test('a newly published material News Brief immediately becomes the lead', () => {
+  const now = Date.parse('2026-09-13T11:00:00.000Z');
+  const brief = story('brief-new', 'brief', at(now, 2));
+  const injury = story('inj', 'injury', at(now, 10), { media: { layout: 'single' } });
+  const performance = story('perf', 'result', at(now, 4));
+
+  assert.equal(chooseLead([injury, performance, brief]).id, 'brief-new');
+});
+
 test('editorial priority may break a near-tie without promoting stale coverage', () => {
   const now = Date.parse('2026-09-13T11:00:00.000Z');
   const performance = story('perf', 'result', at(now, 4));

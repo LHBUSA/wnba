@@ -8,14 +8,17 @@ const group = (c) => (c?.kind === 'result' ? 'performance' : c?.kind);
 const isPhoto = (c) => c?.media && (c.media.layout === 'single' || c.media.layout === 'matchup');
 
 /**
- * Lead selection is freshness-first. Editorial priority can break a near-tie only
- * inside the newest hour of coverage; an older injury can never outrank a much
- * newer performance/preview merely because it is an injury.
+ * Lead selection is freshness-first. A newly published material News Brief is
+ * always allowed to take the lead immediately. For the structured desks,
+ * editorial priority can break a near-tie only inside the newest hour.
  */
 export function chooseLead(items, { tieWindowMs = HOUR } = {}) {
   if (!items?.length) return null;
   const ranked = [...items].sort((a, b) => publishedAt(b) - publishedAt(a));
-  const newestAt = publishedAt(ranked[0]);
+  const newest = ranked[0];
+  if (group(newest) === 'brief') return newest;
+
+  const newestAt = publishedAt(newest);
   const near = ranked.filter((c) => newestAt - publishedAt(c) <= tieWindowMs);
 
   for (const kind of ['injury', 'performance', 'preview']) {
@@ -26,7 +29,7 @@ export function chooseLead(items, { tieWindowMs = HOUR } = {}) {
     return sameMoment.find(isPhoto) || pool[0];
   }
 
-  return ranked[0];
+  return newest;
 }
 
 /**

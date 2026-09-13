@@ -4,6 +4,7 @@
 // only when its inputs changed (input_hash) or the generator version moved.
 
 import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, ARTICLE_VERSION } from './articles.js';
+import { briefArticles, BRIEF_VERSION } from './briefs.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
@@ -72,7 +73,11 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const doTrends = (await env.NEWS_KV.get(`art:v1:trends:${today}`)) === null || force;
   for (const [name, fn, on] of [
     ['injury', injuryArticles, true], ['transaction', transactionArticles, true], ['result', resultArticles, true],
-    ['preview', previewArticles, true], ['trend', trendArticles, doTrends], ['props', propArticles, true], ['market', marketMoveArticles, true]
+    ['preview', previewArticles, true], ['trend', trendArticles, doTrends], ['props', propArticles, true], ['market', marketMoveArticles, true],
+    // Material source-wire events run last so the brief generator can suppress events already covered by a
+    // structured injury/transaction story. A source cluster is one stable brief: corroboration revises it,
+    // while a different material cluster becomes a genuinely new newsroom article.
+    ['brief', () => briefArticles({ externalItems, structured: produced, now }), true]
   ]) {
     if (!on) { runs[name] = 'skipped (daily)'; continue; }
     try {
@@ -100,7 +105,8 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     if (!a.reconcile.ok) a.status = 'held';
     if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, failures: [...a.gate.failures, ...a.reconcile.failures].slice(0, 8), at: started }); continue; }
     const prev = byId.get(a.id);
-    const inHash = `${ARTICLE_VERSION}|${a.input_hash || ''}|${a.headline}|${a.deck}`;
+    const generatorVersion = a.kind === 'brief' ? BRIEF_VERSION : ARTICLE_VERSION;
+    const inHash = `${generatorVersion}|${a.input_hash || ''}|${a.headline}|${a.deck}`;
     if (prev && prev.input_hash === inHash) continue;
     if (prev?.slug) a.slug = prev.slug; // a story keeps its first URL even when a new structure rewrites its headline
     a.first_published_at = prev?.first_published_at || started;
@@ -123,7 +129,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   next.sort((x, y) => String(y.published_at).localeCompare(String(x.published_at)));
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next.slice(0, 400)));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, version: ARTICLE_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.length, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.length, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

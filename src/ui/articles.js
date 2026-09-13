@@ -7,6 +7,7 @@ import { relTime } from '../lib/format.js';
 import { storyMedia, storyThumb } from './story-media.js';
 
 export const KIND_LABEL = {
+  brief: 'News Briefs',
   injury: 'Injuries',
   transaction: 'Transactions',
   performance: 'Performances',
@@ -19,6 +20,7 @@ export const KIND_LABEL = {
 
 // Desk names used on the front page (editorial voice), keyed by kind.
 export const DESK = {
+  brief: 'News Briefs',
   injury: 'Injury Desk',
   transaction: 'Roster Moves',
   performance: 'Performances',
@@ -29,7 +31,7 @@ export const DESK = {
   market: 'Market Watch'
 };
 
-export const KIND_ORDER = ['preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];
+export const KIND_ORDER = ['brief', 'preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];
 
 const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').slice(0, 2);
 // Short source labels for cards (the full, cited list is on the article page).
