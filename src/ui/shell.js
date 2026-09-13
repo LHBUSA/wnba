@@ -1,7 +1,9 @@
 import { html, render, raw } from '../lib/dom.js';
 import { NETWORK, CURRENT_SPORT } from './network.js';
 
-export const NAV = [
+// Desktop header: the high-frequency destinations as a flat row, lower-frequency league/reference destinations
+// behind one "More" disclosure. The drawer (tablet/mobile) lists every destination.
+export const PRIMARY_NAV = [
   ['today', '/', 'Today'],
   ['cast', '/cast', 'WNBACast'],
   ['props', '/props', 'Props'],
@@ -9,12 +11,19 @@ export const NAV = [
   ['players', '/players', 'Players'],
   ['injuries', '/injuries', 'Injuries'],
   ['news', '/news', 'News'],
+  ['international', '/international', 'International']
+];
+export const SECONDARY_NAV = [
   ['standings', '/standings', 'Standings'],
   ['stats', '/stats', 'Stats'],
   ['teams', '/teams', 'Teams'],
-  ['international', '/international', 'International'],
-  ['track-record', '/track-record', 'Track Record']
+  ['track-record', '/track-record', 'Track Record'],
+  ['sources', '/sources', 'Source status']
 ];
+export const NAV = [...PRIMARY_NAV, ...SECONDARY_NAV];
+
+/** Route id → the nav group it lights up (sub-pages highlight their section). */
+export const NAV_GROUP = { player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' };
 
 const ICON = {
   today: '<path d="M4 5h16v15H4zM4 9h16M9 3v4M15 3v4" />',
@@ -37,7 +46,13 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>WNBA intelligence desk</small></span>
         </a>
         <nav class="nav" aria-label="Primary">
-          ${NAV.map(([id, href, label]) => html`<a href="${href}" data-nav="${id}" class="${id === 'cast' ? 'cast-link' : ''}">${label}</a>`)}
+          ${PRIMARY_NAV.map(([id, href, label]) => html`<a href="${href}" data-nav="${id}" class="${id === 'cast' ? 'cast-link' : ''}">${label}</a>`)}
+          <div class="nav-more" data-more-wrap>
+            <button class="nav-more-btn" type="button" aria-expanded="false" aria-controls="nav-more-menu" data-more>More<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="nav-more-menu" id="nav-more-menu" hidden>
+              ${SECONDARY_NAV.map(([id, href, label]) => html`<a href="${href}" data-nav="${id}">${label}</a>`)}
+            </div>
+          </div>
         </nav>
         <div class="hdr-actions">
           <a class="btn-pro" href="/pro" data-nav="pro">WNBA Pro</a>
@@ -51,7 +66,6 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         <div class="drawer-head"><span class="eyebrow">Navigate</span><button class="menu-btn" style="display:inline-flex" type="button" aria-label="Close menu" data-close>✕</button></div>
         ${NAV.map(([id, href, label]) => html`<a href="${href}" data-nav="${id}">${label}</a>`)}
         <a href="/pro" data-nav="pro">WNBA Pro</a>
-        <a href="/sources" data-nav="sources">Source status</a>
       </div>
     </div>
     <main id="main" tabindex="-1" ${ssrPath ? html`data-ssr-path="${ssrPath}"` : ''}>${main}</main>
@@ -108,21 +122,42 @@ export function mountShell(root) {
     drawer.setAttribute('aria-hidden', String(!v));
     root.querySelectorAll('[data-menu]').forEach((b) => b.setAttribute('aria-expanded', String(v)));
   };
+  // Desktop "More" disclosure: click to toggle, Escape or an outside click closes, choosing a link closes.
+  const moreBtn = root.querySelector('[data-more]');
+  const moreMenu = root.querySelector('#nav-more-menu');
+  const setMore = (v, { focusButton = false } = {}) => {
+    if (!moreBtn || !moreMenu) return;
+    moreBtn.setAttribute('aria-expanded', String(v));
+    moreMenu.hidden = !v;
+    if (!v && focusButton) moreBtn.focus();
+  };
+
   root.addEventListener('click', (e) => {
+    if (e.target.closest('[data-more]')) { e.preventDefault(); setMore(moreBtn.getAttribute('aria-expanded') !== 'true'); return; }
+    if (e.target.closest('#nav-more-menu a')) setMore(false);
     if (e.target.closest('[data-menu]')) { e.preventDefault(); open(true); return; }
     if (e.target.closest('[data-close]')) { open(false); return; }
     if (e.target.closest('.drawer a')) open(false);
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') open(false); });
+  document.addEventListener('click', (e) => { if (moreBtn && !e.target.closest('[data-more-wrap]')) setMore(false); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (moreBtn?.getAttribute('aria-expanded') === 'true') setMore(false, { focusButton: true });
+    open(false);
+  });
+  // Keyboard users who tab out of the open menu leave it closed behind them.
+  root.querySelector('[data-more-wrap]')?.addEventListener('focusout', (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setMore(false); });
 
   return {
     outlet: root.querySelector('main'),
     setActive(id) {
-      const group = { player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' }[id] || id;
+      const group = NAV_GROUP[id] || id;
       root.querySelectorAll('[data-nav]').forEach((a) => {
         if (a.dataset.nav === group) a.setAttribute('aria-current', 'page');
         else a.removeAttribute('aria-current');
       });
+      // A destination inside "More" lights up the More control itself.
+      moreBtn?.classList.toggle('on', SECONDARY_NAV.some(([navId]) => navId === group));
     }
   };
 }
