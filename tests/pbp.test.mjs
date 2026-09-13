@@ -156,3 +156,8 @@ test('stored finals and archives upgrade: plays normalized before pbe-pbp/1.0.0 
   assert.deepEqual(up.map((p) => p.text), fresh.map((p) => p.text), 'archived plays render exactly as freshly normalized plays');
   assert.equal(upgradeNormalizedPlays(fresh), fresh, 'already-upgraded plays are left alone');
 });
+
+test('filtered-out rows are really hidden: the grid row style cannot override the hidden attribute', () => {
+  const css = fs.readFileSync(new URL('../src/styles/international.css', import.meta.url), 'utf8');
+  assert.match(css, /\.ipbp li\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
+});
