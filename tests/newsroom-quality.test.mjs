@@ -311,3 +311,11 @@ test('backfill through the desk labels a regeneration as an editorial upgrade ev
   assert.equal(late.context.regeneration, 'editorial_upgrade', 'outside the window only backfill regenerates it');
   assert.deepEqual(await internationalArticles({ intlGet, now: inWindow + 48 * 3600e3, clock }), [], 'and nothing new is created without backfill');
 });
+
+test('deck applies the co-leader rule across both teams (reconcile R4 cannot be tripped by a loser’s equivalent line)', async () => {
+  const detail = { ...FX.detail, boxscore: { teams: FX.detail.boxscore.teams.map((t) => ({ ...t, players: t.players.map((p) => (p.name === 'Nyara Sabally' ? { ...p, pts: 21 } : p)) })) } };
+  const a = await withSlug(await spain({ detail }));
+  assert.match(a.deck, /Iyana Martin \(Spain\) 22 and Nyara Sabally \(Germany\) 21 led the scoring/);
+  const rec = reconcileArticle(a, { season: 2026, injuries: [] });
+  assert.ok(!rec.failures.some((x) => x.startsWith('R4')), rec.failures.join('\n'));
+});

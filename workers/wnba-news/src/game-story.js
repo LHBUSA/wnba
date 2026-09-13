@@ -246,7 +246,7 @@ export function buildGameFacts({ competition, detail, schedule = [], priorDetail
   const lines = (box, team) => box.players.filter(participated).map((p) => playerLine(p, team));
   facts.lines = { winner: lines(wBox, winner).sort((a, b) => b.game_score - a.game_score), loser: lines(lBox, loser).sort((a, b) => b.game_score - a.game_score) };
   facts.minutes_published = [...facts.lines.winner, ...facts.lines.loser].some((p) => p.min !== null);
-  facts.box_lines = [...facts.lines.winner, ...facts.lines.loser].map((p) => ({ name: p.name, pts: p.pts, reb: p.reb, ast: p.ast }));
+  facts.box_lines = [...facts.lines.winner, ...facts.lines.loser].map((p) => ({ name: p.name, team: p.team, pts: p.pts, reb: p.reb, ast: p.ast }));
   facts.headline_stat = 'pts';
 
   if (plays.length) facts.pbp = playFacts(plays, { winnerId: winner.team_id, loserId: loser.team_id, homeId: g.home_team_id });
@@ -390,8 +390,11 @@ export function writeGameStory(f) {
   const Q = f.quarters;
 
   // ---- deck: every materially equivalent top scorer (co-leader rule), then the leading separator
-  const leaders = coLeaders(f.box_lines.filter((b) => wTop.some((p) => p.name === b.name)), 'pts');
-  const deckLead = leaders.length > 1 ? `${listJoin(leaders.map((p) => p.name))} scored ${listJoin(leaders.map((p) => String(p.pts)))} points` : `${star.name} scored ${count(star.pts, 'point')}`;
+  // The co-leader rule (reconcile R4) is applied across BOTH teams: naming one of several materially equivalent
+  // scoring lines names all of them, each with her team.
+  const leaders = coLeaders(f.box_lines, 'pts');
+  const named = leaders.length > 1 && leaders.some((p) => p.name === star.name) ? leaders : null;
+  const deckLead = named ? `${listJoin(named.map((p) => `${p.name} (${p.team === f.winner.name ? W.name : L.name}) ${p.pts}`))} led the scoring` : `${star.name} scored ${count(star.pts, 'point')}`;
   const deckSep = sep[0] ? {
     turnovers: `${W.name} committed ${T.loser.tov - T.winner.tov} fewer turnovers than ${L.name}`,
     offensive_rebounds: `${W.name} won the offensive glass ${T.winner.oreb}–${T.loser.oreb}`,
