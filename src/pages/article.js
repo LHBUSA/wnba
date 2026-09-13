@@ -75,7 +75,7 @@ export async function mount(root, ctx) {
             <div><h3>What argues against it</h3>${(b.against || []).map((x) => html`<p>${x}</p>`)}</div>
             <div><h3>Still unknown</h3>${(b.unknown || []).map((x) => html`<p>${x}</p>`)}</div>
           </div>
-          <p class="module-note">Markets touched: ${(b.markets || []).join(' · ').replaceAll('_', ' ')} · PropBetEdge model: not published</p>
+          <p class="module-note">Markets touched: ${(b.markets || []).join(' · ').replaceAll('_', ' ')}</p>
         </div>
         <div class="takeaway">
           <span class="module-kicker">Market angle</span>

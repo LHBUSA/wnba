@@ -1,6 +1,8 @@
 // Article cards for the in-house WNBA newsroom (hub, home, team, player, game pages).
 // Each card leads with its story media (licensed photo, matchup or team composition) and keeps the
 // photo credit visible. The headline link is stretched over the card so credit links stay real links.
+// Market prices stay on dedicated market surfaces and inside the article's market section; they are
+// intentionally not injected into editorial story cards.
 import { html } from '../lib/dom.js';
 import { teamLogo } from './logo.js';
 import { relTime } from '../lib/format.js';
@@ -45,14 +47,6 @@ const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 
 // emits so gate.js does not read "-91" as a moneyline). Also covers "7-3", "3.5-point", "24-16".
 export const headlineText = (t) => String(t ?? '').split(/(\d[\d.]*[-–][\w.]+)/).map((s, i) => (i % 2 ? html`<span class="nobr">${s}</span>` : s));
 
-export function marketChip(c) {
-  const m = c.market;
-  if (!m) return '';
-  const segs = [m.away_abbr ? `${m.away_abbr} @ ${m.home_abbr}` : '', m.spread !== null && m.spread !== undefined ? `${m.home_abbr || 'Home'} ${m.spread > 0 ? '+' : ''}${m.spread}` : '', m.total !== null && m.total !== undefined ? `O/U ${m.total}` : ''].filter(Boolean);
-  // separator glued to the segment before it, so a wrapped chip never starts a line with "·"
-  return segs.length ? html`<span class="badge market" title="Stored PropBetEdge market capture (${m.books} books)">${segs.map((s, i) => html`<span class="mseg">${s}${i < segs.length - 1 ? ' ·' : ''}</span>${i < segs.length - 1 ? ' ' : ''}`)}</span>` : '';
-}
-
 /** Standard story card. size: 'lead' | 'feature' | 'card' | 'compact'. */
 export function articleCard(c, { lead = false, size = null, eager = false } = {}) {
   const sz = size || (lead ? 'lead' : 'card');
@@ -64,11 +58,11 @@ export function articleCard(c, { lead = false, size = null, eager = false } = {}
       <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span></div>
       <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
       ${sz !== 'compact' && c.deck ? html`<p class="deck">${headlineText(c.deck)}</p>` : ''}
-      ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}${marketChip(c)}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
+      ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
     </div>
     ${sz === 'lead' ? html`<div class="scard-foot">
       ${c.bettor_snippet ? html`<p class="angle"><b>Why it matters for bettors</b>${c.bettor_snippet}</p>` : ''}
-      <div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}${marketChip(c)}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>
+      <div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>
     </div>` : ''}
   </article>`;
 }
