@@ -5,7 +5,7 @@
 
 import { canonicalUrl } from './parse.js';
 import { linkEntities, relevance, itemId, norm, INTERNATIONAL } from './editorial.js';
-import { classify } from './taxonomy.js';
+import { classify, TAXONOMY_VERSION } from './taxonomy.js';
 
 export const KEEP_DAYS = 21;
 
@@ -57,6 +57,7 @@ export async function normalizeItem(raw, src, dict, { startedAt, prev = null, no
     event_type: tax.event_type,
     lane: tax.lane,
     materiality: tax.materiality,
+    taxonomy: TAXONOMY_VERSION,
     relevance: rel.score,
     relevance_reasons: rel.reasons,
     entities,

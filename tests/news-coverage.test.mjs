@@ -53,7 +53,7 @@ const withEvents = (items, registry = null) => {
 const storm = (minutesAgo) => ingest({ headline: 'Ezi Magbegor Injury Update', url: 'https://storm.wnba.com/news/ezi-magbegor-injury-update', summary: null, published_at: iso(minutesAgo), tags: ['Press Releases'] }, 'team_storm');
 const cbs = (minutesAgo) => ingest({ headline: 'Ezi Magbegor tears ACL at World Cup, is out for remainder of WNBA season: What it means for the Storm', url: 'https://www.cbssports.com/wnba/news/ezi-magbegor-acl/', summary: 'The Storm center was hurt in Berlin.', published_at: iso(minutesAgo), tags: ['WNBA'] }, 'cbs_wnba');
 const jws = (minutesAgo) => ingest({ headline: 'Seattle Storm’s Ezi Magbegor Suffers Season-Ending ACL Tear at FIBA World Cup', url: 'https://justwomenssports.com/reads/ezi-magbegor-acl/', summary: 'Magbegor will miss the rest of the season.', published_at: iso(minutesAgo), tags: ['WNBA'] }, 'jws_wnba');
-const times = (minutesAgo) => ingest({ headline: 'Storm lose Ezi Magbegor for season with knee injury', url: 'https://www.seattletimes.com/sports/storm/magbegor-knee/', summary: 'Publisher text that must not be stored.', published_at: iso(minutesAgo), tags: [] }, 'seattle_times_storm');
+const times = (minutesAgo) => ingest({ headline: 'Storm lose Ezi Magbegor for season with knee injury', url: 'https://nypost.com/2026/09/10/sports/magbegor-knee/', summary: 'Publisher text that must not be stored.', published_at: iso(minutesAgo), tags: [] }, 'nypost_liberty');
 
 // ------------------------------------------------------------ registry
 
@@ -69,6 +69,7 @@ test('source registry: every WNBA team has an official source, fields are comple
   assert.equal(new Set(NEWS_SOURCES.map((s) => s.source_id)).size, NEWS_SOURCES.length);
   assert.ok(teams.every((s) => s.priority === 1 && s.summary_policy === 'none'));
   assert.ok(AUDITED_NOT_INGESTED.some((x) => x.source_id === 'athletic_wnba' && x.decision === 'rejected'));
+  assert.ok(!NEWS_SOURCES.some((s) => s.source_id === 'seattle_times_storm'), 'blocked from Cloudflare egress: not ingested');
   assert.ok(AUDITED_NOT_INGESTED.some((x) => x.source_id === 'wnba_transactions_json' && /user agent/i.test(x.reason)));
 });
 
@@ -130,6 +131,7 @@ test('league news taxonomy: commissioner, CBA, expansion, coaching, front office
   // An injury at an international tournament is WNBA news (a WNBA consequence), a tournament result is international.
   assert.equal(eventType("Storm's Ezi Magbegor suffers torn ACL at World Cup"), 'injury');
   assert.equal(eventType('U.S. Women Top Spain 76-66 to Reach the FIBA World Cup Final Against France'), 'international');
+  assert.equal(eventType('Li Yueru Will Miss 2026 FIBA World Cup After Her Passport Got Lost in Mail'), 'international');
 });
 
 test('materiality gate: official roster and injury news is material; opinion, listicles, recycled, explainers and promos are not', () => {
@@ -138,7 +140,8 @@ test('materiality gate: official roster and injury news is material; opinion, li
     [{ headline: 'Minnesota Lynx Sign Guard Aari McDonald' }, 'signing', [{ type: 'team', id: '8', method: 'source_team' }], { priority: 1 }],
     [{ headline: 'Ezi Magbegor Injury Update' }, 'injury', magbegor, { priority: 1 }],
     [{ headline: 'Ezi Magbegor tears ACL at World Cup, is out for remainder of WNBA season' }, 'injury', magbegor, { priority: 3 }],
-    [{ headline: 'WNBA Commissioner Cathy Engelbert to Retire at the End of 2026' }, 'league', [], { priority: 1 }]
+    [{ headline: 'WNBA Commissioner Cathy Engelbert to Retire at the End of 2026' }, 'league', [], { priority: 1 }],
+    [{ headline: 'Dallas Wings Clinch 2026 Playoff Berth' }, 'playoff', [{ type: 'team', id: '3', method: 'source_team' }], { priority: 1 }]
   ];
   for (const [item, type, entities, source] of high) assert.equal(materiality(item, { type, entities, source }).material, true, item.headline);
   const low = [
@@ -148,6 +151,9 @@ test('materiality gate: official roster and injury news is material; opinion, li
     ['Why Kalani Brown signing with the Las Vegas Aces feels like a homecoming', 'signing', { priority: 3 }],
     ['How do the WNBA playoffs work? Dates, format and more', 'playoff', { priority: 2 }],
     ['Golden State Valkyries Announce 2026 WNBA Playoffs Ticket Information', 'playoff', { priority: 1 }],
+    ['Seafoam Central: Playoffs Bound', 'playoff', { priority: 1 }],
+    ['Wings Seek Playoff Berth Tuesday Night, Hosting Fire', 'playoff', { priority: 1 }],
+    ['Veronica Burton Named Western Conference Player of the Week', 'awards', { priority: 1 }],
     ['Seattle Storm Names 2026 Believe in Women Honorees', 'news', { priority: 1 }],
     ['Should the Fever trade for a center before next season?', 'trade', { priority: 3 }],
     ['USA vs. France FIBA Women’s World Cup final: Channel, time, how to watch', 'international', { priority: 2 }]
@@ -246,7 +252,7 @@ test('different facts stay different events: a replacement signing after an inju
 test('an old article cannot become fresh: late-discovered old reports and late corroboration create no new story', async () => {
   const old = await ingest({ headline: 'Storm Sign Kalani Brown to Hardship Contract', url: 'https://storm.wnba.com/news/old-signing', published_at: new Date(NOW - BRIEF_MAX_AGE_MS - 3 * 3600e3).toISOString(), tags: [] }, 'team_storm');
   assert.equal(old.materiality.material, true, 'material, but old');
-  const late = await ingest({ headline: 'Kalani Brown joins Storm on hardship deal', url: 'https://www.seattletimes.com/sports/storm/brown-hardship/', published_at: iso(10), tags: [] }, 'seattle_times_storm');
+  const late = await ingest({ headline: 'Kalani Brown joins Storm on hardship deal', url: 'https://www.reviewjournal.com/sports/aces/brown-hardship/', published_at: iso(10), tags: [] }, 'lvrj_aces');
   const { items } = withEvents([old, late]);
   assert.equal(new Set(items.map((i) => i.cluster_id)).size, 1, 'the late report joins the old event');
   assert.equal((await briefArticles({ externalItems: items, structured: [], now: NOW })).length, 0);

@@ -214,27 +214,6 @@ export const NEWS_SOURCES = [
   },
   // ---------------------------------------------------------------- local beat
   {
-    source_id: 'seattle_times_storm',
-    name: 'The Seattle Times',
-    kind: 'external_publisher',
-    tier: 'local_beat',
-    home_url: 'https://www.seattletimes.com/sports/storm/',
-    feed_url: 'https://www.seattletimes.com/sports/storm/feed/',
-    format: 'rss',
-    wnba_scope: 'team_beat',
-    team: { name: 'Seattle Storm' },
-    reliability: 'Storm beat reporting',
-    timestamp_quality: 'exact_tz',
-    conditional: 'Last-Modified → 304',
-    rights: 'Headline and link only: the publisher’s robots rules opt out of automated reuse, so no summary is stored.',
-    summary_policy: 'none',
-    attribution: 'The Seattle Times',
-    priority: 3,
-    failure_behavior: 'Source marked FAIL; last-good items stay.',
-    cadence_min: 4 * 24 * 60,
-    usage_policy: 'Headline and link only.'
-  },
-  {
     source_id: 'lvrj_aces',
     name: 'Las Vegas Review-Journal',
     kind: 'external_publisher',
@@ -383,6 +362,7 @@ export const NEWS_SOURCES = [
 
 /** Candidates probed and deliberately not ingested (kept for the source-health page and the audit). */
 export const AUDITED_NOT_INGESTED = [
+  { source_id: 'seattle_times_storm', name: 'The Seattle Times', decision: 'rejected', reason: 'Storm feed answers 403 to Cloudflare Worker egress (200 from a residential probe); not fetchable from the runtime without a workaround, and its robots rules opt out of automated reuse.' },
   { source_id: 'athletic_wnba', name: 'The Athletic', decision: 'rejected', reason: 'Paywalled; NYT RSS terms prohibit commercial use without written permission.' },
   { source_id: 'ap_wnba', name: 'Associated Press', decision: 'rejected', reason: 'No public feed; robots disallow RSS paths. Requires a licence.' },
   { source_id: 'wnba_transactions_json', name: 'WNBA.com transactions JSON', decision: 'rejected', reason: 'CDN serves it only to browser user agents; fetching it would require a disguised UA.' },

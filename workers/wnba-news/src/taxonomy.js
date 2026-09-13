@@ -1,4 +1,4 @@
-// Event taxonomy and materiality gate for the WNBA source wire — wnba-taxonomy/1.0.0.
+// Event taxonomy and materiality gate for the WNBA source wire — wnba-taxonomy/1.1.0.
 //
 // Deterministic and stated: regular expressions over the publisher's headline, short summary and categories, plus
 // the source's tier. Nothing here calls a language model and nothing reads an article body.
@@ -8,7 +8,7 @@
 //   story_type  the legacy v1 type, kept so existing consumers (briefs, feed filters, Supabase rows) keep working
 //   materiality { score, level, material, reasons, flags } — whether the event can become a PropBetEdge story
 
-export const TAXONOMY_VERSION = 'wnba-taxonomy/1.0.0';
+export const TAXONOMY_VERSION = 'wnba-taxonomy/1.1.0';
 
 /** Score at or above which a source-wire event may become a new PropBetEdge story. */
 export const MATERIAL_THRESHOLD = 3.5;
@@ -108,6 +108,8 @@ export function eventType(text, { categories = [] } = {}) {
   // International competition coverage stays in the international lane unless it carries a WNBA consequence
   // (an injury, availability change or roster move).
   if (INTERNATIONAL_RE.test(t) && !['injury', 'availability', 'trade', 'signing', 'waiver', 'roster_move', 'cba', 'expansion', 'coaching', 'front_office'].includes(type)) type = 'international';
+  // Missing an international tournament (a passport, a withdrawal) is international news, not a WNBA injury.
+  if (type === 'injury' && /\b(will miss|misses|to miss|withdraws? from|out of)\b.{0,30}\b(fiba|world cup|olympics?|eurobasket|americup|asia cup|afrobasket)\b/i.test(t) && !/\b(acl|torn|tear|surgery|fracture|season)\b/i.test(t)) type = 'international';
   return type;
 }
 
@@ -115,6 +117,12 @@ export const laneOf = (type) => EVENT_TYPES[type]?.lane || 'other';
 export const legacyType = (type) => EVENT_TYPES[type]?.legacy || 'news';
 
 const sourceAdjust = (priority) => (priority === 1 ? 1.5 : priority === 2 ? 0.5 : priority === 4 ? -0.5 : 0);
+// An official source is authoritative for announcements — its own roster, injuries, staff, honours and league office
+// decisions — not for its promotional and matchday posts. A team's playoff post earns the boost only when it reports
+// a clinch, elimination or seeding.
+const OFFICIAL_AUTHORITY = new Set(['injury', 'availability', 'trade', 'signing', 'waiver', 'roster_move', 'coaching', 'front_office', 'awards', 'expansion', 'cba', 'draft', 'league']);
+const PLAYOFF_FACT = /\b(clinch(es|ed|ing)?|eliminat(ed|ion)|earn(s|ed)? (a |the )?(playoff|postseason) (spot|berth)|playoff (seed|seeding|bracket|schedule)|no\. \d seed|first-round bye)\b/i;
+const MINOR_HONOR = /\b(player of the week|rookie of the week|of the month|player of the game|honou?r roll)\b/i;
 const round = (x) => Math.round(x * 10) / 10;
 
 /**
@@ -137,7 +145,10 @@ export function materiality({ headline = '', summary = '', categories = [] } = {
     score -= 1.5;
     reasons.push('no linked player −1.5');
   }
-  const adj = sourceAdjust(source.priority);
+  const officialCovers = OFFICIAL_AUTHORITY.has(type) || (type === 'playoff' && PLAYOFF_FACT.test(headline));
+  const adj = source.priority === 1 && !officialCovers ? 0 : sourceAdjust(source.priority);
+  if (source.priority === 1 && !officialCovers) reasons.push('official source, but not an announcement it is authoritative for: no boost');
+  if (type === 'awards' && MINOR_HONOR.test(headline)) { score -= 2.5; flags.push('minor_honor'); reasons.push('weekly/monthly honour −2.5'); }
   if (adj) { score += adj; reasons.push(`${source.priority === 1 ? 'official source' : `priority ${source.priority} source`} ${adj > 0 ? '+' : '−'}${Math.abs(adj)}`); }
   // The team an official team site belongs to is attribution, not a content link, so it earns no bonus.
   if (players.length || teams.some((t) => t.method !== 'source_team')) { score += 0.5; reasons.push('linked WNBA entity +0.5'); }

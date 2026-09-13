@@ -1,6 +1,6 @@
 # WNBA newsroom — source audit, event model and 7-day coverage audit
 
-Registry `news-sources/2.0.0` · taxonomy `wnba-taxonomy/1.0.0` · events `wnba-events/1.0.0` · fetch `wnba-news-fetch/1.0.0`.
+Registry `news-sources/2.0.0` · taxonomy `wnba-taxonomy/1.1.0` · events `wnba-events/1.0.0` · fetch `wnba-news-fetch/1.0.0`.
 Probed 2026-09-13 with the Worker's own user agent (`PropBetEdge-WNBA-News/1.0 (+https://wnba.propbetedge.ai/news)`); no disguised UA, no login, no paywall, no private credentials, no article bodies.
 
 ## 1. Rules
@@ -9,7 +9,7 @@ Probed 2026-09-13 with the Worker's own user agent (`PropBetEdge-WNBA-News/1.0 (
 * **Never stored:** article bodies. Several official payloads embed full bodies (`content`, `blocksV2`); the parser reads a field whitelist, so bodies never leave the parser (covered by a test).
 * **`summary_policy: none`** (headline + link only):
   * the official team sites, whose excerpts are usually truncated body text;
-  * publishers whose robots rules opt out of automated reuse: The Seattle Times, the New York Post and the Los Angeles Times.
+  * publishers whose robots rules opt out of automated reuse: the New York Post and the Los Angeles Times.
 * **Rejected:** sources needing login, paywall bypass or private credentials; HTML scraping where a better source exists; and aggregators that republish other publishers' work.
 * **Terms-of-use note for the owner:** WNBA.com's terms restrict commercial reuse of site materials "without the written permission of the Operator". WNBA.com was already a production source before this release. Official team items are ingested as headline + link + timestamps only. A legal read on displaying official headlines commercially is recommended.
 
@@ -26,7 +26,6 @@ Probed 2026-09-13 with the Worker's own user agent (`PropBetEdge-WNBA-News/1.0 (
 | cbs_wnba | CBS Sports | RSS | mixed (filtered) | exact | none | publisher description | 3 |
 | jws_wnba | Just Women's Sports | RSS (WNBA category) | WNBA section | exact | ETag + LM → 304 | short description | 3 |
 | the_ix | The IX (The Next) | RSS (WNBA category) | WNBA section | exact | ETag/LM sent | description | 3 |
-| seattle_times_storm | The Seattle Times | RSS | Storm beat | exact | LM → 304 | none | 3 |
 | lvrj_aces | Las Vegas Review-Journal | RSS | Aces beat (AP-tagged items skipped) | exact | none | description | 3 |
 | nypost_liberty | New York Post | RSS | Liberty beat (filtered) | exact | 304 | none | 3 |
 | latimes_sparks | Los Angeles Times | RSS | Sparks beat | exact | none | none | 3 |
@@ -60,6 +59,7 @@ Every entry also records its reliability, rights, attribution, failure behaviour
 | Yardbarker | rejected | Pure republication |
 | FOX Sports | rejected | Feed needs an embedded partner key; stale, mixed sport |
 | Sports Illustrated | rejected | No working WNBA feed |
+| The Seattle Times (Storm) | rejected | 200 from a residential probe but **403 to Cloudflare Worker egress** on the first production pass; not fetchable from the runtime |
 | Hartford Courant, Pioneer Press, Chicago Tribune | rejected | 403 for an honest UA |
 | Star Tribune, Chicago Sun-Times, Dallas Morning News, AJC, SF Chronicle, Washington Post, TSN, Sporting News | rejected | No public WNBA feed found |
 | Toronto Star | rejected | Feed path disallowed by robots |
@@ -95,8 +95,9 @@ The score is: base by event type, plus source tier (official +1.5, priority 2 +0
 | Speculative framing | −1.5 |
 | Question headline | −1.5 |
 | Community feature | −2 |
+| Weekly/monthly honour (Player of the Week, of the Month) | −2.5 |
 
-At event level, each additional independent publisher adds +0.5 (up to +1). An event is material at ≥ 3.5 and needs at least one exact publisher timestamp.
+The official boost applies only to announcements the source is authoritative for (roster, injury, staff, honours, league office decisions); a team's playoff post earns it only when it reports a clinch, elimination or seeding. At event level, each additional independent publisher adds +0.5 (up to +1). An event is material at ≥ 3.5 and needs at least one exact publisher timestamp.
 
 **Material examples (from this week):**
 
@@ -104,20 +105,23 @@ At event level, each additional independent publisher adds +0.5 (up to +1). An e
 |---|---|
 | Storm (official) "Ezi Magbegor Injury Update" | 5.0 |
 | Lynx (official) "Minnesota Lynx Sign Guard Aari McDonald" | 5.0 |
-| Magbegor event, 5 publishers | 6.0 |
+| Magbegor event, 4 publishers | 6.0 |
 | Playoff schedule, 3 publishers | 4.5 |
 
-**Not material (from this week):**
+**Not material (from this week; scores from wnba-taxonomy/1.1.0):**
 
 | Item | Score |
 |---|---|
 | "Why Kalani Brown signing … feels like a homecoming" | 2.0 |
-| "How do the WNBA playoffs work? Dates, format and more" | −1 |
-| "Golden State Valkyries Announce 2026 WNBA Playoffs Ticket Information" | 1.5 |
-| "Seattle Storm Names 2026 Believe in Women Honorees" | −2 |
-| "Muralist selected for the new Indiana Fever Sports Performance Center" | 1.5 |
-| Sky game-day highlight galleries | 0 |
-| "Rapid Reactions: WNBA Top 30" | −0.5 |
+| Liberty (official) "Seafoam Central: Playoffs Bound" | 2.5 |
+| Valkyries (official) "Veronica Burton Named Western Conference Player of the Week" | 2.5 |
+| ESPN "Arena for 76ers, Flyers to open in 2030" | 2.0 |
+| Valkyries (official) "Announce 2026 WNBA Playoffs Ticket Information" | −0.5 |
+| Fever (official) "Muralist selected for the new … Sports Performance Center" | −0.5 |
+| Storm (official) "Names 2026 Believe in Women Honorees" | −1.0 |
+| ESPN "How do the WNBA playoffs work? Dates, format and more" | −1.5 |
+| WNBA.com "Rapid Reactions: WNBA Top 30" | −2.0 |
+| Sky (official) game-day highlight galleries | −2.0 |
 
 ## 6. Event identity (persisted, fact-based)
 
@@ -153,49 +157,49 @@ v1 recomputed clusters every run and named each one after its earliest member. A
 * `GET /v1/news/sources` reports, per source: last attempt and last success; HTTP status; fetched, accepted and rejected counts; new items, new events and duplicates; parse errors; timestamp quality; newest item; staleness (CURRENT / QUIET / STALE_FETCH); consecutive failures; and 24-hour totals.
 * The same data is rendered server-side on `/sources`.
 
-## 8. 7-day retrospective coverage audit (2026-09-06 00:00Z → 2026-09-13 16:23Z)
+## 8. 7-day retrospective coverage audit (2026-09-06 00:00Z → 2026-09-13 16:30Z)
 
 **Method:**
-* **v1 = what production actually captured.** The live `/v1/news` store (6 sources) over the window.
-* **v2 = every registry source**, fetched with the Worker's own fetch/parse/normalize/taxonomy/event code from this machine, with the production roster dictionary.
+* **v1 = what production actually captured.** The live `/v1/news` store (6 sources), snapshotted at 16:21Z immediately before this release deployed.
+* **v2 = every registry source**, fetched with the Worker's own fetch/parse/normalize/taxonomy/event code, with the production roster dictionary.
 * **Limit:** source listing depth. Team pages show their latest 10 posts, feeds their latest N, so v2 is a lower bound for high-volume feeds.
 * **Reproduce:** `scratchpad/coverage-audit.mjs`.
 
 | | v1 (production) | v2 (new registry) |
 |---|---|---|
-| Sources polled | 6 | 30 (30 OK) |
-| WNBA items accepted in window | 19 | 61 |
-| Distinct events | 18 | 52 (61 reports merged into 52 events) |
+| Sources polled | 6 | 29 (29 OK) |
+| WNBA items accepted in window | 19 | 59 |
+| Distinct events | 18 | 52 |
 | Material events | — (v1 had no materiality score) | 4 |
-| Official team items in window | 0 (not polled) | 26 posts from 8 teams; 18 accepted into the WNBA wire (the rest are World Cup recaps, routed to the international lane) |
+| Official team posts in window | 0 (not polled) | 26 posts from 8 teams; 18 accepted into the WNBA wire (the rest are World Cup recaps, routed to the international lane); 3 material |
 
-v2 events by lane: other 26, league 11, games 6, international 4, injuries 3, roster 2.
+v2 events by lane: other 26, league 11, games 6, international 4, injuries 3, roster 2. Material events by lane: injuries 2, roster 1, league 1.
 
 ### What v1 missed and v2 captures
 
-1. **Lynx sign guard Aari McDonald** (official, 2026-09-07 14:51Z; also waived Eliška Joklová).
-   * v1 has no wire item, and **ESPN's transactions log never recorded the move**: the log's newest entries are 09-12 Valkyries and 08-29 Aces/Sparks. v1 therefore produced no story at all.
-   * v2: material signing (5.0) from `team_lynx`. A News Brief would file to Roster Moves and the Lynx team news page.
-2. **Katie Lou Samuelson out for the season after knee surgery** (Storm official, 2026-09-11 18:02Z; Seattle Times 21:15Z).
-   * v1's only coverage was the structured injury story from ESPN's injury feed, first published 18:49Z, 47 minutes after the team's announcement. Its wire had no item.
-   * v2: material injury event (5.5, 2 publishers). By design (not yet observed in production), the breaking path would run the article pass on the first five-minute tick after 18:02Z. When ESPN's feed story follows, the brief collapses onto it and the canonical story keeps the earlier origin.
+1. **Lynx sign guard Aari McDonald** (Lynx official, 2026-09-07 14:51Z; the post also reports the waiver of Eliška Joklová).
+   * v1 has no wire item, and **ESPN's transactions log never recorded the move**: its newest entries are 09-12 Valkyries and 08-29 Aces/Sparks. v1 therefore produced no story at all.
+   * v2: material signing (5.0) from `team_lynx`, filed to Roster Moves and the Lynx team news page.
+2. **Katie Lou Samuelson out for the season after knee surgery** (Storm official, 2026-09-11 18:02Z).
+   * v1's wire had no item. Its only coverage was the structured injury story from ESPN's injury feed, first published 18:49Z, 47 minutes after the team's announcement.
+   * v2: material injury event (5.0) from `team_storm`. By design (not yet observed in production for a live event), the breaking path would run the article pass on the first five-minute tick after 18:02Z. When ESPN's feed story follows, the brief collapses onto it and the canonical story keeps the earlier origin.
 
 ### Events both captured — what changed
 
 3. **Ezi Magbegor ACL tear.**
-   * v1 captured ESPN (19:33Z) and CBS (19:58Z).
-   * v2 folds 5 reports — Seattle Times 18:47Z, ESPN, CBS, Storm official 21:23Z, JWS 09-11 — into **one** event (6.0). The first report is **46 minutes earlier** than v1's, and the official team confirmation is attached to the same story, not a second one.
+   * v1 captured ESPN (19:33Z) and CBS (19:58Z) as one cluster.
+   * v2 folds ESPN, CBS, Storm official (21:23Z) and Just Women's Sports (09-11) into **one** event (6.0), so the team's official confirmation is attached to the same story rather than being a second one.
+   * The earliest report in both systems is ESPN 19:33Z. (The Seattle Times reported at 18:47Z, but it is blocked from Cloudflare egress, so v2 cannot claim that speed-up.)
 4. **2026 playoff schedule.**
-   * v1 captured ESPN only.
+   * v1 captured ESPN only, and stored it as `transaction`.
    * v2 merges ESPN, NBC Sports and JWS into one playoff event (4.5).
 
 ### Noise v2 filters that v1 passed through
 
-* **v1 accepted an off-topic item into the wire:** ESPN "Arena for 76ers, Flyers to open in 2030". v2 types it as business, scores it 2.0, and it cannot become a story.
-* **v1 typed schedule stories by keyword:** "WNBA playoffs schedule 2026: Dates released" is stored in production as `transaction`.
-* **Official team volume is mostly not news.** Of the 18 team items accepted this week, 3 are material. The rest are World Cup recaps, galleries, ticket information and community features, which the gate keeps out of the newsroom while still listing them, attributed, on the team news page.
+* **Off-topic wire item.** v1 accepted ESPN "Arena for 76ers, Flyers to open in 2030". v2 types it as business, scores it below the threshold, and it cannot become a story.
+* **Promotional team posts.** v2 keeps these out of the newsroom while still listing them, attributed, on team news pages: galleries, ticket information, community features, "Seafoam Central: Playoffs Bound", "Wings Seek Playoff Berth Tuesday Night" and weekly honours.
 
 ## 9. Open items
 
-* The team-site canaries ran from a residential IP; `/sources` health shows the first Cloudflare-egress results after deploy.
+* First production pass from Cloudflare egress (2026-09-13 16:26Z): every official team site, WNBA.com and the national/beat feeds answered 200. The Seattle Times answered 403 and was removed from the registry; `/sources` shows live per-source health.
 * Supabase is not bound. The registry, health and items live in KV, as all newsroom state did before this release.

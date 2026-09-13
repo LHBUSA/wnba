@@ -17,6 +17,7 @@ import { assignEvents, seedFromClusters, EVENTS_VERSION } from './events.js';
 import { fetchSource, updateHealth, pool, UA, FETCH_VERSION } from './fetcher.js';
 import { DESK_VERSION } from './pbe-desk.js';
 import { runArticles } from './articles-run.js';
+import { BRIEF_MAX_AGE_MS } from './briefs.js';
 import { ARTICLE_VERSION } from './articles.js';
 import { mediaFor, MEDIA_MANIFEST_AT } from './media.js';
 
@@ -148,12 +149,13 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
     runs.push(run);
   }
 
-  // Classify stored v1 items once (they predate the taxonomy), so every event has a type and materiality.
+  // Classify stored items whose type/materiality predates the current taxonomy version (v1 items, or items that
+  // have dropped off their feed since a rule change), so every event is scored by the same rules.
   const srcById = new Map(NEWS_SOURCES.map((s) => [s.source_id, s]));
   for (const it of Object.values(store)) {
-    if (it.event_type && it.materiality) continue;
+    if (it.event_type && it.materiality && it.taxonomy === TAXONOMY_VERSION) continue;
     const tax = classify(it, { entities: it.entities || [], source: srcById.get(it.source_id) || { priority: it.priority }, timestampQuality: it.timestamp_quality || 'publisher' });
-    Object.assign(it, { event_type: tax.event_type, lane: tax.lane, materiality: tax.materiality, timestamp_quality: it.timestamp_quality || 'publisher' });
+    Object.assign(it, { event_type: tax.event_type, lane: tax.lane, story_type: tax.story_type, materiality: tax.materiality, taxonomy: TAXONOMY_VERSION, timestamp_quality: it.timestamp_quality || 'publisher' });
   }
 
   // Retention window, then persisted fact-based event identity over what remains.
@@ -185,7 +187,8 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
   // materiality) runs the article pass now instead of waiting for the regular ten-minute article cadence.
   const breaking = created
     .map((e) => clusterById.get(e.event_id))
-    .filter((c) => c?.materiality?.material && ['roster', 'injuries', 'league'].includes(c.lane) && (c.members.some((m) => byId[m]?.priority === 1) || c.materiality.level === 'high'))
+    // Only a fresh event can be breaking: a backlog post surfaced by a newly added source never triggers a pass.
+    .filter((c) => c?.materiality?.material && now - Date.parse(c.first_seen_at) <= BRIEF_MAX_AGE_MS && ['roster', 'injuries', 'league'].includes(c.lane) && (c.members.some((m) => byId[m]?.priority === 1) || c.materiality.level === 'high'))
     .map((c) => ({ event_id: c.cluster_id, event_type: c.event_type, headline: c.headline }));
 
   // PropBetEdge newsroom — in-house articles from structured records (needs wnba-api).
