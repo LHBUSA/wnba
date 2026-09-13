@@ -1,16 +1,18 @@
 // Team view — shared by the SPA page and the wnba-web publishing Worker.
-import { html } from '../lib/dom.js';
-import { sourceLine, errorState, playerCard, gameCard, statusBadge, avatar } from '../ui/components.js';
+import { html, raw } from '../lib/dom.js';
+import { sourceLine, errorState, playerCard, gameCard, statusBadge, avatar, badge } from '../ui/components.js';
 import { logoEntry, teamColors } from '../ui/logo.js';
 import { articleList } from '../ui/articles.js';
-import { num, fmtDateET } from '../lib/format.js';
+import { num, fmtDateET, relTime } from '../lib/format.js';
 
 export async function loadTeam(api, id) {
-  const [res, arts] = await Promise.all([api.team(id), api.articles({ team: id, limit: 8 })]);
-  return { id, res, arts };
+  // External coverage (features, profiles, analysis from approved publishers) lives here and on player pages — linked,
+  // attributed, never a PropBetEdge newsroom story of its own.
+  const [res, arts, wire] = await Promise.all([api.team(id), api.articles({ team: id, limit: 8 }), api.news ? api.news({ team: id, lane: 'external', limit: 6 }).catch(() => null) : Promise.resolve(null)]);
+  return { id, res, arts, wire };
 }
 
-export function teamView({ id, res, arts }) {
+export function teamView({ id, res, arts, wire }) {
   if (!res?.ok) return errorState(res, 'This team');
   const d = res.data;
   const t = d.team;
@@ -48,6 +50,10 @@ export function teamView({ id, res, arts }) {
           <div class="sec-head"><h2 class="sec-title bc">Newsroom · ${t.short_name}</h2><a class="sec-link" href="/news">All news →</a></div>
           ${articleList(arts?.ok ? arts.data.items : [], { empty: `No PropBetEdge articles on the ${t.short_name} in the current window.` })}
         </section>
+        ${wire?.ok && wire.data.items.length ? html`<section class="section">
+          <div class="sec-head"><h2 class="sec-title bc">External coverage · ${t.short_name}</h2><span class="note">approved publishers · linked, not republished</span></div>
+          <div class="card"><div class="card-body">${wire.data.items.map((i) => html`<article class="nitem"><div class="nmeta">${badge('ext', i.source?.name || 'Publisher')}<span>${relTime(i.published_at)}</span></div><h3 style="font-size:16px"><a href="${i.url}" ${raw('rel="noopener" target="_blank"')}>${i.headline}</a></h3></article>`)}</div></div>
+        </section>` : ''}
         <section class="section">
           <div class="sec-head"><h2 class="sec-title bc">Roster highlights · observed rotation</h2><span class="note">last ${d.rotation?.sample || 0} games</span></div>
           <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Player</th><th>Role</th><th>GS</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>

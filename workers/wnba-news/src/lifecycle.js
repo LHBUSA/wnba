@@ -30,14 +30,29 @@ export function factsDigest(a) {
   return h.toString(16);
 }
 
-/** The revision kind for a rewrite of `prev` by `a`. */
-export function revisionKind(a, prev, version) {
+const SHARED_EXCLUDE = new Set(['policy', 'derived', 'provenance', 'market']);
+/**
+ * Facts the earlier version was written from, unchanged in the new version? Compares the fact keys both versions
+ * carry (a newer generator may ADD fact keys — that is enrichment, not a change of fact). Volatile market captures and
+ * derived arithmetic are excluded.
+ */
+export function sharedFactsUnchanged(prevItem, a) {
+  const p = prevItem?.facts || {};
+  const n = a?.facts || {};
+  const keys = Object.keys(p).filter((k) => k in n && !SHARED_EXCLUDE.has(k));
+  if (!keys.length) return false;
+  const norm = (x) => JSON.stringify(x, (k, v) => (typeof v === 'number' ? Math.round(v * 1000) / 1000 : v));
+  return keys.every((k) => norm(p[k]) === norm(n[k]));
+}
+
+/** The revision kind for a rewrite of `prev` by `a`. `prevItem` is the stored earlier version, when available. */
+export function revisionKind(a, prev, version, prevItem = null) {
   if (a.context?.regeneration === 'editorial_upgrade') return { kind: 'editorial_upgrade' };
   const from = prev.depth_class;
   const to = a.depth?.class;
   if (from && to && DEPTH_RANK[to] > DEPTH_RANK[from]) return { kind: 'depth_upgrade', from, to };
   const prevVersion = String(prev.input_hash || '').split('|')[0];
-  const sameFacts = prev.facts_digest ? prev.facts_digest === factsDigest(a) : true;
+  const sameFacts = prev.facts_digest ? prev.facts_digest === factsDigest(a) : prevItem ? sharedFactsUnchanged(prevItem, a) : false;
   if (prevVersion && prevVersion !== version && sameFacts) return { kind: 'editorial_quality_upgrade', from_generator: prevVersion };
   return { kind: 'data_update' };
 }
@@ -283,7 +298,8 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
     const history = [...(prev?.revisions || [])];
     if (prev) {
       if (a.provenance && !prev.provenance_contract) history.push({ at: liveAt, kind: 'metadata_correction', note: 'Source time now records when the source record was observed; the earlier version showed an estimated event time.' });
-      history.push({ at: liveAt, ...revisionKind(a, prev, versionOf(a)), generator: versionOf(a), ...(a.depth?.class ? { depth_class: a.depth.class } : {}) });
+      const prevItem = !prev.facts_digest && getItem ? await getItem(prev.id).catch(() => null) : null;
+      history.push({ at: liveAt, ...revisionKind(a, prev, versionOf(a), prevItem), generator: versionOf(a), ...(a.depth?.class ? { depth_class: a.depth.class } : {}) });
     }
     a.revisions = history.slice(-20);
     await putItem(a);

@@ -21,7 +21,10 @@ import { aan } from './prose.js';
 // The v1 functions stay exported as *V1 for comparison runs (scripts/newsroom-dryrun.mjs).
 export { injuryDeep as injuryArticles, transactionDeep as transactionArticles, resultDeep as resultArticles, previewDeep as previewArticles, trendDeep as trendArticles } from './deep.js';
 
-export const ARTICLE_VERSION = 'wnba-articles/1.2.0';
+// 1.3.0: newsroom depth ladder enrichment — every result names its performers; injuries carry recent games, the team
+// around the player and the next opponent; transactions carry role-aware reads, feed status, rotation rank, recent
+// moves and the next game.
+export const ARTICLE_VERSION = 'wnba-articles/1.3.0';
 
 // ------------------------------------------------------------ formatting
 

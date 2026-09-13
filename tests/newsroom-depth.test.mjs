@@ -320,6 +320,25 @@ test('16 · provenance chronology: a version never goes live before it was gener
   assert.equal(revisionKind({ ...a, facts: { ...a.facts, extra: 1 } }, { input_hash: 'wnba-international-desk/1.0.0|x', facts_digest: factsDigest(a) }, 'wnba-international-desk/2.0.0').kind, 'data_update');
 });
 
+test('15b · regenerating a legacy story by a newer generator is an editorial_quality_upgrade only when its facts are unchanged', async () => {
+  const { injury } = await desks();
+  const oldItem = structuredClone(injury);
+  delete oldItem.facts.recent_games; // the earlier generator did not carry the enrichment keys
+  const prevCard = { ...cardOf(oldItem), input_hash: `wnba-articles/1.2.0||${oldItem.headline}|${oldItem.deck}`, first_published_at: '2026-09-11T18:49:00.000Z', revisions: [] };
+  const deps = (item) => ({ getItem: async () => item, putItem: async () => {}, versionOf: () => 'wnba-articles/1.3.0', cardOf });
+  const t = '2026-09-13T19:00:00.000Z';
+  const next = structuredClone(injury);
+  next.body = [...next.body, 'An added paragraph from the enriched generator.'];
+  const r = await mergeArticles({ index: [prevCard], articles: [next], started: t, now: Date.parse(t), ...deps(oldItem) });
+  assert.equal(r.index[0].revisions.at(-1).kind, 'editorial_quality_upgrade');
+  assert.equal(r.index[0].revisions.at(-1).from_generator, 'wnba-articles/1.2.0');
+  assert.equal(r.index[0].first_published_at, '2026-09-11T18:49:00.000Z');
+  const changed = structuredClone(oldItem);
+  changed.facts.injury = { ...changed.facts.injury, status: 'Day-To-Day' };
+  const r2 = await mergeArticles({ index: [prevCard], articles: [structuredClone(next)], started: t, now: Date.parse(t), ...deps(changed) });
+  assert.equal(r2.index[0].revisions.at(-1).kind, 'data_update', 'a fact changed underneath: not labelled a quality upgrade');
+});
+
 test('17 · grammar stays enforced across desks and the new brief prose', async () => {
   const s = await desks();
   const [brief] = await briefArticles({ externalItems: [wire({ headline: 'Portland Fire sign Carla Leite to contract extension', story_type: 'transaction' })], structured: [], now: NOW, ctx: carlaCtx });

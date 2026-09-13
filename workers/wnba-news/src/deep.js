@@ -442,13 +442,19 @@ export async function injuryDeep(ctx) {
     const opp = ng ? (ng.home.team_id === team.team_id ? ng.away : ng.home) : null;
     const ofs = /OFS/i.test(inj.fantasy_status || '') || /season/i.test(inj.status || '');
     const dtd = !ofs && /day/i.test(inj.status);
-    const part = [inj.side, inj.body_part].filter(Boolean).join(' ').toLowerCase();
+    const nir = /not injury related/i.test(inj.body_part || '');
+    const part = nir ? '' : [inj.side, inj.body_part].filter(Boolean).join(' ').toLowerCase();
     const reports = (externalByPlayer.get(inj.athlete_id) || []).filter((r) => r.story_type === 'injury').slice(0, 3);
     const since = teamSince(tRes.schedule, team.team_id, cur.last_date, year, ctx.regIds);
     D.games_since = since.n; D.since_w = since.w; D.since_l = since.l;
     if (st) { D.without_w = st.wins - cur.wins; D.without_l = st.losses - cur.losses; D.without_n = D.without_w + D.without_l; }
     const obs = await observedAbsence(api, rot, team.team_id, inj.athlete_id);
     const minutes = cur.min;
+    // Her most recent logged games (current regular season), and the next opponent's record — the fact block a Full
+    // injury story develops. Every figure is a record value or arithmetic written to D.
+    const recent5 = (pRes.gamelog?.seasons?.find((x) => x.name === cur.season_name)?.games || []).filter((x) => x.min).slice(0, 5).map((x) => ({ date: x.date, min: x.min, pts: x.pts, result: x.result, opponent: x.opponent?.name || null }));
+    if (recent5.length >= 3) { D.recent_min = avg(recent5.map((x) => x.min)); D.recent_pts = avg(recent5.map((x) => x.pts)); }
+    const oppSt = opp ? standingsById.get(opp.team_id) || null : null;
     // new vs long-running absence, from games actually missed (last logged game vs team games since)
     const mode = since.n >= 3 ? 'long' : obs && obs.missed >= 2 ? 'intermittent' : me && me.appearances === rot?.sample ? 'fresh' : 'partial';
     let missedRec = null;
@@ -458,7 +464,7 @@ export async function injuryDeep(ctx) {
       D.missed_w = missedRec.w; D.missed_l = missedRec.l;
     }
     const splitTxt = st && Number.isFinite(D.without_w) ? `the ${n} are ${recWL(cur.wins, cur.losses)} in the ${cur.games} games she has played and ${recWL(D.without_w, D.without_l)} in the ${D.without_n} she has not` : null;
-    const status = `${inj.status}${part ? ` (${part})` : ''}`;
+    const status = `${inj.status}${nir ? ' (not injury related)' : part ? ` (${part})` : ''}`;
 
     let thesis;
     if (mode === 'long') thesis = `ESPN’s injury feed now lists ${p.name} as ${status}${ofs ? ' for the rest of the season' : ''}, but the ${full(team)} are not adjusting to a new absence: her last game in the ESPN game log was ${dMonth(cur.last_date)}, and the ${n} have played ${since.n} games since, going ${recWL(since.w, since.l)}. For the betting markets the listing formalizes an absence the prices have had ${since.n} games to absorb; what it settles is whether she returns this season, and per ESPN’s feed she does not.`;
@@ -466,7 +472,7 @@ export async function injuryDeep(ctx) {
     else if (mode === 'fresh') thesis = `${p.name} played every one of the ${poss(n)} last ${wordN(rot.sample)} games — ${f1(me.min)} minutes a night, ${me.starts ? countOf(me.starts, 'start') : 'no starts'} — so ESPN’s ${status} listing removes a role the ${n} have not yet had to replace in the window we can observe. The betting question is who takes those minutes, and no box score answers it yet.`;
     else thesis = `ESPN’s injury feed lists ${p.name} as ${status}. She has averaged ${f1(minutes)} minutes across ${cur.games} games this season, and the ${n} have already played one recent game without her — the only direct evidence of how the minutes move.`;
 
-    const statusParas = [`The listing: ESPN’s WNBA injury feed carries ${p.name} as ${inj.status}${part ? ` with a ${part} injury` : ''}, last updated ${dShort(inj.source_updated_at)} at ${tET(inj.source_updated_at)}${ofs ? ', marked out for the rest of the season' : inj.source_return_date ? `, with ESPN’s estimated return date of ${rdText(inj, year)} (an estimate, not a confirmation; feed updated ${dShort(inj.source_updated_at)})` : ''}. That is ESPN’s status, not the league’s official injury report.${reports.length ? ` Publisher coverage of her injury in the source wire: ${listJoin(reports.slice(0, 2).map((r) => `${r.source_name} on ${dShort(r.published_at)} (“${r.headline}”)`))}.` : ''}`];
+    const statusParas = [`The listing: ESPN’s WNBA injury feed carries ${p.name} as ${inj.status}${nir ? ', listed as not injury related' : part ? ` with a ${part} injury` : ''}, last updated ${dShort(inj.source_updated_at)} at ${tET(inj.source_updated_at)}${ofs ? ', marked out for the rest of the season' : inj.source_return_date ? `, with ESPN’s estimated return date of ${rdText(inj, year)} (an estimate, not a confirmation; feed updated ${dShort(inj.source_updated_at)})` : ''}. That is ESPN’s status, not the league’s official injury report.${reports.length ? ` Publisher coverage of her injury in the source wire: ${listJoin(reports.slice(0, 2).map((r) => `${r.source_name} on ${dShort(r.published_at)} (“${r.headline}”)`))}.` : ''}`];
     if (mode === 'long') statusParas.push(`What the records do not show is why she had not played since ${dMonth(cur.last_date)}, or when the injury itself occurred; neither ESPN’s structured feed nor the game log carries that, so this story does not assume it.`);
 
     const role = [];
@@ -487,7 +493,11 @@ export async function injuryDeep(ctx) {
     }
     const otherOut = feedTeam.filter((x) => x.athlete_id !== inj.athlete_id);
     if (otherOut.length) role.push(`She is not the team’s only listing: ESPN’s feed also carries ${listJoin(otherOut.map((x) => `${x.name} (${x.status})`))}.`);
-    if (st) role.push(`The ${full(team)} are ${standingText(st, st.conference_name)}, ${st.last_ten} over their last 10, scoring ${f1(st.points_for_avg)} a game and allowing ${f1(st.points_against_avg)}.`);
+    if (recent5.length >= 3 && mode !== 'long') role.push(`Her last ${wordN(recent5.length)} logged games, the most recent on ${dMonth(recent5[0].date)}: ${listJoin(recent5.map((x) => `${x.min}`))} minutes, ${f1(D.recent_min)} a game, with ${f1(D.recent_pts)} points a game${Math.abs(D.recent_min - cur.min) >= 2 ? ` — ${D.recent_min > cur.min ? 'more' : 'less'} than her ${f1(cur.min)}-minute season average, so the recent role was ${D.recent_min > cur.min ? 'larger' : 'smaller'} than the season line suggests` : ''}.`);
+
+    const teamParas = [];
+    if (st) teamParas.push(`The ${full(team)} are ${standingText(st, st.conference_name)}, ${st.last_ten} over their last 10, scoring ${f1(st.points_for_avg)} a game and allowing ${f1(st.points_against_avg)}.`);
+    if (ng && oppSt) teamParas.push(`Their next game is ${ng.home.team_id === team.team_id ? `at home against the ${full(opp)}` : `on the road against the ${full(opp)}`} on ${dLong(ng.start_utc)}. The ${nick(opp)} are ${recWL(oppSt.wins, oppSt.losses)}, ${oppSt.last_ten} over their last 10, and allow ${f1(oppSt.points_against_avg)} points a game.`);
 
     const mkt = [];
     const mt = ng?.market ? marketText(ng.market, ng, team.team_id) : null;
@@ -507,7 +517,7 @@ export async function injuryDeep(ctx) {
     const counterPara = (mode === 'long' || mode === 'intermittent') && withBetter ? `The case against dismissing it: the ${n} won a higher share of games with her (${recWL(cur.wins, cur.losses)}) than without (${recWL(D.without_w, D.without_l)}). Her absence is not nothing — it is simply not new.` : null;
     const next = `What to watch: ${ng ? `the ${poss(n)} next game, ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}; ` : ''}${mode === 'long' || mode === 'intermittent' ? 'the starting lineup, which the observed window suggests is already set without her' : 'the first box score without her, which is the first real evidence of who takes her minutes'}; and player-prop lines, captured only inside 36 hours of tip.`;
 
-    const { body, sections } = assemble([['The read', [thesis]], ['The listing', statusParas], ['Her role and the rotation', role], ['The market', mkt], ['The counter-case', [counterPara]], ['What matters next', [next]]]);
+    const { body, sections } = assemble([['The read', [thesis]], ['The listing', statusParas], ['Her role and the rotation', role], ['The team around her', teamParas], ['The market', mkt], ['The counter-case', [counterPara]], ['What matters next', [next]]]);
     const headline = mode === 'long' ? `${p.name} out for the season, per ESPN’s injury feed — the ${n} have already played ${since.n} games without her`
       : mode === 'intermittent' ? `${p.name} ${ofs ? 'out for the season' : `listed ${inj.status.toLowerCase()}`}, per ESPN’s injury feed — she had played ${wordN(obs.window - obs.missed)} of the ${poss(n)} last ${wordN(obs.window)}`
         : ofs ? `${p.name} out for the season, per ESPN’s injury feed: the ${f1(minutes)} minutes the ${n} have to replace`
@@ -529,13 +539,14 @@ export async function injuryDeep(ctx) {
       lead_team_id: team.team_id, lead_player_id: p.athlete_id, primary_subject: p.name, published_at: inj.source_updated_at,
       context: { player: { athlete_id: p.athlete_id, name: p.name, position: p.position_name, photo: pRes.photo }, team: { team_id: team.team_id, name: team.name, standing: st }, next_game: ng ? { game_id: ng.game_id, start_utc: ng.start_utc, home: ng.home, away: ng.away } : null },
       entities: [{ type: 'player', id: p.athlete_id, name: p.name }, { type: 'team', id: team.team_id, name: team.name }, ...(opp ? [{ type: 'team', id: opp.team_id, name: opp.name }] : []), ...(ng ? [gameEntity(ng)] : [])],
-      facts: { injury: stripNotes(inj), season_log: cur, provenance: [prov(p.name, cur, 'season')], absence: { mode, last_game: cur.last_date, games_since: since.n, window_missed: obs?.missed ?? 0 }, rotation_me: me ? { name: me.name, min: me.min, starts: me.starts, appearances: me.appearances } : null, rotation: rot?.rows?.map((r) => ({ name: r.name, position: r.position, min: r.min, pts: r.pts, starts: r.starts, appearances: r.appearances })), since, standing: st, next_game: ng ? { start_utc: ng.start_utc } : null, market: mt?.facts || null, other_out: otherOut.map((x) => ({ name: x.name, status: x.status })), injury_scope: [team.team_id], observed: obs, derived: D },
+      facts: { injury: stripNotes(inj), season_log: cur, provenance: [prov(p.name, cur, 'season')], absence: { mode, last_game: cur.last_date, games_since: since.n, window_missed: obs?.missed ?? 0 }, rotation_me: me ? { name: me.name, min: me.min, starts: me.starts, appearances: me.appearances } : null, rotation: rot?.rows?.map((r) => ({ name: r.name, position: r.position, min: r.min, pts: r.pts, starts: r.starts, appearances: r.appearances })), since, standing: st, next_game: ng ? { start_utc: ng.start_utc } : null, market: mt?.facts || null, other_out: otherOut.map((x) => ({ name: x.name, status: x.status })), injury_scope: [team.team_id], observed: obs, recent_games: recent5, next_opponent: oppSt ? { name: opp.name, wins: oppSt.wins, losses: oppSt.losses, last_ten: oppSt.last_ten, points_against_avg: oppSt.points_against_avg } : null, derived: D },
       evidence: [
         { kind: 'record', source: 'ESPN WNBA injury feed', url: 'https://www.espn.com/wnba/injuries', captured_at: new Date(now).toISOString(), record: { athlete_id: inj.athlete_id, status: inj.status, body_part: inj.body_part, fantasy_status: inj.fantasy_status, source_return_date: inj.source_return_date, source_updated_at: inj.source_updated_at } },
         ...reports.map((r) => ({ kind: 'publisher_report', source: r.source_name, publisher: r.source_name, headline: r.headline, url: r.canonical_url, published_at: r.published_at, captured_at: r.first_captured_at })),
         { kind: 'record', source: `ESPN game log (${cur.season_name})`, url: `https://www.espn.com/wnba/player/gamelog/_/id/${p.athlete_id}`, record: { games: cur.games, last_game: cur.last_date } },
         { kind: 'record', source: `ESPN team schedule — ${full(team)} (results since her last game)`, url: `https://www.espn.com/wnba/team/schedule/_/id/${team.team_id}`, record: since },
         ...(rot?.games?.length ? [{ kind: 'record', source: `ESPN box scores, last ${rot.sample} ${n} games (observed rotation)`, url: `https://www.espn.com/wnba/team/schedule/_/id/${team.team_id}`, record: { games: rot.games } }] : []),
+        ...(st ? [{ kind: 'record', source: 'ESPN standings', url: 'https://www.espn.com/wnba/standings', captured_at: new Date(now).toISOString(), record: { team: stripNotes(st), next_opponent: oppSt || null } }] : []),
         ...(ng?.market ? [{ kind: 'market', source: 'The Odds API (stored PropBetEdge snapshot)', captured_at: ng.market.captured_at, record: { books: ng.market.books, spread: ng.market.spread.home_line, total: ng.market.total.line } }] : [])
       ]
     });
@@ -556,6 +567,7 @@ function presentTense(sentence) {
 
 export async function transactionDeep(ctx) {
   const { api, transactions, dict, injuries, now } = ctx;
+  const standingsById = ctx.standingsById || new Map();
   const historical = Boolean(ctx.historical);
   const meter = meterOf(ctx);
   const byTeamDay = new Map();
@@ -579,6 +591,7 @@ export async function transactionDeep(ctx) {
     const onRoster = named.filter((p) => (tRes?.roster || []).some((r) => r.athlete_id === p.athlete_id));
     const moveText = listJoin(clauses.slice(0, 2).map(presentTense));
     const signing = clauses.some((c) => /^(Signed|Re-signed|Claimed|Acquired|Activated)\b/.test(c));
+    const activation = clauses.some((c) => /^(Activated|Reinstated)\b|\bas active\b/i.test(c));
 
     const profiles = [];
     const sProfiles = [];
@@ -589,7 +602,11 @@ export async function transactionDeep(ctx) {
       const bio = pr?.player || {};
       profiles.push({ athlete_id: p.athlete_id, name: p.name, position: bio.position, height: bio.height, current: log.current, prior: log.prior });
       const size = [bio.height, bio.position_name?.toLowerCase()].filter(Boolean).join(' ');
-      if (log.current?.games) { provs.push(prov(p.name, log.current, 'season')); sProfiles.push(`${p.name}${size ? `, a ${size},` : ''} has played ${countOf(log.current.games, 'game')} in the ${year} regular season, per the ESPN game log, averaging ${statAvg(log.current.pts, 'point')} and ${statAvg(log.current.reb, 'rebound')} in ${statAvg(log.current.min, 'minute')}.`); }
+      if (log.current?.games) {
+        provs.push(prov(p.name, log.current, 'season'));
+        const l10 = log.current.last10;
+        sProfiles.push(`${p.name}${size ? `, a ${size},` : ''} has played ${countOf(log.current.games, 'game')} in the ${year} regular season, per the ESPN game log, averaging ${statAvg(log.current.pts, 'point')} and ${statAvg(log.current.reb, 'rebound')} in ${statAvg(log.current.min, 'minute')}.${l10 ? ` Over her last ${l10.games} of those games she averaged ${f1(l10.pts)} points in ${f1(l10.min)} minutes.` : ''} Her most recent game in the log was ${dMonth(log.current.last_date)}.`);
+      }
       else if (log.prior?.games) { provs.push(prov(p.name, log.prior, 'prior_season')); sProfiles.push(`${p.name}${size ? `, a ${size},` : ''} has no ${year} regular-season games in the ESPN game log. Her most recent regular season there is ${log.prior.year}${log.prior.team_name ? ` with the ${log.prior.team_name}` : ''}: ${countOf(log.prior.games, 'game')}, ${statAvg(log.prior.pts, 'point')} and ${statAvg(log.prior.reb, 'rebound')} in ${statAvg(log.prior.min, 'minute')} — ${log.prior.year} numbers, not ${year}.`); }
       else sProfiles.push(`${p.name} is on the current ${n} roster; the ESPN game log shows no regular-season minutes for her.`);
     }
@@ -597,6 +614,19 @@ export async function transactionDeep(ctx) {
     const feed = historical ? null : feedFor(injuries, team.team_id);
     const ctxParas = [];
     const rot = tRes?.rotation;
+    // The moved player's own feed listing, and where her season minutes would rank in the current observed rotation.
+    for (const p of profiles) {
+      const listing = (feed || []).find((x) => String(x.athlete_id) === String(p.athlete_id));
+      if (listing && activation) sProfiles.push(`ESPN’s injury feed still lists ${p.name} as ${listing.status}, last updated ${dShort(listing.source_updated_at)} — so as of this story the feed and the transactions log do not yet agree on her availability.`);
+      else if (listing) sProfiles.push(`ESPN’s injury feed lists ${p.name} as ${listing.status}, last updated ${dShort(listing.source_updated_at)}.`);
+      const played = (rot?.rows || []).filter((r) => r.appearances > 0 && String(r.athlete_id) !== String(p.athlete_id));
+      if (p.current?.games && Number.isFinite(p.current.min) && played.length >= 5) {
+        const rank = played.filter((r) => r.min > p.current.min).length + 1;
+        D[`rank_${p.athlete_id}`] = rank;
+        sProfiles.push(`Her ${f1(p.current.min)} minutes a game would rank ${['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'][rank] || `No. ${rank}`} among the ${countOf(played.length, 'player')} who played in the ${poss(n)} last ${wordN(rot.sample)} games — ${p.current.min >= 15 ? 'a rotation-level workload, not end-of-bench minutes' : 'minutes at the end of the bench'}.`);
+      }
+    }
+    const teamMoves = (ctx.transactions || transactions || []).filter((t) => String(t.team?.team_id) === String(team.team_id) && t.date.slice(0, 10) !== g.date.slice(0, 10) && Date.parse(t.date) < Date.parse(g.date) && Date.parse(g.date) - Date.parse(t.date) <= 30 * 86400e3).sort((x, y) => y.date.localeCompare(x.date)).slice(0, 4);
     let recentLong = [];
     if (feed) {
       const longOuts = feed.filter((x) => /OFS/i.test(x.fantasy_status || '') || (x.source_return_date && Date.parse(x.source_return_date) - Date.parse(g.date) > 60 * 86400e3));
@@ -627,16 +657,30 @@ export async function transactionDeep(ctx) {
     const ng = nextGame(tRes?.schedule, team.team_id);
     const mt = ng?.market ? marketText(ng.market, ng, team.team_id) : null;
     const mkt = [];
-    if (mt) mkt.push(`The next price already sits after the move: PropBetEdge’s capture of ${dShort(ng.market.captured_at)} (${ng.market.books} books) has ${ng.away.abbr} at ${ng.home.abbr} on ${dShort(ng.start_utc)} at ${ng.market.spread.home_line === null ? 'no spread' : `${ng.home.abbr} ${ng.market.spread.home_line > 0 ? '+' : ''}${ng.market.spread.home_line}`}${ng.market.total.line !== null ? `, total ${ng.market.total.line}` : ''} — market consensus, not a PropBetEdge projection. A depth signing dated ${dShort(g.date)} is not new information for it.`);
+    if (mt) mkt.push(`The next price already sits after the move: PropBetEdge’s capture of ${dShort(ng.market.captured_at)} (${ng.market.books} books) has ${ng.away.abbr} at ${ng.home.abbr} on ${dShort(ng.start_utc)} at ${ng.market.spread.home_line === null ? 'no spread' : `${ng.home.abbr} ${ng.market.spread.home_line > 0 ? '+' : ''}${ng.market.spread.home_line}`}${ng.market.total.line !== null ? `, total ${ng.market.total.line}` : ''} — market consensus, not a PropBetEdge projection. ${activation ? 'A roster activation' : signing ? 'A depth signing' : 'A roster move'} dated ${dShort(g.date)} is not new information for it.`);
     const lastMin = profiles.map((p) => p.current?.min ?? p.prior?.min).filter((v) => Number.isFinite(v));
     const lastLbl = profiles.map((p) => (p.current?.games ? `this regular season` : p.prior ? `her ${p.prior.year} regular season` : null)).filter(Boolean)[0];
-    const thesis = `Per ESPN’s WNBA transactions log, the ${full(team)} ${moveText} (${dShort(g.date)}). ${signing && recentLong.length ? `It lands ${countOf(D.days_after_listing ?? 0, 'day')} after a long-term frontcourt listing, but nothing in the records points to a top-of-rotation role for the newcomer${lastMin.length && lastLbl ? ` — ${lastLbl} averaged ${f1(lastMin[0])} minutes` : ''} — so its betting relevance runs through the end of the bench and player-prop eligibility, not the game line.` : 'Nothing in the records points to a top-of-rotation role; its betting relevance runs through the end of the bench.'}`;
-    const { body, sections } = assemble([['The read', [thesis]], ['The move', sProfiles], ['The roster it lands in', ctxParas], ['The market', mkt]]);
+    const curMover = profiles.find((p) => p.current?.games && Number.isFinite(p.current.min));
+    const readTail = signing && recentLong.length
+      ? `It lands ${countOf(D.days_after_listing ?? 0, 'day')} after a long-term frontcourt listing, but nothing in the records points to a top-of-rotation role for the newcomer${lastMin.length && lastLbl ? ` — ${lastLbl} averaged ${f1(lastMin[0])} minutes` : ''} — so its betting relevance runs through the end of the bench and player-prop eligibility, not the game line.`
+      : curMover && curMover.current.min >= 15
+        ? `${curMover.name} has averaged ${f1(curMover.current.min)} minutes across ${countOf(curMover.current.games, 'game')} this season, a rotation role, so the move changes who is available for real minutes rather than the end of the bench.`
+        : curMover
+          ? `${curMover.name} has averaged ${f1(curMover.current.min)} minutes this season, so the move touches the end of the bench rather than the rotation’s core.`
+          : 'Nothing in the records points to a top-of-rotation role; its betting relevance runs through the end of the bench.';
+    const thesis = `Per ESPN’s WNBA transactions log, the ${full(team)} ${moveText} (${dShort(g.date)}). ${readTail}`;
+    const oppNext = ng ? (ng.home.team_id === team.team_id ? ng.away : ng.home) : null;
+    const oppSt = oppNext && !historical ? ctx.standingsById?.get(oppNext.team_id) || null : null;
+    const movesParas = teamMoves.length ? [`It is not the ${poss(n)} only recent roster change. Earlier moves in the transactions log over the previous 30 days: ${teamMoves.map((t) => `${dShort(t.date)} — ${String(t.description).replace(/\.$/, '')}`).join('; ')}.`] : [];
+    const nextParas = ng ? [`The ${n} next play ${ng.home.team_id === team.team_id ? `the ${full(oppNext)} at home` : `at the ${full(oppNext)}`} on ${dLong(ng.start_utc)}${oppSt ? `; the ${nick(oppNext)} are ${recWL(oppSt.wins, oppSt.losses)} and ${oppSt.last_ten} over their last 10` : ''}. The first box score after the move is the first record of how the minutes are actually used.`] : [];
+    const { body, sections } = assemble([['The read', [thesis]], ['The move', sProfiles], ['The roster it lands in', ctxParas], ['Recent moves', movesParas], ['The market', mkt], ['What comes next', nextParas]]);
     const headline = `Roster move: the ${n} ${moveText}`.replace(/\s+/g, ' ');
     const deck = recentLong.length && signing
       ? `Dated ${dShort(g.date)}, ${D.days_after_listing === 0 ? 'the same day as' : `${countOf(D.days_after_listing, 'day')} after`} an ESPN injury-feed update that lists ${listingPhrase(recentLong[0], year)}. Per ESPN’s transactions log.`
-      : `A roster move dated ${dShort(g.date)} from ESPN’s WNBA transactions log.`;
-    const bettor = [`A depth move: it changes who fills the last minutes of the ${poss(n)} rotation, which touches player-prop eligibility rather than game lines.`, ng ? `Next up: ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}.` : 'No upcoming game is on the published schedule.'];
+      : curMover
+        ? `${curMover.name} brings ${f1(curMover.current.pts)} points in ${f1(curMover.current.min)} minutes a game across ${curMover.current.games} games this season${st ? ` to a ${full(team)} team at ${recWL(st.wins, st.losses)}` : ''}${ng ? `, before the ${nick(oppNext)} on ${dShort(ng.start_utc)}` : ''}. Per ESPN’s transactions log, dated ${dShort(g.date)}.`
+        : `A roster move dated ${dShort(g.date)} from ESPN’s WNBA transactions log.`;
+    const bettor = [curMover && curMover.current.min >= 15 ? `${poss(curMover.name)} ${f1(curMover.current.min)} minutes a game are rotation minutes: the move is relevant to player-prop eligibility and minutes for the ${poss(n)} regulars, not only the end of the bench.` : `A depth move: it changes who fills the last minutes of the ${poss(n)} rotation, which touches player-prop eligibility rather than game lines.`, ng ? `Next up: ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}.` : 'No upcoming game is on the published schedule.'];
     const against = [...(profiles.some((p) => !p.current?.games && p.prior?.games) ? [`The incoming player has no ${year} games in the source log; her last regular season is the only baseline, and it was with a different team.`] : []), 'Depth moves rarely move a game line on their own.'];
     const unknown = ['How many minutes the incoming player receives — there is no box score for the new role yet.'];
     const id = await hashId(['transaction', team.team_id, g.date.slice(0, 10), g.moves.join('|')]);
@@ -646,8 +690,8 @@ export async function transactionDeep(ctx) {
       lead_team_id: team.team_id, lead_player_id: onRoster[0]?.athlete_id || null, primary_subject: n, published_at: g.date,
       context: { team: { team_id: team.team_id, name: team.name, standing: st }, players: profiles, next_game: ng ? { game_id: ng.game_id, start_utc: ng.start_utc, home: ng.home, away: ng.away } : null },
       entities: [{ type: 'team', id: team.team_id, name: team.name }, ...onRoster.map((p) => ({ type: 'player', id: p.athlete_id, name: p.name })), ...(ng ? [gameEntity(ng)] : [])],
-      facts: { moves: g.moves, profiles, provenance: provs, out: (feed || []).map(stripNotes), injury_scope: feed ? [team.team_id] : [], injury_feed_unavailable: !feed, standing: st, market: mt?.facts || null, rotation: rot?.rows?.map((r) => ({ name: r.name, position: r.position, min: r.min, reb: r.reb, starts: r.starts, appearances: r.appearances })), rotation_sample: rot?.sample, historical, derived: D },
-      evidence: [{ kind: 'record', source: 'ESPN WNBA transactions log', url: 'https://www.espn.com/wnba/transactions', captured_at: new Date(now).toISOString(), record: { team: team.abbr, date: g.date, moves: g.moves } }, ...profiles.map((p) => ({ kind: 'record', source: `ESPN game log — ${p.name} (${p.current?.games ? p.current.season_name : p.prior ? p.prior.season_name : 'no games'})`, url: `https://www.espn.com/wnba/player/gamelog/_/id/${p.athlete_id}`, record: p.current || p.prior })), ...(recentLong.length ? [{ kind: 'record', source: 'ESPN WNBA injury feed', url: 'https://www.espn.com/wnba/injuries', record: stripNotes(recentLong[0]) }] : [])]
+      facts: { moves: g.moves, profiles, provenance: provs, out: (feed || []).map(stripNotes), injury_scope: feed ? [team.team_id] : [], injury_feed_unavailable: !feed, standing: st, market: mt?.facts || null, rotation: rot?.rows?.map((r) => ({ name: r.name, position: r.position, min: r.min, reb: r.reb, starts: r.starts, appearances: r.appearances })), rotation_sample: rot?.sample, team_moves: teamMoves.map((t) => ({ date: t.date, description: t.description })), next_opponent: oppSt ? { name: oppNext.name, wins: oppSt.wins, losses: oppSt.losses, last_ten: oppSt.last_ten } : null, historical, derived: D },
+      evidence: [{ kind: 'record', source: 'ESPN WNBA transactions log', url: 'https://www.espn.com/wnba/transactions', captured_at: new Date(now).toISOString(), record: { team: team.abbr, date: g.date, moves: g.moves } }, ...profiles.map((p) => ({ kind: 'record', source: `ESPN game log — ${p.name} (${p.current?.games ? p.current.season_name : p.prior ? p.prior.season_name : 'no games'})`, url: `https://www.espn.com/wnba/player/gamelog/_/id/${p.athlete_id}`, record: p.current || p.prior })), ...(recentLong.length ? [{ kind: 'record', source: 'ESPN WNBA injury feed', url: 'https://www.espn.com/wnba/injuries', record: stripNotes(recentLong[0]) }] : []), ...(rot?.games?.length ? [{ kind: 'record', source: `ESPN box scores, last ${rot.sample} ${n} games (observed rotation)`, url: `https://www.espn.com/wnba/team/schedule/_/id/${team.team_id}`, record: { games: rot.games } }] : []), ...(st ? [{ kind: 'record', source: 'ESPN standings', url: 'https://www.espn.com/wnba/standings', record: { team: stripNotes(st), next_opponent: oppSt || null } }] : []), ...(teamMoves.length ? [{ kind: 'record', source: 'ESPN WNBA transactions log (previous 30 days)', url: 'https://www.espn.com/wnba/transactions', record: { moves: teamMoves.map((t) => ({ date: t.date, description: t.description })) } }] : [])]
     });
     a0.meter = meterDelta(meter, t0);
     out.push(a0);
@@ -767,6 +811,30 @@ export async function resultDeep(ctx) {
       starParas.push(`${r.name}: ${statLine(r)}${Number.isFinite(r.plus_minus) ? `, a ${sgn(r.plus_minus)} in her minutes` : ''}.${spText}${base}`);
     }
 
+    // Every result names its performers. Without a notable line, the leading scorers on both sides carry the section,
+    // with the top winner measured against her own entering baseline.
+    const performerRows = [];
+    if (!stars.length) {
+      const leaders = (tid, k) => box.filter((x) => x.team_id === tid).sort((x, y) => (y.pts ?? 0) - (x.pts ?? 0)).slice(0, k);
+      const wl = leaders(winner.team_id, 2);
+      const ll = leaders(loser.team_id, 1);
+      for (const [i, r] of [...wl, ...ll].entries()) {
+        let base = '';
+        if (i === 0) {
+          const pr = await api(`/v1/players/${r.athlete_id}`);
+          const ent = seasonLog(pr, year, dict?.teamById, { before: g.start_utc }).current;
+          if (ent && ent.games >= 3 && Number.isFinite(ent.pts)) {
+            provs.push(prov(r.name, ent, 'entering_game'));
+            comparisons.push({ athlete_id: r.athlete_id, name: r.name, stat: 'pts', value: r.pts, entering: { games: ent.games, avg: ent.pts, last10: ent.last10?.pts ?? null, last10_games: ent.last10?.games ?? null }, above: (r.pts ?? 0) - ent.pts });
+            base = ` She came in averaging ${f1(ent.pts)} points over ${ent.games} games of the ${year} regular season.`;
+          }
+        }
+        const t = r.team_id === winner.team_id ? winner : loser;
+        performerRows.push(r);
+        starParas.push(`${r.name} (${nick(t)}): ${statLine(r)}${Number.isFinite(r.plus_minus) ? `, a ${sgn(r.plus_minus)} in her minutes` : ''}.${base}`);
+      }
+    }
+
     // co-leaders: the headline never implies one player did what two did (rule: reconcile.js CO_LEADER_RULE)
     const top = stars[0] || null;
     const headStat = top ? (keyOf(top) === 'pts' ? 'pts' : keyOf(top)) : null;
@@ -858,7 +926,7 @@ export async function resultDeep(ctx) {
       lead_team_id: winner.team_id, lead_player_id: top?.athlete_id || null, primary_subject: W, published_at: g.last_play_wallclock || g.start_utc,
       context: { game: { game_id: g.game_id, start_utc: g.start_utc, home: g.home, away: g.away, venue: g.venue }, stars: stars.slice(0, 3) },
       entities: [gameEntity(g), { type: 'team', id: winner.team_id, name: winner.name }, { type: 'team', id: loser.team_id, name: loser.name }, ...stars.slice(0, 3).map((r) => ({ type: 'player', id: r.athlete_id, name: r.name }))],
-      facts: { scores: { w: winner.score, l: loser.score, margin }, stars, box_lines: boxLines, headline_stat: headStat, co_leader_rule: CO_LEADER_RULE, lead, run, ats, after: { w: afterW, l: afterL }, entering: { w: enterW }, standings_now: { l: sl }, quarters: q, team_stats: { w: tw, l: tl }, comparisons, provenance: provs, next: [ngW, ngL].filter(Boolean).map((ng) => ({ start_utc: ng.start_utc, home: ng.home.abbr, away: ng.away.abbr, market: ng.market ? { spread: ng.market.spread.home_line, total: ng.market.total.line, books: ng.market.books, captured_at: ng.market.captured_at } : null })), derived: D },
+      facts: { scores: { w: winner.score, l: loser.score, margin }, stars, performers: performerRows, box_lines: boxLines, headline_stat: headStat, co_leader_rule: CO_LEADER_RULE, lead, run, ats, after: { w: afterW, l: afterL }, entering: { w: enterW }, standings_now: { l: sl }, quarters: q, team_stats: { w: tw, l: tl }, comparisons, provenance: provs, next: [ngW, ngL].filter(Boolean).map((ng) => ({ start_utc: ng.start_utc, home: ng.home.abbr, away: ng.away.abbr, market: ng.market ? { spread: ng.market.spread.home_line, total: ng.market.total.line, books: ng.market.books, captured_at: ng.market.captured_at } : null })), derived: D },
       evidence: [{ kind: 'record', source: 'ESPN box score + play-by-play + shot locations', url: `https://www.espn.com/wnba/game/_/gameId/${g.game_id}`, record: { final: `${g.away.abbr} ${g.away.score} - ${g.home.abbr} ${g.home.score}`, events: live.events_total } }, { kind: 'record', source: 'ESPN team schedules (records after the game, scoring entering it)', url: 'https://www.espn.com/wnba/schedule', record: { after_w: afterW, after_l: afterL, entering_w: enterW } }, { kind: 'record', source: `ESPN standings (${asOfLabel})`, url: 'https://www.espn.com/wnba/standings', record: { l: sl } }, ...(pc ? [{ kind: 'market', source: `${pc.provider} line relayed by ESPN`, record: { spread_home: pc.spread, total: pc.over_under, home_ml: pc.home_moneyline, away_ml: pc.away_moneyline } }] : [])]
     });
     a0.meter = meterDelta(meter, t0);

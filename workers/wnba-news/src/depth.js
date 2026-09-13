@@ -24,7 +24,7 @@ export const DEPTH_VERSION = 'wnba-depth/1.0.0';
 export const DEPTH_CLASSES = {
   flash: { label: 'Flash', rank: 0, range: [150, 350], floor: 40, pass: 0.6, sections: 1, developed: 0, evidence: 1 },
   brief: { label: 'Brief', rank: 1, range: [350, 650], floor: 170, pass: 0.75, sections: 2, developed: 1, evidence: 2 },
-  full: { label: 'Full', rank: 2, range: [650, 1100], floor: 320, pass: 0.8, sections: 4, developed: 2, evidence: 3 },
+  full: { label: 'Full', rank: 2, range: [650, 1100], floor: 300, pass: 0.8, sections: 4, developed: 2, evidence: 3 },
   deep: { label: 'Deep', rank: 3, range: [1000, 1600], floor: 480, pass: 0.85, sections: 5, developed: 3, evidence: 3 }
 };
 
