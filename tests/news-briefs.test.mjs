@@ -42,8 +42,9 @@ test('a fresh material source cluster becomes a publishable PBE News Brief', asy
   assert.ok(!out[0].headline.includes('WNBA announces a new league operations update'));
   // The deck says what happened and who reported it; the publisher's exact headline is quoted once, in the body.
   assert.match(out[0].deck, /Reported by NBC Sports on Sep 13\.$/);
-  assert.match(out[0].body[0], /^NBC Sports reported a league development on Sunday, September 13, under the headline “WNBA announces a new league operations update”\.$/);
-  assert.match(out[0].body[1], /^ESPN followed at \d{1,2}:\d{2} [AP]M ET with “WNBA league operations update confirmed”\.$/);
+  // League desk: FACT (what changed, attributed and corroborated) → UNKNOWN (what remains unresolved); nothing invented.
+  assert.match(out[0].body[0], /^NBC Sports reported on Sunday, September 13, under the headline “WNBA announces a new league operations update”\. ESPN followed at \d{1,2}:\d{2} [AP]M ET with “WNBA league operations update confirmed”\. The details beyond that headline remain the publishers’ reporting\.$/);
+  assert.deepEqual(out[0].sections.map((x) => x.title), ['What changed', 'What remains unresolved']);
   assert.equal(out[0].published_at, iso(5));
   assert.equal(out[0].bettor_angle, null, 'no stored market: no standing betting disclaimer');
 });

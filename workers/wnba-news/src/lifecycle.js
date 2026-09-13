@@ -41,7 +41,9 @@ export function sharedFactsUnchanged(prevItem, a) {
   const n = a?.facts || {};
   const keys = Object.keys(p).filter((k) => k in n && !SHARED_EXCLUDE.has(k));
   if (!keys.length) return false;
-  const norm = (x) => JSON.stringify(x, (k, v) => (typeof v === 'number' ? Math.round(v * 1000) / 1000 : v));
+  // Order-insensitive (a feed can list the same players in a different order) and rounding-stable.
+  const canon = (x) => (Array.isArray(x) ? x.map(canon).sort((p, q) => JSON.stringify(p).localeCompare(JSON.stringify(q))) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).filter(([k]) => !/(captured_at|fetched_at|age_s|stale)$/.test(k)).sort(([p], [q]) => p.localeCompare(q)).map(([k, v]) => [k, canon(v)])) : typeof x === 'number' ? Math.round(x * 1000) / 1000 : x);
+  const norm = (x) => JSON.stringify(canon(x));
   return keys.every((k) => norm(p[k]) === norm(n[k]));
 }
 
@@ -52,7 +54,7 @@ export function revisionKind(a, prev, version, prevItem = null) {
   const to = a.depth?.class;
   if (from && to && DEPTH_RANK[to] > DEPTH_RANK[from]) return { kind: 'depth_upgrade', from, to };
   const prevVersion = String(prev.input_hash || '').split('|')[0];
-  const sameFacts = prev.facts_digest ? prev.facts_digest === factsDigest(a) : prevItem ? sharedFactsUnchanged(prevItem, a) : false;
+  const sameFacts = prevItem ? sharedFactsUnchanged(prevItem, a) : prev.facts_digest ? prev.facts_digest === factsDigest(a) : false;
   if (prevVersion && prevVersion !== version && sameFacts) return { kind: 'editorial_quality_upgrade', from_generator: prevVersion };
   return { kind: 'data_update' };
 }
@@ -298,7 +300,7 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
     const history = [...(prev?.revisions || [])];
     if (prev) {
       if (a.provenance && !prev.provenance_contract) history.push({ at: liveAt, kind: 'metadata_correction', note: 'Source time now records when the source record was observed; the earlier version showed an estimated event time.' });
-      const prevItem = !prev.facts_digest && getItem ? await getItem(prev.id).catch(() => null) : null;
+      const prevItem = getItem ? await getItem(prev.id).catch(() => null) : null;
       history.push({ at: liveAt, ...revisionKind(a, prev, versionOf(a), prevItem), generator: versionOf(a), ...(a.depth?.class ? { depth_class: a.depth.class } : {}) });
     }
     a.revisions = history.slice(-20);

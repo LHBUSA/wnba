@@ -24,7 +24,9 @@ export { injuryDeep as injuryArticles, transactionDeep as transactionArticles, r
 // 1.3.0: newsroom depth ladder enrichment — every result names its performers; injuries carry recent games, the team
 // around the player and the next opponent; transactions carry role-aware reads, feed status, rotation rank, recent
 // moves and the next game.
-export const ARTICLE_VERSION = 'wnba-articles/1.3.0';
+// 1.4.0: preview Market is facts only, analysis moves to additive Intelligence; trends are materiality-gated and carry
+// market-now, persistence and opponent context; the legacy upgrade pass rebuilds stories whose records are still in reach.
+export const ARTICLE_VERSION = 'wnba-articles/1.4.0';
 
 // ------------------------------------------------------------ formatting
 
@@ -840,6 +842,8 @@ export function cardOf(a) {
     // Cards follow the same Intelligence decision as the article: a bettor read appears only for actionable relevance.
     bettor_snippet: intelligenceOf(a).market_relevance === 'actionable' && intelligenceOf(a).render.intelligence ? intelligenceOf(a).copy?.summary || null : null,
     intelligence: { market_relevance: intelligenceOf(a).market_relevance, market_data_status: intelligenceOf(a).market_data_status },
+    // Whether the Intelligence module renders, and whether it was suppressed because its copy added nothing.
+    intel: { rendered: Boolean(intelligenceOf(a).render.intelligence), suppressed: intelligenceOf(a).market_relevance !== 'none' && Boolean(a.bettor_angle) && !intelligenceOf(a).render.intelligence },
     // International game identity for cards, related stories and share images (the media resolver reads it).
     intl: a.context?.international ? { competition: a.context.international.competition, round: a.context.international.round, medal: a.context.international.medal, winner: a.context.international.winner, loser: a.context.international.loser, featured: a.context.international.featured } : null,
     status: a.status,

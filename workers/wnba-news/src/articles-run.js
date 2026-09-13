@@ -5,7 +5,9 @@
 
 import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, ARTICLE_VERSION } from './articles.js';
 import { briefArticles, underlyingEvent, BRIEF_VERSION } from './briefs.js';
+import { withheldBySourcePolicy } from './sources.js';
 import { assessDepth, DEPTH_VERSION } from './depth.js';
+import { reviewStory, needsReview, assessStored, listedCard, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles } from './lifecycle.js';
@@ -80,10 +82,13 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const runs = {};
   const produced = [];
   let coverageDecisions = [];
+  const deskDecisions = {};
   const priorIndex = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
   // Backfill: regenerate EXISTING international stories (same id, slug, origin) with the current generator.
   const backfill = backfillInternational ? new Set(priorIndex.filter((c) => c.kind === 'international' && !c.superseded_by).map((c) => (c.entities || []).find((e) => e?.type === 'intl_game')?.id).filter(Boolean).map(String)) : null;
-  const doTrends = (await env.NEWS_KV.get(`art:v1:trends:${today}`)) === null || force;
+  // Trends run once per ET day per generator version: a new trend generator is picked up by the normal pass.
+  const trendKey = `art:v1:trends:${today}:${ARTICLE_VERSION}`;
+  const doTrends = (await env.NEWS_KV.get(trendKey)) === null || force;
   for (const [name, fn, on] of [
     ['injury', injuryArticles, true], ['transaction', transactionArticles, true], ['result', resultArticles, true],
     ['preview', previewArticles, true], ['trend', trendArticles, doTrends], ['props', propArticles, true], ['market', marketMoveArticles, true],
@@ -98,19 +103,20 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     try {
       const xs = await fn(ctx);
       runs[name] = xs.length;
+      if (Array.isArray(xs.decisions) && name !== 'brief') deskDecisions[name] = xs.decisions.slice(0, 20);
       produced.push(...xs);
     } catch (e) {
       runs[name] = `error: ${e.message}`;
       errors.push(`${name}: ${e.stack || e.message}`.slice(0, 300));
     }
   }
-  if (doTrends) await env.NEWS_KV.put(`art:v1:trends:${today}`, '1', { expirationTtl: 3 * 86400 });
+  if (doTrends) await env.NEWS_KV.put(trendKey, "1", { expirationTtl: 3 * 86400 });
 
   const index = priorIndex;
   const held = [];
   const publishable = [];
   const feed = inj?.items || [];
-  for (const a0 of produced) {
+  const gateOne = async (a0) => {
     const a = await withSlug(a0);
     // Added gate: gate.js validate() has already run inside finalize(); reconcile checks what a number gate
     // cannot see (season provenance, absence context, injury-feed completeness, co-leaders, market alignment,
@@ -124,8 +130,42 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     // Word count is a diagnostic; substance, repetition and Intelligence duplication decide.
     a.depth = assessDepth(a, { now });
     if (!a.depth.pass) { a.status = 'held'; a.reconcile.failures.push(...a.depth.failures.filter((f) => !a.gate.failures.includes(f))); }
-    if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, depth: { class: a.depth.class, score: a.depth.score, words: a.depth.words }, failures: [...new Set([...a.gate.failures, ...a.reconcile.failures])].slice(0, 8), at: started }); continue; }
+    if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, depth: { class: a.depth.class, score: a.depth.score, words: a.depth.words }, failures: [...new Set([...a.gate.failures, ...a.reconcile.failures])].slice(0, 8), at: started }); return a; }
     publishable.push(a);
+    return a;
+  };
+  for (const a0 of produced) await gateOne(a0);
+
+  // Legacy upgrade pass (legacy.js): a live story below the current standard whose records are still in reach is rebuilt
+  // by the CURRENT generator for its desk and goes through exactly the same gate. Bounded per pass; never creates a story.
+  const producedIds = new Set(produced.map((a) => a.id));
+  const regenerations = new Map();
+  const getItem = (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json');
+  let upgradeBudget = 6;
+  for (const c of priorIndex) {
+    if (upgradeBudget <= 0) break;
+    if (!listedCard(c) || producedIds.has(c.id) || !['result', 'performance', 'transaction', 'trend'].includes(c.kind) || !needsReview(c)) continue;
+    const item = await getItem(c.id).catch(() => null);
+    if (!item || assessStored(item, { now }).pass) continue;
+    upgradeBudget -= 1;
+    let xs = [];
+    try {
+      if (c.kind === 'result' || c.kind === 'performance') {
+        const gameId = (item.entities || []).find((e) => e?.type === 'game')?.id || item.context?.game?.game_id;
+        if (gameId) xs = await resultArticles({ ...ctx, finals: [{ game_id: gameId }] });
+      } else if (c.kind === 'transaction') {
+        const day = String(item.published_at || '').slice(0, 10);
+        const moves = (tx?.items || []).filter((t) => String(t.team?.team_id) === String(c.lead_team_id) && String(t.date).slice(0, 10) === day);
+        if (moves.length) xs = await transactionArticles({ ...ctx, transactions: moves, windowDays: 60 });
+      } else if (c.kind === 'trend' && !doTrends) {
+        xs = await trendArticles({ ...ctx, teams: (ctx.teams || []).filter((t) => String(t.team_id) === String(c.lead_team_id)) });
+      }
+    } catch (e) { errors.push(`legacy upgrade ${c.id}: ${e.message}`.slice(0, 200)); }
+    const mine = xs.filter((a) => a.id === c.id || (c.kind === 'trend' && a.lead_team_id === c.lead_team_id));
+    if (!mine.length) { regenerations.set(c.id, null); continue; }
+    const before = publishable.length;
+    const a = await gateOne(mine[0]);
+    regenerations.set(c.id, { passed: publishable.length > before, failures: a.depth?.failures?.length ? a.depth.failures : [...(a.gate?.failures || []), ...(a.reconcile?.failures || [])] });
   }
 
   // New material event = new story; same event with new data = revision that keeps its editorial origin.
@@ -144,9 +184,23 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   // Standalone stories that were only another publisher's feature (no underlying development) are demoted to external
   // coverage — deliberately, once per brief-generator version, keeping the item, its URL and its revision history.
   const demotions = await demoteExternalCoverage(next, { at: started, getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'), putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }) });
+  // Every live story gets an intentional quality state (legacy.js). Rewritten stories passed the gate this pass.
+  const writtenIds = new Set(events.map((e) => e.id));
+  let reviewed = 0;
+  for (const c of next) {
+    if (c.superseded_by) continue;
+    if (writtenIds.has(c.id)) { c.quality_state = 'current_quality'; c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'current_quality', reason: 'written this pass through the current gate', at: started, generator: String(c.input_hash || '').split('|')[0] || null }; continue; }
+    if (!needsReview(c) || reviewed >= 60) continue;
+    reviewed += 1;
+    const teamName = c.kind === 'trend' ? (ctx.teams || []).find((t) => String(t.team_id) === String(c.lead_team_id))?.short_name : null;
+    const deskDecision = teamName ? (deskDecisions.trend || []).find((x) => x.team === teamName) || null : null;
+    const review = reviewStory({ card: c, item: await getItem(c.id).catch(() => null), now, regeneration: regenerations.has(c.id) ? regenerations.get(c.id) : null, cards: next, withheld: withheldBySourcePolicy(c), deskDecision });
+    c.quality_state = review.state;
+    c.quality_review = review;
+  }
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter((c) => !c.superseded_by && c.status !== 'external_coverage').length, depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), coverage_decisions: coverageDecisions.slice(0, 20), demotions, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), coverage_decisions: coverageDecisions.slice(0, 20), desk_decisions: deskDecisions, demotions, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }
@@ -179,7 +233,7 @@ export async function demoteExternalCoverage(cards, { at, getItem, putItem }) {
 
 /** Newsroom health: depth-class distribution, substance and structure by desk, upgrades and substance holds. */
 export function newsroomHealth(cards, { produced = [], held = [], events = [] } = {}) {
-  const live = cards.filter((c) => !c.superseded_by && c.status !== 'external_coverage');
+  const live = cards.filter(listedCard);
   const median = (xs) => { const s = [...xs].sort((p, q) => p - q); return s.length ? s[Math.floor(s.length / 2)] : null; };
   const byDesk = {};
   for (const a of produced) {
@@ -192,13 +246,24 @@ export function newsroomHealth(cards, { produced = [], held = [], events = [] } 
     byDesk[d].classes[a.depth?.class] = (byDesk[d].classes[a.depth?.class] || 0) + 1;
   }
   const classes = {};
-  for (const c of live) classes[c.depth_class || 'unclassified'] = (classes[c.depth_class || 'unclassified'] || 0) + 1;
+  for (const c of live) { const k = c.depth_class || c.depth?.class || c.quality_review?.depth?.class || 'unclassified'; classes[k] = (classes[k] || 0) + 1; }
   return {
     live_depth_classes: classes,
     by_desk: Object.fromEntries(Object.entries(byDesk).map(([k, v]) => [k, { stories: v.stories, median_words: median(v.words), median_dimensions: median(v.dims), median_sections: median(v.sections), classes: v.classes }])),
     upgraded_in_place: live.filter((c) => (c.revisions || []).some((r) => r.kind === 'depth_upgrade' || r.kind === 'editorial_quality_upgrade')).length,
     held_for_substance: held.filter((h) => (h.failures || []).some((f) => f.startsWith('depth:'))).length,
+    held_total: held.length,
     external_coverage: cards.filter((c) => c.status === 'external_coverage').length,
+    quality_states: Object.fromEntries(QUALITY_STATES.map((k) => [k, cards.filter((c) => !c.superseded_by && (c.quality_state || (c.status === 'external_coverage' ? 'external_coverage' : null)) === k).length])),
+    unreviewed: cards.filter((c) => !c.superseded_by && !c.quality_state && c.status !== 'external_coverage').length,
+    legacy_below_standard: cards.filter((c) => !c.superseded_by && ['legacy_acceptable', 'quality_upgrade_available'].includes(c.quality_state)).length,
+    words_by_desk: Object.fromEntries([...new Set(live.map((c) => c.depth?.contract || c.quality_review?.depth?.contract || c.kind))].map((k) => { const ws = live.filter((c) => (c.depth?.contract || c.quality_review?.depth?.contract || c.kind) === k).map((c) => c.depth?.words ?? c.quality_review?.depth?.words).filter(Number.isFinite); return [k, median(ws)]; }).filter(([, v]) => v !== null)),
+    market_modules_with_attached_market: live.filter((c) => c.intel?.rendered && c.has_market).length,
+    intelligence_suppressed_non_additive: live.filter((c) => c.intel?.suppressed).length,
+    visual_failures_this_run: held.filter((h) => (h.failures || []).some((f) => f.startsWith('visual:'))).length,
+    provenance_failures_this_run: held.filter((h) => (h.failures || []).some((f) => f.startsWith('provenance:'))).length,
+    duplication_failures_this_run: [...held, ...produced.map((a) => ({ failures: a.depth?.failures || [] }))].filter((h) => (h.failures || []).some((f) => /repeated|restates|duplicate/.test(f))).length,
+    idea_repetitions_diagnostic: produced.reduce((s, a) => s + (a.depth?.idea_repetitions || 0), 0),
     revisions_this_run: events.filter((e) => e.event === 'revision').length
   };
 }

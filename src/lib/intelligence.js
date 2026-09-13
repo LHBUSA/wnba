@@ -18,9 +18,11 @@
 // listed "Markets touched: player workload" and rendered a Market Angle advertising the props board — three
 // modules, three independent inferences.
 
-import { sentencesOf, numbersOf, restates } from './semantic.js';
+import { sentencesOf, numbersOf, restates, repeatsIdea } from './semantic.js';
 
-export const INTELLIGENCE_VERSION = 'pbe-intelligence/1.1.0';
+// 1.2.0: additive copy also rejects paraphrased ideas (semantic.js repeatsIdea). Copy stored under an older version is
+// re-filtered on read, so a page never shows a module the current rule would suppress.
+export const INTELLIGENCE_VERSION = 'pbe-intelligence/1.2.0';
 
 // Kinds whose article is built on a stored sportsbook capture by definition.
 const MARKET_KINDS = new Set(['props', 'market', 'trend']);
@@ -87,7 +89,9 @@ export function additiveCopy(a, { relevance = null } = {}) {
   const nums = new Set(corpus.flatMap(numbersOf));
   const rel = relevance || decideIntelligence({ kind: a.kind, entities: a.entities, market: a.market_watch || a.market_angle || null }).market_relevance;
   const newFigure = (x) => numbersOf(x).some((n) => !/^[0-5]$/.test(n) && !nums.has(n));
-  const keep = (x) => x && !INTELLIGENCE_BOILERPLATE.test(x) && !restates(x, corpus, nums) && (rel === 'actionable' || newFigure(x));
+  // Restating a sentence OR repeating its idea in other words ("the key consideration for bettors is availability")
+  // is not additive.
+  const keep = (x) => x && !INTELLIGENCE_BOILERPLATE.test(x) && !restates(x, corpus, nums) && !repeatsIdea(x, corpus) && (rel === 'actionable' || newFigure(x));
   const read = [b.summary, ...(b.supporting || [])].filter(Boolean).flatMap(sentencesOf);
   const kept = read.filter(keep);
   const against = (b.against || []).filter(keep);
@@ -98,7 +102,7 @@ export function additiveCopy(a, { relevance = null } = {}) {
 /** The stored decision, or the same decision recomputed for an article written before the contract existed. */
 export function intelligenceOf(a) {
   const base = a?.intelligence?.version && a.intelligence.render ? a.intelligence : decideIntelligence({ kind: a?.kind, entities: a?.entities, market: a?.market_watch || a?.market_angle || null, international: a?.kind === 'international' });
-  if (base.copy !== undefined) return base;
+  if (base.copy !== undefined && base.version === INTELLIGENCE_VERSION) return base;
   // Legacy record: the module renders only the additive part of its copy.
   const copy = base.render.intelligence ? additiveCopy(a, { relevance: base.market_relevance }) : null;
   return { ...base, copy, render: { ...base.render, intelligence: base.render.intelligence && Boolean(copy?.summary) } };

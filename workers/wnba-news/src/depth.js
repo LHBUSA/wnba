@@ -17,13 +17,13 @@
 // sections, an Intelligence module restating the body, play-by-play language without play-by-play, and unsupported
 // characterisation.
 
-import { sentencesOf, contentTokens, restates } from '../../../src/lib/semantic.js';
+import { sentencesOf, contentTokens, restates, duplicatedIdeas, repeatsIdea } from '../../../src/lib/semantic.js';
 
 export const DEPTH_VERSION = 'wnba-depth/1.0.0';
 
 export const DEPTH_CLASSES = {
   flash: { label: 'Flash', rank: 0, range: [150, 350], floor: 40, pass: 0.6, sections: 1, developed: 0, evidence: 1 },
-  brief: { label: 'Brief', rank: 1, range: [350, 650], floor: 170, pass: 0.75, sections: 2, developed: 1, evidence: 2 },
+  brief: { label: 'Brief', rank: 1, range: [350, 650], floor: 120, pass: 0.75, sections: 2, developed: 1, evidence: 2 },
   full: { label: 'Full', rank: 2, range: [650, 1100], floor: 300, pass: 0.8, sections: 4, developed: 2, evidence: 3 },
   deep: { label: 'Deep', rank: 3, range: [1000, 1600], floor: 480, pass: 0.85, sections: 5, developed: 3, evidence: 3 }
 };
@@ -176,7 +176,10 @@ export function classifyDepth(a, { now = Date.now() } = {}) {
   // A story derived from external reporting reaches Full only when PropBetEdge's own records confirm the event (a
   // matching transaction or injury listing) or independent publishers corroborate it, on top of rich records.
   const b = a.kind === 'brief' ? a.facts?.brief || {} : null;
-  const confirmed = b ? Boolean(b.verified?.transaction || (['injury', 'availability'].includes(b.event_type) && b.verified?.injury?.status) || dims.includes('corroboration')) : true;
+  // Full needs BOTH a PropBetEdge record that confirms the event (or, lacking one, a second publisher) and rich records;
+  // a single-publisher report stays Brief even when a record confirms it.
+  const pbeConfirms = b ? Boolean(b.verified?.transaction || b.verified?.record?.verified || (['injury', 'availability'].includes(b.event_type) && b.verified?.injury?.status)) : true;
+  const confirmed = b ? (pbeConfirms && dims.includes('corroboration')) || (!pbeConfirms && dims.includes('corroboration') && (b.value?.count ?? 0) >= 5) : true;
   if (developing && n <= 3) { cls = 'flash'; reasons.push('developing event with sparse verified records'); }
   else if (b && (!confirmed || (b.value?.count ?? 0) < 5)) { cls = n >= 2 || !developing ? 'brief' : 'flash'; reasons.push(confirmed ? 'external report with limited PropBetEdge records' : 'external report not yet confirmed by a PropBetEdge record or a second publisher'); }
   else if (importance >= 3 && n >= 6) { cls = 'deep'; reasons.push('significant event with the richest records'); }
@@ -199,9 +202,10 @@ function elementsFor(contract, a, cls) {
   const all = body.join(' ');
   const S = (k) => sectionText(a, k);
   const lede = S('lede').length ? S('lede') : body.slice(0, a.sections?.[0]?.count || 1);
+  const ledeWords = words(lede.slice(0, 2));
   const E = [];
   const el = (key, supported, met, core = false) => E.push({ key, supported: Boolean(supported), met: Boolean(supported && met), core });
-  el('lede', true, lede.length && words(lede.slice(0, 1)) >= 20, true);
+  el('lede', true, lede.length && (words(lede.slice(0, 1)) >= 20 || ledeWords >= 25), true);
 
   switch (contract) {
     case 'international': {
@@ -276,14 +280,18 @@ function elementsFor(contract, a, cls) {
     default: {
       // external / league / record / draft briefs
       const b = f.brief || {};
-      const value = b.value || { dimensions: [] };
+      // League/business desk: corroboration by independent publishers is part of what the story establishes.
+      const value = { dimensions: [...((b.value || {}).dimensions || []), ...(b.desk === 'league' && (b.publishers || 0) >= 2 ? ['corroboration'] : [])] };
       el('the_development', true, S('change').length >= 1, true);
       el('underlying_event', true, b.underlying_event === true, true);
-      el('original_value', true, value.dimensions.length >= (cls === 'full' || cls === 'deep' ? 4 : cls === 'brief' ? 2 : 0), true);
-      el('records_developed', value.dimensions.length, S('records').length + S('team').length >= (value.dimensions.length >= 3 ? 2 : 1));
-      const why = S('why').filter((p) => !BOILERPLATE.test(p));
+      const leagueDesk = b.desk === 'league';
+      el('original_value', true, value.dimensions.length >= (cls === 'full' || cls === 'deep' ? 4 : cls === 'brief' ? (leagueDesk ? 1 : 2) : 0), true);
+      el('records_developed', value.dimensions.length, S('records').length + S('team').length + S('context').length + S('game').length + S('history').length >= (value.dimensions.length >= 3 ? 2 : 1));
+      const why = [...S('why'), ...S('implication'), ...S('history')].filter((p) => !BOILERPLATE.test(p));
       el('why_it_matters', value.dimensions.length, why.length >= 1);
-      el('next', true, S('next').filter((p) => !BOILERPLATE.test(p)).length >= 1, true);
+      el('next', true, [...S('next'), ...S('unknown'), ...S('implication')].filter((p) => !BOILERPLATE.test(p)).length >= 1, true);
+      // Record desk: the achievement must be in PropBetEdge's own records.
+      if (b.desk === 'record') el('record_verified', true, b.verified?.record?.verified === true, true);
     }
   }
   // Shared: sections developed for the class, and evidence cited for it.
@@ -299,6 +307,10 @@ function elementsFor(contract, a, cls) {
 // ------------------------------------------------------------ hard failures
 
 const PBP_LANGUAGE = /(lead changed hands|lead changes?\b|never trailed|score was tied|last (led|tie)|largest lead was|pulled away for good|over the next stretch|with \d{1,2}:\d{2} left|\bpossessions? (in a row|straight)|\b\d+[-–]0 run\b|unanswered)/i;
+// Scouting language is opinion, never a record: rejected in PropBetEdge prose (quoted publisher headlines excepted).
+export const SCOUTING_LANGUAGE = /\b(elite feel|high motor|(nba|wnba)[- ]ready|a (natural )?winner|winning mentality|generational|can['’]t[- ]miss|franchise[- ]altering|high ceiling|sky-high ceiling|upside|special talent|superstar|game[- ]changer|elite)\b/i;
+// League / business / draft desks: no financial figures, motives, negotiating positions or legal conclusions of our own.
+export const BUSINESS_CLAIMS = /(\$\s?\d|\b\d+(\.\d+)?\s?(million|billion)\b|\bvaluations?\b|\bin an? effort to\b|\bseeks? to\b|\bseek to\b|\baims? to\b|\bwants? to\b|\bmotivat\w*|\bleverage\b|\bnegotiating (position|stance|tactic)s?\b|\bhardball\b|\b(is|was|are|were) (illegal|unlawful|meritless|frivolous|baseless|justified)\b|\bviolat(e|ed|es|ion)\b|\bliable\b|\bwill (win|lose)\b)/i;
 const UNSUPPORTED = /\b(momentum|wanted it more|refused to lose|willed (her|them|the)|clutch gene|statement win|sent a message|hungrier)\b/i;
 
 function repetition(body) {
@@ -323,8 +335,7 @@ function repetition(body) {
 export function intelligenceDuplicates(a) {
   const copy = a.intelligence?.copy;
   if (!copy || !a.intelligence?.render?.intelligence) return [];
-  const corpus = sentencesOf((a.body || []).join(' '));
-  return [copy.summary, ...(copy.supporting || [])].filter(Boolean).filter((s) => restates(s, corpus));
+  return duplicatedIdeas([copy.summary, ...(copy.supporting || [])].filter(Boolean), [a.headline, a.deck, ...(a.body || [])].filter(Boolean));
 }
 
 // ------------------------------------------------------------ assessment
@@ -357,9 +368,17 @@ export function assessDepth(a, { now = Date.now() } = {}) {
   const pbpAvailable = contract === 'international' ? Boolean(a.facts?.game?.pbp) : contract === 'game' ? Boolean(a.facts?.lead) : true;
   if (!pbpAvailable && PBP_LANGUAGE.test(text)) hard.push(`depth: play-by-play language without play-by-play (“${text.match(PBP_LANGUAGE)[0]}”)`);
   if (UNSUPPORTED.test(text)) hard.push(`depth: unsupported characterisation (“${text.match(UNSUPPORTED)[0]}”)`);
+  const own = text.replace(/“[^”]*”/g, ' '); // PropBetEdge's own words: quoted publisher headlines removed
+  if (SCOUTING_LANGUAGE.test(own)) hard.push(`depth: scouting language is not a record (“${own.match(SCOUTING_LANGUAGE)[0]}”)`);
+  const deskName = deskOfStory(a);
+  if (['league', 'draft'].includes(deskName) && BUSINESS_CLAIMS.test(own)) hard.push(`depth: unsourced financial, motive or legal claim (“${own.match(BUSINESS_CLAIMS)[0]}”)`);
   const dupIntel = intelligenceDuplicates(a);
   if (dupIntel.length) hard.push(`depth: PropBetEdge Intelligence restates the article body (“${dupIntel[0].slice(0, 80)}”)`);
 
+  // Diagnostic (not a hold): body sentences that repeat an idea from an EARLIER section without adding a figure or name.
+  let ideaRepetitions = 0;
+  const bySection = (a.sections || []).map((s) => sentencesOf((a.body || []).slice(s.first, s.first + s.count).join(' ')));
+  for (let i = 1; i < bySection.length; i += 1) { const earlier = bySection.slice(0, i).flat(); ideaRepetitions += bySection[i].filter((x) => repeatsIdea(x, earlier)).length; }
   const failures = [...hard];
   if (unmetCore.length) failures.push(`depth: ${rule.label} ${contract} story is missing core substance: ${unmetCore.join(', ')}`);
   if (score < rule.pass) failures.push(`depth: substance score ${score} is below the ${rule.label} threshold ${rule.pass} (unmet: ${unmet.join(', ')})`);
@@ -384,6 +403,7 @@ export function assessDepth(a, { now = Date.now() } = {}) {
     target_range: rule.range,
     sections: titles.length,
     repetition_ratio: rep.ratio,
+    idea_repetitions: ideaRepetitions,
     pass: failures.length === 0,
     failures,
     diagnostics

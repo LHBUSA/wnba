@@ -272,7 +272,10 @@ test('one structure per class: the same inputs produce byte-identical prose', as
   assert.deepEqual(again.body, stories.preview.body);
   assert.equal(again.headline, stories.preview.headline);
   assert.equal(again.structure, 0);
-  assert.deepEqual(again.sections.map((s) => s.title), ['The read', 'Availability', 'The matchup', 'The market', 'The counter-case', 'What matters next']);
+  // The counter-case is analysis of the price, so it lives in PropBetEdge Intelligence ("What argues against it"); the body's
+  // "The market" section carries only market facts.
+  assert.deepEqual(again.sections.map((s) => s.title), ['The read', 'Availability', 'The matchup', 'The market', 'What matters next']);
+  assert.ok(again.bettor_angle.against.some((x) => /^The case against the 8.5-point spread:/.test(x)));
 });
 
 // ---------------------------------------------------------------- 11. historical runs borrow nothing from today
