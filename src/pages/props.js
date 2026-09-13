@@ -7,10 +7,10 @@ import { american, bookName, fmtDateTimeET, fmtTimeET, fmtDateET, pct, plural } 
 import { sparkline } from '../ui/charts.js';
 
 export const title = () => 'Props & best line';
-export const description = () => 'WNBA best-line board: sportsbook prices, no-vig market consensus, and PropBetEdge model status — always kept separate.';
+export const description = () => 'WNBA best-line board: sportsbook prices and no-vig market consensus with source, book and capture-time context.';
 
 const MARKET_LABEL = { player_points: 'Points', player_rebounds: 'Rebounds', player_assists: 'Assists', player_threes: '3-pointers made' };
-const SUB = 'The best price a sportsbook offers and the market’s no-vig consensus, kept separate — and never blended into a PropBetEdge projection.';
+const SUB = 'The best price a sportsbook offers and the market’s no-vig consensus, clearly separated and timestamped.';
 
 /** Handicap/total lines print as published: no forced decimals, explicit sign on spreads. */
 const sline = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : `${Number(v) > 0 ? '+' : ''}${Number(v)}`);
@@ -52,15 +52,8 @@ export async function mount(root, ctx) {
 
   const readRail = html`<div class="read-rail" aria-label="How to read this board">
     <span class="rk rk-best" tabindex="0"><b>Best price</b><span>sportsbook offer</span><span class="rk-tip">The best number any book in this snapshot posts for that side, with the book named.</span></span>
-    <span class="rk rk-cons" tabindex="0"><b>Consensus</b><span>no-vig market benchmark</span><span class="rk-tip">Median no-vig probability across books (two or more). A market benchmark computed from prices — not a model.</span></span>
-    <span class="rk rk-pbe" tabindex="0"><b>PBE</b><span>not published</span><span class="rk-tip">No validated PropBetEdge WNBA model exists yet. Fair value and model gap are unavailable by design, never inferred from prices.</span></span>
+    <span class="rk rk-cons" tabindex="0"><b>Consensus</b><span>no-vig market benchmark</span><span class="rk-tip">Median no-vig probability across books (two or more), computed from the prices in the stored snapshot.</span></span>
   </div>`;
-
-  // The status comes from the API's own model block, so the page cannot claim more than the service does.
-  const model = (odds.ok && odds.data.pbe_model) || (props.ok && props.data.pbe_model) || null;
-  const pbeStatus = !model || model.status === 'NOT_PUBLISHED'
-    ? html`<div class="pbe-status"><span class="ps-tag">PBE fair value · Not published</span><p>No validated PropBetEdge WNBA model is live yet. Market consensus is shown separately and is never presented as a PBE projection.</p></div>`
-    : '';
 
   const snapRail = (meta, capturedAt, extra = '') => html`<div class="snap-rail">
     <span class="sr-state" data-state="${currentState(meta)}">Current snapshot</span>
@@ -154,7 +147,6 @@ export async function mount(root, ctx) {
   render(root, html`
     ${pageHead({ eyebrow: 'Props · Best line', title: 'Best line board', sub: SUB })}
     ${readRail}
-    ${pbeStatus}
 
     <section class="section">
       <div class="sec-head"><h2 class="sec-title">Game lines</h2>${odds.ok && odds.data.schedule ? html`<span class="note">Ingest ${odds.data.schedule}</span>` : ''}</div>
@@ -171,7 +163,7 @@ export async function mount(root, ctx) {
     </section>
 
     <section class="section">
-      <div class="sec-head"><h2 class="sec-title">Player props</h2><span class="pbe-pill">PBE · Not published</span></div>
+      <div class="sec-head"><h2 class="sec-title">Player props</h2><span class="note">best over/under · no-vig consensus when 2+ books are available</span></div>
       ${!props.ok ? errorState(props, 'The props snapshot') : !propRows.length ? empty('No player props captured yet', 'Player props are captured for games tipping within 36 hours, at the same 8:00 / 1:00 / 6:00 ET ingest. The next slate is outside that window right now, so there is nothing real to show — no placeholder lines.') : html`
         ${snapRail(props.meta, props.data.captured_at)}
         <div class="board-shell">

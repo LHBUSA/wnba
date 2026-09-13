@@ -108,7 +108,7 @@ async function detail(root, ctx) {
           <div class="tile"><small>No-vig ${g.home?.abbr} win</small><b class="cons">${d.market_summary.moneyline.home_no_vig !== null ? `${(d.market_summary.moneyline.home_no_vig * 100).toFixed(1)}%` : '—'}</b><span>market benchmark</span></div>
           <div class="tile"><small>Spread moves</small><b style="height:30px">${raw(sparkline((d.market_history || []).map((h) => h.spread), { width: 110, height: 28 }))}</b><span>${(d.market_history || []).length} capture${(d.market_history || []).length === 1 ? '' : 's'}</span></div>
           <div class="tile"><small>Player props</small><b>${d.market_summary.props?.available ? d.market_summary.props.players : '—'}</b><span>${d.market_summary.props?.available ? 'players captured' : '36h capture window'}</span></div>
-          <div class="tile"><small>PBE fair value</small><b class="na">—</b><span>not published</span></div>
+          <div class="tile"><small>Books captured</small><b>${d.market_summary.books ?? '—'}</b><span>sportsbooks in snapshot</span></div>
         </div>` : html`<p class="note">No market snapshot matched to this game yet. Snapshots run at 8:00, 1:00 and 6:00 ET; a page view never requests new prices.</p>`}
     </section>
 
