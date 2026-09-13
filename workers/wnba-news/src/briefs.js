@@ -56,10 +56,14 @@ function coveredByStructured(canon, members, structured) {
     return published.some((a) => a.kind === 'injury' && a.lead_player_id != null && players.has(String(a.lead_player_id)));
   }
   if (canon.story_type === 'transaction' || canon.story_type === 'trade') {
-    return published.some((a) => a.kind === 'transaction' && (
-      (a.lead_player_id != null && players.has(String(a.lead_player_id))) ||
-      (a.lead_team_id != null && teams.has(String(a.lead_team_id)))
-    ));
+    // A named player is the strongest identity. Do not suppress a new player-specific
+    // event merely because another transaction happened for the same team.
+    if (players.size) {
+      return published.some((a) => a.kind === 'transaction' && a.lead_player_id != null && players.has(String(a.lead_player_id)));
+    }
+    // Team-only publisher items can fall back to team identity because there is no
+    // safer player key available in the source-wire cluster.
+    return published.some((a) => a.kind === 'transaction' && a.lead_team_id != null && teams.has(String(a.lead_team_id)));
   }
   return false;
 }
@@ -120,7 +124,9 @@ export async function briefArticles({ externalItems = [], structured = [], now =
     }
     const player = allEntities.find((e) => e.type === 'player') || null;
     const team = allEntities.find((e) => e.type === 'team') || null;
-    const eventAt = new Date(Math.min(...members.map(when).filter(Boolean))).toISOString();
+    const eventTimes = members.map(when).filter(Boolean);
+    if (!eventTimes.length) continue;
+    const eventAt = new Date(Math.min(...eventTimes)).toISOString();
     const id = await hashId(['brief', cluster_id]);
 
     const headline = headlineFor(canon);
