@@ -21,6 +21,7 @@ const PAGES = {
   injuries: () => import('../pages/injuries.js'),
   news: () => import('../pages/news.js'),
   'news-cat': () => import('../pages/news.js'),
+  'news-team': () => import('../pages/news.js'),
   story: () => import('../pages/story.js'),
   article: () => import('../pages/article.js'),
   standings: () => import('../pages/standings.js'),

@@ -96,8 +96,10 @@ async function feeds(env, url) {
     };
   }
   if (!arts.ok || !teams.ok) return respond('temporarily unavailable', 503, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store', 'retry-after': '300' });
-  const liveDesks = Object.keys(DESKS).filter((k) => arts.data.items.some((c) => c.kind === k || (k === 'performance' && c.kind === 'result')));
+  const liveDesks = Object.keys(DESKS).filter((k) => arts.data.items.some((c) => !c.superseded_by && (c.kind === k || c.desk === k || (k === 'performance' && c.kind === 'result'))));
+  const teamNews = teams.data.teams.map((t) => String(t.team_id)).filter((id) => arts.data.items.some((c) => !c.superseded_by && (String(c.lead_team_id) === id || (c.entities || []).some((e) => e?.type === 'team' && String(e.id) === id))));
   const body = sitemapXml({
+    teamNews,
     articles: arts.data.items,
     players: players.ok ? players.data.players : [],
     teams: teams.data.teams,

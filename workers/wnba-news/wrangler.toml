@@ -6,7 +6,7 @@ workers_dev = true
 
 # Independent WNBA newsroom lane: its own Worker, KV namespace and cron.
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["*/5 * * * *"]
 
 [[kv_namespaces]]
 binding = "NEWS_KV"

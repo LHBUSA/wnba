@@ -795,11 +795,22 @@ export async function withSlug(a) {
   return a;
 }
 
+// Newsroom desk a story files under. Structured stories file by kind; a News Brief files under its event's lane, so
+// an official injury update lands on the Injury Desk and a CBA report on the League desk as well as News Briefs.
+const BRIEF_DESK = { injuries: 'injury', roster: 'transaction', league: 'league', international: 'international' };
+export function deskOf(a) {
+  if (a.kind === 'brief') return BRIEF_DESK[a.context?.brief?.desk] || null;
+  if (a.kind === 'injury' || a.kind === 'transaction' || a.kind === 'international') return a.kind;
+  return null;
+}
+
 export function cardOf(a) {
   return {
     id: a.id,
     slug: a.slug,
     kind: a.kind,
+    desk: deskOf(a),
+    event_type: a.context?.brief?.event_type || null,
     category: a.category,
     headline: a.headline,
     deck: a.deck,

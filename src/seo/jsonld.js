@@ -186,9 +186,11 @@ export function pageGraph(route, meta, data = {}) {
       break;
     }
     case 'news':
+    case 'news-team':
     case 'news-cat': {
       crumbs.push(['News', '/news']);
       if (route === 'news-cat') crumbs.push([DESKS[data.kind] || 'Desk', meta.path]);
+      if (route === 'news-team') crumbs.push([data.team?.name ? `${data.team.name} news` : 'Team news', meta.path]);
       const items = (data.items || []).slice(0, 30).map((c) => ({ path: `/news/${c.slug}`, name: c.headline }));
       g.push(webPage(meta, 'CollectionPage', { mainEntity: { '@id': `${meta.url}#list` }, publisher: { '@id': IDS.newsroom } }), itemList(meta.url, items));
       break;

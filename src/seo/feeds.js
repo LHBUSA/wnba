@@ -48,7 +48,7 @@ export const intlPlayerPath = (p) => `/international/players/${String(p.player_i
  * @param {object} o { articles, players, teams, games, desks } — desks: kinds that currently have stories.
  * lastmod is emitted only where a real content date exists (article origin / revision); never the build time.
  */
-export function sitemapXml({ articles = [], players = [], teams = [], games = [], desks = Object.keys(DESKS), international = null } = {}) {
+export function sitemapXml({ articles = [], players = [], teams = [], games = [], desks = Object.keys(DESKS), teamNews = [], international = null } = {}) {
   const urls = [];
   const add = (path, lastmod) => urls.push(`  <url><loc>${xml(`${SITE}${path}`)}</loc>${lastmod ? `<lastmod>${xml(new Date(ms(lastmod)).toISOString())}</lastmod>` : ''}</url>`);
   const seen = new Set();
@@ -56,6 +56,8 @@ export function sitemapXml({ articles = [], players = [], teams = [], games = []
   const newest = canonicalArticles(articles)[0];
   for (const p of STATIC_PATHS) once(p, p === '/news' && newest ? newest.first_published_at : null);
   for (const k of desks) if (DESKS[k]) once(`/news/c/${k}`);
+  // Team news pages are listed only for teams with at least one live newsroom story (empty ones are noindex).
+  for (const id of teamNews) once(`/news/teams/${id}`);
   for (const c of canonicalArticles(articles)) {
     const rev = ms(c.revised_at);
     once(`/news/${c.slug}`, rev && rev > ms(origin(c)) ? c.revised_at : origin(c));

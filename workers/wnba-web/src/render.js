@@ -17,7 +17,7 @@ import { loadTeam, teamView } from '../../../src/views/team.js';
 import { loadMatchup, matchupView, loadMatchupsList, matchupsListView } from '../../../src/views/matchups.js';
 import { loadInjuries, injuriesView, loadStandings, standingsView, loadTeams, teamsView, loadPlayers, playersView, loadStats, statsView } from '../../../src/views/league.js';
 import { loadToday, todayView } from '../../../src/views/today.js';
-import { TRUST_VIEWS, sourcesHead, sourcesRegistryView } from '../../../src/views/trust.js';
+import { TRUST_VIEWS, sourcesHead, sourcesRegistryView, newsHealthView } from '../../../src/views/trust.js';
 import { fmtDateET, fmtTimeET } from '../../../src/lib/format.js';
 import { loadIntlHome, intlHomeView, loadCompetition, competitionView, loadIntlGame, intlGameView, loadNationalTeam, nationalTeamView, loadIntlPlayer, intlPlayerView, playerHref } from '../../../src/views/international.js';
 
@@ -56,6 +56,15 @@ export async function renderRoute(pathname, api) {
       const meta = routeMeta(id, { path, params, empty: v.empty });
       if (v.error) return out(503, { ...meta, robots: NOINDEX_ROBOTS }, v.body, null);
       return out(200, meta, v.body, { kind: params.kind, items: data.arts.data.items });
+    }
+    case 'news-team': {
+      const data = await loadNews(api, null, params.teamId);
+      if (data.teamsOk && !data.team) return nf();
+      if (!data.team) return unavailable('This team’s news', { status: 503 });
+      const v = newsView(data);
+      const meta = routeMeta(id, { path, params, data: { team: data.team }, empty: v.empty });
+      if (v.error) return out(503, { ...meta, robots: NOINDEX_ROBOTS }, v.body, null);
+      return out(200, meta, v.body, { team: data.team, items: data.arts.data.items });
     }
     case 'article': {
       const res = await loadArticle(api, params.slug);
@@ -128,8 +137,10 @@ export async function renderRoute(pathname, api) {
       return out(200, routeMeta(id, { path }), intro('Track record', 'Track record', 'Picks are recorded before the outcome with the recorded price, graded deterministically, and losing results render as losing.', [['/methodology', 'Methodology']]));
     case 'pro':
       return out(200, routeMeta(id, { path }), intro('Membership', 'PropBetEdge WNBA Pro', 'The full WNBA research desk: $9.99 a month or $3.99 a week. Cancel anytime.'));
-    case 'sources':
-      return out(200, routeMeta(id, { path }), html`${sourcesHead()}${sourcesRegistryView()}`);
+    case 'sources': {
+      const news = api.newsSources ? await api.newsSources() : { ok: false };
+      return out(200, routeMeta(id, { path }), html`${sourcesHead()}${sourcesRegistryView()}${newsHealthView(news)}`);
+    }
     case 'about':
     case 'editorial-policy':
     case 'corrections':

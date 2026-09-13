@@ -39,6 +39,7 @@ export const DESKS = Object.freeze({
   international: 'International',
   injury: 'Injury Desk',
   transaction: 'Roster Moves',
+  league: 'League',
   performance: 'Performances',
   preview: 'Previews',
   trend: 'Team Trends',

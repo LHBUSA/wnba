@@ -20,11 +20,13 @@ export const ARTICLE_RUN_MIN_GAP_MS = 9 * 60e3;
 // Story identity, editorial-origin clock, duplicate repair and supersession live in lifecycle.js.
 export { articleFirstPublishedAt, injuryIdentity } from './lifecycle.js';
 
-export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null }) {
+export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false }) {
   const started = new Date().toISOString();
   const now = Date.now();
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
-  if (!force && last?.at && now - Date.parse(last.at) < ARTICLE_RUN_MIN_GAP_MS && last.version === ARTICLE_VERSION) return { skipped: 'ran_recently', last_at: last.at };
+  // Source ingest runs every five minutes; the article pass every ten, or immediately when ingest found a new material
+  // official roster / injury / league event (the breaking path).
+  if (!force && !breaking && last?.at && now - Date.parse(last.at) < ARTICLE_RUN_MIN_GAP_MS && last.version === ARTICLE_VERSION) return { skipped: 'ran_recently', last_at: last.at };
 
   const errors = [];
   // One fetch per distinct path per run: box scores, team and player records are shared by every generator
@@ -75,6 +77,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const ctx = { api, injuries: inj?.items || [], externalByPlayer, schedule: games, standingsById, now, transactions: tx?.items || [], dict, finals, upcoming, finalsByTeam, teams: dict.teamsList || [], props, season, regIds, meter, asOf: started };
   const runs = {};
   const produced = [];
+  const priorIndex = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
   const doTrends = (await env.NEWS_KV.get(`art:v1:trends:${today}`)) === null || force;
   for (const [name, fn, on] of [
     ['injury', injuryArticles, true], ['transaction', transactionArticles, true], ['result', resultArticles, true],
@@ -84,7 +87,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     // Material source-wire events run last so the brief generator can suppress events already covered by a
     // structured injury/transaction story. A source cluster is one stable brief: corroboration revises it,
     // while a different material cluster becomes a genuinely new newsroom article.
-    ['brief', () => briefArticles({ externalItems, structured: produced, now, ctx: { api, injuries: inj?.items || null, transactions: tx?.items || [], schedule: games, standingsById, season, dict } }), true]
+    ['brief', () => briefArticles({ externalItems, structured: produced, now, existingIds: new Set(priorIndex.map((c) => c.id)), ctx: { api, injuries: inj?.items || null, transactions: tx?.items || [], schedule: games, standingsById, season, dict } }), true]
   ]) {
     if (!on) { runs[name] = 'skipped (daily)'; continue; }
     try {
@@ -98,7 +101,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   }
   if (doTrends) await env.NEWS_KV.put(`art:v1:trends:${today}`, '1', { expirationTtl: 3 * 86400 });
 
-  const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+  const index = priorIndex;
   const held = [];
   const publishable = [];
   const feed = inj?.items || [];
@@ -128,7 +131,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   });
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter((c) => !c.superseded_by).length, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: breaking ? 'breaking' : force ? 'forced' : 'cadence', version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter((c) => !c.superseded_by).length, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

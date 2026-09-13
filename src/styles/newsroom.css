@@ -96,7 +96,29 @@
 .desk-nav a:hover { color: var(--paper); border-bottom-color: var(--line-2); }
 .desk-nav a.on, .desk-nav a.on:hover { color: var(--gold-bright); border-bottom-color: var(--gold); }
 .desk-nav a:focus-visible { outline-offset: 3px; }
+/* Desk menus: Teams and More desks. Native <details>, so they open by click, Enter or Space without script. */
+.desk-menu { position: relative; }
+.desk-menu > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--dim); padding: 8px 0; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; user-select: none; }
+.desk-menu > summary::-webkit-details-marker { display: none; }
+.desk-menu > summary svg { width: 11px; height: 11px; transition: transform .15s; }
+.desk-menu[open] > summary svg { transform: rotate(180deg); }
+.desk-menu > summary:hover, .desk-menu[open] > summary { color: var(--paper); border-bottom-color: var(--line-2); }
+.desk-menu > summary.on { color: var(--gold-bright); border-bottom-color: var(--gold); }
+.desk-menu > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.desk-menu-list { position: absolute; left: 0; top: calc(100% + 8px); z-index: 40; min-width: 210px; display: grid; gap: 2px; padding: 8px; background: var(--ink-1); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 18px 40px rgba(0,0,0,.45); letter-spacing: .08em; }
+.desk-menu-list--teams { grid-template-columns: repeat(2, minmax(0, 1fr)); min-width: 460px; }
+.desk-nav .desk-menu-list a { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 0; border-radius: 8px; color: var(--dim); font-size: 12px; white-space: nowrap; }
+.desk-nav .desk-menu-list a:hover { background: rgba(255,255,255,.05); color: var(--paper); }
+.desk-nav .desk-menu-list a.on { color: var(--gold-bright); background: rgba(212,175,55,.08); }
+.desk-menu-list a span { overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 900px) { .desk-nav { gap: 6px 15px; } }
+@media (max-width: 640px) {
+  .desk-menu { position: static; }
+  .desk-nav { position: relative; }
+  .desk-menu-list, .desk-menu-list--teams { left: 0; right: 0; min-width: 0; }
+  .desk-menu-list--teams { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .desk-nav .desk-menu-list a { white-space: normal; letter-spacing: .04em; }
+}
 @media (min-width: 381px) and (max-width: 640px) { .desk-nav { gap: 4px 14px; letter-spacing: .09em; } }   /* 390-class phones: desks pack 4 + 4, no lone tab row (360 keeps 3/3/2) */
 
 .front-top { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 32px; align-items: start; }

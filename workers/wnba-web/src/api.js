@@ -46,6 +46,7 @@ export function bindingApi(env, { timeoutMs = 9000 } = {}) {
     news: (p) => N(`/v1/news${qs(p)}`),
     articles: (p) => N(`/v1/articles${qs(p)}`),
     article: (slug) => N(`/v1/articles/${encodeURIComponent(slug)}`),
+    newsSources: () => N('/v1/news/sources'),
     intl: () => I('/v1/international'),
     intlCompetition: (id, view) => I(`/v1/international/competitions/${encodeURIComponent(id)}${view ? `/${view}` : ''}`),
     intlGame: (id) => I(`/v1/international/games/${encodeURIComponent(id)}`),

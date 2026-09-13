@@ -159,6 +159,43 @@ export function findPredecessor(a, cards, { now = Date.now() } = {}) {
   return { prev: null, relistedAfter: null };
 }
 
+export const CROSS_KIND_WINDOW_MS = 48 * 3600e3;
+
+/**
+ * One event, one story, across generators. An official team announcement can reach the newsroom as a News Brief
+ * minutes before ESPN's injury feed or transactions log produces the structured story for the same player. When
+ * both exist, the brief collapses onto the structured story (the richer record), and that story inherits the
+ * brief's earlier editorial origin — PropBetEdge first reported the event when the brief went live.
+ * Idempotent; only briefs filed to the Injury Desk or Roster Moves with a named player are considered.
+ */
+export function collapseBriefsOntoStructured(cards, repairs = []) {
+  const live = cards.filter((c) => !c.duplicate_of);
+  for (const b of live) {
+    if (b.kind !== 'brief' || !b.lead_player_id || !['injury', 'transaction'].includes(b.desk)) continue;
+    const bt = ms(articleFirstPublishedAt(b));
+    if (bt === null) continue;
+    const pid = String(b.lead_player_id);
+    const names = (c) => String(c.lead_player_id) === pid || (c.entities || []).some((e) => e?.type === 'player' && String(e.id) === pid);
+    // Same event: published within the window of each other, or — for injuries — the structured story's listing is
+    // still continuous on the feed (player + status while listed is one event, however long the absence runs).
+    const sameEvent = (c) => Math.abs((ms(articleFirstPublishedAt(c)) ?? Infinity) - bt) <= CROSS_KIND_WINDOW_MS || (c.kind === 'injury' && !c.listing_ended_at && !c.superseded_by && (ms(articleFirstPublishedAt(c)) ?? Infinity) <= bt);
+    const target = live
+      .filter((c) => c.kind === b.desk && c.id !== b.id && !c.duplicate_of && names(c) && sameEvent(c))
+      .sort((x, y) => (ms(articleFirstPublishedAt(x)) ?? 0) - (ms(articleFirstPublishedAt(y)) ?? 0))[0];
+    if (!target) continue;
+    b.duplicate_of = target.id;
+    repairs.push({ id: b.id, fix: 'brief_collapsed_onto_structured', to: target.id });
+    const tt = ms(articleFirstPublishedAt(target));
+    if (tt !== null && bt < tt) {
+      const revisedAt = latest([target.revised_at, target.updated_at, target.first_published_at]);
+      repairs.push({ id: target.id, fix: 'origin_restored', from: target.first_published_at, to: b.first_published_at });
+      target.first_published_at = b.first_published_at;
+      if (revisedAt && ms(revisedAt) > bt) target.revised_at = revisedAt;
+    }
+  }
+  return repairs;
+}
+
 /** Record whether each live injury listing is still on the feed. Only called with a successfully fetched feed. */
 export function trackInjuryListings(cards, feed, at) {
   const onFeed = new Set((feed || []).filter((i) => i?.athlete_id).map((i) => `${i.athlete_id}|${String(i.status || '').toLowerCase()}`));
@@ -206,7 +243,10 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
     const firstPublished = prev ? articleFirstPublishedAt(prev) || started : started;
 
     if (prev && prev.input_hash === inHash) {
-      byId.set(prev.id, { ...prev, first_published_at: firstPublished, ...lifecycle });
+      // Unchanged story: no rewrite, no revision stamp. Card-only routing metadata added after it was written (its
+      // newsroom desk) is filled in so the desks are complete without faking an update.
+      const card = cardOf(a);
+      byId.set(prev.id, { ...prev, first_published_at: firstPublished, ...lifecycle, ...(prev.desk === undefined && card.desk !== undefined ? { desk: card.desk, event_type: card.event_type ?? null } : {}) });
       continue;
     }
     if (prev?.slug) a.slug = prev.slug; // a story keeps its URL when a revision rewrites its headline
@@ -227,6 +267,7 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
   }
 
   const all = [...byId.values()];
+  collapseBriefsOntoStructured(all, repairs);
   if (Array.isArray(feed)) trackInjuryListings(all, feed, started);
   assignSupersession(all);
 

@@ -1,7 +1,7 @@
 // Trust & publisher pages: /about, /editorial-policy, /corrections, /methodology, plus the static source
 // registry shown on /sources. Static, crawlable, concise. Shared by the SPA and the publishing Worker.
 import { html } from '../lib/dom.js';
-import { pageHead } from '../ui/components.js';
+import { pageHead, badge } from '../ui/components.js';
 
 const nav = (here) => html`<nav class="pill-row" aria-label="Trust pages" style="margin:4px 0 20px">
   ${[['/about', 'About'], ['/editorial-policy', 'Editorial policy'], ['/corrections', 'Corrections'], ['/methodology', 'Methodology'], ['/sources', 'Sources']].map(([href, label]) => html`<a class="pill ${href === here ? 'on' : ''}" href="${href}" ${href === here ? html`aria-current="page"` : ''}>${label}</a>`)}
@@ -17,7 +17,8 @@ const page = (here, head, sections) => html`
 export const SOURCE_REGISTRY = [
   ['ESPN public WNBA data', 'Schedules, scores, play-by-play, published shot locations, box scores, rosters, standings, team and player statistics, transactions and the injury feed. Used as structured records; statuses stay ESPN’s and are labelled as such.'],
   ['The Odds API', 'Sportsbook prices stored by PropBetEdge at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET, and player props inside 36 hours of tip. A page view never requests new prices.'],
-  ['Publisher source wire', 'ESPN, WNBA.com, CBS Sports, The IX, Swish Appeal and Her Hoop Stats: headline, link and the publisher-supplied description or summary only. Article bodies are never stored or reproduced; links open on the publisher’s site.'],
+  ['Official league and team announcements', 'WNBA.com news and press releases and all fifteen official team sites, read from the structured post data those pages publish: headline, link, categories and timestamps. Embedded article bodies are discarded. Official team announcements are authoritative for that team’s roster and injury news.'],
+  ['Publisher source wire', 'ESPN, NBC Sports, CBS Sports, Just Women’s Sports, The IX, The Seattle Times, the Las Vegas Review-Journal, the New York Post, the Los Angeles Times, High Post Hoops, Swish Appeal, Winsidr and Her Hoop Stats: headline, link and — where the publisher allows automated reuse — its own short summary. Article bodies are never stored or reproduced; links open on the publisher’s site. Paywalled and aggregator sources are not ingested.'],
   ['Wikimedia Commons', 'Player photographs used under their stated Creative Commons or public-domain licenses, credited on every image, matched to the player by Wikidata identity and reviewed before use.'],
   ['PropBetEdge WNBA Newsroom', 'Stories written by the deterministic PropBetEdge generator from the structured records cited in each story’s evidence list.']
 ];
@@ -26,6 +27,50 @@ export function sourcesRegistryView() {
   return html`<section class="card" style="margin-bottom:16px">
     <div class="card-head"><span class="card-title">Where the data comes from</span><a class="sec-link" href="/methodology">Methodology →</a></div>
     <div class="card-body">${SOURCE_REGISTRY.map(([name, body]) => html`<p><b>${name}.</b> ${body}</p>`)}</div>
+  </section>`;
+}
+
+const STATUS_BADGE = { PASS: ['final', 'OK'], NOT_MODIFIED: ['final', 'OK · 304'], SKIPPED: ['final', 'OK · daily'], DEGRADED: ['stale', 'Degraded'], FAIL: ['out', 'Failing'] };
+const STALE_LABEL = { CURRENT: 'current', QUIET: 'quiet publisher', STALE_FETCH: 'stale — polls failing' };
+const TIER_LABEL = { official: 'Official', national: 'National', womens_media: 'Women’s sports media', local_beat: 'Local beat', analysis: 'Analysis' };
+const ago = (iso, now) => { if (!iso) return '—'; const m = Math.round((now - Date.parse(iso)) / 60e3); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 48 * 60 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+
+/**
+ * Newsroom source health — measured by the wnba-news Worker on every five-minute poll. Shared by /sources in the SPA
+ * and the publishing Worker, so the first HTTP response carries the same table.
+ */
+export function newsHealthView(news, { now = Date.now() } = {}) {
+  if (!news?.ok) return html`<section class="card section"><div class="card-head"><span class="card-title">Newsroom sources</span></div><div class="card-body"><p class="note">Newsroom source health is unavailable right now.</p></div></section>`;
+  const { summary, sources, not_ingested: skipped = [], cadence } = news.data;
+  const polled = sources.filter((s) => s.health);
+  const tiers = ['official', 'national', 'womens_media', 'local_beat', 'analysis'];
+  return html`<section class="card section">
+    <div class="card-head"><span class="card-title">Newsroom sources · health</span><span class="note">${summary ? `${summary.ok} of ${summary.sources} polling OK` : ''}${news.meta?.last_ingest_at ? ` · last poll ${ago(news.meta.last_ingest_at, now)}` : ''}</span></div>
+    <div class="card-body"><p class="note">${cadence}. Conditional requests (ETag / Last-Modified) are used wherever the publisher honours them; a 304 is a successful poll with nothing new.${summary?.failing?.length ? ` Failing now: ${summary.failing.join(', ')}.` : ''}</p></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th class="l">Source</th><th>Status</th><th>HTTP</th><th>Last success</th><th>Fetched</th><th>Accepted</th><th>New events</th><th>Duplicates</th><th>Parse errors</th><th>Newest item</th><th class="l">Staleness</th></tr></thead><tbody>
+      ${tiers.map((t) => {
+        const rows = polled.filter((s) => s.tier === t);
+        if (!rows.length) return '';
+        return html`<tr><td class="l" colspan="11"><span class="eyebrow">${TIER_LABEL[t]}</span></td></tr>${rows.map((s) => {
+          const h = s.health;
+          const [key, label] = STATUS_BADGE[h.last_status] || ['stale', h.last_status];
+          return html`<tr>
+            <td class="l"><a href="${s.home_url}" rel="noopener nofollow" target="_blank">${s.name}</a><div class="note">${s.format === 'news_sitemap' ? 'news sitemap (daily)' : s.format === 'wnba_platform' ? 'official page data' : s.format === 'espn_json' ? 'provider JSON' : 'RSS / Atom'} · ${h.timestamp_quality && (h.timestamp_quality.date_only || 0) > 0 ? 'date-only timestamps' : s.timestamp_quality}</div></td>
+            <td>${badge(key, label)}</td>
+            <td>${h.http_status ?? '—'}</td>
+            <td>${ago(h.last_success_at, now)}</td>
+            <td>${h.last_run?.fetched ?? 0}</td>
+            <td>${h.last_run?.accepted ?? 0}</td>
+            <td>${h.totals_24h?.new_events ?? 0}<span class="note"> /24h</span></td>
+            <td>${h.last_run?.duplicates ?? 0}</td>
+            <td>${h.last_run?.parse_errors ?? 0}</td>
+            <td>${ago(h.latest_item_at, now)}</td>
+            <td class="l">${STALE_LABEL[h.staleness] || h.staleness}${h.error ? html`<div class="note">${h.error}</div>` : ''}</td>
+          </tr>`;
+        })}`;
+      })}
+    </tbody></table></div>
+    ${skipped.length ? html`<div class="card-body"><p class="note"><b>Audited and not ingested:</b> ${skipped.map((x) => `${x.name} (${x.reason.replace(/\.$/, '')})`).join('; ')}.</p></div>` : ''}
   </section>`;
 }
 
@@ -38,7 +83,7 @@ export const TRUST_VIEWS = {
       'The site combines live WNBA data (WNBACast, scores, injuries, standings, stats), stored sportsbook market snapshots and an in-house newsroom. Everything is built for research; nothing here is a guarantee or a pick unless it is recorded on the track record.'
     ]],
     ['The PropBetEdge WNBA Newsroom', [
-      'The newsroom is automated and deterministic. Every ten minutes it reads PropBetEdge’s structured WNBA records — the injury feed, transactions, box scores, schedules, standings and stored market captures — and the attributed publisher source wire, and writes stories only where a record supports one.',
+      'The newsroom is automated and deterministic. It polls official league and team announcements and the attributed publisher source wire every five minutes, and every ten minutes — or immediately when an official team or league announcement is material — it reads PropBetEdge’s structured WNBA records — the injury feed, transactions, box scores, schedules, standings and stored market captures — and writes stories only where a record supports one.',
       'Each story passes a publication gate before it goes live. A story that fails the gate is held, not published.'
     ]],
     ['Publisher reporting vs. PropBetEdge facts', [

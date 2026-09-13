@@ -111,6 +111,82 @@ export function parseWnbaCom(html) {
   })).filter((i) => i.headline && i.url);
 }
 
+export const PARSE_VERSION = 'wnba-news-parse/2.0.0';
+
+// Official WNBA platform pages (www.wnba.com and the <team>.wnba.com sites). No RSS/Atom/WP REST exists; the post
+// list is embedded as structured JSON — `__NEXT_DATA__` on www, the App Router flight payload (`self.__next_f`) on
+// team sites. Post objects share one schema. They also embed the full article body (`content`, `blocksV2`): only
+// the whitelisted fields below are read, so the body never leaves this function.
+function flightText(html) {
+  let out = '';
+  for (const m of html.matchAll(/self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)/g)) {
+    try { out += JSON.parse(m[1]); } catch { /* a malformed chunk is skipped, not fatal */ }
+  }
+  return out;
+}
+
+function balancedObject(s, start) {
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < s.length; i += 1) {
+    const c = s[i];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth += 1;
+    else if (c === '}') { depth -= 1; if (depth === 0) return s.slice(start, i + 1); }
+  }
+  return null;
+}
+
+const utc = (v) => { const t = Date.parse(v || ''); return Number.isFinite(t) ? new Date(t).toISOString() : null; };
+
+export function parseWnbaPlatform(html, { excerpts = true } = {}) {
+  const nd = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  const text = nd ? nd[1] : flightText(html);
+  if (!text) throw new Error('wnba_platform_no_payload');
+  const posts = new Map();
+  for (const m of text.matchAll(/\{"id":(\d+),"type":"post"/g)) {
+    if (posts.has(m[1])) continue;
+    const raw = balancedObject(text, m.index);
+    if (!raw) continue;
+    let o;
+    try { o = JSON.parse(raw); } catch { continue; }
+    if (!o.permalink || !o.title || o.hidefromNewsFeed) continue;
+    const cats = o.taxonomy?.categories && typeof o.taxonomy.categories === 'object' ? Object.values(o.taxonomy.categories) : [];
+    posts.set(m[1], {
+      post_id: String(o.id),
+      headline: stripHtml(o.title),
+      url: o.permalink,
+      summary: excerpts && o.excerpt ? stripHtml(o.excerpt).slice(0, 400) || null : null,
+      published_at: utc(o.date),
+      updated_at: utc(o.modified),
+      byline: null,
+      tags: [...new Set([typeof o.category === 'string' ? o.category : o.category?.name, ...cats].filter((x) => typeof x === 'string' && x))]
+    });
+  }
+  if (!posts.size && nd) return parseWnbaCom(html).map((i) => ({ ...i, summary: excerpts ? i.summary : null }));
+  if (!posts.size) throw new Error('wnba_platform_no_posts');
+  return [...posts.values()].filter((i) => i.headline && i.url);
+}
+
+/** Google News sitemap (title, link, publication date). Date-only timestamps are flagged, never treated as exact. */
+export function parseNewsSitemap(xml, { maxAgeMs = 8 * 86400e3, now = Date.now() } = {}) {
+  const out = [];
+  for (const m of xml.matchAll(/<url>([\s\S]*?)<\/url>/gi)) {
+    const b = m[1];
+    const loc = stripHtml(tag(b, 'loc'));
+    const title = stripHtml(tag(b, 'news:title'));
+    const date = stripHtml(tag(b, 'news:publication_date'));
+    if (!loc || !title || !date) continue;
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(date);
+    const t = Date.parse(dateOnly ? `${date}T00:00:00Z` : date);
+    if (!Number.isFinite(t) || t < now - maxAgeMs) continue;
+    out.push({ headline: title, url: loc, summary: null, published_at: new Date(t).toISOString(), updated_at: null, byline: null, tags: [], timestamp_quality: dateOnly ? 'date_only' : 'publisher' });
+  }
+  return out;
+}
+
 export function canonicalUrl(u) {
   try {
     const x = new URL(u);

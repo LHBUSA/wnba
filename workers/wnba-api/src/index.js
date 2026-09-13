@@ -44,7 +44,7 @@ const TTL = {
   athlete: 3600,
   leaders: 1800,
   schedule: 900,
-  transactions: 900
+  transactions: 300
 };
 
 export default {

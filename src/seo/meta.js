@@ -30,6 +30,7 @@ const DESK_TITLES = {
   international: 'International Women’s Basketball News: World Cup, Olympics & FIBA',
   injury: 'WNBA Injury News & Availability Analysis',
   transaction: 'WNBA Transactions & Roster Moves',
+  league: 'WNBA League News: Awards, Coaching, Front Offices, Playoffs & CBA',
   performance: 'WNBA Game Recaps & Performances',
   preview: 'WNBA Game Previews',
   trend: 'WNBA Betting Trends: Against the Spread & Totals',
@@ -40,7 +41,8 @@ const DESK_DESCRIPTIONS = {
   brief: 'PropBetEdge News Briefs on material WNBA events, with the originating publisher attributed and PropBetEdge’s own structured records alongside.',
   international: 'PropBetEdge international desk: medal-game results and national-team stories built from structured box scores, with every WNBA player linked to her WNBA profile.',
   injury: 'WNBA injury and availability stories from ESPN’s injury feed: the minutes at stake, who absorbs them and what the records do not show.',
-  transaction: 'WNBA signings, waivers, hardship contracts and roster moves from the transactions log, with rotation context.',
+  transaction: 'WNBA signings, waivers, hardship contracts and roster moves from the transactions log and official team announcements, with rotation context.',
+  league: 'WNBA league news from official league and team announcements and national reporting: awards, coaching and front-office changes, the playoff picture, expansion and labor, each checked for materiality and attributed.',
   performance: 'WNBA game recaps and standout performances built from box scores and compared with each player’s season.',
   preview: 'WNBA game previews: form, rest, observed rotations, availability and the stored sportsbook market for the next slate.',
   trend: 'WNBA against-the-spread and totals trends measured against a named sportsbook’s lines, with the sample shown.',
@@ -71,6 +73,11 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: 'PropBetEdge WNBA — WNBA News, Injuries, Odds & Live Game Intelligence', description: 'Independent WNBA intelligence: today’s slate with stored sportsbook lines, WNBACast live games, sourced injuries, standings and an original PropBetEdge WNBA newsroom.' });
     case 'news':
       return m({ title: `WNBA News Today, Injuries, Transactions & Analysis | ${BRAND}`, description: 'The PropBetEdge WNBA newsroom: original, source-grounded WNBA news briefs, injury and roster-move stories, game previews, recaps and market analysis, updated every 10 minutes.' });
+    case 'news-team': {
+      const t = data?.team;
+      if (!t) return m({ title: `WNBA Team News | ${BRAND}`, robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
+      return m({ title: `${t.name} News: Injuries, Roster Moves & Official Announcements | ${BRAND}`, description: clip(`${t.name} news from the PropBetEdge WNBA newsroom: injury and roster-move stories, the team’s official announcements and beat coverage, attributed and checked against PropBetEdge’s WNBA records.`, 300), robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
+    }
     case 'news-cat': {
       const k = params.kind;
       if (!DESK_TITLES[k]) return notFound(base.path);

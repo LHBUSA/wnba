@@ -2,7 +2,7 @@ import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
 import { skeleton, badge, errorState } from '../ui/components.js';
 import { relTime, fmtDateTimeET } from '../lib/format.js';
-import { sourcesRegistryView, sourcesHead } from '../views/trust.js';
+import { sourcesRegistryView, sourcesHead, newsHealthView } from '../views/trust.js';
 
 export const title = () => 'Source status & methodology';
 export const description = () => 'Live source health for PropBetEdge WNBA, measured from the Cloudflare runtime, plus the methods behind every derived number.';
@@ -16,7 +16,9 @@ export async function mount(root, ctx) {
   render(root, html`
     ${sourcesHead()}
     ${sourcesRegistryView()}
-    <section class="card">
+    ${newsHealthView(news)}
+
+    <section class="card section">
       <div class="card-head"><span class="card-title">Provider canary · from Cloudflare</span><span class="note">${src.ok ? `run ${fmtDateTimeET(src.meta.served_at)}` : ''}</span></div>
       ${src.ok ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Capability</th><th>Host</th><th>HTTP</th><th>Bytes</th><th>Latency</th><th>Result</th></tr></thead><tbody>
         ${src.data.probes.map((p) => html`<tr><td>${p.name.replace('_', ' ')}</td><td class="l">${p.host}</td><td>${p.status ?? '—'}</td><td>${p.bytes.toLocaleString()}</td><td>${p.ms} ms</td><td>${p.pass ? badge('final', 'PASS') : badge(p.name === 'site_api_host' ? 'stale' : 'out', p.name === 'site_api_host' ? 'Blocked (expected)' : 'FAIL')}</td></tr>`)}
@@ -34,9 +36,9 @@ export async function mount(root, ctx) {
         </div>
       </section>
       <section class="card">
-        <div class="card-head"><span class="card-title">Newsroom lane</span></div>
+        <div class="card-head"><span class="card-title">Newsroom usage policy</span></div>
         <div class="card-body">
-          ${news.ok ? news.data.sources.map((s) => html`<div class="change-row" style="grid-template-columns:minmax(0,1fr) auto"><div><b>${s.name}</b><div class="note">${s.usage_policy}</div></div>${s.last_run ? badge(s.last_run.status === 'PASS' ? 'final' : 'stale', s.last_run.status) : badge('pbe', 'Owned')}</div>`) : errorState(news, 'The newsroom')}
+          ${news.ok ? news.data.sources.filter((s) => s.kind !== 'owned').map((s) => html`<div class="change-row" style="grid-template-columns:minmax(0,1fr)"><div><b>${s.name}</b><div class="note">${s.usage_policy}</div></div></div>`) : errorState(news, 'The newsroom')}
         </div>
       </section>
     </div>
@@ -49,6 +51,7 @@ export async function mount(root, ctx) {
         <li><b>Pace</b> is the standard possessions estimate (FGA − OREB + TOV + 0.44·FTA) and is labelled as an estimate.</li>
         <li><b>Rotations</b> are observed from the last five real box scores; roles follow stated minute rules.</li>
         <li><b>Market consensus</b> is the median no-vig probability across books — a benchmark, never a PropBetEdge model.</li>
+        <li><b>Newsroom events</b> are one story per real-world event: reports are joined by their facts (event type, player, team), scored by a stated materiality rule, and only material events become stories.</li>
         <li><b>Player photos</b> are Wikimedia Commons images under CC0 / public-domain / CC BY / CC BY-SA, matched to the player by exact name and date of birth on Wikidata, then crop-reviewed. Otherwise a neutral card.</li>
       </ul>
       <p class="note" style="margin-top:12px">Photo coverage: ${h?.photo_coverage ? `${h.photo_coverage.approved} verified` : '—'}.</p>

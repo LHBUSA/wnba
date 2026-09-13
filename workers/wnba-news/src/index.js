@@ -8,22 +8,31 @@
 // wnba-api is down (entity dictionary falls back to its last good copy; Desk
 // stories pause). Its own KV namespace, its own deploy, its own cron.
 
-import { NEWS_SOURCES, PBE_SOURCE } from './sources.js';
-import { parseRss, parseEspnNews, parseWnbaCom, canonicalUrl } from './parse.js';
-import { buildDictionary, linkEntities, relevance, clusterItems, itemId, EDITORIAL_VERSION, INTERNATIONAL } from './editorial.js';
+import { NEWS_SOURCES, PBE_SOURCE, AUDITED_NOT_INGESTED, SOURCE_REGISTRY_VERSION } from './sources.js';
+import { PARSE_VERSION } from './parse.js';
+import { buildDictionary, EDITORIAL_VERSION } from './editorial.js';
+import { classify, TAXONOMY_VERSION, LANES, EVENT_TYPES } from './taxonomy.js';
+import { normalizeItem, KEEP_DAYS } from './ingest.js';
+import { assignEvents, seedFromClusters, EVENTS_VERSION } from './events.js';
+import { fetchSource, updateHealth, pool, UA, FETCH_VERSION } from './fetcher.js';
 import { DESK_VERSION } from './pbe-desk.js';
 import { runArticles } from './articles-run.js';
 import { ARTICLE_VERSION } from './articles.js';
 import { mediaFor, MEDIA_MANIFEST_AT } from './media.js';
 
 const SERVICE = 'wnba-news';
-const VERSION = '1.0.0';
-const KEEP_DAYS = 21;
-const UA = 'PropBetEdge-WNBA-News/1.0 (+https://wnba.propbetedge.ai/news)';
+const VERSION = '2.0.0';
+export const CRON_MINUTES = 5;
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runIngest(env, 'cron'));
+    ctx.waitUntil((async () => {
+      // A slow pass must not overlap the next five-minute tick and race it on the same KV keys.
+      const lease = await env.NEWS_KV.get('news:v1:lease', 'json');
+      if (lease?.at && Date.now() - Date.parse(lease.at) < 4 * 60e3) return;
+      await env.NEWS_KV.put('news:v1:lease', JSON.stringify({ at: new Date().toISOString() }), { expirationTtl: 600 });
+      try { await runIngest(env, 'cron'); } finally { await env.NEWS_KV.delete('news:v1:lease'); }
+    })());
   },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -80,99 +89,109 @@ async function dictionary(env) {
   }
 }
 
-async function fetchSource(src) {
-  const res = await fetch(src.feed_url, { headers: { 'user-agent': UA, accept: src.format === 'espn_json' ? 'application/json' : 'application/rss+xml, application/xml, text/html;q=0.8' }, signal: AbortSignal.timeout(12000), redirect: 'follow' });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`http_${res.status}`);
-  if (src.format === 'espn_json') return parseEspnNews(JSON.parse(text));
-  if (src.format === 'wnba_next_data') return parseWnbaCom(text);
-  return parseRss(text);
-}
-
 async function runIngest(env, trigger, { forceArticles = false } = {}) {
   const startedAt = new Date().toISOString();
+  const now = Date.parse(startedAt);
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
   const dict = buildDictionary(rawDict);
-  const store = (await env.NEWS_KV.get('news:v1:items', 'json')) || {};
-  // International lane: national-team / FIBA / Olympic items. The WNBA relevance guard is unchanged — these items
-  // do not enter the WNBA feed unless they already qualify — but they are kept, attributed, for the international desk.
-  const intlStore = (await env.NEWS_KV.get('news:v1:intl-items', 'json')) || {};
+  const [storeRaw, intlRaw, validatorsRaw, healthRaw, registryRaw, legacyClusters] = await Promise.all([
+    env.NEWS_KV.get('news:v1:items', 'json'),
+    // International lane: national-team / FIBA / Olympic items. The WNBA relevance guard is unchanged — these items
+    // do not enter the WNBA feed unless they already qualify — but they are kept, attributed, for the international desk.
+    env.NEWS_KV.get('news:v1:intl-items', 'json'),
+    env.NEWS_KV.get('news:v1:http', 'json'),
+    env.NEWS_KV.get('news:v1:source-health', 'json'),
+    env.NEWS_KV.get('news:v1:events', 'json'),
+    env.NEWS_KV.get('news:v1:clusters', 'json')
+  ]);
+  const store = storeRaw || {};
+  const intlStore = intlRaw || {};
+  const validators = validatorsRaw || {};
+  const health = healthRaw || {};
   const runs = [];
 
-  for (const src of NEWS_SOURCES) {
-    const run = { source_id: src.source_id, at: startedAt, status: 'PASS', fetched: 0, accepted: 0, new: 0, duplicates_url: 0, rejected: 0, rejected_samples: [] };
-    try {
-      const items = await fetchSource(src);
-      run.fetched = items.length;
-      for (const raw of items) {
-        const canonical = canonicalUrl(raw.url);
-        if (!canonical) { run.rejected += 1; continue; }
-        if (raw.published_at && Date.parse(raw.published_at) < Date.now() - KEEP_DAYS * 86400e3) { run.outside_window = (run.outside_window || 0) + 1; continue; }
-        const id = await itemId(canonical);
-        const entities = linkEntities(raw, dict);
-        const rel = relevance(raw, entities, src);
-        if (INTERNATIONAL.test(`${raw.headline} ${raw.summary || ''}`)) {
-          const prevIntl = intlStore[id];
-          intlStore[id] = { item_id: id, source_id: src.source_id, source_name: src.name, source_kind: src.kind, attribution: src.attribution, priority: src.priority, canonical_url: canonical, headline: raw.headline, summary: raw.summary, byline: raw.byline, published_at: raw.published_at || prevIntl?.published_at || startedAt, source_updated_at: raw.updated_at || null, first_captured_at: prevIntl?.first_captured_at || startedAt, last_captured_at: startedAt, story_type: rel.type, relevance: rel.score, relevance_reasons: rel.reasons, entities, lane: 'international', wnba_accepted: rel.accept, rights: 'headline_link_summary' };
-          run.international = (run.international || 0) + 1;
-        }
-        if (!rel.accept) {
-          run.rejected += 1;
-          // A rule change can un-accept an item we stored earlier; it leaves the feed.
-          if (store[id]) { delete store[id]; run.withdrawn = (run.withdrawn || 0) + 1; }
-          if (run.rejected_samples.length < 6) run.rejected_samples.push({ headline: raw.headline, reasons: rel.reasons });
-          continue;
-        }
-        run.accepted += 1;
-        const prev = store[id];
-        if (prev) run.duplicates_url += 1; else run.new += 1;
-        store[id] = {
-          item_id: id,
-          source_id: src.source_id,
-          source_name: src.name,
-          source_kind: src.kind,
-          attribution: src.attribution,
-          priority: src.priority,
-          canonical_url: canonical,
-          headline: raw.headline,
-          summary: raw.summary,
-          byline: raw.byline,
-          published_at: raw.published_at || prev?.published_at || startedAt,
-          source_updated_at: raw.updated_at || null,
-          first_captured_at: prev?.first_captured_at || startedAt,
-          last_captured_at: startedAt,
-          story_type: rel.type,
-          relevance: rel.score,
-          relevance_reasons: rel.reasons,
-          entities,
-          rights: 'headline_link_summary'
-        };
+  // Fetch every source in parallel (bounded); each is isolated, so one slow or failing publisher costs only itself.
+  const fetched = await pool(NEWS_SOURCES, 8, (src) => fetchSource(src, { validators: validators[src.source_id], now }));
+  const touched = new Map();
+
+  for (let i = 0; i < NEWS_SOURCES.length; i += 1) {
+    const src = NEWS_SOURCES[i];
+    const f = fetched[i];
+    const run = { source_id: src.source_id, at: startedAt, status: f.status, http_status: f.http_status, ms: f.ms, fetched: f.items.length, accepted: 0, new: 0, duplicates_url: 0, rejected: 0, rejected_samples: [], parse_errors: f.parse_errors || 0, ...(f.error ? { error: f.error } : {}), ...(f.reason ? { reason: f.reason } : {}) };
+    if (f.validators) validators[src.source_id] = f.validators;
+    const tq = { publisher: 0, date_only: 0, capture: 0 };
+    for (const raw of f.items) {
+      const n = await normalizeItem(raw, src, dict, { startedAt, now });
+      if (n.reject) { if (n.reject === 'outside_window') run.outside_window = (run.outside_window || 0) + 1; else run.rejected += 1; continue; }
+      const { id, rel } = n;
+      const prev = store[id] || intlStore[id] || null;
+      const record = { ...n.record, published_at: raw.published_at || prev?.published_at || startedAt, first_captured_at: prev?.first_captured_at || startedAt };
+      tq[record.timestamp_quality] += 1;
+      if (!run.latest_item_at || record.published_at > run.latest_item_at) run.latest_item_at = record.published_at;
+      if (n.international) {
+        intlStore[id] = { ...record, lane: 'international', wnba_accepted: rel.accept };
+        run.international = (run.international || 0) + 1;
       }
-      if (!items.length) run.status = 'DEGRADED';
-    } catch (e) {
-      run.status = 'FAIL';
-      run.error = e.message;
+      if (!rel.accept) {
+        run.rejected += 1;
+        // A rule change can un-accept an item we stored earlier; it leaves the feed.
+        if (store[id]) { delete store[id]; run.withdrawn = (run.withdrawn || 0) + 1; }
+        if (run.rejected_samples.length < 6) run.rejected_samples.push({ headline: raw.headline, reasons: rel.reasons });
+        continue;
+      }
+      run.accepted += 1;
+      if (store[id]) run.duplicates_url += 1; else run.new += 1;
+      store[id] = record;
+      touched.set(id, run);
     }
+    run.timestamp_quality = tq;
     runs.push(run);
   }
 
-  // Retention window, then dedupe clusters over what remains.
-  const cutoff = Date.now() - KEEP_DAYS * 86400e3;
+  // Classify stored v1 items once (they predate the taxonomy), so every event has a type and materiality.
+  const srcById = new Map(NEWS_SOURCES.map((s) => [s.source_id, s]));
+  for (const it of Object.values(store)) {
+    if (it.event_type && it.materiality) continue;
+    const tax = classify(it, { entities: it.entities || [], source: srcById.get(it.source_id) || { priority: it.priority }, timestampQuality: it.timestamp_quality || 'publisher' });
+    Object.assign(it, { event_type: tax.event_type, lane: tax.lane, materiality: tax.materiality, timestamp_quality: it.timestamp_quality || 'publisher' });
+  }
+
+  // Retention window, then persisted fact-based event identity over what remains.
+  const cutoff = now - KEEP_DAYS * 86400e3;
   for (const [k, v] of Object.entries(store)) if (Date.parse(v.published_at) < cutoff) delete store[k];
   for (const [k, v] of Object.entries(intlStore)) if (Date.parse(v.published_at) < cutoff) delete intlStore[k];
-  await env.NEWS_KV.put('news:v1:intl-items', JSON.stringify(intlStore));
   const list = Object.values(store);
-  const clusters = clusterItems(list);
   const byId = Object.fromEntries(list.map((x) => [x.item_id, x]));
+  // First run on the registry: v1 clusters seed it, so every existing event — and the brief keyed to it — keeps its id.
+  const registryIn = registryRaw || (legacyClusters ? seedFromClusters(legacyClusters, byId) : null);
+  const { registry, clusters, created, joined } = assignEvents(list, registryIn, { now, keepMs: KEEP_DAYS * 86400e3 });
   for (const c of clusters) for (const m of c.members) if (byId[m]) byId[m].cluster_id = c.cluster_id;
-  await env.NEWS_KV.put('news:v1:items', JSON.stringify(store));
-  await env.NEWS_KV.put('news:v1:clusters', JSON.stringify(clusters));
+  const clusterById = new Map(clusters.map((c) => [c.cluster_id, c]));
+  for (const e of created) { const r = touched.get(e.item_id); if (r) r.new_events = (r.new_events || 0) + 1; }
+  for (const e of joined) { const r = touched.get(e.item_id); if (r) r.joined_events = (r.joined_events || 0) + 1; }
+
+  for (const run of runs) health[run.source_id] = updateHealth(health[run.source_id], srcById.get(run.source_id), run, { now, cronMinutes: CRON_MINUTES });
+
+  await Promise.all([
+    env.NEWS_KV.put('news:v1:intl-items', JSON.stringify(intlStore)),
+    env.NEWS_KV.put('news:v1:items', JSON.stringify(store)),
+    env.NEWS_KV.put('news:v1:clusters', JSON.stringify(clusters)),
+    env.NEWS_KV.put('news:v1:events', JSON.stringify(registry)),
+    env.NEWS_KV.put('news:v1:http', JSON.stringify(validators)),
+    env.NEWS_KV.put('news:v1:source-health', JSON.stringify(health))
+  ]);
+
+  // Breaking path: a new material roster/injury/league event from an official source (or corroborated high
+  // materiality) runs the article pass now instead of waiting for the regular ten-minute article cadence.
+  const breaking = created
+    .map((e) => clusterById.get(e.event_id))
+    .filter((c) => c?.materiality?.material && ['roster', 'injuries', 'league'].includes(c.lane) && (c.members.some((m) => byId[m]?.priority === 1) || c.materiality.level === 'high'))
+    .map((c) => ({ event_id: c.cluster_id, event_type: c.event_type, headline: c.headline }));
 
   // PropBetEdge newsroom — in-house articles from structured records (needs wnba-api).
-  // (Replaces the v1 PBE Desk blurbs; same evidence discipline, full article contract.)
   let articles;
   try {
-    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), intlGet: env.INTL ? (p) => intlGet(env, p) : null, dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: Object.values(store), force: forceArticles });
+    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), intlGet: env.INTL ? (p) => intlGet(env, p) : null, dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: list, force: forceArticles, breaking: breaking.length > 0 });
   } catch (e) {
     articles = { error: e.message };
   }
@@ -181,10 +200,19 @@ async function runIngest(env, trigger, { forceArticles = false } = {}) {
 
   await persistSupabase(env, store, clusters, deskStore).catch((e) => runs.push({ source_id: 'supabase', status: 'FAIL', error: e.message }));
 
-  const status = { at: startedAt, trigger, version: VERSION, editorial: EDITORIAL_VERSION, desk_version: DESK_VERSION, dictionary: { fresh: dictFresh, error: dictError || null, players: rawDict.players?.length || 0, captured_at: rawDict.captured_at }, sources: runs, desk, totals: { items: list.length, clusters: clusters.length, articles_published: articles?.published_total ?? null }, article_version: ARTICLE_VERSION, supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) };
+  const status = {
+    at: startedAt, trigger, version: VERSION, editorial: EDITORIAL_VERSION, taxonomy: TAXONOMY_VERSION, events_version: EVENTS_VERSION, fetch: FETCH_VERSION, parser: PARSE_VERSION, registry: SOURCE_REGISTRY_VERSION, desk_version: DESK_VERSION,
+    dictionary: { fresh: dictFresh, error: dictError || null, players: rawDict.players?.length || 0, captured_at: rawDict.captured_at },
+    sources: runs.map(({ rejected_samples, ...r }) => ({ ...r, rejected_samples: rejected_samples.slice(0, 3) })),
+    events: { created: created.length, joined: joined.length, breaking },
+    desk,
+    totals: { items: list.length, events: clusters.length, clusters: clusters.length, material_events: clusters.filter((c) => c.materiality?.material).length, articles_published: articles?.published_total ?? null, sources: NEWS_SOURCES.length, sources_ok: runs.filter((r) => ['PASS', 'NOT_MODIFIED', 'SKIPPED'].includes(r.status)).length },
+    article_version: ARTICLE_VERSION,
+    supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
+  };
   await env.NEWS_KV.put('news:v1:status', JSON.stringify(status));
   const hist = (await env.NEWS_KV.get('news:v1:runs', 'json')) || [];
-  await env.NEWS_KV.put('news:v1:runs', JSON.stringify([status, ...hist].slice(0, 48)));
+  await env.NEWS_KV.put('news:v1:runs', JSON.stringify([{ ...status, sources: status.sources.map(({ rejected_samples, ...r }) => r) }, ...hist].slice(0, 48)));
   return status;
 }
 
@@ -223,6 +251,8 @@ async function feed(env, url) {
   const team = url.searchParams.get('team');
   const game = url.searchParams.get('game');
   const lane = url.searchParams.get('lane'); // pbe | external | international
+  const deskFilter = url.searchParams.get('desk'); // injuries | roster | league | international | games | market | other
+  const materialOnly = url.searchParams.get('material') === '1';
   const match = (ents) => (!player || ents.some((e) => e.type === 'player' && e.id === player)) && (!team || ents.some((e) => e.type === 'team' && e.id === team)) && (!game || ents.some((e) => e.type === 'game' && e.id === game));
 
   const items = store || {};
@@ -239,7 +269,7 @@ async function feed(env, url) {
     for (const it of Object.values(intlStore || {})) {
       if (type && it.story_type !== type) continue;
       if (!match(it.entities || [])) continue;
-      out.push({ lane: 'international', id: it.item_id, kind: it.story_type, headline: it.headline, url: it.canonical_url, source: { id: it.source_id, name: it.source_name, kind: it.source_kind, attribution: it.attribution }, byline: it.byline, published_at: it.published_at, source_updated_at: it.source_updated_at, captured_at: it.first_captured_at, entities: it.entities || [], wnba_accepted: Boolean(it.wnba_accepted) });
+      out.push({ lane: 'international', id: it.item_id, kind: it.story_type, event_type: it.event_type || null, headline: it.headline, url: it.canonical_url, source: { id: it.source_id, name: it.source_name, kind: it.source_kind, attribution: it.attribution }, byline: it.byline, published_at: it.published_at, source_updated_at: it.source_updated_at, captured_at: it.first_captured_at, entities: it.entities || [], wnba_accepted: Boolean(it.wnba_accepted) });
     }
   } else if (lane !== 'pbe') {
     for (const c of clusters || []) {
@@ -247,13 +277,20 @@ async function feed(env, url) {
       if (!canon) continue;
       const members = c.members.map((m) => items[m]).filter(Boolean);
       const ents = dedupeEntities(members.flatMap((m) => m.entities));
-      if (type && canon.story_type !== type) continue;
+      if (type && canon.story_type !== type && c.event_type !== type) continue;
+      if (deskFilter && c.lane !== deskFilter) continue;
+      if (materialOnly && !c.materiality?.material) continue;
       if (!match(ents)) continue;
       out.push({
         lane: 'external',
         id: canon.item_id,
         cluster_id: c.cluster_id,
+        event_id: c.cluster_id,
         kind: canon.story_type,
+        event_type: c.event_type || canon.event_type || null,
+        desk: c.lane || canon.lane || null,
+        materiality: c.materiality || null,
+        publishers: c.publishers || members.length,
         headline: canon.headline,
         summary: canon.summary,
         url: canon.canonical_url,
@@ -272,7 +309,7 @@ async function feed(env, url) {
   out.sort((a, b) => String(b.published_at).localeCompare(String(a.published_at)));
   return j({
     ok: true,
-    data: { items: out.slice(0, limit), total: out.length, filters: { type, player, team, game, lane } },
+    data: { items: out.slice(0, limit), total: out.length, filters: { type, player, team, game, lane, desk: deskFilter, material: materialOnly } },
     meta: {
       service: SERVICE,
       version: VERSION,
@@ -301,7 +338,7 @@ async function articlesRoute(env, url) {
   const player = url.searchParams.get('player');
   const game = url.searchParams.get('game');
   const has = (c, t, id) => (c.entities || []).some((e) => e && e.type === t && e.id === id);
-  const list = index.filter((c) => !c.superseded_by && (!cat || c.kind === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
+  const list = index.filter((c) => !c.superseded_by && (!cat || c.kind === cat || c.desk === cat || (cat === 'performance' && c.kind === 'result')) && (!team || has(c, 'team', team) || c.lead_team_id === team) && (!player || has(c, 'player', player)) && (!game || has(c, 'game', game)));
   return j({ ok: true, data: { items: list.slice(0, limit).map(({ input_hash, ...c }) => ({ ...c, media: mediaFor(c) })), total: list.length }, meta: { service: SERVICE, version: VERSION, generator: ARTICLE_VERSION, media_manifest_at: MEDIA_MANIFEST_AT, last_run_at: last?.at || null, freshness: last?.at ? (Date.now() - Date.parse(last.at) > 90 * 60e3 ? 'STALE' : 'CURRENT') : 'UNAVAILABLE', served_at: new Date().toISOString() } }, 200, 30);
 }
 
@@ -340,8 +377,25 @@ async function storyRoute(env, id) {
 }
 
 async function sourcesRoute(env) {
-  const status = await env.NEWS_KV.get('news:v1:status', 'json');
-  return j({ ok: true, data: { sources: [...NEWS_SOURCES, PBE_SOURCE].map((s) => ({ ...s, last_run: status?.sources?.find((r) => r.source_id === s.source_id) || null })), cadence: 'Cloudflare Cron every 10 minutes', editorial: EDITORIAL_VERSION, desk: DESK_VERSION }, meta: { service: SERVICE, version: VERSION, last_ingest_at: status?.at || null } }, 200, 60);
+  const [status, healthMap] = await Promise.all([env.NEWS_KV.get('news:v1:status', 'json'), env.NEWS_KV.get('news:v1:source-health', 'json')]);
+  const hm = healthMap || {};
+  const sources = [...NEWS_SOURCES, PBE_SOURCE].map((s) => {
+    const h = hm[s.source_id] || null;
+    return { ...s, last_run: status?.sources?.find((r) => r.source_id === s.source_id) || null, health: h ? { ...h, totals_24h: h.totals_24h ? { ...h.totals_24h, buckets: undefined } : null } : null };
+  });
+  const polled = sources.filter((s) => s.health);
+  const summary = {
+    sources: NEWS_SOURCES.length,
+    ok: polled.filter((s) => ['PASS', 'NOT_MODIFIED', 'SKIPPED'].includes(s.health.last_status)).length,
+    failing: polled.filter((s) => s.health.last_status === 'FAIL').map((s) => s.source_id),
+    degraded: polled.filter((s) => s.health.last_status === 'DEGRADED').map((s) => s.source_id),
+    stale_fetch: polled.filter((s) => s.health.staleness === 'STALE_FETCH').map((s) => s.source_id),
+    quiet: polled.filter((s) => s.health.staleness === 'QUIET').map((s) => s.source_id),
+    by_tier: Object.fromEntries(['official', 'national', 'womens_media', 'local_beat', 'analysis'].map((t) => [t, NEWS_SOURCES.filter((s) => s.tier === t).length])),
+    events_last_run: status?.events || null,
+    totals: status?.totals || null
+  };
+  return j({ ok: true, data: { summary, sources, not_ingested: AUDITED_NOT_INGESTED, cadence: `Cloudflare Cron every ${CRON_MINUTES} minutes (article pass every 10 minutes, immediately on a new material official event)`, registry: SOURCE_REGISTRY_VERSION, editorial: EDITORIAL_VERSION, taxonomy: TAXONOMY_VERSION, events: EVENTS_VERSION, fetch: FETCH_VERSION, lanes: LANES, event_types: Object.fromEntries(Object.entries(EVENT_TYPES).map(([k, v]) => [k, { lane: v.lane, label: v.label }])), desk: DESK_VERSION }, meta: { service: SERVICE, version: VERSION, last_ingest_at: status?.at || null, served_at: new Date().toISOString() } }, 200, 60);
 }
 
 async function runsRoute(env) {
@@ -351,7 +405,7 @@ async function runsRoute(env) {
 
 async function health(env) {
   const status = await env.NEWS_KV.get('news:v1:status', 'json');
-  return j({ ok: true, service: SERVICE, version: VERSION, runtime: 'cloudflare-workers', scheduler: 'cloudflare-cron */10', kv: Boolean(env.NEWS_KV), api_binding: Boolean(env.API), supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY), last_ingest_at: status?.at || null, totals: status?.totals || null });
+  return j({ ok: true, service: SERVICE, version: VERSION, runtime: 'cloudflare-workers', scheduler: `cloudflare-cron */${CRON_MINUTES}`, kv: Boolean(env.NEWS_KV), api_binding: Boolean(env.API), supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY), last_ingest_at: status?.at || null, totals: status?.totals || null });
 }
 
 // ---------------------------------------------------------------- utils

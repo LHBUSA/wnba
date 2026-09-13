@@ -1,6 +1,8 @@
 // Relevance gate, story typing, entity linking and dedupe for the WNBA newsroom.
 // All rules are deterministic and stated; nothing here calls a language model.
 
+import { eventType, legacyType } from './taxonomy.js';
+
 export const EDITORIAL_VERSION = 'wnba-news-editorial/1.0.0';
 
 export function norm(s) {
@@ -31,10 +33,14 @@ export const STORY_TYPES = [
   ['league', /\b(commissioner|cba|collective bargaining|expansion|draft|all-star|mvp|awards?|rookie of the year|league office|salary cap)\b/i]
 ];
 
+// The v1 regex table above is kept for back-compat imports. Typing now comes from the taxonomy (taxonomy.js), which
+// fixes v1 misreads such as "WNBA releases playoff schedule" being typed as a player release.
 export function storyType(text) {
-  for (const [type, re] of STORY_TYPES) if (re.test(text)) return type;
-  return 'news';
+  return legacyType(eventType(text));
 }
+
+/** Source scopes whose every item is WNBA material by construction (the gate still types and links it). */
+export const IN_SCOPE = new Set(['wnba_only', 'team_official', 'team_beat', 'wnba_section']);
 
 /** Build lookup structures from the current rosters / teams. */
 export function buildDictionary({ players = [], teams = [] }) {
@@ -123,7 +129,7 @@ export function relevance(item, entities, source) {
   if (wnbaTag) { score += 1; reasons.push('publisher tag WNBA'); }
   if (teams.length) { score += 2 + Math.min(teams.length - 1, 1); reasons.push(`team: ${teams.map((t) => t.name).join(', ')}`); }
   if (players.length) { score += 1 + Math.min(players.length - 1, 2) * 0.5; reasons.push(`player: ${players.slice(0, 3).map((p) => p.name).join(', ')}`); }
-  if (source.wnba_scope === 'wnba_only') { score += 2; reasons.push('official WNBA source'); }
+  if (IN_SCOPE.has(source.wnba_scope)) { score += 2; reasons.push(source.wnba_scope === 'wnba_only' || source.wnba_scope === 'team_official' ? 'official WNBA source' : 'WNBA-scoped source'); }
   const type = storyType(text);
   if (['injury', 'trade', 'transaction', 'coaching', 'lineup', 'playoffs'].includes(type) && (players.length || teams.length)) { score += 1.5; reasons.push(`consequential type: ${type}`); }
   if (OFF_SPORT.test(item.headline) && !wnbaWord && !teams.length) { reasons.push('off-sport headline'); return { accept: false, score: 0, reasons, type }; }
@@ -133,7 +139,7 @@ export function relevance(item, entities, source) {
   if (INTERNATIONAL.test(text) && !wnbaWord && !['injury', 'trade', 'transaction'].includes(type)) { reasons.push('international competition without WNBA consequence'); return { accept: false, score: 0, reasons, type }; }
   // Player-only mentions (e.g. a World Cup story naming WNBA players) need a
   // consequence (injury/transaction) or an explicit WNBA mention to qualify.
-  const accept = wnbaWord || teams.length > 0 || source.wnba_scope === 'wnba_only' || (wnbaTag && players.length > 0) || (players.length > 0 && ['injury', 'trade', 'transaction', 'lineup'].includes(type));
+  const accept = wnbaWord || teams.length > 0 || IN_SCOPE.has(source.wnba_scope) || (wnbaTag && players.length > 0) || (players.length > 0 && ['injury', 'trade', 'transaction', 'lineup'].includes(type));
   if (!accept) reasons.push('no WNBA signal strong enough');
   return { accept, score: Math.round(score * 10) / 10, reasons, type };
 }

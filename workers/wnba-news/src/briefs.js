@@ -15,12 +15,25 @@
 // quoted exactly; anything that exists only in the report stays the publisher's.
 
 import { finalize, hashId } from './articles.js';
+import { eventMateriality, laneOf, legacyType, EVENT_TYPES } from './taxonomy.js';
 import { seasonLog } from './deep.js';
 import { dShort, dLong, tET, f1, listJoin, nick, poss } from './prose.js';
 
 export const BRIEF_VERSION = 'wnba-briefs/1.1.0';
 export const BRIEF_MAX_AGE_MS = 36 * 3600e3;
 export const BRIEF_MAX_PER_RUN = 12;
+
+// Event types whose brief headline names the event class (the v1 legacy types keep their v1 headlines, so stories
+// already published are not re-headlined).
+const LEAGUE_HEADLINE = {
+  expansion: 'WNBA expansion news',
+  cba: 'WNBA labor news',
+  draft: 'WNBA draft news',
+  awards: 'WNBA awards news',
+  front_office: 'WNBA front-office news',
+  business: 'WNBA business news',
+  playoff: 'WNBA playoff news'
+};
 
 const MATERIAL_TYPES = new Set(['injury', 'trade', 'transaction', 'coaching', 'lineup', 'playoffs', 'league', 'news']);
 
@@ -49,7 +62,21 @@ function canonical(members) {
   })[0];
 }
 
-function material(canon) {
+/** The event's type: the most material member's (source-wire v2), else the canonical item's legacy type. */
+function eventTypeOf(members, canon) {
+  const typed = members.filter((m) => m.event_type && m.materiality);
+  if (!typed.length) return null;
+  return [...typed].sort((a, b) => b.materiality.score - a.materiality.score || when(a) - when(b))[0].event_type;
+}
+
+/**
+ * Materiality. Source-wire v2 items carry a deterministic materiality score (taxonomy.js): the event is material when
+ * its strongest report plus independent corroboration clears the threshold and at least one report has an exact
+ * publisher timestamp. Items without a score (v1 records) keep the v1 rule.
+ */
+function material(canon, members = [canon]) {
+  const m = eventMateriality(members);
+  if (m) return m.material;
   if (!MATERIAL_TYPES.has(canon.story_type)) return false;
   if (canon.story_type === 'news') return (canon.priority ?? 9) <= 2 || (canon.relevance ?? 0) >= 4;
   return true;
@@ -81,7 +108,12 @@ function coveredByStructured(canon, members, structured) {
  * Original PropBetEdge headline for the event. Built only from the event type and verified identities, so it can
  * never say more than the report and the records support. The publisher's headline is attributed in the deck.
  */
-export function briefHeadline({ storyType, player, team, verified, source }) {
+export function briefHeadline({ storyType, eventType = null, player, team, verified, source }) {
+  if (eventType && LEAGUE_HEADLINE[eventType] && !player) {
+    const teamName = team?.name || null;
+    return teamName ? `${teamName}: ${LEAGUE_HEADLINE[eventType].replace(/^WNBA /, '')} — the report and where the ${nick(team)} stand` : `${LEAGUE_HEADLINE[eventType]}: the ${source} report and what PropBetEdge’s records show`;
+  }
+  if (eventType === 'awards' && player) return `${player.name} award news${team?.name ? ` for the ${team.name}` : ''}: the announcement and her season in numbers`;
   const teamName = team?.name || null;
   if (player) {
     const withTeam = teamName ? ` for the ${teamName}` : '';
@@ -228,12 +260,16 @@ function writeBrief({ source, sourceHeadline, sourceAt, others, names, player, t
 }
 
 /** Build at most one PBE brief per material source-wire cluster. `ctx` supplies structured records when available. */
-export async function briefArticles({ externalItems = [], structured = [], now = Date.now(), ctx = {} } = {}) {
-  const candidates = grouped(externalItems)
-    .map((g) => ({ ...g, canon: canonical(g.members) }))
-    .filter((g) => g.canon && material(g.canon))
-    .filter((g) => now - Math.max(...g.members.map(when)) <= BRIEF_MAX_AGE_MS)
-    .filter((g) => !coveredByStructured(g.canon, g.members, structured))
+export async function briefArticles({ externalItems = [], structured = [], now = Date.now(), ctx = {}, existingIds = null } = {}) {
+  const existing = existingIds instanceof Set ? existingIds : new Set(existingIds || []);
+  const withIds = await Promise.all(grouped(externalItems).map(async (g) => ({ ...g, canon: canonical(g.members), briefId: await hashId(['brief', g.cluster_id]) })));
+  const candidates = withIds
+    .filter((g) => g.canon && material(g.canon, g.members))
+    // Freshness is the EVENT's origin: its earliest report. A newly added source that surfaces an old report, or a
+    // late corroboration of an old event, can never make that event a fresh story. An already-published brief
+    // for the event can still be revised while its newest report is inside the window.
+    .filter((g) => now - Math.min(...g.members.map(when).filter(Boolean)) <= BRIEF_MAX_AGE_MS || (existing.has(g.briefId) && now - Math.max(...g.members.map(when)) <= BRIEF_MAX_AGE_MS))
+    .filter((g) => { const t = eventTypeOf(g.members, g.canon); return !coveredByStructured(t ? { ...g.canon, story_type: legacyType(t) } : g.canon, g.members, structured); })
     .sort((a, b) => Math.max(...b.members.map(when)) - Math.max(...a.members.map(when)))
     .slice(0, BRIEF_MAX_PER_RUN);
 
@@ -257,9 +293,12 @@ export async function briefArticles({ externalItems = [], structured = [], now =
     if (!eventTimes.length) continue;
     const eventAt = new Date(Math.min(...eventTimes)).toISOString();
     const id = await hashId(['brief', cluster_id]);
+    const evType = eventTypeOf(members, canon);
+    const storyType = evType ? legacyType(evType) : canon.story_type;
+    const evM = eventMateriality(members);
 
     const { v, evidence: records, team } = await verify({ player, team: teamEntity?.name ? teamEntity : null, ctx: { ...ctx, now } });
-    const headline = trimHeadline(briefHeadline({ storyType: canon.story_type, player, team: v.team || team, verified: v, source }));
+    const headline = trimHeadline(briefHeadline({ storyType, eventType: evType, player, team: v.team || team, verified: v, source }));
     const canonReport = reports.find((r) => r.headline === sourceHeadline && r.publisher === source) || reports[0];
     const others = reports.filter((r) => r !== canonReport && r.publisher !== source);
     const s = v.season;
@@ -267,14 +306,16 @@ export async function briefArticles({ externalItems = [], structured = [], now =
       ? `PropBetEdge’s records: ${f1(s.pts)} points and ${f1(s.ast >= s.reb ? s.ast : s.reb)} ${s.ast >= s.reb ? 'assists' : 'rebounds'} per game across ${s.games} games for the ${v.team?.name} this season.`
       : v.standing ? `PropBetEdge’s records: the ${v.team.name} are ${v.standing.wins}–${v.standing.losses}.` : 'PropBetEdge keeps the report attributed and adds its own WNBA records where they exist.';
     const deck = `${source} published “${sourceHeadline}”. ${deckRecord}`;
-    const { body, sections } = writeBrief({ source, sourceHeadline, sourceAt: canonReport?.published_at || eventAt, others, names, player, team: v.team || team, v, storyType: canon.story_type });
+    const { body, sections } = writeBrief({ source, sourceHeadline, sourceAt: canonReport?.published_at || eventAt, others, names, player, team: v.team || team, v, storyType });
     const method = [
-      `Why this is a News Brief: ${poss(source)} item passed the PropBetEdge source-wire materiality check (story type: ${canon.story_type}) and is not already covered by a structured injury or transaction story.`,
+      evM
+        ? `Why this is a News Brief: the event (${EVENT_TYPES[evType]?.label || storyType}) scored ${evM.score} on PropBetEdge’s deterministic materiality check (threshold 3.5; ${evM.publishers} publisher${evM.publishers === 1 ? '' : 's'}), and it is not already covered by a structured injury or transaction story.`
+        : `Why this is a News Brief: ${poss(source)} item passed the PropBetEdge source-wire materiality check (story type: ${canon.story_type}) and is not already covered by a structured injury or transaction story.`,
       'Source rights: PropBetEdge stores the publisher’s headline, link and supplied metadata only. It does not reproduce the article body, and details that exist only in that report remain the publisher’s reporting.',
-      'Story identity: this brief is tied to one source cluster. When another publisher covers the same event, or PropBetEdge’s records change, the story is revised at the same URL with an Updated time; a different event becomes a new brief.'
+      'Story identity: this brief is tied to one event in PropBetEdge’s persisted event registry, identified by its facts (event type, player, team), never by a publisher’s article id. When another publisher covers the same event, or PropBetEdge’s records change, the story is revised at the same URL with an Updated time; a different event becomes a new brief.'
     ];
     const verifiedKey = JSON.stringify([s ? [s.games, f1(s.pts), f1(s.reb), f1(s.ast), f1(s.min)] : null, v.injury?.status || null, v.standing ? [v.standing.wins, v.standing.losses, v.standing.seed] : null, v.next_game?.game_id || null, v.transaction?.date || null]);
-    const input_hash = [BRIEF_VERSION, canon.story_type, canon.item_id, verifiedKey, ...members.map((m) => `${m.item_id}:${m.source_updated_at || m.published_at || ''}:${m.headline || ''}`).sort()].join('|');
+    const input_hash = [BRIEF_VERSION, storyType, canon.item_id, verifiedKey, ...members.map((m) => `${m.item_id}:${m.source_updated_at || m.published_at || ''}:${m.headline || ''}`).sort()].join('|');
 
     out.push(finalize({
       id,
@@ -297,10 +338,10 @@ export async function briefArticles({ externalItems = [], structured = [], now =
       lead_player_id: player?.id || null,
       primary_subject: player?.name || v.team?.name || null,
       published_at: eventAt,
-      context: { brief: { cluster_id, story_type: canon.story_type, source_item_id: canon.item_id, source_url: canon.canonical_url, source_name: source }, next_game: null },
+      context: { brief: { cluster_id, story_type: storyType, event_type: evType, desk: evType ? laneOf(evType) : null, source_item_id: canon.item_id, source_url: canon.canonical_url, source_name: source }, next_game: null },
       entities: [...allEntities, ...(v.next_game ? [{ type: 'game', id: v.next_game.game_id, name: `${v.team?.name} ${v.next_game.home ? 'vs' : 'at'} ${v.next_game.opponent}`, start_utc: v.next_game.start_utc }] : [])],
       facts: {
-        brief: { cluster_id, story_type: canon.story_type, source_item_id: canon.item_id, linked_entities: allEntities.map((e) => ({ type: e.type, id: e.id, name: e.name })), verified: v },
+        brief: { cluster_id, story_type: storyType, event_type: evType, materiality: evM ? { score: evM.score, publishers: evM.publishers } : null, source_item_id: canon.item_id, linked_entities: allEntities.map((e) => ({ type: e.type, id: e.id, name: e.name })), verified: v },
         provenance: v.provenance ? [v.provenance] : []
       },
       evidence: [...reports, ...records],
