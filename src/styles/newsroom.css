@@ -191,8 +191,15 @@
   .front-lead .scard--lead .ib--full .ib-name { font-size: 3.8cqw; }
   .front-lead .scard--lead .ib--full .ib-score { font-size: 5cqw; }
   .front-lead .scard--lead.sm--intl-board .sm-frame::after, .front-lead .scard--lead .sm--intl-board .sm-frame { background: linear-gradient(135deg, #15110d 0%, #0f0d0a 50%, color-mix(in srgb, var(--c1) 34%, #0f0d0a) 100%); }
-  .front-lead .scard--lead .ib--band { inset: 0 auto auto 0; width: 44%; padding: 3.2cqw; justify-content: flex-start; background: none; }
-  .front-lead .scard--lead .ib--band .ib-kicker { display: inline-flex; }
+  /* Lead with a photograph: a compact scoreboard chip in the top-left corner, clear of the headline block. */
+  .front-lead .scard--lead .ib--band { inset: 2cqw auto auto 2cqw; width: 30%; padding: 1.6cqw 2cqw; gap: .8cqw; justify-content: flex-start; border-radius: 1.2cqw; background: rgba(15, 13, 10, .82); box-shadow: 0 1cqw 3cqw rgba(0,0,0,.4); }
+  .front-lead .scard--lead .ib--band .ib-kicker { display: inline-flex; font-size: 1.4cqw; gap: .8cqw; }
+  .front-lead .scard--lead .ib--band .ib-medal { width: 1.5cqw; height: 1.5cqw; }
+  .front-lead .scard--lead .ib--band .ib-rows { width: 100%; gap: .5cqw; }
+  .front-lead .scard--lead .ib--band .ib-row { grid-template-columns: 3.2cqw minmax(0, 1fr) auto; gap: 1.1cqw; padding-bottom: .5cqw; }
+  .front-lead .scard--lead .ib--band .ib-flag { width: 3.2cqw; height: 2.15cqw; }
+  .front-lead .scard--lead .ib--band .ib-name { font-size: 2.3cqw; }
+  .front-lead .scard--lead .ib--band .ib-score { font-size: 2.8cqw; }
   .front-lead .scard--lead .scard-meta { color: var(--dim); }
 }
 .scard-foot { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin-top: 4px; }
