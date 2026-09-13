@@ -34,6 +34,9 @@ export const DESK = {
 export const KIND_ORDER = ['brief', 'preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];
 
 const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').slice(0, 2);
+// The visible story age is canonical newsroom publication time. Source/event timestamps may
+// move when an existing article is revised, but that must not make old coverage look newly published.
+const storyTime = (c) => c?.first_published_at || c?.published_at;
 // Short source labels for cards (the full, cited list is on the article page).
 const srcLabel = (s) => String(s).replace(/^wnba-api matchup research.*/i, 'PBE matchup research').replace(/\s*\(.*$/, '').replace(/\s*—.*$/, '');
 const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 2).join(', ');
@@ -58,7 +61,7 @@ export function articleCard(c, { lead = false, size = null, eager = false } = {}
   return html`<article class="scard scard--${sz}">
     ${storyMedia(c.media, { slot, eager })}
     <div class="scard-body">
-      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(c.published_at)}</span></div>
+      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span></div>
       <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
       ${sz !== 'compact' && c.deck ? html`<p class="deck">${headlineText(c.deck)}</p>` : ''}
       ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}${marketChip(c)}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
@@ -87,7 +90,7 @@ export function articleRow(c) {
   return html`<article class="srow">
     ${storyThumb(c.media, 64)}
     <div class="srow-body">
-      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(c.published_at)}</span></div>
+      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span></div>
       <h3 class="srow-h"><a href="/news/${c.slug}">${headlineText(c.headline)}</a></h3>
       ${thumbCredit(c.media)}
     </div>
