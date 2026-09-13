@@ -98,7 +98,7 @@ export async function mount(root, ctx) {
             <td>${g.market.books}</td>
             <td>${g.market.props?.available ? `${g.market.props.players} players` : html`<span class="note">36h window</span>`}</td>
           </tr>`)}</tbody></table></div>
-          <div class="card-body"><p class="note">Sportsbook prices and the market’s no-vig consensus are shown separately on the <a class="gold" href="/props">best line board</a>. No PropBetEdge model price is published for the WNBA.</p></div></div>
+          <div class="card-body"><p class="note">Sportsbook prices and the market’s no-vig consensus are shown separately on the <a class="gold" href="/props">best line board</a>, with source, book count and capture time kept visible.</p></div></div>
       </section>` : ''}
 
       <div class="section split">
