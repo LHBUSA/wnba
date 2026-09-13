@@ -271,7 +271,7 @@ function dedupeEntities(list) {
 async function articlesRoute(env, url) {
   const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
-  const limit = Math.min(Number(url.searchParams.get('limit') || 40), 200);
+  const limit = Math.min(Number(url.searchParams.get('limit') || 40), 400);
   const cat = url.searchParams.get('kind');
   const team = url.searchParams.get('team');
   const player = url.searchParams.get('player');

@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const read = (p) => fs.readFileSync(new URL(p, import.meta.url), 'utf8');
+// Page modules delegate rendering to shared views (src/views/*), which the publishing Worker also serves;
+// each surface is checked as page + view source together.
 const cards = read('../src/ui/articles.js');
-const article = read('../src/pages/article.js');
-const news = read('../src/pages/news.js');
-const matchups = read('../src/pages/matchups.js');
+const article = read('../src/pages/article.js') + read('../src/views/article.js');
+const news = read('../src/pages/news.js') + read('../src/views/news.js');
+const matchups = read('../src/pages/matchups.js') + read('../src/views/matchups.js');
 const props = read('../src/pages/props.js');
-const today = read('../src/pages/today.js');
+const today = read('../src/pages/today.js') + read('../src/views/today.js');
 
 test('editorial story cards do not render sportsbook market chips', () => {
   assert.doesNotMatch(cards, /marketChip\s*\(/);

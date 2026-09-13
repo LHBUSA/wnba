@@ -4,7 +4,7 @@
 // (data/team-logos.json records source, hash and fetch time).
 
 import { html } from '../lib/dom.js';
-import manifest from '../../data/team-logos.json';
+import manifest from '../../data/team-logos.json' with { type: 'json' };
 
 const BY_ID = new Map(manifest.teams.map((t) => [String(t.team_id), t]));
 const BY_ABBR = new Map(manifest.teams.map((t) => [t.abbr, t]));

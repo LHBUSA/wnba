@@ -1,19 +1,21 @@
 import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
-import { pageHead, skeleton, badge, errorState } from '../ui/components.js';
+import { skeleton, badge, errorState } from '../ui/components.js';
 import { relTime, fmtDateTimeET } from '../lib/format.js';
+import { sourcesRegistryView, sourcesHead } from '../views/trust.js';
 
 export const title = () => 'Source status & methodology';
 export const description = () => 'Live source health for PropBetEdge WNBA, measured from the Cloudflare runtime, plus the methods behind every derived number.';
 
 export async function mount(root, ctx) {
-  render(root, html`${pageHead({ eyebrow: 'Trust', title: 'Source status' })}${skeleton(360)}`);
+  render(root, html`${sourcesHead()}${sourcesRegistryView()}${skeleton(360)}`);
   const [src, health, news] = await Promise.all([api.sources(), api.health(), api.newsSources()]);
   if (!ctx.isCurrent()) return;
   const ingest = health.ok !== false ? health.ingest_status || health.data?.ingest_status : null;
   const h = health.ok ? health : null;
   render(root, html`
-    ${pageHead({ eyebrow: 'Trust', title: 'Source status', sub: 'Measured live from the Cloudflare Workers that serve this site — the same egress your data comes through. Nothing on this page is cached marketing copy.' })}
+    ${sourcesHead()}
+    ${sourcesRegistryView()}
     <section class="card">
       <div class="card-head"><span class="card-title">Provider canary · from Cloudflare</span><span class="note">${src.ok ? `run ${fmtDateTimeET(src.meta.served_at)}` : ''}</span></div>
       ${src.ok ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Capability</th><th>Host</th><th>HTTP</th><th>Bytes</th><th>Latency</th><th>Result</th></tr></thead><tbody>

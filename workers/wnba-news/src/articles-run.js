@@ -81,7 +81,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     // Material source-wire events run last so the brief generator can suppress events already covered by a
     // structured injury/transaction story. A source cluster is one stable brief: corroboration revises it,
     // while a different material cluster becomes a genuinely new newsroom article.
-    ['brief', () => briefArticles({ externalItems, structured: produced, now }), true]
+    ['brief', () => briefArticles({ externalItems, structured: produced, now, ctx: { api, injuries: inj?.items || null, transactions: tx?.items || [], schedule: games, standingsById, season, dict } }), true]
   ]) {
     if (!on) { runs[name] = 'skipped (daily)'; continue; }
     try {

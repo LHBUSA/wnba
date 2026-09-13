@@ -1,0 +1,29 @@
+name = "wnba-web"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "fd3a233edadd0a60916413c1199f71ee"
+workers_dev = true
+
+# Publishing edge for wnba.propbetedge.ai: server-visible HTML for indexable routes, sitemaps, RSS and share
+# cards. Vercel proxies those paths here (vercel.json external rewrites); Vercel still serves static assets.
+# No cron, no KV: every read goes through the wnba-api / wnba-news service bindings.
+
+[[services]]
+binding = "API"
+service = "wnba-api"
+
+[[services]]
+binding = "NEWS"
+service = "wnba-news"
+
+# Share-card fonts (OFL: Newsreader, Barlow Condensed, Inter) are bundled as binary data for satori.
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
+
+[observability]
+enabled = true
+
+[limits]
+cpu_ms = 30000

@@ -29,7 +29,10 @@ test('a fresh material source cluster becomes a publishable PBE News Brief', asy
   assert.equal(out[0].category, 'News Briefs');
   assert.equal(out[0].status, 'published');
   assert.equal(out[0].gate.ok, true, out[0].gate.failures?.join('\n'));
-  assert.match(out[0].headline, /^WNBA\.com:/);
+  // The headline is PropBetEdge's own; the originating publisher and its exact headline are attributed in the deck.
+  assert.doesNotMatch(out[0].headline, /^WNBA\.com:/);
+  assert.ok(!out[0].headline.includes('WNBA announces a new league operations update'));
+  assert.match(out[0].deck, /^WNBA\.com published “WNBA announces a new league operations update”\./);
   assert.equal(out[0].published_at, iso(5));
 });
 
@@ -95,4 +98,64 @@ test('old source-wire events do not get promoted into new briefs', async () => {
   const old = item({ published_at: new Date(NOW - BRIEF_MAX_AGE_MS - 60e3).toISOString() });
   const out = await briefArticles({ externalItems: [old], structured: [], now: NOW });
   assert.equal(out.length, 0);
+});
+
+// ------------------------------------------------------------ wnba-briefs/1.1.0 editorial structure
+
+import { reconcileArticle } from '../workers/wnba-news/src/reconcile.js';
+
+const CARLA = { type: 'player', id: '5208982', name: 'Carla Leite', team_id: '132052', method: 'exact_full_name', on_current_roster: true };
+const FIRE = { type: 'team', id: '132052', name: 'Portland Fire' };
+const carlaItem = item({
+  item_id: 'feb18fa744704c89169f', cluster_id: 'c_feb18fa744704c89169f', source_id: 'swish_appeal', source_name: 'Swish Appeal', priority: 2,
+  canonical_url: 'https://www.swishappeal.com/wnba/86660/portland-fire-france-carla-leite',
+  headline: 'Carla Leite is the special talent firing up the relaunched Portland Fire', story_type: 'news', relevance: 4, published_at: iso(60),
+  summary: 'Publisher summary text that must never appear in PropBetEdge prose.',
+  entities: [CARLA, FIRE]
+});
+const game = (d, pts, min) => ({ game_id: `g${d}`, date: `2026-08-${String(d).padStart(2, '0')}T23:00Z`, team_id: '132052', min, pts, reb: 2, ast: 6, result: 'W' });
+const carlaCtx = {
+  season: 2026,
+  api: async (path) => (path === '/v1/players/5208982' ? {
+    player: { athlete_id: '5208982', name: 'Carla Leite', position_name: 'Guard', team: { team_id: '132052', name: 'Portland Fire', short_name: 'Fire' } },
+    gamelog: { seasons: [{ name: '2026 Regular Season', games: [game(28, 20, 30), game(26, 18, 29), game(24, 19, 28), game(22, 17, 30), game(20, 19, 29), game(18, 10, 22), game(16, 12, 24)] }] }
+  } : null),
+  injuries: [{ athlete_id: '5208982', team_id: '132052', name: 'Carla Leite', status: 'Out', body_part: 'Not Injury Related', source_updated_at: '2026-08-29T16:22Z', short_comment: 'The Fire temporarily suspended Leite contract Saturday before the World Cup break began.' }],
+  transactions: [],
+  schedule: [{ game_id: '401857199', start_utc: '2026-09-17T23:00Z', status: { state: 'pre' }, home: { team_id: '132052', name: 'Portland Fire' }, away: { team_id: '129689', name: 'Golden State Valkyries' } }],
+  standingsById: new Map([['132052', { wins: 14, losses: 22, seed: 9, conference_name: 'Western Conference', last_ten: '4-6' }]]),
+  dict: { teamById: new Map([['132052', { name: 'Portland Fire' }]]) }
+};
+
+test('a material brief is an original PBE article: own headline, attributed deck, verified sections, method out of the body', async () => {
+  const [a] = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW, ctx: carlaCtx });
+  assert.equal(a.status, 'published', a.gate.failures.join('\n'));
+  assert.equal(a.headline, 'Carla Leite in focus for the Portland Fire: the report and her season in numbers');
+  assert.doesNotMatch(a.headline, /^Swish Appeal:/);
+  assert.match(a.deck, /^Swish Appeal published “Carla Leite is the special talent firing up the relaunched Portland Fire”\. PropBetEdge’s records: 16\.4 points and 6 assists per game across 7 games for the Portland Fire this season\.$/);
+  assert.deepEqual(a.sections.map((s) => s.title), ['What happened', 'What PropBetEdge can verify', 'Why it matters', 'What comes next']);
+  const text = a.body.join('\n');
+  assert.match(text, /has played 7 games for the Portland Fire this season, averaging 16\.4 points/);
+  assert.match(text, /ESPN’s injury feed lists Carla Leite as Out/);
+  assert.match(text, /The Portland Fire are 14–22, No\. 9 in the Western Conference/);
+  assert.match(text, /next play the Golden State Valkyries at home/);
+  // Source-rights boilerplate lives in the method layer, not the article body; publisher summaries never appear.
+  assert.doesNotMatch(text, /does not reproduce the publisher'?s article body/i);
+  assert.doesNotMatch(text, /Publisher summary text/);
+  assert.ok(a.method.some((m) => /does not reproduce the article body/.test(m)));
+  assert.ok(a.evidence.some((e) => e.kind === 'publisher_report' && e.publisher === 'Swish Appeal'));
+  assert.ok(a.evidence.some((e) => e.kind === 'record' && /ESPN game log \(2026 Regular Season\)/.test(e.source)));
+  assert.ok(a.entities.some((e) => e.type === 'game' && e.id === '401857199'));
+  // The added reconciliation gate also passes (season provenance, comment-text shingles, lint).
+  const rec = reconcileArticle(a, { season: 2026, injuries: carlaCtx.injuries });
+  assert.equal(rec.ok, true, rec.failures.join('\n'));
+});
+
+test('a brief with no structured context still publishes truthfully and keeps its story identity', async () => {
+  const [bare] = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW });
+  const [rich] = await briefArticles({ externalItems: [carlaItem], structured: [], now: NOW, ctx: carlaCtx });
+  assert.equal(bare.status, 'published', bare.gate.failures.join('\n'));
+  assert.equal(bare.id, rich.id, 'structured context changes the copy, never the story id');
+  assert.notEqual(bare.input_hash, rich.input_hash, 'a records change is a revision of the same story');
+  assert.doesNotMatch(bare.body.join(' '), /\d+\.\d+ points/);
 });

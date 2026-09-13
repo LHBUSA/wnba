@@ -26,8 +26,9 @@ const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 
 const BRAND_MARK = `<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1813"/><circle cx="32" cy="32" r="19" fill="none" stroke="#d4af37" stroke-width="3.5"/><path d="M13 32h38M32 13v38M19 18c7 6 7 22 0 28M45 18c-7 6-7 22 0 28" fill="none" stroke="#ff7a2f" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 
-export function mountShell(root) {
-  render(root, html`
+/** The site shell as HTML. `main` is the page content (server-rendered by the publishing Worker); `ssrPath` marks it. */
+export function shellHtml({ main = '', ssrPath = null } = {}) {
+  return html`
     <header class="hdr">
       <div class="hdr-in">
         <a class="brand" href="/" aria-label="PropBetEdge WNBA home">
@@ -52,15 +53,20 @@ export function mountShell(root) {
         <a href="/sources" data-nav="sources">Source status</a>
       </div>
     </div>
-    <main id="main" tabindex="-1"></main>
+    <main id="main" tabindex="-1" ${ssrPath ? html`data-ssr-path="${ssrPath}"` : ''}>${main}</main>
     <footer class="foot">
       <div class="foot-in">
         <div>
           <a class="brand" href="/">${raw(BRAND_MARK)}<span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>Independent WNBA intelligence</small></span></a>
           <p class="note" style="margin-top:12px;max-width:44ch">Built from real WNBA source data with visible source and freshness on every volatile number. Sportsbook prices, market consensus and PropBetEdge model outputs are always kept separate.</p>
           <ul style="margin-top:14px">
-            <li><a href="/sources">Source status &amp; methodology</a></li>
+            <li><a href="/about">About the newsroom</a></li>
+            <li><a href="/editorial-policy">Editorial policy</a></li>
+            <li><a href="/corrections">Corrections &amp; revisions</a></li>
+            <li><a href="/methodology">Methodology</a></li>
+            <li><a href="/sources">Source status</a></li>
             <li><a href="/track-record">Track record doctrine</a></li>
+            <li><a href="/rss.xml">Newsroom RSS</a></li>
           </ul>
         </div>
         <div>
@@ -88,7 +94,12 @@ export function mountShell(root) {
       <a href="/news" data-nav="news">${raw(svg('news'))}News</a>
       <a href="#menu" data-menu>${raw(svg('more'))}More</a>
     </nav>
-  `);
+  `;
+}
+
+export function mountShell(root) {
+  // A server-rendered shell is kept as-is (identical markup); it is rendered here only when the page arrived empty.
+  if (!root.querySelector('header.hdr') || !root.querySelector('#main')) render(root, shellHtml());
 
   const drawer = root.querySelector('#drawer');
   const open = (v) => {

@@ -40,3 +40,7 @@ table { border-collapse: collapse; width: 100%; }
 .gold { color: var(--gold); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+
+/* Server-rendered page handoff: the live page mounts in a layout-neutral wrapper. */
+.ssr-live { display: contents; }
+.ssr-live[hidden] { display: none; }

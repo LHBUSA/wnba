@@ -1,2 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /app-shell.html
+
+Sitemap: https://wnba.propbetedge.ai/sitemap.xml
+Sitemap: https://wnba.propbetedge.ai/news-sitemap.xml
