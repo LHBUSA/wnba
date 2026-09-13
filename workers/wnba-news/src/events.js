@@ -31,6 +31,11 @@ const GENERIC = new Set(['news', 'result', 'performance', 'preview', 'market', '
 // Light stemming for league-level headline matching ("releases"/"released", "playoffs"/"playoff", "dates"/"date").
 const stems = (headline) => new Set([...tokens(headline)].map((w) => w.replace(/(ing|ed|es|s)$/, '')).filter((w) => w.length > 2));
 
+const withoutNames = (tk, it) => {
+  const names = new Set(['wnba', ...(it.entities || []).flatMap((e) => [...tokens(e?.name || '')])]);
+  return new Set([...tk].filter((w) => !names.has(w)));
+};
+
 /** The fact key of an item, or null when the item carries no verifiable fact identity. */
 export function factKey(item) {
   const t = item.event_type;
@@ -103,7 +108,10 @@ function candidate(it, events) {
       ? Math.max(0, ...ev.members.map((m) => jaccard(stems(it.headline), stems(m.headline))))
       : 0;
     const shared = players.length && players.some((p) => ev.players.includes(p));
-    const score = shared && compatible(it.event_type, ev.event_type) && jac >= 0.2 ? 1 + jac : jac >= 0.55 ? jac : sameTypeNoFacts >= 0.4 ? sameTypeNoFacts : 0;
+    // A shared player is not a shared event: the overlap that counts is what the headlines say beyond the names
+    // ("Reese named Player of the Week" and "Reese breaks WNBA record" share only "angel reese wnba").
+    const topical = shared ? Math.max(0, ...ev.members.map((m) => jaccard(withoutNames(tk, it), withoutNames(tokens(m.headline), it)))) : 0;
+    const score = shared && compatible(it.event_type, ev.event_type) && topical >= 0.2 ? 1 + topical : jac >= 0.55 ? jac : sameTypeNoFacts >= 0.4 ? sameTypeNoFacts : 0;
     if (score && (!best || score > best.score)) best = { ev, rule: shared ? 'shared_player' : jac >= 0.55 ? 'headline' : 'same_type_headline', score };
   }
   return best;

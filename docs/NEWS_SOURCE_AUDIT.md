@@ -1,6 +1,6 @@
 # WNBA newsroom — source audit, event model and 7-day coverage audit
 
-Registry `news-sources/2.0.0` · taxonomy `wnba-taxonomy/1.1.0` · events `wnba-events/1.0.0` · fetch `wnba-news-fetch/1.0.0`.
+Registry `news-sources/2.0.0` · taxonomy `wnba-taxonomy/1.1.1` · events `wnba-events/1.0.0` · fetch `wnba-news-fetch/1.0.0`.
 Probed 2026-09-13 with the Worker's own user agent (`PropBetEdge-WNBA-News/1.0 (+https://wnba.propbetedge.ai/news)`); no disguised UA, no login, no paywall, no private credentials, no article bodies.
 
 ## 1. Rules
@@ -108,7 +108,7 @@ The official boost applies only to announcements the source is authoritative for
 | Magbegor event, 4 publishers | 6.0 |
 | Playoff schedule, 3 publishers | 4.5 |
 
-**Not material (from this week; scores from wnba-taxonomy/1.1.0):**
+**Not material (from this week; scores from wnba-taxonomy/1.1.1):**
 
 | Item | Score |
 |---|---|

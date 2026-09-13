@@ -1,4 +1,4 @@
-// Event taxonomy and materiality gate for the WNBA source wire — wnba-taxonomy/1.1.0.
+// Event taxonomy and materiality gate for the WNBA source wire — wnba-taxonomy/1.1.1.
 //
 // Deterministic and stated: regular expressions over the publisher's headline, short summary and categories, plus
 // the source's tier. Nothing here calls a language model and nothing reads an article body.
@@ -8,7 +8,7 @@
 //   story_type  the legacy v1 type, kept so existing consumers (briefs, feed filters, Supabase rows) keep working
 //   materiality { score, level, material, reasons, flags } — whether the event can become a PropBetEdge story
 
-export const TAXONOMY_VERSION = 'wnba-taxonomy/1.1.0';
+export const TAXONOMY_VERSION = 'wnba-taxonomy/1.1.1';
 
 /** Score at or above which a source-wire event may become a new PropBetEdge story. */
 export const MATERIAL_THRESHOLD = 3.5;
@@ -67,7 +67,7 @@ const RULES = [
   ['roster_move', /\b(activate[sd]?|hardship|suspend(s|ed)?|suspension|placed on|reinstate[sd]?|announces? (her |his )?retirement|retire[sd]? from|option (exercised|declined)|core(d)? (designation|player)|roster (move|cut|spot|update)|contract (suspended|terminated)|free agen(t|cy))\b/i],
   ['injury', /\b(injur(y|ies|ed)|out for (the )?(season|year|remainder)|(for|out) (the )?rest of (the )?season|los(e|es|ing) .{2,40} for (the )?(rest of (the )?)?season|season-ending|ruled out|will miss|miss(es)? (the )?(rest|remainder)|questionable|doubtful|day-to-day|torn|tear(s|ing)? (her |his |an? |the )?(left |right )?(acl|achilles|meniscus|mcl|labrum|ligament)|\bacl\b|achilles|meniscus|sprain(ed)?|fracture[sd]?|surgery|(knee|ankle|foot|hip|hand|wrist|back|shoulder|calf|hamstring) (procedure|surgery|injury|soreness|contusion)|undergoes|underwent|concussion|protocol|sidelined|health update|setback|strain(ed)?|out indefinitely)\b/i],
   ['availability', /\b(return(s|ed|ing)? (to|from) (practice|injury|action|the lineup|the court|play)|cleared to (play|return)|back (at|to) practice|expected to (play|return)|available (to play|for)|upgraded to|downgraded to|will play|won't play|load management|rest(s|ed)? (for|against))\b/i],
-  ['awards', /\b(mvp|most valuable player|defensive player of the year|dpoy|rookie of the year|sixth (player|woman) of the year|most improved player|coach of the year|executive of the year|all-wnba|all-defensive|all-rookie|player of the (week|month)|rookie of the month|all-star (starters?|reserves?|selections?|roster|captains?|voting)|named (an? )?all-star|award(s|ed)?|honou?rs? (for|as))\b/i],
+  ['awards', /\b(mvp|most valuable player|(player|rookie|coach|sixth player) of the (week|month)|defensive player of the year|dpoy|rookie of the year|sixth (player|woman) of the year|most improved player|coach of the year|executive of the year|all-wnba|all-defensive|all-rookie|player of the (week|month)|rookie of the month|all-star (starters?|reserves?|selections?|roster|captains?|voting)|named (an? )?all-star|award(s|ed)?|honou?rs? (for|as))\b/i],
   ['coaching', /\b(head coach|interim coach|assistant coach|coach(es|ing)? (fired|hire[sd]?|search|change|staff)|(fires?|fired|hires?|hired|names?|named|parts? ways with|dismiss(es|ed)?) .{0,40}\bcoach)\b/i],
   ['front_office', /\b(general manager|\bgm\b|president of basketball|team president|front office|ownership group|new owners?|sale of the (team|franchise)|minority stake|chief executive|ceo)\b/i],
   ['draft', /\b(draft (lottery|pick|prospects?|order|board|night|rights)|no\. \d+ pick|first-round pick|\d{4} wnba draft|wnba draft)\b/i],
@@ -122,7 +122,7 @@ const sourceAdjust = (priority) => (priority === 1 ? 1.5 : priority === 2 ? 0.5 
 // a clinch, elimination or seeding.
 const OFFICIAL_AUTHORITY = new Set(['injury', 'availability', 'trade', 'signing', 'waiver', 'roster_move', 'coaching', 'front_office', 'awards', 'expansion', 'cba', 'draft', 'league']);
 const PLAYOFF_FACT = /\b(clinch(es|ed|ing)?|eliminat(ed|ion)|earn(s|ed)? (a |the )?(playoff|postseason) (spot|berth)|playoff (seed|seeding|bracket|schedule)|no\. \d seed|first-round bye)\b/i;
-const MINOR_HONOR = /\b(player of the week|rookie of the week|of the month|player of the game|honou?r roll)\b/i;
+const MINOR_HONOR = /\b(player of the week|rookie of the week|coach of the week|of the month|player of the game|honou?r roll)\b/i;
 const round = (x) => Math.round(x * 10) / 10;
 
 /**
