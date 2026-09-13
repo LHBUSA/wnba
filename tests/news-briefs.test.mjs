@@ -78,6 +78,19 @@ test('external injury coverage does not duplicate an already-published structure
   assert.equal(out.length, 0);
 });
 
+test('a different named player transaction on the same team is not suppressed', async () => {
+  const tx = item({
+    story_type: 'transaction',
+    headline: 'Example Team signs Alyssa Example to a contract',
+    entities: [{ type: 'player', id: '42', name: 'Alyssa Example', team_id: '7' }, { type: 'team', id: '7', name: 'Example Team' }]
+  });
+  const structured = [{ id: 'tx-other', kind: 'transaction', status: 'published', lead_player_id: '99', lead_team_id: '7' }];
+  const out = await briefArticles({ externalItems: [tx], structured, now: NOW });
+
+  assert.equal(out.length, 1);
+  assert.equal(out[0].kind, 'brief');
+});
+
 test('old source-wire events do not get promoted into new briefs', async () => {
   const old = item({ published_at: new Date(NOW - BRIEF_MAX_AGE_MS - 60e3).toISOString() });
   const out = await briefArticles({ externalItems: [old], structured: [], now: NOW });
