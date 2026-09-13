@@ -307,3 +307,18 @@ test('a registry-only competition page never promises scores or stats in its tit
   assert.equal(meta.robots, 'noindex, follow');
   assert.ok(COMPETITIONS.filter((c) => c.coverage === 'registry_only').every((c) => !c.start_date && !c.qualification_relationships.length), 'no unverified dates or qualification links');
 });
+
+test('international desk: a box score without minutes publishes without printing "null" (bronze game, 2026-09-13)', async () => {
+  const { game, intlGet } = medalFixture();
+  const noMinutes = async (path) => {
+    const r = await intlGet(path);
+    if (!r?.boxscore) return r;
+    // ESPN's FIBA feed omitted minutes (and some rebounds/assists) for players in the real bronze-medal box score.
+    return { ...r, boxscore: { teams: r.boxscore.teams.map((t) => ({ ...t, players: t.players.map((p, i) => ({ ...p, min: p.wnba ? p.min : null, ...(i === 1 ? { reb: null } : {}) })) })) } };
+  };
+  const [story] = await internationalArticles({ intlGet: noMinutes, now: Date.parse(game.scheduled_at) + 3 * 3600e3 });
+  assert.doesNotMatch(story.body.join(' '), /null/);
+  assert.equal(story.status, 'published', story.gate.failures.join('\n'));
+  const rec = reconcileArticle(story, { season: 2026, injuries: [] });
+  assert.equal(rec.ok, true, rec.failures.join('\n'));
+});

@@ -14,7 +14,14 @@ const GAME_LENGTH_MS = 2.5 * 3600e3;
 const MEDAL = { FINAL: { gold: 'gold', loser: 'silver' }, BRONZE: { gold: 'bronze', loser: null } };
 
 const f1 = (v) => (Number.isFinite(v) ? (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '') : null);
-const line = (p) => `${p.pts} points, ${p.reb} rebounds and ${p.ast} assists in ${p.min} minutes`;
+// ESPN's FIBA box scores sometimes omit minutes (or rebounds/assists) for a player: a missing stat is left out of the
+// sentence, never printed as "null".
+const line = (p) => {
+  const n = (v) => Number.isFinite(v);
+  const parts = [`${p.pts} points`, n(p.reb) ? `${p.reb} rebounds` : null, n(p.ast) ? `${p.ast} assists` : null].filter(Boolean);
+  const stats = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
+  return n(p.min) && p.min > 0 ? `${stats} in ${p.min} minutes` : stats;
+};
 
 /** Medal games finished within the window, newest first. `now` is injected for tests. */
 export function materialInternationalGames(overview, now = Date.now()) {
