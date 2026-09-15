@@ -27,6 +27,9 @@ import { photoFor, photoCoverage } from './photos.js';
 import { PBE_MODEL } from '../../shared/market.js';
 import { upgradeNormalizedPlays } from '../../shared/pbp.js';
 import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './market.js';
+import { requestLink, verifyPage, verifyConsume, logout, privateJson, credentialedPreflight } from './auth.js';
+import { resolveAccount } from './account.js';
+import { pbeStatus, pbeCoverage, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 
 const SERVICE = 'wnba-api';
 const VERSION = '1.0.0';
@@ -50,10 +53,22 @@ const TTL = {
 
 export default {
   async fetch(request, env, ctx) {
-    if (request.method === 'OPTIONS') return preflight();
-    if (request.method !== 'GET' && request.method !== 'HEAD') return json({ ok: false, error: { code: 'method_not_allowed' } }, { status: 405 });
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
+    // Credentialed surfaces (session cookie): exact-origin CORS, private no-store responses.
+    const credentialed = CREDENTIALED_PATHS.test(path);
+    if (request.method === 'OPTIONS') return credentialed ? credentialedPreflight(request) : preflight();
+    const post = POST_ROUTES[path];
+    if (request.method === 'POST') {
+      if (!post) return json({ ok: false, error: { code: 'method_not_allowed' } }, { status: 405 });
+      try {
+        return await post(request, env);
+      } catch (e) {
+        console.error(`[${SERVICE}] POST ${path}`, e?.stack || e);
+        return privateJson(request, { ok: false, error: { code: 'internal_error' } }, 500);
+      }
+    }
+    if (request.method !== 'GET' && request.method !== 'HEAD') return json({ ok: false, error: { code: 'method_not_allowed' } }, { status: 405 });
     const route = matchRoute(path);
     if (!route) return json({ ok: false, error: { code: 'not_found', message: `No route ${path}` }, routes: ROUTE_LIST }, { status: 404 });
     try {
@@ -90,9 +105,22 @@ const ROUTES = [
   ['/v1/stats/teams', statsTeams],
   ['/v1/odds', odds],
   ['/v1/props', props],
-  ['/v1/track-record', trackRecord],
-  ['/v1/account', account]
+  ['/v1/track-record', trackRecordPublic],
+  ['/v1/track-record/ledger', trackRecordLedger],
+  ['/v1/account', account],
+  ['/v1/auth/verify', ({ request, env }) => verifyPage(request, env)],
+  ['/v1/pbe/status', pbeStatus],
+  ['/v1/pbe/coverage', pbeCoverage],
+  ['/v1/pbe/picks', pbePicks],
+  ['/v1/pbe/games/:id', pbeGame],
+  ['/v1/pbe/teams/:id', pbeTeam]
 ];
+const POST_ROUTES = {
+  '/v1/auth/request': requestLink,
+  '/v1/auth/verify': verifyConsume,
+  '/v1/auth/logout': logout
+};
+const CREDENTIALED_PATHS = /^\/v1\/(account|auth\/(request|logout)|pbe\/(picks|games|teams)(\/|$)|track-record\/ledger)/;
 const ROUTE_LIST = ROUTES.map(([p]) => p);
 
 function matchRoute(path) {
@@ -804,48 +832,8 @@ async function props({ env, path }) {
 
 // ---------------------------------------------------------------- trust surfaces
 
-async function trackRecord({ path }) {
-  // No WNBA pick has been recorded. The ledger is empty by fact, not by error.
-  return ok(
-    {
-      picks_recorded: 0,
-      graded: 0,
-      pending: 0,
-      wins: 0,
-      losses: 0,
-      pushes: 0,
-      roi: null,
-      roi_note: 'ROI is computed only from picks with a recorded market price at pick time.',
-      doctrine: [
-        'A pick exists only if it was recorded before its game started.',
-        'The line and price used are frozen with the pick.',
-        'Grading is deterministic from the final box score.',
-        'Losses stay losses. Nothing is backfilled or deleted.',
-        'Sample size is shown next to every rate.'
-      ],
-      model: PBE_MODEL
-    },
-    base(path, { source: SOURCES.pbe, fetchedAt: nowIso(), freshness: FRESHNESS.CURRENT, semantics: 'EMPTY_LEDGER' }),
-    { maxAge: 60 }
-  );
-}
-
-async function account({ env, path }) {
-  // Fail closed. WNBA Pro requires: verified PropBetEdge session -> Supabase
-  // pbe_sport_entitlements (product_key wnba_pro). Neither the session contract
-  // nor the WNBA Stripe objects are live, so every visitor is signed_out.
-  return json(
-    {
-      ok: true,
-      data: {
-        state: 'signed_out',
-        entitled: false,
-        product_key: 'wnba_pro',
-        purchase_activation: env.WNBA_PURCHASE_ACTIVE === 'true' ? 'active' : 'inactive',
-        reason: 'Account verification is not connected for WNBA yet; access is fail-closed.'
-      },
-      meta: base(path, { source: SOURCES.pbe, fetchedAt: nowIso(), freshness: FRESHNESS.CURRENT, semantics: 'ACCOUNT_FAIL_CLOSED' })
-    },
-    { maxAge: 0 }
-  );
+async function account({ request, env, path }) {
+  // Server-decided: verified WNBA session -> network billing ledger (wnba_pro). See src/account.js.
+  const data = await resolveAccount(request, env);
+  return privateJson(request, { ok: true, data, meta: base(path, { source: SOURCES.pbe, fetchedAt: nowIso(), freshness: FRESHNESS.CURRENT, semantics: 'ACCOUNT_SERVER_DECIDED' }) });
 }

@@ -13,6 +13,11 @@ crons = ["* * * * *"]
 binding = "WNBA_KV"
 id = "c3249a8e3552438da38c6cad0d54e172"
 
+[vars]
+# PBE WNBA runner. dry_run = shadow ledger in KV only (never public, never official).
+# `armed` writes the official Supabase ledger and requires owner approval + PBE_ARMED_BY + PBE_SUPABASE_* secrets.
+PBE_MODE = "dry_run"
+
 [observability]
 enabled = true
 
@@ -20,3 +25,5 @@ enabled = true
 #   ODDS_API_KEY               The Odds API key (odds task: 08/13/18 ET only)
 #   ADMIN_TOKEN                bearer token for POST /run/<task>
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   (after owner approval)
+#   PBE_SUPABASE_URL, PBE_SUPABASE_SERVICE_ROLE_KEY   tkmln wnba_pbe_* writer (armed only)
+#   PBE_ARMED_BY                                    owner approval reference (armed only)

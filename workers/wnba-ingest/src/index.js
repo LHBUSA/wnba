@@ -11,6 +11,7 @@
 //   schedule     every 30 min   season schedule -> wnba_games
 //   reference    hourly :15     teams, rosters, standings snapshot
 //   odds         08/13/18 ET    featured markets + near-term props (credit-bounded)
+//   pbe          every minute   PBE WNBA model runner (PBE_MODE; dry_run = shadow ledger only)
 
 import { fetchJsonWithTimeout, cachedJson } from '../../shared/fetcher.js';
 import { ESPN, normalizeScoreboard, normalizeSummary, normalizeInjuries, normalizeTeams, normalizeRoster, normalizeStandings } from '../../shared/espn.js';
@@ -18,6 +19,7 @@ import { shotChart } from '../../shared/derive.js';
 import { normalizeOddsEvent, normalizeProps, teamIndex, normalizeName } from '../../shared/market.js';
 import { upsert, insert, supabaseConfigured } from '../../shared/supabase.js';
 import { etCompact, addDays, etHour } from '../../shared/time.js';
+import { pbeTask } from './pbe-runner.js';
 
 const SERVICE = 'wnba-ingest';
 const VERSION = '1.0.0';
@@ -30,7 +32,7 @@ export default {
   async scheduled(event, env, ctx) {
     const d = new Date(event.scheduledTime);
     const minute = d.getUTCMinutes();
-    const tasks = ['live'];
+    const tasks = ['live', 'pbe'];
     if (minute % 10 === 0) tasks.push('availability', 'backfill');
     if (minute % 30 === 5) tasks.push('schedule');
     if (minute === 15) tasks.push('reference');
@@ -47,7 +49,7 @@ export default {
       const status = env.WNBA_KV ? await env.WNBA_KV.get('ingest:v1:status', 'json') : null;
       return j({ ok: true, service: SERVICE, version: VERSION, status });
     }
-    const m = url.pathname.match(/^\/run\/(live|availability|backfill|schedule|reference|odds)$/);
+    const m = url.pathname.match(/^\/run\/(live|availability|backfill|schedule|reference|odds|pbe)$/);
     if (m && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       const result = await runTasks(env, ctx, [m[1]], 'manual');
@@ -79,7 +81,8 @@ async function runTasks(env, ctx, tasks, trigger) {
   return results;
 }
 
-const TASKS = { live, availability, backfill, schedule, reference, odds };
+// pbe: PBE WNBA runner (pbe-runner.js). PBE_MODE off | dry_run | armed; it decides per game whether anything is due.
+const TASKS = { live, availability, backfill, schedule, reference, odds, pbe: (env) => pbeTask(env) };
 
 // ---------------------------------------------------------------- rows
 
