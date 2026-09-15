@@ -1,0 +1,32 @@
+ step | pass |                                              check_name                                              |                                                       detail                                                        
+------+------+------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------
+ 00   | t    | environment                                                                                          | PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35228, 64-bit · db postgres · user postgres
+ 01   | t    | clean install: no wnba_pbe_* object exists before the migration                                      | 0 pre-existing wnba_pbe relations
+ 02   | t    | second execution succeeds and creates nothing new                                                    | relations 22, functions 7, triggers 15 after both runs
+ 03   | t    | access: RLS on all 5 tables, zero policies, anon/authenticated hold no privilege                     | rls=5/5 · policies=0 · anon/authenticated grants=0 · service_role: select+insert only
+ 04   | t    | registry insert stamps the server clock (backdated registered_at/promoted_at ignored)                | champion = pbe-wnba-model-v1
+ 05   | t    | pre-lock observation insert allowed (as service_role; recorded_at forced to server clock)            | observation 78a09021-7a9b-4823-a515-e602e9ee9a37 recorded_at 2026-09-15 14:24:57.644653-05
+ 06   | t    | observation update rejected (append-only)                                                            | 42501 permission denied for table wnba_pbe_prediction_observations
+ 07   | t    | official lock insert allowed (champion model, matches its observation, locked_at forced)             | prediction a8325f6e-607c-4e5f-a23c-2ad7cb434a2c
+ 08   | t    | lock from a non-champion model rejected                                                              | wnba_pbe: official locks come only from the current champion (pbe-wnba-model-v1), not pbe-wnba-challenger-proof
+ 09   | t    | lock whose probability differs from its source observation rejected                                  | wnba_pbe: lock for game proof-game-1 does not match its source observation
+ 10   | t    | locked selection update rejected                                                                     | 42501 permission denied for table wnba_pbe_locked_predictions
+ 11   | t    | locked probability update rejected                                                                   | 42501 permission denied for table wnba_pbe_locked_predictions
+ 12a  | t    | locked reasoning update rejected                                                                     | 42501 permission denied for table wnba_pbe_locked_predictions
+ 12b  | t    | locked model version update rejected                                                                 | 42501 permission denied for table wnba_pbe_locked_predictions
+ 13   | t    | locked deletion rejected                                                                             | 42501 permission denied for table wnba_pbe_locked_predictions
+ 14   | t    | owner-role update, delete and truncate of a lock rejected by trigger                                 | wnba_pbe: wnba_pbe_locked_predictions cannot be truncated
+ 15   | t    | locked row byte-identical after every rejected mutation                                              | to_jsonb equal
+ 16   | t    | duplicate official lock for the same game + contract rejected                                        | 23505 duplicate key value violates unique constraint "wnba_pbe_lock_one_per_game"
+ 17   | t    | first grade append allowed (revision 1)                                                              | grade 8a3d117c-dd14-47e3-b66b-115a94bf3207
+ 17a  | t    | grade contradicting the score rejected                                                               | wnba_pbe: result loss contradicts the score (expected win)
+ 18   | t    | correction append allowed (revision 2 supersedes revision 1 with a reason)                           | grade 298b8d34-a3e3-430c-bd1a-cc52b4b5bf78
+ 18a  | t    | correction without a reason rejected                                                                 | 23514 new row for relation "wnba_pbe_grade_revisions" violates check constraint "wnba_pbe_grade_chain"
+ 18b  | t    | out-of-sequence revision rejected                                                                    | wnba_pbe: revision 3 must follow revision 1 and supersede it
+ 19   | t    | prior grade (revision 1) remains unchanged after the correction                                      | revision 1 still win, byte-identical
+ 19a  | t    | in-place grade update rejected                                                                       | 42501 permission denied for table wnba_pbe_grade_revisions
+ 19b  | t    | grade deletion rejected                                                                              | 42501 permission denied for table wnba_pbe_grade_revisions
+ 20   | t    | current grade = latest revision (view shows revision 2 loss); 2 revisions auditable                  | current revision 2 (loss) · history 2 rows
+ 21   | t    | anon cannot read the locked ledger or the grade view (permission denied)                             | permission denied for view wnba_pbe_current_grades
+ 22   | t    | unrelated schemas untouched: catalog fingerprint of every non-wnba_pbe object identical before/after | before 50e13b2b9ca0d2e4977cff9c0e181637 · after 50e13b2b9ca0d2e4977cff9c0e181637 · non-wnba_pbe relations 335 → 335
+(29 rows)
