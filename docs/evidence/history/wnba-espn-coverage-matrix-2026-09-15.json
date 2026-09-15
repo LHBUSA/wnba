@@ -1,0 +1,854 @@
+[
+ {
+  "season": 1997,
+  "scoreboard_events": 112,
+  "scoreboard_by_type_status": {
+   "type2:STATUS_TBD": 112
+  },
+  "scoreboard_team_ids": 8,
+  "summaries_read": 0,
+  "coverage": {
+   "summary_missing": 112
+  }
+ },
+ {
+  "season": 1998,
+  "scoreboard_events": 150,
+  "scoreboard_by_type_status": {
+   "type2:STATUS_IN_PROGRESS": 144,
+   "type2:STATUS_FORFEIT": 2,
+   "type2:STATUS_FINAL": 4
+  },
+  "scoreboard_team_ids": 10,
+  "summaries_read": 0,
+  "coverage": {
+   "summary_missing": 150
+  }
+ },
+ {
+  "season": 1999,
+  "scoreboard_events": 216,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_TBD": 13,
+   "type2:STATUS_IN_PROGRESS": 177,
+   "type2:STATUS_FORFEIT": 3,
+   "type2:STATUS_FINAL": 7,
+   "type2:STATUS_TBD": 5,
+   "type3:STATUS_IN_PROGRESS": 11
+  },
+  "scoreboard_team_ids": 12,
+  "summaries_read": 0,
+  "coverage": {
+   "summary_missing": 203
+  }
+ },
+ {
+  "season": 2000,
+  "scoreboard_events": 300,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_TBD": 28,
+   "type2:STATUS_IN_PROGRESS": 242,
+   "type2:STATUS_FORFEIT": 2,
+   "type2:STATUS_FINAL": 12,
+   "type3:STATUS_IN_PROGRESS": 15,
+   "type3:STATUS_FINAL": 1
+  },
+  "scoreboard_team_ids": 16,
+  "summaries_read": 0,
+  "coverage": {
+   "summary_missing": 272
+  }
+ },
+ {
+  "season": 2001,
+  "scoreboard_events": 307,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_TBD": 27,
+   "type2:STATUS_IN_PROGRESS": 232,
+   "type2:STATUS_FINAL": 19,
+   "type2:STATUS_TBD": 6,
+   "type2:STATUS_SCHEDULED": 1,
+   "type2:STATUS_FORFEIT": 2,
+   "type2:STATUS_POSTPONED": 1,
+   "type3:STATUS_IN_PROGRESS": 16,
+   "type3:STATUS_FORFEIT": 1,
+   "type3:STATUS_SCHEDULED": 1,
+   "type3:STATUS_TBD": 1
+  },
+  "scoreboard_team_ids": 18,
+  "summaries_read": 0,
+  "coverage": {
+   "summary_missing": 280
+  }
+ },
+ {
+  "season": 2002,
+  "scoreboard_events": 300,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_TBD": 26,
+   "type2:STATUS_FINAL": 257,
+   "type3:STATUS_FINAL": 15,
+   "type3:STATUS_TBD": 2
+  },
+  "scoreboard_team_ids": 18,
+  "summaries_read": 272,
+  "coverage": {
+   "status:STATUS_FINAL": 272,
+   "player_box": 269,
+   "player_minutes": 269,
+   "player_plus_minus": 269,
+   "starters_flag": 264,
+   "play_by_play": 271,
+   "shot_coordinates": 271,
+   "venue": 166,
+   "leaders": 272,
+   "playoff_series_info": 272,
+   "standings_block": 272,
+   "season_series": 272,
+   "linescores": 271,
+   "summary_missing": 2
+  }
+ },
+ {
+  "season": 2003,
+  "scoreboard_events": 260,
+  "scoreboard_by_type_status": {
+   "type2:STATUS_FINAL": 239,
+   "type2:STATUS_POSTPONED": 2,
+   "type3:STATUS_FINAL": 19
+  },
+  "scoreboard_team_ids": 16,
+  "summaries_read": 258,
+  "coverage": {
+   "status:STATUS_FINAL": 258,
+   "player_box": 257,
+   "player_minutes": 257,
+   "player_plus_minus": 257,
+   "starters_flag": 257,
+   "play_by_play": 258,
+   "shot_coordinates": 258,
+   "leaders": 258,
+   "playoff_series_info": 258,
+   "standings_block": 258,
+   "season_series": 258,
+   "linescores": 258,
+   "team_box": 198,
+   "officials": 2,
+   "attendance": 1,
+   "summary_missing": 2,
+   "venue": 3
+  }
+ },
+ {
+  "season": 2004,
+  "scoreboard_events": 241,
+  "scoreboard_by_type_status": {
+   "type2:STATUS_FINAL": 222,
+   "type3:STATUS_FINAL": 19
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 241,
+  "coverage": {
+   "status:STATUS_FINAL": 241,
+   "player_box": 240,
+   "player_minutes": 240,
+   "player_plus_minus": 240,
+   "starters_flag": 239,
+   "play_by_play": 240,
+   "shot_coordinates": 240,
+   "leaders": 241,
+   "playoff_series_info": 241,
+   "standings_block": 241,
+   "season_series": 241,
+   "linescores": 241,
+   "team_box": 214,
+   "venue": 168,
+   "officials": 131,
+   "recap_article": 3
+  }
+ },
+ {
+  "season": 2005,
+  "scoreboard_events": 256,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 17,
+   "type2:STATUS_FINAL": 222,
+   "type3:STATUS_FINAL": 17
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 239,
+  "coverage": {
+   "status:STATUS_FINAL": 239,
+   "team_box": 230,
+   "player_box": 239,
+   "player_minutes": 239,
+   "player_plus_minus": 239,
+   "starters_flag": 237,
+   "play_by_play": 239,
+   "shot_coordinates": 239,
+   "officials": 141,
+   "venue": 160,
+   "leaders": 239,
+   "playoff_series_info": 239,
+   "standings_block": 239,
+   "season_series": 239,
+   "linescores": 239,
+   "recap_article": 13
+  }
+ },
+ {
+  "season": 2006,
+  "scoreboard_events": 276,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 18,
+   "type2:STATUS_FINAL": 239,
+   "type3:STATUS_FINAL": 19
+  },
+  "scoreboard_team_ids": 16,
+  "summaries_read": 258,
+  "coverage": {
+   "status:STATUS_FINAL": 258,
+   "team_box": 256,
+   "player_box": 256,
+   "player_minutes": 256,
+   "player_plus_minus": 256,
+   "starters_flag": 255,
+   "play_by_play": 256,
+   "shot_coordinates": 256,
+   "officials": 158,
+   "leaders": 258,
+   "playoff_series_info": 258,
+   "standings_block": 258,
+   "season_series": 258,
+   "linescores": 258,
+   "venue": 113,
+   "recap_article": 5
+  }
+ },
+ {
+  "season": 2007,
+  "scoreboard_events": 261,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 18,
+   "type2:STATUS_FINAL": 222,
+   "type3:STATUS_FINAL": 21
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 243,
+  "coverage": {
+   "status:STATUS_FINAL": 243,
+   "team_box": 243,
+   "player_box": 243,
+   "player_minutes": 243,
+   "player_plus_minus": 243,
+   "starters_flag": 243,
+   "play_by_play": 243,
+   "shot_coordinates": 243,
+   "officials": 168,
+   "venue": 111,
+   "leaders": 243,
+   "playoff_series_info": 243,
+   "standings_block": 243,
+   "season_series": 243,
+   "linescores": 243,
+   "attendance": 3
+  }
+ },
+ {
+  "season": 2008,
+  "scoreboard_events": 277,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 17,
+   "type2:STATUS_FINAL": 238,
+   "type2:STATUS_POSTPONED": 1,
+   "type3:STATUS_FINAL": 21
+  },
+  "scoreboard_team_ids": 14,
+  "summaries_read": 259,
+  "coverage": {
+   "status:STATUS_FINAL": 259,
+   "team_box": 257,
+   "player_box": 258,
+   "player_minutes": 258,
+   "player_plus_minus": 258,
+   "starters_flag": 257,
+   "play_by_play": 258,
+   "shot_coordinates": 258,
+   "venue": 113,
+   "leaders": 259,
+   "playoff_series_info": 259,
+   "standings_block": 259,
+   "season_series": 259,
+   "linescores": 259,
+   "officials": 175,
+   "attendance": 3,
+   "summary_missing": 1
+  }
+ },
+ {
+  "season": 2009,
+  "scoreboard_events": 257,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 14,
+   "type2:STATUS_FINAL": 222,
+   "type3:STATUS_FINAL": 21
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 243,
+  "coverage": {
+   "status:STATUS_FINAL": 243,
+   "team_box": 243,
+   "player_box": 243,
+   "player_minutes": 243,
+   "player_plus_minus": 243,
+   "starters_flag": 241,
+   "play_by_play": 243,
+   "shot_coordinates": 243,
+   "officials": 179,
+   "venue": 108,
+   "leaders": 243,
+   "playoff_series_info": 243,
+   "standings_block": 243,
+   "season_series": 243,
+   "linescores": 243
+  }
+ },
+ {
+  "season": 2010,
+  "scoreboard_events": 236,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 15,
+   "type2:STATUS_FINAL": 205,
+   "type3:STATUS_FINAL": 16
+  },
+  "scoreboard_team_ids": 16,
+  "summaries_read": 221,
+  "coverage": {
+   "status:STATUS_FINAL": 221,
+   "team_box": 221,
+   "player_box": 221,
+   "player_minutes": 221,
+   "player_plus_minus": 221,
+   "starters_flag": 221,
+   "play_by_play": 221,
+   "shot_coordinates": 221,
+   "officials": 166,
+   "leaders": 221,
+   "playoff_series_info": 221,
+   "standings_block": 221,
+   "season_series": 221,
+   "linescores": 221,
+   "venue": 94
+  }
+ },
+ {
+  "season": 2011,
+  "scoreboard_events": 239,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 14,
+   "type2:STATUS_FINAL": 206,
+   "type3:STATUS_FINAL": 19
+  },
+  "scoreboard_team_ids": 17,
+  "summaries_read": 225,
+  "coverage": {
+   "status:STATUS_FINAL": 225,
+   "team_box": 225,
+   "player_box": 225,
+   "player_minutes": 225,
+   "player_plus_minus": 225,
+   "starters_flag": 224,
+   "play_by_play": 224,
+   "shot_coordinates": 224,
+   "officials": 171,
+   "venue": 99,
+   "leaders": 225,
+   "playoff_series_info": 225,
+   "standings_block": 225,
+   "season_series": 225,
+   "linescores": 225,
+   "attendance": 1
+  }
+ },
+ {
+  "season": 2012,
+  "scoreboard_events": 237,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 14,
+   "type2:STATUS_FINAL": 204,
+   "type3:STATUS_FINAL": 19
+  },
+  "scoreboard_team_ids": 14,
+  "summaries_read": 223,
+  "coverage": {
+   "status:STATUS_FINAL": 223,
+   "team_box": 222,
+   "player_box": 223,
+   "player_minutes": 223,
+   "player_plus_minus": 223,
+   "starters_flag": 221,
+   "play_by_play": 223,
+   "shot_coordinates": 223,
+   "officials": 184,
+   "venue": 110,
+   "leaders": 223,
+   "playoff_series_info": 223,
+   "standings_block": 223,
+   "season_series": 223,
+   "linescores": 223,
+   "recap_article": 105,
+   "attendance": 53,
+   "dnp_flags": 49
+  }
+ },
+ {
+  "season": 2013,
+  "scoreboard_events": 236,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 14,
+   "type2:STATUS_FINAL": 205,
+   "type3:STATUS_FINAL": 17
+  },
+  "scoreboard_team_ids": 16,
+  "summaries_read": 222,
+  "coverage": {
+   "status:STATUS_FINAL": 222,
+   "team_box": 222,
+   "player_box": 222,
+   "player_minutes": 222,
+   "player_plus_minus": 222,
+   "starters_flag": 222,
+   "dnp_flags": 211,
+   "play_by_play": 222,
+   "shot_coordinates": 222,
+   "officials": 222,
+   "attendance": 222,
+   "venue": 222,
+   "leaders": 222,
+   "playoff_series_info": 222,
+   "recap_article": 208,
+   "standings_block": 222,
+   "season_series": 222,
+   "linescores": 222
+  }
+ },
+ {
+  "season": 2014,
+  "scoreboard_events": 239,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 16,
+   "type2:STATUS_FINAL": 205,
+   "type3:STATUS_FINAL": 18
+  },
+  "scoreboard_team_ids": 16,
+  "summaries_read": 223,
+  "coverage": {
+   "status:STATUS_FINAL": 223,
+   "team_box": 223,
+   "player_box": 223,
+   "player_minutes": 223,
+   "player_plus_minus": 223,
+   "starters_flag": 223,
+   "dnp_flags": 214,
+   "play_by_play": 223,
+   "shot_coordinates": 223,
+   "officials": 223,
+   "attendance": 223,
+   "venue": 223,
+   "leaders": 223,
+   "playoff_series_info": 223,
+   "recap_article": 223,
+   "standings_block": 223,
+   "season_series": 223,
+   "linescores": 223
+  }
+ },
+ {
+  "season": 2015,
+  "scoreboard_events": 242,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 15,
+   "type2:STATUS_FINAL": 205,
+   "type2:STATUS_POSTPONED": 1,
+   "type3:STATUS_FINAL": 21
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 226,
+  "coverage": {
+   "status:STATUS_FINAL": 226,
+   "team_box": 226,
+   "player_box": 226,
+   "player_minutes": 226,
+   "player_plus_minus": 226,
+   "starters_flag": 226,
+   "dnp_flags": 223,
+   "play_by_play": 226,
+   "shot_coordinates": 226,
+   "officials": 226,
+   "attendance": 226,
+   "venue": 226,
+   "leaders": 226,
+   "playoff_series_info": 226,
+   "recap_article": 226,
+   "standings_block": 226,
+   "season_series": 226,
+   "linescores": 226,
+   "summary_missing": 1
+  }
+ },
+ {
+  "season": 2016,
+  "scoreboard_events": 235,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 15,
+   "type2:STATUS_FINAL": 204,
+   "type3:STATUS_FINAL": 16
+  },
+  "scoreboard_team_ids": 12,
+  "summaries_read": 220,
+  "coverage": {
+   "status:STATUS_FINAL": 220,
+   "team_box": 220,
+   "player_box": 220,
+   "player_minutes": 220,
+   "player_plus_minus": 220,
+   "starters_flag": 220,
+   "dnp_flags": 211,
+   "play_by_play": 219,
+   "shot_coordinates": 219,
+   "officials": 219,
+   "attendance": 220,
+   "venue": 220,
+   "leaders": 220,
+   "playoff_series_info": 220,
+   "recap_article": 218,
+   "standings_block": 220,
+   "season_series": 220,
+   "linescores": 220
+  }
+ },
+ {
+  "season": 2017,
+  "scoreboard_events": 234,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 13,
+   "type2:STATUS_FINAL": 205,
+   "type2:STATUS_POSTPONED": 1,
+   "type3:STATUS_FINAL": 15
+  },
+  "scoreboard_team_ids": 14,
+  "summaries_read": 220,
+  "coverage": {
+   "status:STATUS_FINAL": 220,
+   "team_box": 220,
+   "player_box": 220,
+   "player_minutes": 220,
+   "player_plus_minus": 220,
+   "starters_flag": 220,
+   "dnp_flags": 207,
+   "play_by_play": 220,
+   "shot_coordinates": 220,
+   "officials": 220,
+   "attendance": 219,
+   "venue": 220,
+   "leaders": 220,
+   "playoff_series_info": 220,
+   "recap_article": 220,
+   "standings_block": 220,
+   "season_series": 220,
+   "linescores": 220,
+   "summary_missing": 1
+  }
+ },
+ {
+  "season": 2018,
+  "scoreboard_events": 237,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 15,
+   "type2:STATUS_FINAL": 204,
+   "type2:STATUS_FORFEIT": 1,
+   "type3:STATUS_FINAL": 17
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 221,
+  "coverage": {
+   "status:STATUS_FINAL": 221,
+   "team_box": 221,
+   "player_box": 221,
+   "player_minutes": 221,
+   "player_plus_minus": 221,
+   "starters_flag": 221,
+   "dnp_flags": 208,
+   "play_by_play": 220,
+   "shot_coordinates": 220,
+   "officials": 221,
+   "attendance": 217,
+   "venue": 221,
+   "leaders": 221,
+   "playoff_series_info": 221,
+   "recap_article": 189,
+   "standings_block": 221,
+   "season_series": 221,
+   "linescores": 221,
+   "summary_missing": 1
+  }
+ },
+ {
+  "season": 2019,
+  "scoreboard_events": 236,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 15,
+   "type2:STATUS_FINAL": 205,
+   "type3:STATUS_FINAL": 16
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 221,
+  "coverage": {
+   "status:STATUS_FINAL": 221,
+   "team_box": 221,
+   "player_box": 221,
+   "player_minutes": 221,
+   "player_plus_minus": 221,
+   "starters_flag": 221,
+   "dnp_flags": 214,
+   "play_by_play": 220,
+   "shot_coordinates": 220,
+   "officials": 221,
+   "attendance": 221,
+   "venue": 221,
+   "leaders": 221,
+   "playoff_series_info": 221,
+   "recap_article": 187,
+   "standings_block": 221,
+   "season_series": 221,
+   "linescores": 221
+  }
+ },
+ {
+  "season": 2020,
+  "scoreboard_events": 154,
+  "scoreboard_by_type_status": {
+   "type2:STATUS_FINAL": 132,
+   "type2:STATUS_SCHEDULED": 1,
+   "type2:STATUS_POSTPONED": 5,
+   "type3:STATUS_FINAL": 15,
+   "type3:STATUS_POSTPONED": 1
+  },
+  "scoreboard_team_ids": 12,
+  "summaries_read": 147,
+  "coverage": {
+   "status:STATUS_FINAL": 147,
+   "team_box": 147,
+   "player_box": 147,
+   "player_minutes": 147,
+   "player_plus_minus": 147,
+   "starters_flag": 147,
+   "dnp_flags": 146,
+   "play_by_play": 146,
+   "shot_coordinates": 146,
+   "officials": 147,
+   "venue": 147,
+   "leaders": 147,
+   "playoff_series_info": 147,
+   "recap_article": 122,
+   "standings_block": 147,
+   "season_series": 147,
+   "linescores": 147,
+   "attendance": 1,
+   "summary_missing": 7
+  }
+ },
+ {
+  "season": 2021,
+  "scoreboard_events": 218,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 7,
+   "type2:STATUS_FINAL": 194,
+   "type3:STATUS_FINAL": 17
+  },
+  "scoreboard_team_ids": 14,
+  "summaries_read": 211,
+  "coverage": {
+   "status:STATUS_FINAL": 211,
+   "team_box": 211,
+   "player_box": 211,
+   "player_minutes": 211,
+   "player_plus_minus": 211,
+   "starters_flag": 211,
+   "dnp_flags": 181,
+   "play_by_play": 211,
+   "shot_coordinates": 211,
+   "officials": 201,
+   "attendance": 183,
+   "venue": 211,
+   "leaders": 211,
+   "playoff_series_info": 211,
+   "recap_article": 202,
+   "standings_block": 211,
+   "season_series": 211,
+   "linescores": 211
+  }
+ },
+ {
+  "season": 2022,
+  "scoreboard_events": 251,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 9,
+   "type1:STATUS_CANCELED": 1,
+   "type2:STATUS_FINAL": 218,
+   "type3:STATUS_FINAL": 23
+  },
+  "scoreboard_team_ids": 14,
+  "summaries_read": 241,
+  "coverage": {
+   "status:STATUS_FINAL": 241,
+   "team_box": 241,
+   "player_box": 241,
+   "player_minutes": 241,
+   "player_plus_minus": 241,
+   "starters_flag": 241,
+   "play_by_play": 241,
+   "shot_coordinates": 241,
+   "officials": 241,
+   "attendance": 236,
+   "venue": 241,
+   "leaders": 241,
+   "playoff_series_info": 241,
+   "recap_article": 232,
+   "standings_block": 241,
+   "season_series": 241,
+   "linescores": 241,
+   "dnp_flags": 203
+  }
+ },
+ {
+  "season": 2023,
+  "scoreboard_events": 274,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 11,
+   "type2:STATUS_FINAL": 242,
+   "type2:STATUS_POSTPONED": 1,
+   "type3:STATUS_FINAL": 20
+  },
+  "scoreboard_team_ids": 14,
+  "summaries_read": 262,
+  "coverage": {
+   "status:STATUS_FINAL": 262,
+   "team_box": 262,
+   "player_box": 262,
+   "player_minutes": 262,
+   "player_plus_minus": 262,
+   "starters_flag": 262,
+   "dnp_flags": 216,
+   "play_by_play": 262,
+   "shot_coordinates": 262,
+   "officials": 262,
+   "attendance": 261,
+   "venue": 262,
+   "leaders": 262,
+   "playoff_series_info": 262,
+   "recap_article": 255,
+   "standings_block": 262,
+   "season_series": 262,
+   "linescores": 262,
+   "summary_missing": 1
+  }
+ },
+ {
+  "season": 2024,
+  "scoreboard_events": 275,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 11,
+   "type2:STATUS_FINAL": 242,
+   "type3:STATUS_FINAL": 22
+  },
+  "scoreboard_team_ids": 15,
+  "summaries_read": 264,
+  "coverage": {
+   "status:STATUS_FINAL": 264,
+   "team_box": 264,
+   "player_box": 264,
+   "player_minutes": 264,
+   "player_plus_minus": 264,
+   "starters_flag": 264,
+   "dnp_flags": 232,
+   "play_by_play": 264,
+   "shot_coordinates": 264,
+   "officials": 261,
+   "attendance": 264,
+   "venue": 264,
+   "leaders": 264,
+   "playoff_series_info": 264,
+   "recap_article": 260,
+   "standings_block": 264,
+   "season_series": 264,
+   "linescores": 264
+  }
+ },
+ {
+  "season": 2025,
+  "scoreboard_events": 327,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 15,
+   "type2:STATUS_FINAL": 288,
+   "type3:STATUS_FINAL": 24
+  },
+  "scoreboard_team_ids": 17,
+  "summaries_read": 312,
+  "coverage": {
+   "status:STATUS_FINAL": 312,
+   "team_box": 312,
+   "player_box": 312,
+   "player_minutes": 312,
+   "player_plus_minus": 312,
+   "starters_flag": 312,
+   "dnp_flags": 288,
+   "play_by_play": 312,
+   "shot_coordinates": 312,
+   "officials": 312,
+   "attendance": 311,
+   "venue": 312,
+   "leaders": 312,
+   "playoff_series_info": 312,
+   "recap_article": 298,
+   "standings_block": 312,
+   "season_series": 312,
+   "linescores": 312
+  }
+ },
+ {
+  "season": 2026,
+  "scoreboard_events": 380,
+  "scoreboard_by_type_status": {
+   "type1:STATUS_FINAL": 18,
+   "type2:STATUS_FINAL": 302,
+   "type2:STATUS_POSTPONED": 1,
+   "type2:STATUS_SCHEDULED": 30,
+   "type3:STATUS_SCHEDULED": 29
+  },
+  "scoreboard_team_ids": 21,
+  "summaries_read": 302,
+  "coverage": {
+   "status:STATUS_FINAL": 302,
+   "team_box": 302,
+   "player_box": 302,
+   "player_minutes": 302,
+   "player_plus_minus": 302,
+   "starters_flag": 302,
+   "dnp_flags": 283,
+   "play_by_play": 302,
+   "shot_coordinates": 302,
+   "officials": 302,
+   "attendance": 299,
+   "venue": 302,
+   "leaders": 302,
+   "market_eval_only": 302,
+   "playoff_series_info": 302,
+   "recap_article": 289,
+   "standings_block": 302,
+   "season_series": 302,
+   "linescores": 302,
+   "summary_missing": 60
+  }
+ }
+]
