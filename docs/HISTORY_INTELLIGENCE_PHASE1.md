@@ -41,18 +41,38 @@ What PropBetEdge holds today:
 
 Per-season coverage measured from the harvest (counts are games; "reg/post" are finals):
 
-| Season | Finals (reg/post) | Player box | Team box | PBP | Officials | Attendance | Notes |
-|---|---|---|---|---|---|---|---|
-| 1997 | 0 | — | — | — | — | — | 112 events all STATUS_TBD, no scores |
-| 1998 | scores on 150 (statuses wrong) | — | — | — | — | — | no postseason events |
-| 1999–2001 | scores correct, statuses wrong | — | — | — | — | — | two halves; some 2001 Finals TBD |
-| 2002 | 257/15 | 269 | **0** | 271 | 0 | 0 | standings corrupt |
-| 2003 | 239/19 | 257 | 198 | 258 | 2 | 1 | standings usable from 2003 |
-| 2004–2005 | ~222/18 | ~240 | 214–230 | full | ~135 | 0 | |
-| 2006–2012 | ~215/19 | full | full | full | 60–80% | ~0 (53 in 2012) | venue ~50% |
-| 2013–2019 | ~205/17 | full | full | full | full | full | wallclock from 2015 |
-| 2020 | 132/15 | full | full | full | full | 1 | bubble; 7 postponed |
-| 2021–2026 | 194–302 reg | full | full | full | full | ~full | 2026 postseason pending |
+| Season | Finals reg/post | Summaries read | Player box | Team box | PBP | Officials | Attendance | Venue | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| 1997 | 0 / 0 | 0 | — | — | — | — | — | — | 112 events all STATUS_TBD, no scores |
+| 1998 | 4 / 0 | 0 | — | — | — | — | — | — | 144 events stuck at IN_PROGRESS + 2 forfeits; scores present, statuses wrong; no postseason events |
+| 1999 | 7 / 0 | 0 | — | — | — | — | — | — | 177 IN_PROGRESS reg + 11 IN_PROGRESS post |
+| 2000 | 12 / 1 | 0 | — | — | — | — | — | — | 242 IN_PROGRESS reg + 15 post |
+| 2001 | 19 / 0 | 0 | — | — | — | — | — | — | 232 IN_PROGRESS reg + 16 post; some Finals TBD |
+| 2002 | 257 / 15 | 272 | 269 | **0** | 271 | 0 | 0 | 166 | team box must be derived from player sums |
+| 2003 | 239 / 19 | 258 | 257 | 198 | 258 | 2 | 1 | **3** | venue almost entirely absent this season |
+| 2004 | 222 / 19 | 241 | 240 | 214 | 240 | 131 | 0 | 168 | |
+| 2005 | 222 / 17 | 239 | 239 | 230 | 239 | 141 | 0 | 160 | |
+| 2006 | 239 / 19 | 258 | 256 | 256 | 256 | 158 | 0 | 113 | |
+| 2007 | 222 / 21 | 243 | 243 | 243 | 243 | 168 | 3 | 111 | |
+| 2008 | 238 / 21 | 259 | 258 | 257 | 258 | 175 | 3 | 113 | |
+| 2009 | 222 / 21 | 243 | 243 | 243 | 243 | 179 | 0 | 108 | |
+| 2010 | 205 / 16 | 221 | 221 | 221 | 221 | 166 | 0 | 94 | |
+| 2011 | 206 / 19 | 225 | 225 | 225 | 224 | 171 | 1 | 99 | |
+| 2012 | 204 / 19 | 223 | 223 | 222 | 223 | 184 | 53 | 110 | attendance begins |
+| 2013 | 205 / 17 | 222 | 222 | 222 | 222 | 222 | 222 | 222 | first fully complete season |
+| 2014 | 205 / 18 | 223 | 223 | 223 | 223 | 223 | 223 | 223 | |
+| 2015 | 205 / 21 | 226 | 226 | 226 | 226 | 226 | 226 | 226 | play wallclock begins |
+| 2016 | 204 / 16 | 220 | 220 | 220 | 219 | 219 | 220 | 220 | |
+| 2017 | 205 / 15 | 220 | 220 | 220 | 220 | 220 | 219 | 220 | |
+| 2018 | 204 / 17 | 221 | 221 | 221 | 220 | 221 | 217 | 221 | draft data begins |
+| 2019 | 205 / 16 | 221 | 221 | 221 | 220 | 221 | 221 | 221 | |
+| 2020 | 132 / 15 | 147 | 147 | 147 | 146 | 147 | **1** | 147 | bubble: no crowds, 5 reg + 1 post postponed |
+| 2021 | 194 / 17 | 211 | 211 | 211 | 211 | 201 | 183 | 211 | COVID-limited attendance |
+| 2022 | 218 / 23 | 241 | 241 | 241 | 241 | 241 | 236 | 241 | |
+| 2023 | 242 / 20 | 262 | 262 | 262 | 262 | 262 | 261 | 262 | |
+| 2024 | 242 / 22 | 264 | 264 | 264 | 264 | 261 | 264 | 264 | |
+| 2025 | 288 / 24 | 312 | 312 | 312 | 312 | 312 | 311 | 312 | |
+| 2026 | 302 / 0 | 302 | 302 | 302 | 302 | 302 | 299 | 302 | 30 reg + 29 post still scheduled |
 
 Totals available 1997+: player season stats, v3 career rows with team ids, league leaders, awards (incomplete early).
 
@@ -121,6 +141,8 @@ Legend: ● complete · ◐ partial · ○ absent · ▲ derivable from canonica
 | 2013–2017 | ● | ● | ● | ● | ● | ▲● | ● | ▲ | ○ | ● | ✎ | ● | ● |
 | 2018–2026 | ● | ● | ● | ● | ● | ▲● | ● | ▲ | ● | ● | ✎ | ● | ● |
 
+Exceptions inside those bands: 2020 attendance is absent because the bubble had no crowds (1 of 147), 2021 is partial (183 of 211) for COVID capacity limits — both are true-zero/true-partial, not ingestion gaps; 2003 venue names are effectively missing (3 of 258); 2024 officials cover 261 of 264.
+
 International: Olympics ● 2016–2024 (ESPN), ◐ 1976–2012 (Olympedia, D4); World Cup ● 2026 only; continental cups, EuroLeague Women, domestic leagues ○.
 
 ## F. Proposed global identity schema
@@ -188,9 +210,11 @@ Public reads (facts; Pro gating decided later per surface):
 
 ## J. First shippable vertical slice — WNBA 2024
 
-Why 2024: complete, officials + attendance full, 12 stable franchises, 242 regular-season + 22 playoff games, directly adjacent to Paris 2024 Olympics for the next (international) slice.
+Why 2024: complete (264 of 264 games have player box, team box, PBP, attendance and venue; officials 261 of 264), 12 stable franchises, and directly adjacent to Paris 2024 for the next (international) slice.
 
 Scope: one edition fully modeled — 12 team editions, every player appearing (persons + ESPN source ids + Wikidata crosswalk), 264 games with team/player box scores and play events, officials, attendance, derived standings with tiebreaks, derived playoff series, awards (ESPN + curated check), derived season/career-to-date totals and a first records set (single-game highs, season leaders, team streaks).
+
+Note before check 3: the harvest has **242** type-2 (regular) finals, while a 12-team 40-game schedule is **240** standings games. The 2 extra must be classified — the Commissioner's Cup final counts for player stats but not for standings, and any exhibition must be excluded entirely. Game classification (`counts_for_standings`, `counts_for_stats`) is therefore part of the slice, not an afterthought.
 
 Acceptance (all must PASS; receipt committed):
 
