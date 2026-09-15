@@ -1,0 +1,19 @@
+{
+  "contract_id": "pbe-wnba-eligibility/1",
+  "status": "PROPOSED",
+  "applies_to_model": "pbe-wnba-model-v1",
+  "rule": {
+    "measure": "min_current_season_final_games",
+    "no_call_below": 3,
+    "reason": "INSUFFICIENT_TEAM_HISTORY"
+  },
+  "derivation": {
+    "preregistration_sha256": "041a20583a3b382547c854e5503ac207e8bacd40cd00caf607d2dfa6a0fe0210",
+    "study_K": 3,
+    "mapping": "no_call_below = max(K, 3)"
+  },
+  "evidence": {
+    "receipt": "model/pbe-wnba-model-v1/eligibility/eligibility_study_receipt.json",
+    "receipt_sha256": "b3b67e981f9e73c02b39c6f9abb2e50161a030117632e48ca11e7d899dfa082c"
+  }
+}
