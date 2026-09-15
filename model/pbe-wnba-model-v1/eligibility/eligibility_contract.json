@@ -1,0 +1,54 @@
+{
+  "contract_id": "pbe-wnba-eligibility/1",
+  "status": "FROZEN",
+  "frozen_at": "2026-09-15",
+  "frozen_by": "Owner decision 2026-09-15: freeze K=3 from the pre-registered study; no second pooled 2015-2026 threshold search; holdout does not retune K.",
+  "applies_to_model": "pbe-wnba-model-v1",
+  "model_hashes": {
+    "artifact_sha256": "180dfcf50ca8fa96c2a71b7ee37abde80aacc5ff5f403783b03b4769436394f3",
+    "feature_spec_sha256": "83c36ef3394d48ef6fbb8af7dc9a7d586475efe8fd3f12ecf25076ad83c48752",
+    "validation_receipt_sha256": "bd13420633d2a73a3c50f19f5a9b7785084963222f9925db269ce09e76d325c5"
+  },
+  "rule": {
+    "measure": "min_current_season_final_games",
+    "definition": "m = min(home_n_current, away_n_current): each team's final, box-complete, current-season (season type 2 or 3) games visible under the frozen as-of rule (started before the prediction instant and on an earlier ET calendar date).",
+    "no_call_below": 3,
+    "reason": "INSUFFICIENT_TEAM_HISTORY",
+    "consistency": "Equals artifact.json params.min_current_games = 3 and feature_spec.json eligibility.min_current_games = 3 (fixed before holdout). The runtime refuses to start if they ever differ."
+  },
+  "metadata_flags": [
+    {
+      "flag": "LIMITED_TEAM_HISTORY",
+      "when": "3 <= m <= 5",
+      "display": "Limited current-season history",
+      "effect": "Factual, non-model metadata only. It does not change the probability, the pick, the confidence tier, eligibility or grading.",
+      "evidence": "The 2025-26 holdout 3-5 slice was weak (n=45, log loss 0.7132, Brier 0.25896, accuracy 0.4889, AUC 0.5751); validation 2015-2024 was not (n=185, log loss 0.626)."
+    }
+  ],
+  "derivation": {
+    "preregistration": "model/pbe-wnba-model-v1/eligibility/preregistration.json",
+    "preregistration_sha256": "041a20583a3b382547c854e5503ac207e8bacd40cd00caf607d2dfa6a0fe0210",
+    "preregistration_commit": "fa97b6a (2026-09-15T15:48:39-05:00), before any bin metric was computed",
+    "results_commit": "4c0ca9d (2026-09-15T15:51:21-05:00)",
+    "decision_rule": "K = smallest integer in 0..13 satisfying on VALIDATION seasons 2015-2024 only: (a) every bin of m >= K beats the home-win-rate baseline log loss (bins n < 60 merged); (b) cumulative m >= K calibration slope in [0.80, 1.25] and ECE <= 0.050; (c) entry slice K..K+2 log loss < 0.660. Contract threshold = max(K, 3).",
+    "mechanical_selection": {
+      "K0": "fail: (c) entry slice 0-2 log loss 0.686 >= 0.660",
+      "K1": "fail: (a) bin 1-2 log loss 0.714 vs home rate 0.697; (c) 0.684",
+      "K2": "fail: (a) bin 2-2 log loss 0.720 vs home rate 0.704; (c) 0.663",
+      "K3": "pass: (a) all bins beat home rate; (b) slope 1.045, ECE 0.032; (c) 3-5 log loss 0.626"
+    },
+    "study_K": 3,
+    "no_call_below": 3
+  },
+  "holdout_caveats": {
+    "judged_the_same_way_for_K3": "FAIL on (c) only: entry slice extended to m 3-7 for n >= 60 (n=71) has log loss 0.685 above the 0.660 floor. (a) passes on merged bins (3-8: 0.640 vs 0.685; 9+: 0.606 vs 0.685); (b) passes (slope 0.876, ECE 0.039).",
+    "holdout_3_5_slice": { "n": 45, "log_loss": 0.7132, "brier": 0.25896, "accuracy": 0.4889, "roc_auc": 0.5751, "reconciled_with_validation_receipt": true },
+    "interpretation": "Early-season weakness is real in 2025-26 and absent across ten validation seasons. By the pre-registered rule the holdout does not move K. It is disclosed here and surfaced to readers through LIMITED_TEAM_HISTORY, not by altering any model output.",
+    "not_done": "No second (pooled 2015-2026) threshold search, by owner decision."
+  },
+  "evidence": {
+    "receipt": "model/pbe-wnba-model-v1/eligibility/eligibility_study_receipt.json",
+    "receipt_sha256": "b3b67e981f9e73c02b39c6f9abb2e50161a030117632e48ca11e7d899dfa082c",
+    "doc": "docs/PBE_WNBA_ELIGIBILITY_STUDY.md"
+  }
+}

@@ -53,11 +53,12 @@ export async function mount(root, ctx) {
         <span class="eyebrow">PBE Edge</span>
         <p style="margin-top:12px;color:var(--paper-2)">PBE probability minus the de-vigged consensus probability for the same team: each sportsbook’s price is normalized to 100%, then the median is taken across books. The book count and market age are shown with every edge.</p>
         <span class="eyebrow" style="display:block;margin-top:18px">Lock policy · ${d.lock_policy.id}</span>
-        <p style="margin-top:12px;color:var(--paper-2)">Calls are recalculated as new pregame data arrives, every minute in the final half hour, and lock ${d.lock_policy.lock_minutes_before_tip} minutes before scheduled tip. After the lock, the pick, probability, inputs, reasoning and market comparison never change. Results are graded separately, and corrections are added as new revisions.</p>
+        <p style="margin-top:12px;color:var(--paper-2)">Calls are recalculated as new pregame data arrives, every minute in the final half hour. In validation, shadow calls lock ${d.lock_policy.lock_minutes_before_tip} minutes before scheduled tip. That timing is <b>experimental</b>: injury-report timing around tip is being measured before any official lock time is fixed. Once a call is locked, the pick, probability, inputs, reasoning and market comparison never change. Results are graded separately, and corrections are added as new revisions.</p>
         <p class="note" style="margin-top:10px">${d.lock_policy.note}</p>
       </section>
       <section class="card card-pad">
-        <span class="eyebrow">Known limits</span>
+        ${d.eligibility ? html`<span class="eyebrow">When the model makes no call</span><p style="margin-top:12px;color:var(--paper-2)">No call when either team has fewer than ${d.eligibility.no_call_below} current-season games. Teams with 3–5 games are marked <b>Limited current-season history</b>: the label is context only and changes nothing in the call. ${d.eligibility.holdout_caveat}</p>` : ''}
+        <span class="eyebrow" style="display:block;margin-top:18px">Known limits</span>
         <ul class="pro-list">${(d.known_limits || []).map((l) => html`<li>${l}</li>`)}</ul>
         <span class="eyebrow" style="display:block;margin-top:18px">Model identity</span>
         <p class="model-hash" style="margin-top:10px">${d.model_id} · ${d.model_type}<br>artifact ${d.artifact_sha256}<br>feature spec ${d.feature_spec_sha256}<br>validation receipt ${d.validation_receipt_sha256}<br>training window ${fmtDateET(d.training_window.first_game_utc, { year: 'numeric', month: 'short', day: 'numeric' })} – ${fmtDateET(d.training_window.last_game_utc, { year: 'numeric', month: 'short', day: 'numeric' })} · ${d.training_window.rows} games</p>

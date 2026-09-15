@@ -181,3 +181,72 @@ test('track record aggregate: counts, Brier, no calibration under 50 graded, sma
   const empty = trackRecordAggregate([]);
   assert.deepEqual([empty.wins, empty.losses, empty.hit_rate, empty.brier], [0, 0, null, null]);
 });
+
+// ------------------------------------------------------------------ frozen eligibility contract
+import { createHash } from 'node:crypto';
+import { ELIGIBILITY, NO_CALL_BELOW, eligibilityFlags } from '../workers/shared/pbe-runtime.js';
+import { ARTIFACT, FEATURE_SPEC, MANIFEST, predictFromRows } from '../workers/shared/pbe-wnba-model.js';
+
+const ELIG_DIR = new URL('../model/pbe-wnba-model-v1/eligibility/', import.meta.url);
+const fileSha = (name) => createHash('sha256').update(fs.readFileSync(new URL(name, ELIG_DIR))).digest('hex');
+
+test('eligibility contract is FROZEN, bound to the model bytes, the pre-registration and the study receipt', () => {
+  const receipt = JSON.parse(fs.readFileSync(new URL('eligibility_study_receipt.json', ELIG_DIR), 'utf8'));
+  assert.equal(ELIGIBILITY.status, 'FROZEN');
+  assert.equal(ELIGIBILITY.rule.reason, 'INSUFFICIENT_TEAM_HISTORY');
+  assert.equal(NO_CALL_BELOW, 3);
+  assert.equal(ELIGIBILITY.evidence.receipt_sha256, fileSha('eligibility_study_receipt.json'));
+  assert.equal(ELIGIBILITY.derivation.preregistration_sha256, fileSha('preregistration.json'));
+  assert.equal(receipt.preregistration_sha256, fileSha('preregistration.json'), 'receipt was produced under this exact pre-registration');
+  assert.equal(receipt.chosen_K, 3);
+  assert.equal(receipt.result, 'PASS');
+  // mechanical: smallest K in 0..13 passing the pre-registered criteria on validation seasons
+  const firstPass = receipt.criteria_by_K_validation.find((c) => c.pass).K;
+  assert.equal(firstPass, 3);
+  assert.deepEqual(receipt.criteria_by_K_validation.slice(0, 3).map((c) => c.pass), [false, false, false]);
+  assert.equal(Math.max(firstPass, 3), ELIGIBILITY.rule.no_call_below);
+  assert.equal(NO_CALL_BELOW, ARTIFACT.params.min_current_games);
+  assert.equal(NO_CALL_BELOW, FEATURE_SPEC.eligibility.min_current_games);
+  for (const [k, f] of [['artifact_sha256', 'artifact.json'], ['feature_spec_sha256', 'feature_spec.json'], ['validation_receipt_sha256', 'validation_receipt.json']]) assert.equal(ELIGIBILITY.model_hashes[k], MANIFEST.files[f]);
+  assert.equal(receipt.holdout_confirmation.holdout_judged_same_way.c_entry_slice.pass, false, 'holdout caveat preserved, not hidden');
+  assert.match(ELIGIBILITY.holdout_caveats.judged_the_same_way_for_K3, /FAIL on \(c\)/);
+});
+
+test('LIMITED_TEAM_HISTORY is metadata only; below the floor the reason is INSUFFICIENT_TEAM_HISTORY', async () => {
+  assert.deepEqual([2, 3, 4, 5, 6].map((m) => eligibilityFlags(m)), [[], ['LIMITED_TEAM_HISTORY'], ['LIMITED_TEAM_HISTORY'], ['LIMITED_TEAM_HISTORY'], []]);
+  const games = JSON.parse(fs.readFileSync(new URL('games-2026.json', FX), 'utf8')).sort((a, b) => Date.parse(a.start_utc) - Date.parse(b.start_utc));
+  let limited = null; let insufficient = null; let deep = null;
+  for (const g of games) {
+    const asOf = new Date(Date.parse(g.start_utc) - 15 * 60e3).toISOString();
+    const d = await buildPredictionDoc({ game: g, leagueRows: ROWS, asOf, runId: 't', mode: 'dry_run', now: Date.parse(asOf) });
+    const m = d.eligibility.min_current_games;
+    if (!insufficient && m < 3) insufficient = { d, g, asOf };
+    if (!limited && m >= 3 && m <= 5) limited = { d, g, asOf };
+    if (!deep && m >= 6) deep = { d, g, asOf };
+    if (limited && insufficient && deep) break;
+  }
+  assert.ok(limited && insufficient && deep, 'fixture covers all three history states');
+  for (const s of [limited, insufficient, deep]) {
+    const raw = predictFromRows({ game: { ...s.g, event_id: s.g.event_id }, leagueRows: ROWS, asOf: s.asOf });
+    assert.equal(s.d.p_home, raw.p_home, 'probability unchanged');
+    assert.equal(s.d.call, raw.call);
+    assert.equal(s.d.pick_team_id, raw.pick_team_id, 'pick unchanged');
+    assert.equal(s.d.confidence, raw.confidence ? raw.confidence.toLowerCase() : null, 'frozen confidence tier unchanged');
+  }
+  assert.deepEqual(limited.d.flags, ['LIMITED_TEAM_HISTORY']);
+  assert.deepEqual(deep.d.flags, []);
+  assert.equal(insufficient.d.call, 'NO_CALL');
+  assert.equal(insufficient.d.no_call_reason, 'INSUFFICIENT_TEAM_HISTORY');
+  assert.match(insufficient.d.no_call_detail, /under_3_current_games/);
+  const lock = lockDoc(limited.d, { ledger: 'shadow' });
+  assert.deepEqual(lock.flags, ['LIMITED_TEAM_HISTORY'], 'flag travels with the frozen lock');
+});
+
+test('promotion generator accepts the frozen contract (emits SQL only; nothing applied)', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(process.execPath, ['scripts/model/promotion-sql.mjs', '--approved-by', 'TEST ONLY - not approved'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /insert into public\.wnba_pbe_model_promotions/);
+  assert.match(r.stdout, new RegExp(fileSha('eligibility_contract.json')));
+  assert.match(r.stdout, /pbe-wnba-eligibility\/1/);
+});

@@ -11,10 +11,33 @@
 // in probability points. It is a disagreement measure, not a claimed value: on the 2026 evaluation the
 // de-vigged market out-predicted the model (log loss 0.579 vs 0.591, docs/PBE_WNBA_MODEL_V1.md).
 
-import { predictFromRows, reasons, orient, MODEL_ID, MANIFEST, FEATURE_SPEC } from './pbe-wnba-model.js';
+import { predictFromRows, reasons, orient, MODEL_ID, MANIFEST, FEATURE_SPEC, ARTIFACT } from './pbe-wnba-model.js';
+import ELIGIBILITY from '../../model/pbe-wnba-model-v1/eligibility/eligibility_contract.json' with { type: 'json' };
 
-export const RUNTIME_VERSION = 'pbe-wnba-runtime/1.0.0';
+export const RUNTIME_VERSION = 'pbe-wnba-runtime/1.1.0';
 export const CONTRACT = 'game_winner_v1';
+
+// Frozen eligibility contract (owner decision 2026-09-15). The runtime refuses to load if the contract is not
+// FROZEN, is for different model bytes, or disagrees with the floor the frozen artifact and spec already enforce.
+export { ELIGIBILITY };
+export const NO_CALL_BELOW = ELIGIBILITY.rule.no_call_below;
+(function assertEligibilityContract() {
+  const bad = [];
+  if (ELIGIBILITY.status !== 'FROZEN') bad.push(`status ${ELIGIBILITY.status}`);
+  if (ELIGIBILITY.applies_to_model !== MODEL_ID) bad.push('model id');
+  if (ELIGIBILITY.model_hashes.artifact_sha256 !== MANIFEST.files['artifact.json']) bad.push('artifact hash');
+  if (ELIGIBILITY.model_hashes.feature_spec_sha256 !== MANIFEST.files['feature_spec.json']) bad.push('feature spec hash');
+  if (ELIGIBILITY.model_hashes.validation_receipt_sha256 !== MANIFEST.files['validation_receipt.json']) bad.push('validation receipt hash');
+  if (NO_CALL_BELOW !== ARTIFACT.params.min_current_games || NO_CALL_BELOW !== FEATURE_SPEC.eligibility.min_current_games) bad.push('floor differs from artifact/spec');
+  if (bad.length) throw new Error(`eligibility contract mismatch: ${bad.join(', ')}`);
+})();
+
+/** Non-model metadata flags from the frozen contract (never change probability, pick, confidence or grading). */
+export function eligibilityFlags(minCurrentGames) {
+  return ELIGIBILITY.metadata_flags
+    .filter((f) => f.flag === 'LIMITED_TEAM_HISTORY' ? minCurrentGames >= NO_CALL_BELOW && minCurrentGames <= 5 : false)
+    .map((f) => f.flag);
+}
 
 // Lock policy v1: official call is frozen 15 minutes before scheduled tip. Provisional (pre-lock) scoring runs
 // every 5 minutes, every minute inside the final 30 minutes. The policy id is stored with every lock.
@@ -147,6 +170,8 @@ export async function buildPredictionDoc({ game, leagueRows, asOf, marketEvent =
     away: reasons(prediction, { orientTeam: prediction.away_team_id })
   };
   const market = marketComparison(prediction, marketEvent, marketCapturedAt, now);
+  const minGames = Math.min(prediction.teams.home.n_current, prediction.teams.away.n_current);
+  const insufficient = prediction.call === 'NO_CALL' && minGames < NO_CALL_BELOW;
   return {
     schema: 'pbe-wnba-prediction/1',
     runtime: RUNTIME_VERSION,
@@ -168,12 +193,16 @@ export async function buildPredictionDoc({ game, leagueRows, asOf, marketEvent =
     },
     model: { model_id: prediction.model_id, artifact_sha256: prediction.artifact_sha256, feature_spec_sha256: prediction.feature_spec_sha256, feature_schema: prediction.feature_schema },
     call: prediction.call,
-    no_call_reason: prediction.no_call_reason,
+    // Contract reason code for the history floor; the model's own detail string is kept alongside.
+    no_call_reason: insufficient ? ELIGIBILITY.rule.reason : prediction.no_call_reason,
+    no_call_detail: insufficient ? prediction.no_call_reason : null,
     p_home: prediction.p_home,
     p_away: prediction.p_away,
     pick_team_id: prediction.pick_team_id,
     pick_probability: prediction.pick_probability,
     confidence: prediction.confidence ? prediction.confidence.toLowerCase() : null,
+    eligibility: { contract_id: ELIGIBILITY.contract_id, no_call_below: NO_CALL_BELOW, min_current_games: minGames },
+    flags: eligibilityFlags(minGames),
     feature_order: prediction.feature_order,
     feature_vector: prediction.feature_vector,
     feature_hash: hash,
@@ -183,7 +212,10 @@ export async function buildPredictionDoc({ game, leagueRows, asOf, marketEvent =
       home_games_current: prediction.teams.home.n_current,
       away_games_current: prediction.teams.away.n_current,
       home_carryover: prediction.teams.home.carryover ?? null,
-      away_carryover: prediction.teams.away.carryover ?? null
+      away_carryover: prediction.teams.away.carryover ?? null,
+      min_current_games: minGames,
+      flags: eligibilityFlags(minGames),
+      eligibility_contract: ELIGIBILITY.contract_id
     },
     teams_state: prediction.teams,
     market,
@@ -321,6 +353,8 @@ export function lockDoc(doc, { now = Date.now(), ledger }) {
     model: doc.model,
     call: doc.call,
     no_call_reason: doc.no_call_reason,
+    flags: doc.flags || [],
+    eligibility: doc.eligibility || null,
     p_home: doc.p_home,
     selected_team_id: doc.pick_team_id,
     selected_side: doc.pick_team_id ? (doc.pick_team_id === doc.game.home_team_id ? 'home' : 'away') : null,

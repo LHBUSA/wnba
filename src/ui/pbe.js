@@ -17,6 +17,7 @@ export function teamName(t, { short = false } = {}) {
 const teamOf = (game, id) => (String(game.home_team_id) === String(id) ? { team_id: game.home_team_id, ...(game.home || {}) } : { team_id: game.away_team_id, ...(game.away || {}) });
 
 const CONF = { high: 'High', medium: 'Medium', low: 'Low' };
+const historyFlag = (item) => ((item.flags || []).includes('LIMITED_TEAM_HISTORY') ? html`<span class="pbe-flag" title="At least one team has played only 3–5 games this season. Shown for context; it does not change the probability, pick or confidence.">Limited current-season history</span>` : '');
 
 export function phaseLine(item) {
   if (item.phase === 'LOCKED') return html`<span class="pbe-phase locked">Locked</span><span>${fmtTimeET(item.locked_at)} · ${item.lock_policy}</span>`;
@@ -62,7 +63,7 @@ export function pbeTeamPicker(item, teamId) {
 
   if (item.call === 'NO_CALL') {
     return html`<section class="pbe-card" aria-label="PBE Team Picker">${head}
-      <div class="pbe-nocall"><b>PBE no call</b><span>${item.no_call_reason === 'model_near_coin_flip' ? 'The model sees this game as too close to call.' : 'Not enough current-season games for a call yet.'}</span></div>
+      <div class="pbe-nocall"><b>PBE no call</b><span>${item.no_call_reason === 'model_near_coin_flip' ? 'The model sees this game as too close to call.' : 'Insufficient team history: a team has fewer than 3 current-season games.'}</span></div>
       <div class="pbe-stats"><div class="pbe-stat"><small>${teamName(us, { short: true })}</small><b>${pct1(item.oriented?.team_probability)}</b><span>model win probability</span></div><div class="pbe-stat"><small>${teamName(them, { short: true })}</small><b>${pct1(item.oriented?.opponent_probability)}</b><span>model win probability</span></div></div>
       ${marketFoot(item)}</section>`;
   }
@@ -74,7 +75,7 @@ export function pbeTeamPicker(item, teamId) {
       <div class="pbe-stat pick"><small>PBE pick</small><b>${teamLogo(pick, 26)}${teamName(pick)}</b><span>${o?.team_is_pick ? 'this team' : `over ${teamName(us, { short: true })}`}</span></div>
       <div class="pbe-stat prob"><small>Win probability</small><b>${pct1(item.pick_probability)}</b><span>${o?.team_is_pick ? `${teamName(them, { short: true })} ${pct1(o?.opponent_probability)}` : `${teamName(us, { short: true })} ${pct1(o?.team_probability)}`}</span></div>
       ${marketCells(item, pickName)}
-      <div class="pbe-stat"><small>Confidence</small><b class="conf ${item.confidence}">${CONF[item.confidence] || '—'}</b><span>probability + data depth</span></div>
+      <div class="pbe-stat"><small>Confidence</small><b class="conf ${item.confidence}">${CONF[item.confidence] || '—'}</b><span>probability + data depth</span>${historyFlag(item)}</div>
     </div>
     <div class="pbe-why">
       <div><h3>Why PBE likes ${pickName}</h3>${reasonList(item.reasoning?.supporting, 'No single factor stands out; the call is the sum of small edges.')}</div>
@@ -128,12 +129,12 @@ export function pbeCallCard(item) {
       <div class="pbe-stats compact">
         <div class="pbe-stat pick"><small>PBE pick</small><b>${teamName(pick, { short: true })}</b><span>${pct1(item.pick_probability)}</span></div>
         ${marketCells(item, teamName(pick, { short: true }))}
-        <div class="pbe-stat"><small>Confidence</small><b class="conf ${item.confidence}">${CONF[item.confidence]}</b></div>
+        <div class="pbe-stat"><small>Confidence</small><b class="conf ${item.confidence}">${CONF[item.confidence]}</b>${historyFlag(item)}</div>
       </div>
       <details class="pbe-details"><summary>Model reasoning</summary>
         <div class="pbe-why"><div><h3>Why PBE likes ${teamName(pick, { short: true })}</h3>${reasonList(item.reasoning?.supporting, 'No single factor stands out.')}</div>
         <div><h3>What works against them</h3>${reasonList(item.reasoning?.opposing, 'Nothing meaningful.')}</div></div>
-      </details>` : item.call === 'NO_CALL' ? html`<div class="pbe-nocall"><b>No call</b><span>${item.no_call_reason === 'model_near_coin_flip' ? 'too close to call' : 'not enough current-season games'}</span></div>` : ''}
+      </details>` : item.call === 'NO_CALL' ? html`<div class="pbe-nocall"><b>No call</b><span>${item.no_call_reason === 'model_near_coin_flip' ? 'too close to call' : 'insufficient team history'}</span></div>` : ''}
     ${item.call ? marketFoot(item) : html`<p class="pbe-foot">${phaseLine(item)}</p>`}
   </article>`;
 }

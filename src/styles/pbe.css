@@ -117,3 +117,4 @@
   .mnav { isolation: isolate; }
 }
 @media (max-width: 380px) { .mnav a { min-width: 52px; } }
+.pbe-flag { display: inline-block; margin-top: 7px; font: 700 10px/1.2 var(--f-data); letter-spacing: .06em; color: var(--warn, #e3b04b); border: 1px solid rgba(227, 176, 75, .45); border-radius: 999px; padding: 4px 7px; }

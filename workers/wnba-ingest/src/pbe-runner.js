@@ -157,18 +157,29 @@ export function diffAvailability(before, after) {
   return changes;
 }
 
-async function recordCheckpoints(env, games, now) {
+async function recordCheckpoints(env, games, now, ledger = 'shadow') {
   let recorded = 0;
   let snapshot = null;
   for (const g of games) {
     const key = `pbe:v1:shadow:availchk:${g.game_id}`;
-    const doc = (await env.WNBA_KV.get(key, 'json')) || { schema: 'pbe-availability-checkpoints/1', game: g, checkpoints: {} };
+    const doc = (await env.WNBA_KV.get(key, 'json')) || { schema: 'pbe-availability-checkpoints/2', game: g, checkpoints: {} };
     const due = checkpointsDue(g.scheduled_tip_utc, Object.keys(doc.checkpoints), now);
     if (!due.length) continue;
     snapshot ||= await env.WNBA_KV.get('avail:v1:snapshot', 'json');
     const players = teamAvailability(snapshot, [g.home_team_id, g.away_team_id]);
+    // The prediction as it stood at this checkpoint (the latest pre-lock document, or the frozen lock after it).
+    const pred = (await env.WNBA_KV.get(`pbe:v1:${ledger}:lock:${g.game_id}`, 'json')) || (await env.WNBA_KV.get(`pbe:v1:${ledger}:pred:${g.game_id}`, 'json'));
+    const prediction = pred ? {
+      source: pred.schema?.startsWith('pbe-wnba-lock') ? 'lock' : 'pre_lock_document',
+      generated_at: pred.source_generated_at || pred.generated_at || null,
+      call: pred.call, p_home: pred.p_home, pick_team_id: pred.selected_team_id ?? pred.pick_team_id ?? null,
+      pick_probability: pred.win_probability ?? pred.pick_probability ?? null,
+      pbe_edge: (pred.market_at_lock || pred.market)?.pbe_edge ?? null,
+      market_captured_at: (pred.market_at_lock || pred.market)?.captured_at ?? null,
+      feature_hash: pred.feature_hash, flags: pred.flags || []
+    } : null;
     for (const c of due) {
-      doc.checkpoints[String(c)] = { recorded_at: new Date(now).toISOString(), minutes_before_tip: Math.round((Date.parse(g.scheduled_tip_utc) - now) / 60e3), feed_captured_at: snapshot?.captured_at || null, players };
+      doc.checkpoints[String(c)] = { recorded_at: new Date(now).toISOString(), minutes_before_tip: Math.round((Date.parse(g.scheduled_tip_utc) - now) / 60e3), feed_captured_at: snapshot?.captured_at || null, feed_age_s: snapshot?.captured_at ? Math.round((now - Date.parse(snapshot.captured_at)) / 1000) : null, players, prediction };
       recorded += 1;
     }
     await env.WNBA_KV.put(key, JSON.stringify(doc), { expirationTtl: 120 * 86400 });
@@ -314,7 +325,7 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
   if (nearTip) await env.WNBA_KV.put('pbe:v1:near_tip_until', new Date(now + 3 * 60e3).toISOString(), { expirationTtl: 600 });
   const checkpointGames = [...upcoming.map((g) => ({ game_id: g.event_id, scheduled_tip_utc: g.start_utc, home_team_id: g.home_id, away_team_id: g.away_id })), ...(index.games || []).filter((x) => !upcoming.some((u) => u.event_id === x.game_id))]
     .filter((g) => { const m = (Date.parse(g.scheduled_tip_utc) - now) / 60e3; return m <= NEAR_TIP_MINUTES && m >= -20; });
-  summary.availability_checkpoints = await recordCheckpoints(env, checkpointGames, now);
+  summary.availability_checkpoints = await recordCheckpoints(env, checkpointGames, now, ledger);
 
   index.generated_at = new Date(now).toISOString();
   index.mode = mode;

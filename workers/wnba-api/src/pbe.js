@@ -18,7 +18,7 @@ import MANIFEST from '../../../model/pbe-wnba-model-v1/manifest.json' with { typ
 import RECEIPT from '../../../model/pbe-wnba-model-v1/validation_receipt.json' with { type: 'json' };
 import { resolveAccount } from './account.js';
 import { privateJson } from './auth.js';
-import { orientDoc, lockPhase, trackRecordAggregate, LOCK_POLICY, CONTRACT } from '../../shared/pbe-runtime.js';
+import { orientDoc, lockPhase, trackRecordAggregate, LOCK_POLICY, CONTRACT, ELIGIBILITY } from '../../shared/pbe-runtime.js';
 
 const KV = (ledger, kind, id) => `pbe:v1:${ledger}:${kind}${id ? `:${id}` : ''}`;
 
@@ -67,7 +67,7 @@ function phaseOf(doc, lock, now = Date.now()) {
 /** One call as served: the official lock if it exists, otherwise the provisional pre-lock document. */
 function callItem(doc, lock, grade, ledger) {
   const src = lock
-    ? { ...doc, generated_at: lock.source_generated_at, p_home: lock.p_home, p_away: 1 - lock.p_home, call: lock.call, no_call_reason: lock.no_call_reason, pick_team_id: lock.selected_team_id, pick_probability: lock.win_probability, confidence: lock.confidence, reasoning: lock.reasoning, market: lock.market_at_lock, feature_hash: lock.feature_hash, model: lock.model, game: lock.game }
+    ? { ...doc, generated_at: lock.source_generated_at, p_home: lock.p_home, p_away: 1 - lock.p_home, call: lock.call, no_call_reason: lock.no_call_reason, pick_team_id: lock.selected_team_id, pick_probability: lock.win_probability, confidence: lock.confidence, flags: lock.flags || [], reasoning: lock.reasoning, market: lock.market_at_lock, feature_hash: lock.feature_hash, model: lock.model, game: lock.game }
     : doc;
   const phase = phaseOf(src, lock);
   if (phase === 'NOT_LOCKED') {
@@ -88,6 +88,7 @@ function callItem(doc, lock, grade, ledger) {
     p_away: 1 - src.p_home,
     pick_probability: src.pick_probability,
     confidence: src.confidence,
+    flags: src.flags || [],
     market: marketView(src.market),
     reasoning: r ? { supporting: r.supporting.slice(0, 3), opposing: r.opposing.slice(0, 2), adjustments: r.adjustments } : null,
     model: src.model,
@@ -131,7 +132,8 @@ export async function pbeStatus({ env }) {
       runner_mode: index?.mode || 'not_running',
       published: env.PBE_PUBLISH === 'true',
       contract: CONTRACT,
-      lock_policy: LOCK_POLICY,
+      eligibility: { contract_id: ELIGIBILITY.contract_id, status: ELIGIBILITY.status, no_call_below: ELIGIBILITY.rule.no_call_below, reason: ELIGIBILITY.rule.reason, metadata_flags: ELIGIBILITY.metadata_flags.map((f) => ({ flag: f.flag, when: f.when, display: f.display, effect: f.effect })), holdout_caveat: ELIGIBILITY.holdout_caveats.interpretation },
+      lock_policy: { ...LOCK_POLICY, status: 'EXPERIMENTAL_SHADOW' },
       last_run_at: index?.generated_at || null
     }
   }, 60);
