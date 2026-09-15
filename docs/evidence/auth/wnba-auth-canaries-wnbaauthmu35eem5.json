@@ -1,0 +1,85 @@
+{
+  "run": "wnbaauthmu35eem5",
+  "at": "2026-09-15T20:54:45.105Z",
+  "api": "https://wnba-api.propbetedge.ai",
+  "results": [
+    {
+      "canary": "01 signed out: account signed_out, every protected route 401, no paid values",
+      "pass": true,
+      "detail": "pbe/picks 401 · teams/20 401 · games/401857190 401 · track-record/ledger 401"
+    },
+    {
+      "canary": "02 active wnba_pro authenticates (real verify endpoint, real cookie) and gets full picks access",
+      "pass": true,
+      "detail": "303 → /pbe-picks · account pro/subscriber/CURRENT · picks 200 MODEL_IN_VALIDATION (PBE_PUBLISH=false: no values to any subscriber)"
+    },
+    {
+      "canary": "03 session alone never grants Pro: signed-in email with no entitlement is free, 403 everywhere",
+      "pass": true,
+      "detail": "account free · pbe/picks 403 · teams/20 403 · games/401857190 403 · track-record/ledger 403"
+    },
+    {
+      "canary": "04 NBA Pro only subscriber gets no WNBA paid access",
+      "pass": true,
+      "detail": "account free · pbe/picks 403 · teams/20 403 · games/401857190 403 · track-record/ledger 403"
+    },
+    {
+      "canary": "04 NHL Pro only subscriber gets no WNBA paid access",
+      "pass": true,
+      "detail": "account free · pbe/picks 403 · teams/20 403 · games/401857190 403 · track-record/ledger 403"
+    },
+    {
+      "canary": "04 UFC Pro only subscriber gets no WNBA paid access",
+      "pass": true,
+      "detail": "account free · pbe/picks 403 · teams/20 403 · games/401857190 403 · track-record/ledger 403"
+    },
+    {
+      "canary": "05 expired wnba_pro (period end passed) denied",
+      "pass": true,
+      "detail": "ledger status active but period ended → free · pbe/picks 403 · teams/20 403 · games/401857190 403 · track-record/ledger 403"
+    },
+    {
+      "canary": "06 cancelled (subscription.deleted) wnba_pro denied",
+      "pass": true,
+      "detail": "canceled → free · pbe/picks 403 · teams/20 403 · games/401857190 403 · track-record/ledger 403"
+    },
+    {
+      "canary": "07 every paid request rechecks entitlement: cancel mid-session, same cookie is denied on the next request",
+      "pass": true,
+      "detail": "same session: 200 → (Stripe cancel) → 403, no re-login"
+    },
+    {
+      "canary": "08 magic token is single use: replay of a consumed token is rejected (410), no cookie",
+      "pass": true,
+      "detail": "replay 410, no set-cookie"
+    },
+    {
+      "canary": "09 magic token expiry: a link past its TTL is rejected (410)",
+      "pass": true,
+      "detail": "consumed after TTL → 410"
+    },
+    {
+      "canary": "10 forged / malformed tokens and forged cookies are rejected",
+      "pass": true,
+      "detail": "unknown token 410 · signature swap / alg:none / garbage → signed_out · email via query/header → 401"
+    },
+    {
+      "canary": "11 logout revokes the session: the same cookie is signed_out afterwards",
+      "pass": true,
+      "detail": "pro → logout 200 (Max-Age=0) → same cookie signed_out/session_revoked"
+    },
+    {
+      "canary": "12 cross-site origins get no credentialed CORS and sign-in requests are refused",
+      "pass": true,
+      "detail": "no ACAO/ACAC for foreign origin · /v1/auth/request 403"
+    }
+  ],
+  "passed": 14,
+  "total": 14,
+  "cleanup": {
+    "entitlements": 7,
+    "events": 16,
+    "remaining": 0
+  },
+  "note": "KV link keys expire within 15 minutes; revoked-session keys expire with the session."
+}

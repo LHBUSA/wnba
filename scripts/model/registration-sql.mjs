@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// Emit (never execute) the SQL that registers pbe-wnba-model-v1 in the applied wnba_pbe ledger on tkmln and
-// promotes it to champion. Registration and promotion are owner decisions; this only prepares reviewable SQL.
+// Emit (never execute) the SQL that REGISTERS pbe-wnba-model-v1 in wnba_pbe_model_versions on tkmln as a
+// champion_candidate. It never inserts a promotion: wnba_pbe_current_champion() stays unchanged, so no official
+// lock can be accepted. Promotion is a separate, later owner decision (scripts/model/promotion-sql.mjs).
 //
-//   node scripts/model/registration-sql.mjs --promoted-by "<owner approval reference>" > registration.sql
+//   node scripts/model/registration-sql.mjs --registered-by "<owner approval reference>" > registration.sql
 //
 // Every hash is recomputed from the committed file bytes and must equal manifest.json, or the script refuses.
 import fs from 'node:fs';
@@ -12,8 +13,8 @@ import { createHash } from 'node:crypto';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/(\w:)/, '$1')), '..', '..');
 const DIR = path.join(ROOT, 'model', 'pbe-wnba-model-v1');
 const arg = (k) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : null; };
-const promotedBy = arg('promoted-by');
-if (!promotedBy) { console.error('usage: --promoted-by "<owner approval reference>"'); process.exit(2); }
+const registeredBy = arg('registered-by');
+if (!registeredBy) { console.error('usage: --registered-by "<owner approval reference>"'); process.exit(2); }
 
 const bytes = (f) => fs.readFileSync(path.join(DIR, f));
 const sha = (f) => createHash('sha256').update(bytes(f)).digest('hex');
@@ -39,18 +40,15 @@ const summary = {
   leakage_audit_pass: receipt.leakage_audit?.pass === true
 };
 
-process.stdout.write(`-- Register + promote ${artifact.model_id} on tkmlnhmylqnttmnsnief. Generated ${new Date().toISOString()}.
--- Owner approval required before running. Both rows are immutable once inserted (triggers).
+process.stdout.write(`-- Register (NOT promote) ${artifact.model_id} on tkmlnhmylqnttmnsnief. Generated ${new Date().toISOString()}.
+-- Approval: ${registeredBy.replace(/\s+/g, ' ')}
+-- The row is immutable once inserted (triggers). No wnba_pbe_model_promotions row is written.
 begin;
 insert into public.wnba_pbe_model_versions
   (model_id, model_type, feature_schema, artifact_sha256, feature_spec_sha256, validation_receipt_sha256, training_window, validation_summary, role_at_registration, artifact_uri)
 values
   (${lit(artifact.model_id)}, ${lit(artifact.model_type)}, ${lit(artifact.feature_schema)},
    ${lit(manifest.files['artifact.json'])}, ${lit(manifest.files['feature_spec.json'])}, ${lit(manifest.files['validation_receipt.json'])},
-   ${jsonb(manifest.training_window)}, ${jsonb(summary)}, 'champion_candidate', 'LHBUSA/wnba:model/pbe-wnba-model-v1/artifact.json');
-insert into public.wnba_pbe_model_promotions (model_id, promoted_by, evidence)
-values (${lit(artifact.model_id)}, ${lit(promotedBy)}, ${jsonb({ basis: 'first champion; frozen validation receipt', receipt_sha256: manifest.files['validation_receipt.json'], ...summary })});
-select model_id, artifact_sha256, feature_spec_sha256, registered_at from public.wnba_pbe_model_versions;
-select public.wnba_pbe_current_champion() as champion;
+   ${jsonb(manifest.training_window)}, ${jsonb({ ...summary, registered_by: registeredBy, promotion: 'NOT PROMOTED at registration' })}, 'champion_candidate', 'LHBUSA/wnba:model/pbe-wnba-model-v1/artifact.json');
 commit;
 `);
