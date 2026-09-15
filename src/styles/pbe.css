@@ -106,3 +106,14 @@
 @media (max-width: 420px) { .signin-form { grid-template-columns: minmax(0, 1fr); } }
 .signin-msg { margin-top: 8px; font-size: 13px; color: var(--dim); }
 .signin-msg.err { color: var(--neg); }
+
+/* mobile bottom nav: PBE Picks, premium treatment */
+@media (max-width: 980px) {
+  .mnav a.mnav-pbe { color: var(--gold-bright); position: relative; }
+  .mnav a.mnav-pbe::before { content: ''; position: absolute; inset: 2px 6px; border-radius: 10px; border: 1px solid var(--gold-line); background: linear-gradient(180deg, rgba(212, 175, 55, .16), rgba(212, 175, 55, .04)); z-index: -1; }
+  .mnav a.mnav-pbe span { display: inline-flex; align-items: flex-start; gap: 2px; }
+  .mnav a.mnav-pbe sup { font: 800 7px/1 var(--f-data); letter-spacing: .08em; color: #1a1406; background: var(--gold); border-radius: 999px; padding: 2px 3px; }
+  .mnav a.mnav-pbe[aria-current='page'] { color: var(--paper); }
+  .mnav { isolation: isolate; }
+}
+@media (max-width: 380px) { .mnav a { min-width: 52px; } }

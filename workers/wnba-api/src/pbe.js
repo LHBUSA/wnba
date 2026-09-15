@@ -127,7 +127,8 @@ export async function pbeStatus({ env }) {
       holdout: { seasons: RECEIPT.protocol?.holdout_seasons, n: hold.n, log_loss: hold.log_loss, brier: hold.brier, accuracy: hold.accuracy, roc_auc: hold.roc_auc, calibration_slope: hold.calibration_slope },
       market_benchmark_note: 'On 2026 games with a sportsbook price, the de-vigged market predicted outcomes better than the model (log loss 0.579 vs 0.591, n=277). PBE Edge measures disagreement with the market, not proven value.',
       known_limits: RECEIPT.known_limits,
-      runner_mode: env.PBE_MODE || 'off',
+      // As reported by the runner itself (wnba-ingest writes its mode into the ledger index every pass).
+      runner_mode: index?.mode || 'not_running',
       published: env.PBE_PUBLISH === 'true',
       contract: CONTRACT,
       lock_policy: LOCK_POLICY,

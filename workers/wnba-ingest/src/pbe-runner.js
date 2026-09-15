@@ -122,6 +122,60 @@ function lockRowFromObservation(obs, doc) {
   };
 }
 
+// ------------------------------------------------------------------ lock-policy evidence (shadow measurement only)
+
+// Injury-feed state for both teams at T-60, T-30, T-15 and T-0. Nothing here changes a prediction or a lock; it is
+// the evidence the owner reviews before any lock time is made permanent (owner decision 5).
+export const AVAIL_CHECKPOINTS = [60, 30, 15, 0];
+export const NEAR_TIP_MINUTES = 75;
+
+export function checkpointsDue(tipIso, recorded, now = Date.now()) {
+  const tip = Date.parse(tipIso);
+  if (!Number.isFinite(tip) || now > tip + 20 * 60e3) return [];
+  return AVAIL_CHECKPOINTS.filter((c) => now >= tip - c * 60e3 && !recorded.includes(String(c)));
+}
+
+export function teamAvailability(snapshot, teamIds) {
+  const ids = new Set(teamIds.map(String));
+  return Object.entries(snapshot?.items || {})
+    .filter(([, v]) => ids.has(String(v.team_id)))
+    .map(([key, v]) => ({ key, athlete_id: v.athlete_id || null, team_id: String(v.team_id), status: v.status || null, source_updated_at: v.source_updated_at || null }))
+    .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}
+
+export function diffAvailability(before, after) {
+  const b = new Map((before || []).map((p) => [p.key, p]));
+  const a = new Map((after || []).map((p) => [p.key, p]));
+  const changes = [];
+  for (const [k, p] of a) {
+    const q = b.get(k);
+    if (!q) changes.push({ key: k, team_id: p.team_id, kind: 'added', status_after: p.status });
+    else if (q.status !== p.status) changes.push({ key: k, team_id: p.team_id, kind: 'status_changed', status_before: q.status, status_after: p.status });
+    else if (q.source_updated_at !== p.source_updated_at) changes.push({ key: k, team_id: p.team_id, kind: 'source_updated', status_after: p.status });
+  }
+  for (const [k, q] of b) if (!a.has(k)) changes.push({ key: k, team_id: q.team_id, kind: 'removed', status_before: q.status });
+  return changes;
+}
+
+async function recordCheckpoints(env, games, now) {
+  let recorded = 0;
+  let snapshot = null;
+  for (const g of games) {
+    const key = `pbe:v1:shadow:availchk:${g.game_id}`;
+    const doc = (await env.WNBA_KV.get(key, 'json')) || { schema: 'pbe-availability-checkpoints/1', game: g, checkpoints: {} };
+    const due = checkpointsDue(g.scheduled_tip_utc, Object.keys(doc.checkpoints), now);
+    if (!due.length) continue;
+    snapshot ||= await env.WNBA_KV.get('avail:v1:snapshot', 'json');
+    const players = teamAvailability(snapshot, [g.home_team_id, g.away_team_id]);
+    for (const c of due) {
+      doc.checkpoints[String(c)] = { recorded_at: new Date(now).toISOString(), minutes_before_tip: Math.round((Date.parse(g.scheduled_tip_utc) - now) / 60e3), feed_captured_at: snapshot?.captured_at || null, players };
+      recorded += 1;
+    }
+    await env.WNBA_KV.put(key, JSON.stringify(doc), { expirationTtl: 120 * 86400 });
+  }
+  return recorded;
+}
+
 // ------------------------------------------------------------------ the task
 
 export function modeOf(env) {
@@ -254,6 +308,13 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
     await env.WNBA_KV.put(K(ledger, 'grade', id), JSON.stringify(stored));
     summary.grades += 1;
   }
+
+  // Lock-policy evidence: injury-feed checkpoints around every covered tip, and faster feed polling near tips.
+  const nearTip = upcoming.some((g) => (Date.parse(g.start_utc) - now) / 60e3 <= NEAR_TIP_MINUTES);
+  if (nearTip) await env.WNBA_KV.put('pbe:v1:near_tip_until', new Date(now + 3 * 60e3).toISOString(), { expirationTtl: 600 });
+  const checkpointGames = [...upcoming.map((g) => ({ game_id: g.event_id, scheduled_tip_utc: g.start_utc, home_team_id: g.home_id, away_team_id: g.away_id })), ...(index.games || []).filter((x) => !upcoming.some((u) => u.event_id === x.game_id))]
+    .filter((g) => { const m = (Date.parse(g.scheduled_tip_utc) - now) / 60e3; return m <= NEAR_TIP_MINUTES && m >= -20; });
+  summary.availability_checkpoints = await recordCheckpoints(env, checkpointGames, now);
 
   index.generated_at = new Date(now).toISOString();
   index.mode = mode;

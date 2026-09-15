@@ -123,3 +123,30 @@ test('eligible finals use the training franchise rule (>= 10 regular-season fina
   assert.ok(!finals.some((e) => e.id === 'ALLSTAR'));
   assert.equal(finals.length, new Set(ROWS.filter((r) => r.season === 2026).map((r) => r.event_id)).size);
 });
+
+test('lock-policy evidence: checkpoints due at T-60/T-30/T-15/T-0, feed diff, near-tip flag and recorded snapshots', async () => {
+  const { checkpointsDue, diffAvailability, teamAvailability } = await import('../workers/wnba-ingest/src/pbe-runner.js');
+  const tip = '2026-09-17T23:30:00.000Z';
+  const t = Date.parse(tip);
+  assert.deepEqual(checkpointsDue(tip, [], t - 61 * 60e3), []);
+  assert.deepEqual(checkpointsDue(tip, [], t - 45 * 60e3), [60]);
+  assert.deepEqual(checkpointsDue(tip, ['60'], t - 16 * 60e3), [30]);
+  assert.deepEqual(checkpointsDue(tip, ['60', '30'], t - 60e3), [15]);
+  assert.deepEqual(checkpointsDue(tip, ['60', '30', '15'], t + 60e3), [0]);
+  assert.deepEqual(checkpointsDue(tip, [], t + 30 * 60e3), [], 'too late to record honestly');
+  const snap = { items: { a: { athlete_id: '1', team_id: '20', status: 'Day-To-Day', source_updated_at: 'x' }, b: { athlete_id: '2', team_id: '18', status: 'Out', source_updated_at: 'y' }, c: { athlete_id: '3', team_id: '5', status: 'Out' } } };
+  const before = teamAvailability(snap, ['20', '18']);
+  assert.equal(before.length, 2);
+  const after = teamAvailability({ items: { a: { ...snap.items.a, status: 'Out', source_updated_at: 'z' }, d: { athlete_id: '4', team_id: '20', status: 'Questionable' } } }, ['20', '18']);
+  assert.deepEqual(diffAvailability(before, after).map((c) => c.kind).sort(), ['added', 'removed', 'status_changed']);
+
+  const { kv, env, eventsFor } = await setup();
+  await kv.put('avail:v1:snapshot', JSON.stringify({ captured_at: new Date(NOW - 60e3).toISOString(), ...snap }));
+  const s = await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+  assert.ok(Date.parse(kv.map.get('pbe:v1:near_tip_until')) > NOW, 'near-tip flag set (G_LOCK tips in 14 min)');
+  const chk = JSON.parse(kv.map.get('pbe:v1:shadow:availchk:G_LOCK'));
+  assert.deepEqual(Object.keys(chk.checkpoints).sort(), ['15', '30', '60']);
+  assert.equal(chk.checkpoints['15'].players.length, 2);
+  assert.ok(!kv.map.has('pbe:v1:shadow:availchk:G_LATER'), 'a game 5h out records nothing');
+  assert.equal(s.availability_checkpoints, 3);
+});

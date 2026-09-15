@@ -31,7 +31,8 @@ const ICON = {
   cast: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4v16M7 6.5c3 3 3 8 0 11M17 6.5c-3 3-3 8 0 11"/>',
   props: '<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',
   news: '<path d="M5 4h11v16H6a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1zM16 8h3v10a2 2 0 0 1-2 2M8 8h5M8 12h5M8 16h3"/>',
-  more: '<path d="M4 7h16M4 12h16M4 17h16"/>'
+  more: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  pbe: '<path d="M4 19h16"/><path d="M6 16l4-5 3 3 5-7"/><circle cx="18" cy="7" r="1.6"/>'
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
 
@@ -108,6 +109,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
     <nav class="mnav" aria-label="Primary mobile">
       <a href="/" data-nav="today">${raw(svg('today'))}Today</a>
       <a href="/cast" data-nav="cast">${raw(svg('cast'))}Cast</a>
+      <a href="/pbe-picks" data-nav="pbe-picks" class="mnav-pbe">${raw(svg('pbe'))}<span>PBE<sup>PRO</sup></span></a>
       <a href="/props" data-nav="props">${raw(svg('props'))}Props</a>
       <a href="/news" data-nav="news">${raw(svg('news'))}News</a>
       <a href="#menu" data-menu>${raw(svg('more'))}More</a>

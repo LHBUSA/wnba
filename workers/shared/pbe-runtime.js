@@ -393,7 +393,7 @@ export function trackRecordAggregate(rows) {
     brier: brier === null ? null : r4(brier),
     calibration,
     calibration_note: graded.length >= MIN_CALIBRATION_SAMPLE ? null : `Calibration is shown from ${MIN_CALIBRATION_SAMPLE} graded picks; ${graded.length} so far.`,
-    sample_note: graded.length < 30 ? 'Small sample: early results say little about the model.' : null
+    sample_note: graded.length > 0 && graded.length < 30 ? 'Small sample: early results say little about the model.' : null
   };
 }
 
