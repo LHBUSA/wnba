@@ -1,0 +1,42 @@
+{
+  "preregistration_id": "pbe-wnba-eligibility-study/1",
+  "model": "pbe-wnba-model-v1",
+  "written_before_results": true,
+  "known_at_writing": [
+    "Pooled validation (2015-2024) and holdout (2025+2026) metrics already committed in validation_receipt.json (validation log loss 0.60498; holdout 0.61082).",
+    "The committed holdout slice with 3-5 minimum current games: n=45, log loss 0.7132, Brier 0.25896, accuracy 0.4889, AUC 0.5751. This is HOLDOUT data and is never used to choose K.",
+    "Game COUNTS per bin (no metrics): validation 0-2:202, 3-5:185, 6-8:180, 9-12:244, 13+:1414; holdout 0-2:46, 3-5:45, 6-8:42, 9-12:58, 13+:421."
+  ],
+  "not_known_at_writing": "Any per-bin or cumulative validation metric, and any holdout metric other than the committed 3-5 slice.",
+  "measure": {
+    "name": "min_current_season_final_games",
+    "definition": "m = min(home_n_current, away_n_current): each team's final, box-complete, current-season (type 2 or 3) games visible under the frozen as-of rule (started before as_of = tip - 15 min and on an earlier ET date). Same numbers the frozen feature build emits (dataset_k4_r0.6.csv columns home_n_current / away_n_current)."
+  },
+  "predictions": {
+    "recipe": "frozen v1 recipe exactly as scripts/model/walkforward.py: dataset k=4 r=0.6, feature set F_sos_form_situation_rotation, window last8, C=10, structural home term, trained per target season on ELIGIBLE rows (m >= 3) of prior seasons only.",
+    "scored_games": "ALL games of the target season in the dataset, including m = 0-2 (currently NO CALL by the frozen eligibility floor), so the study can see what the model would have said.",
+    "validation_seasons": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+    "holdout_seasons": [2025, 2026]
+  },
+  "bins": ["0-2", "3-5", "6-8", "9-12", "13+"],
+  "metrics": {
+    "per_bin": ["n", "log_loss", "brier", "accuracy", "roc_auc", "ece (10 equal-width bins; 'insufficient' when n < 60)", "calibration slope/intercept ('insufficient' when n < 100)"],
+    "baselines_per_bin": ["coin_0.5", "home_rate (training-window home win rate, walk-forward)", "net_rating_sign (as walkforward.py naive())"],
+    "cumulative": "m >= K for K in 0..13: n, coverage %, log_loss, brier, ece"
+  },
+  "decision_rule": {
+    "search": "K is the SMALLEST integer in 0..13 satisfying (a), (b) and (c) on VALIDATION seasons only.",
+    "a_bins_beat_home_rate": "Partition m >= K into bins: [K, upper edge of the fixed bin containing K], then each subsequent fixed bin (6-8, 9-12, 13+). Any bin with n < 60 is merged upward into the next bin before judging (the last bin, if < 60, merges downward). Every resulting bin must have model log loss strictly below the home_rate baseline log loss on the same games.",
+    "b_cumulative_calibration": "The cumulative slice m >= K must have calibration slope within [0.80, 1.25] and ECE <= 0.050.",
+    "c_entry_slice_floor": "The entry slice K <= m <= K+2 must have log loss < 0.660. If that slice has n < 60 it is extended upward one game-count at a time until n >= 60.",
+    "floor_justification": "0.660 sits between the pooled validation log loss (0.605) and a coin flip (0.693): an entry slice at or above it is too close to a guess to publish as a model call. Chosen before any bin metric was computed.",
+    "no_k": "If no K in 0..13 satisfies all three, the study reports FAIL and proposes no threshold; the honest consequence is stated in the doc."
+  },
+  "contract_mapping": {
+    "no_call_below": "max(K, 3)",
+    "reason": "The frozen v1 policy already publishes NO CALL below 3 current games (feature_spec.json, fixed before holdout). This study may only tighten that floor, never loosen it.",
+    "reason_code": "INSUFFICIENT_TEAM_HISTORY"
+  },
+  "holdout_use": "For the chosen K only: report holdout bin and cumulative metrics as confirmation. Holdout never changes K.",
+  "not_allowed": ["choosing K by reference to any specific upcoming game", "changing bins, floors or thresholds after seeing validation or holdout bin metrics"]
+}
