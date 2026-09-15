@@ -1,0 +1,76 @@
+{
+  "run": "wnbapromu31jfin",
+  "at": "2026-09-15T19:04:46.753Z",
+  "worker": "https://propbetedge-sports-billing.sales-fd3.workers.dev",
+  "worker_version": "v1.2.0",
+  "signed_deliveries_accepted": 27,
+  "passed": 12,
+  "total": 12,
+  "results": [
+    {
+      "canary": "01 catalog: deployed Worker serves wnba / wnba_pro, webhook + ledger + read configured",
+      "pass": true,
+      "detail": "v1.2.0; sports nba,nhl,wnba,ufc"
+    },
+    {
+      "canary": "02 forged, tampered, stale and missing signatures rejected",
+      "pass": true,
+      "detail": "forged 400 \u00c2\u00b7 tampered 400 \u00c2\u00b7 stale(>300s) 400 \u00c2\u00b7 missing 400 \u00c2\u00b7 nothing granted"
+    },
+    {
+      "canary": "03 monthly: checkout.session.completed \u00e2\u2020\u2019 subscription.created grants wnba_pro (ledger accepts sport=wnba)",
+      "pass": true,
+      "detail": "checkout_paid_awaiting_subscription (not yet entitled) \u00e2\u2020\u2019 subscription_active \u00e2\u2020\u2019 entitled monthly"
+    },
+    {
+      "canary": "04 WNBA entitlement is independent: wnba_pro never implies nba/nhl/ufc",
+      "pass": true,
+      "detail": "nba_pro false \u00c2\u00b7 nhl_pro false \u00c2\u00b7 ufc_pro false"
+    },
+    {
+      "canary": "05 duplicate Stripe event id is idempotent",
+      "pass": true,
+      "detail": "first applied \u00c2\u00b7 second {duplicate:true}"
+    },
+    {
+      "canary": "06 weekly: subscription-first ordering then checkout grants wnba_pro",
+      "pass": true,
+      "detail": "subscription_active \u00e2\u2020\u2019 checkout_identity_attached \u00e2\u2020\u2019 entitled weekly"
+    },
+    {
+      "canary": "07 one email holds NBA Pro and WNBA Pro as independent subscriptions",
+      "pass": true,
+      "detail": "NBA-only \u00e2\u2020\u2019 no WNBA \u00c2\u00b7 both \u00e2\u2020\u2019 both \u00c2\u00b7 cancel NBA \u00e2\u2020\u2019 WNBA unaffected"
+    },
+    {
+      "canary": "08 wrong price / wrong link / cross-sport metadata fail closed",
+      "pass": true,
+      "detail": "weekly price on monthly link \u00e2\u2020\u2019 checkout_price_mismatch_revoked \u00c2\u00b7 NBA link+metadata \u00e2\u2020\u2019 checkout_sport_mismatch \u00c2\u00b7 unknown link \u00e2\u2020\u2019 not_managed_link \u00c2\u00b7 trial metadata \u00e2\u2020\u2019 checkout_trial_not_allowed"
+    },
+    {
+      "canary": "09 cancel-at-period-end keeps access until the period end",
+      "pass": true,
+      "detail": "entitled with cancel_at_period_end=true through 2026-10-05"
+    },
+    {
+      "canary": "10 expired period denies access even while status says active",
+      "pass": true,
+      "detail": "status active, current_period_end in the past \u00e2\u2020\u2019 entitled false"
+    },
+    {
+      "canary": "11 subscription.deleted ends access; stale and late events cannot restore it",
+      "pass": true,
+      "detail": "deleted \u00e2\u2020\u2019 canceled \u00c2\u00b7 stale \u00e2\u2020\u2019 stale_subscription_event \u00c2\u00b7 newer \u00e2\u2020\u2019 canceled_is_terminal \u00c2\u00b7 invoice.paid \u00e2\u2020\u2019 canceled_is_terminal"
+    },
+    {
+      "canary": "12 invoice.payment_failed moves weekly to past_due and denies",
+      "pass": true,
+      "detail": "payment_failed \u00e2\u2020\u2019 past_due (denied) \u00c2\u00b7 invoice.paid \u00e2\u2020\u2019 active (entitled)"
+    }
+  ],
+  "cleanup": {
+    "entitlements": 8,
+    "events": 26,
+    "remaining": 0
+  }
+}

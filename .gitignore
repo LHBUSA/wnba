@@ -17,3 +17,5 @@ scripts/out/
 scripts/out-discovery/
 scripts/.cache/
 __pycache__/
+supabase/proofs/proof.local.sql
+supabase/proofs/proof.remote.sql

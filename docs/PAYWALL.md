@@ -1,6 +1,6 @@
 # WNBA Pro — paywall & entitlement activation
 
-**State: FAIL-CLOSED.** Every visitor is `signed_out`; the checkout button is disabled; no Stripe ID exists in this repo.
+**State 2026-09-15: FAIL-CLOSED.** Stripe objects exist and are wired into `src/data/pricing.js` (IDs only). The billing Worker + production ledger pass 12/12 signed canaries for WNBA. Checkout stays disabled because WNBA members cannot yet obtain a verified session (gate 15) and no real checkout has been run (gates 6, 11, 12).
 
 ## Offer (fixed)
 
@@ -22,6 +22,18 @@ wnba-api /v1/account → verified PropBetEdge session → pbe_has_sport_entitlem
 
 One email owns each sport independently (one row per Stripe subscription; unique on `stripe_subscription_id`, not email).
 
+## Session contract (captured 2026-09-11 from the deployed `propbetedge-auth-magic`; re-probed 2026-09-15)
+
+| Fact | Value |
+|---|---|
+| Issuer | `propbetedge-auth-magic` v2.1 at `auth.propbetedge.ai` (`POST /magic/request`, `GET /magic/verify`, `GET /session`, `GET /pickup`, `POST /logout`) |
+| Cookie | `pbe_session`, `Domain=.propbetedge.ai`, `Path=/`, `HttpOnly`, `Secure`, `SameSite=Lax`, 30-day |
+| Token | HS256 JWT over `{ email, type: 'session', iat, exp }`, signed with that Worker's `MAGIC_JWT_SECRET` |
+| Link issuance | `allow_any_subscriber: false`; `/magic/request` answers "If that email is registered…" (legacy MLB registry) |
+| CORS | `Access-Control-Allow-Origin: https://mlb.propbetedge.ai` only (probed with `Origin: https://wnba.propbetedge.ai`) |
+
+`wnba-api` verifies the signature itself and never calls `/session`: that endpoint re-checks the legacy MLB table and clears the cookie for anyone without MLB.
+
 ## Three states (server-decided)
 
 | State | Rendered when | What it shows |
@@ -34,23 +46,30 @@ One email owns each sport independently (one row per Stripe subscription; unique
 
 ## Activation checklist (ALL must be PASS, then flip atomically)
 
-| # | Gate | Status 2026-09-11 | Blocker |
+Evidence: `docs/evidence/billing/wnba-billing-canaries-2026-09-15.json` (run `wnbapromu31jfin`, `node scripts/billing/wnba-billing-canaries.mjs`). Synthetic ids only; the run deleted its rows (0 remaining).
+
+| # | Gate | Status 2026-09-15 | Evidence / blocker |
 |---|---|---|---|
-| 1 | Stripe product "PropBetEdge WNBA Pro" exists | ✗ | no Stripe credential in this session (Worker secrets unreadable; no Stripe CLI) |
-| 2 | Recurring prices $9.99/mo and $3.99/wk exist | ✗ | depends on 1 |
-| 3 | Hosted Payment Links (no trial, metadata `acquired_sport=wnba`, `product=propbetedge_wnba`, `plan=pro_monthly|pro_weekly`, `trial=none`) | ✗ | depends on 2 |
-| 4 | `wnba` accepted by `pbe_sport_entitlements_sport_check` | ✗ staged | `propbetedge-workers/migrations/20260911_pbe_add_wnba_sport_v1.sql` — owner must apply (after the base ledger migration) |
-| 5 | Billing Worker `PRODUCTS`/`LINKS` allowlist carries the exact WNBA price + link IDs | ✗ | depends on 2–3; change lands in `LHBUSA/propbetedge-workers` |
-| 6 | Stripe webhook endpoint → billing Worker, secret bound | ✗ | owner / Stripe dashboard |
-| 7 | Signature verification rejects bad/expired signatures | code present in billing Worker; not canaried for WNBA | 6 |
-| 8 | Event ordering (subscription.* before checkout.session.completed) | code present (`isNewer`, identity-only fill); not canaried | 6 |
-| 9 | Duplicate delivery idempotent (`pbe_sport_stripe_events`) | code present; not canaried | 6 |
-| 10 | Cancel → `canceled`, access ends at period end | not canaried | 6 |
-| 11 | Weekly entitlement end-to-end | not canaried | 1–6 |
-| 12 | Monthly entitlement end-to-end | not canaried | 1–6 |
-| 13 | One email holding NBA Pro + WNBA Pro independently | not canaried | 4–6 |
-| 14 | Browser cannot self-grant (no query/cookie/localStorage path) | ✓ `/v1/account` is fail-closed; guard enforces | — |
-| 15 | WNBA session verification in `wnba-api` (`auth.propbetedge.ai` session → email) | ✗ | auth-magic Worker source is not in Git; session contract must be captured first |
+| 1 | Stripe product exists | ✓ owner-verified LIVE | `prod_VF9ThkcPbyvOTG` |
+| 2 | Recurring prices | ✓ owner-verified LIVE | monthly `price_1UEfAmF3CaVzg4OReyWRioNO` $9.99 · weekly `price_1UEfAsF3CaVzg4OR7082zM5i` $3.99 · no trial |
+| 3 | Payment Links | ✓ IDs owner-verified · ✗ URLs | `plink_1UEfBOF3CaVzg4ORuxdQriRX` / `plink_1UEfBTF3CaVzg4ORy1GQeoI5`. The `buy.stripe.com/…` URLs are in no source we can verify and we hold no Stripe key; **owner supplies both URLs** and confirms both links are active |
+| 4 | `wnba` accepted by the live `pbe_sport_entitlements` sport constraint | ✓ PROVEN | canary 03: the production ledger accepted `sport='wnba'` rows through the deployed Worker |
+| 5 | Production catalog = verified IDs | ✓ PROVEN | canary 01: deployed `propbetedge-sports-billing` v1.2.0 serves `wnba`/`wnba_pro`; canaries 03/06/08 prove exactly those price↔link pairs grant and nothing else does |
+| 6 | Stripe → billing Worker delivery | ◐ partial | the endpoint secret is bound (`webhook_configured:true`) and real Stripe events reached the ledger on 2026-09-14 (`customer.subscription.updated`, `invoice.paid`). Whether the Stripe endpoint subscribes to `checkout.session.completed` can only be proven by a real WNBA checkout or the Stripe dashboard |
+| 7 | Signatures: forged / tampered / stale / missing rejected | ✓ PROVEN | canary 02 |
+| 8 | `checkout.session.completed` handled (checkout alone never grants) | ✓ PROVEN (signed synthetic) | canary 03 |
+| 9 | Subscription lifecycle + ordering (subscription-first and checkout-first) | ✓ PROVEN (signed synthetic) | canaries 03, 06, 11 |
+| 10 | Duplicate Stripe event idempotent | ✓ PROVEN | canary 05 |
+| 11 | Cancel-at-period-end keeps access to period end; deletion ends it; late events cannot resurrect | ✓ PROVEN (signed synthetic) | canaries 09, 11 |
+| 12 | Weekly + monthly end to end | ✓ Worker/ledger · ✗ real card | canaries 03, 06; real checkout owed |
+| 13 | Expired / past_due denied | ✓ PROVEN | canaries 10, 12 |
+| 14 | WNBA independent of NBA/NHL/UFC (one email, separate subscriptions) | ✓ PROVEN | canaries 04, 07 |
+| 15a | Session contract captured | ✓ | table above |
+| 15b | `wnba-api` verifies `pbe_session` itself and reads the ledger via the billing Worker | ✓ in code + tests | not deployed |
+| 15c | `wnba-api` reachable on a `propbetedge.ai` host with credentials | ✗ | cookie is `Domain=.propbetedge.ai` `SameSite=Lax`; needs `wnba-api.propbetedge.ai` |
+| 15d | **WNBA members can sign in** | ✗ **BLOCKER** | `auth.propbetedge.ai` (auth-magic v2.1, source not in Git) runs `allow_any_subscriber:false`, sends links only to registered legacy-MLB emails, and allows CORS only from `mlb.propbetedge.ai`. Owner decision 2026-09-15: extend the shared auth-magic (capture its source into Git → add the WNBA origin/redirect → treat an active `pbe_sport_entitlements` email as registered) |
+| 15e | Secrets on `wnba-api` | ✗ | `PBE_SESSION_JWT_SECRET` (= auth-magic `MAGIC_JWT_SECRET`, owner-held) · `ENTITLEMENT_READ_TOKEN` |
+| 16 | Browser cannot self-grant | ✓ | no query/header/body/localStorage path reaches the decision; guard rule 7 |
 
 ## Atomic activation (one commit, one deploy)
 
