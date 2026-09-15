@@ -39,11 +39,13 @@ try {
   $raw = $_.ErrorDetails.Message
   if (-not $raw) { throw }
 }
-$m = [regex]::Match($raw, 'WNBA_PBE_PROOF_RESULT (\[.*\])')
-if (-not $m.Success) { Write-Host "Proof did not reach its result statement. Server said:"; Write-Host $raw; exit 1 }
-$json = $m.Groups[1].Value -replace '\\"', '"' -replace '\\\\', '\'
-$results = $json | ConvertFrom-Json
+. (Join-Path $PSScriptRoot "ProofResult.ps1")
+$parsed = ConvertFrom-WnbaProofError -Raw $raw
+if (-not $parsed) { Write-Host "Proof did not reach its result statement. Server said:"; Write-Host $raw; exit 1 }
+$results = $parsed.Results
 $results | Format-Table step, pass, check, detail -AutoSize -Wrap
+$fingerprint = $results | Where-Object { $_.step -eq '22' }
+Write-Host ("non-WNBA catalog fingerprint unchanged: {0} ({1})" -f [bool]$fingerprint.pass, $fingerprint.detail)
 
 $after = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body (@{ query = "select count(*)::int as wnba_pbe_relations from pg_class where relname like 'wnba\_pbe%'" } | ConvertTo-Json -Compress)
 $passed = @($results | Where-Object { $_.pass }).Count
