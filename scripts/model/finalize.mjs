@@ -35,6 +35,17 @@ export const POLICY = Object.freeze({
   }
 });
 
+// Display-only rule added AFTER the holdout evaluation (it changes no probability,
+// metric or pick). A factor whose learned coefficient sign contradicts the plain-
+// language direction of its feature (e.g. more starter continuity lowering the
+// probability) is not presented as a reason for or against a team; it is listed
+// under `adjustments` with its exact contribution instead.
+export const DISPLAY_POLICY_AFTER_HOLDOUT = Object.freeze({
+  expected_sign: { net_rating: 1, sos_adj_net: 1, efg_margin: 1, tov_margin: 1, orb_margin: 1, ftr_margin: 1, pace: 0, form10: 1, form5: 1, home_court: 1, rest: 1, back_to_back: -1, games_last7: -1, availability: 1, continuity: 1, concentration: 0 },
+  rule: 'Contributions from a feature whose coefficient sign differs from expected_sign (0 = no expectation) go to adjustments, not supporting/opposing. Every contribution stays in the prediction record.',
+  added: 'after holdout; display only'
+});
+
 export const canonical = (obj) => JSON.stringify(obj, null, 2) + '\n';
 export const sha256 = (s) => createHash('sha256').update(String(s).replace(/\r\n/g, '\n')).digest('hex');
 const readJson = async (p) => JSON.parse(await readFile(p, 'utf8'));
@@ -77,7 +88,7 @@ async function main() {
     eligibility: POLICY.eligibility,
     no_call: POLICY.no_call,
     confidence: POLICY.confidence,
-    reasoning: POLICY.reasoning,
+    reasoning: { ...POLICY.reasoning, expected_sign: DISPLAY_POLICY_AFTER_HOLDOUT.expected_sign, sign_rule: DISPLAY_POLICY_AFTER_HOLDOUT.rule },
     source: 'ESPN site.web.api WNBA scoreboard (dates=YYYY) + summary?event=<id>'
   };
   const specText = canonical(spec);
@@ -133,6 +144,7 @@ async function main() {
     },
     leakage_audit: leakage,
     policy_fixed_before_holdout: POLICY,
+    display_policy_added_after_holdout: DISPLAY_POLICY_AFTER_HOLDOUT,
     known_limits: [
       'No historical injury reports exist in the source; late scratches are invisible to the model until they show up in observed minutes.',
       'Rotation features see only who played, not why a player did not.',

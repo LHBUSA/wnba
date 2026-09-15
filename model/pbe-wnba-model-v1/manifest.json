@@ -1,0 +1,28 @@
+{
+  "model_id": "pbe-wnba-model-v1",
+  "frozen_at": "2026-09-15T19:11:21.753Z",
+  "hash": "sha256 of file bytes as committed (LF line endings)",
+  "files": {
+    "artifact.json": "180dfcf50ca8fa96c2a71b7ee37abde80aacc5ff5f403783b03b4769436394f3",
+    "feature_spec.json": "83c36ef3394d48ef6fbb8af7dc9a7d586475efe8fd3f12ecf25076ad83c48752",
+    "validation_receipt.json": "bd13420633d2a73a3c50f19f5a9b7785084963222f9925db269ce09e76d325c5"
+  },
+  "training_window": {
+    "seasons": [
+      2019,
+      2026
+    ],
+    "window": "last8",
+    "first_game_utc": "2019-06-05T02:00:00.000Z",
+    "last_game_utc": "2026-08-31T00:30:00.000Z",
+    "rows": 1786,
+    "eligible_only": true,
+    "season_types": [
+      2,
+      3
+    ],
+    "as_of_offset_minutes": 15
+  },
+  "dataset_sha256": "043ed0d02605617a9d30d6375f2ef5542a7a997d50bda77c9a0554519e20e93b",
+  "rows_sha256": "19b4b8e19f444b7f997321c1a9b272ba87b0b00caa5a11c07a8519052cc29253"
+}

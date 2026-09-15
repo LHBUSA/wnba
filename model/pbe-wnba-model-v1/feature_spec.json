@@ -1,0 +1,218 @@
+{
+  "spec_id": "pbe-wnba-model-v1/feature-spec",
+  "model_id": "pbe-wnba-model-v1",
+  "feature_schema": "pbe-wnba-features/1.0.0",
+  "row_schema": "pbe-wnba-team-game/1",
+  "implementation": "workers/shared/pbe-wnba-features.js (the same module builds the training dataset and live vectors)",
+  "orientation": "Every feature is listed-home-team minus away-team; the model outputs P(listed home team wins).",
+  "as_of_rule": "A feature reads only FINAL regular-season/postseason team-game rows with a complete box whose game started strictly before as_of AND whose America/New_York calendar date is earlier than the target game date. The target game is never readable. Historical training rows use as_of = scheduled tip - 15 minutes.",
+  "params": {
+    "prior_games": 4,
+    "carryover": 0.6,
+    "min_current_games": 3
+  },
+  "params_definition": {
+    "prior_games": "Weight, in games, of the prior-season value when shrinking season-to-date team quality: (n x current + prior_games x carryover x prior) / (n + prior_games).",
+    "carryover": "Fraction of the prior full season (>= 10 games) carried into the new season before shrinkage; 0 prior (league mean) for a franchise without one.",
+    "min_current_games": "Eligibility floor (see eligibility)."
+  },
+  "features": [
+    {
+      "name": "sos_adj_net",
+      "family": "team_quality",
+      "unit": "pts/100",
+      "def": "Shrunk net rating plus mean as-of opponent net rating (strength of schedule), home minus away"
+    },
+    {
+      "name": "form10",
+      "family": "form",
+      "unit": "pts/100",
+      "def": "Last-10 net rating minus shrunk season net rating, home minus away (0 below 3 games)"
+    },
+    {
+      "name": "home_court",
+      "family": "situation",
+      "unit": "flag",
+      "def": "1 when the listed home team plays in its own arena, 0 at a neutral site"
+    },
+    {
+      "name": "rest",
+      "family": "situation",
+      "unit": "days",
+      "def": "Rest days clamped 0..3 (3 when no current-season game), home minus away"
+    },
+    {
+      "name": "back_to_back",
+      "family": "situation",
+      "unit": "flag",
+      "def": "Second night of a back-to-back, home minus away"
+    },
+    {
+      "name": "availability",
+      "family": "rotation",
+      "unit": "share",
+      "def": "Share of last-10 minutes played by players who appeared in the most recent game, home minus away"
+    },
+    {
+      "name": "continuity",
+      "family": "rotation",
+      "unit": "share",
+      "def": "Share of the last-10 core five (most minutes) who started the most recent game, home minus away"
+    }
+  ],
+  "windows": {
+    "form": "last 5 / last 10 current-season finals, 0 below 3 games",
+    "rotation": "last 10 current-season finals",
+    "schedule_density": "previous 7 days",
+    "rest": "ET calendar days between games minus 1, clamped 0..3"
+  },
+  "single_site_seasons": [
+    2020
+  ],
+  "candidates_considered": [
+    {
+      "name": "net_rating",
+      "family": "team_quality",
+      "unit": "pts/100",
+      "def": "Shrunk season-to-date net rating (prior season carryover) home minus away"
+    },
+    {
+      "name": "sos_adj_net",
+      "family": "team_quality",
+      "unit": "pts/100",
+      "def": "Shrunk net rating plus mean as-of opponent net rating (strength of schedule), home minus away"
+    },
+    {
+      "name": "efg_margin",
+      "family": "team_quality",
+      "unit": "eFG pts",
+      "def": "Shrunk eFG% minus opponent eFG%, home minus away"
+    },
+    {
+      "name": "tov_margin",
+      "family": "team_quality",
+      "unit": "TOV% pts",
+      "def": "Shrunk opponent TOV% minus own TOV%, home minus away"
+    },
+    {
+      "name": "orb_margin",
+      "family": "team_quality",
+      "unit": "ORB% pts",
+      "def": "Shrunk ORB% minus opponent ORB%, home minus away"
+    },
+    {
+      "name": "ftr_margin",
+      "family": "team_quality",
+      "unit": "FT/FGA",
+      "def": "Shrunk FTM/FGA minus opponent FTM/FGA, home minus away"
+    },
+    {
+      "name": "pace",
+      "family": "team_quality",
+      "unit": "poss/40",
+      "def": "Season-to-date pace, home minus away (0 when either team has no current games)"
+    },
+    {
+      "name": "form10",
+      "family": "form",
+      "unit": "pts/100",
+      "def": "Last-10 net rating minus shrunk season net rating, home minus away (0 below 3 games)"
+    },
+    {
+      "name": "form5",
+      "family": "form",
+      "unit": "pts/100",
+      "def": "Last-5 net rating minus shrunk season net rating, home minus away (0 below 3 games)"
+    },
+    {
+      "name": "home_court",
+      "family": "situation",
+      "unit": "flag",
+      "def": "1 when the listed home team plays in its own arena, 0 at a neutral site"
+    },
+    {
+      "name": "rest",
+      "family": "situation",
+      "unit": "days",
+      "def": "Rest days clamped 0..3 (3 when no current-season game), home minus away"
+    },
+    {
+      "name": "back_to_back",
+      "family": "situation",
+      "unit": "flag",
+      "def": "Second night of a back-to-back, home minus away"
+    },
+    {
+      "name": "games_last7",
+      "family": "situation",
+      "unit": "games",
+      "def": "Games played in the previous 7 days, home minus away"
+    },
+    {
+      "name": "availability",
+      "family": "rotation",
+      "unit": "share",
+      "def": "Share of last-10 minutes played by players who appeared in the most recent game, home minus away"
+    },
+    {
+      "name": "continuity",
+      "family": "rotation",
+      "unit": "share",
+      "def": "Share of the last-10 core five (most minutes) who started the most recent game, home minus away"
+    },
+    {
+      "name": "concentration",
+      "family": "rotation",
+      "unit": "HHI",
+      "def": "Herfindahl index of last-10 player minute shares, home minus away"
+    }
+  ],
+  "excluded_inputs": [
+    "Sportsbook prices, lines and moneylines (market is compared after prediction, never a feature)",
+    "Injury reports (ESPN publishes current injuries only, with no timestamped history; availability comes from observed minutes)",
+    "Target game final score, box score or play-by-play",
+    "Any row from the target game date or later, and any future roster state",
+    "Closing prices observed after lock"
+  ],
+  "eligibility": {
+    "min_current_games": 3,
+    "note": "Both teams need at least 3 final games this season before the prediction instant."
+  },
+  "no_call": {
+    "min_pick_probability": 0.53,
+    "note": "Below 53% for the favoured side the model publishes NO CALL (model_near_coin_flip)."
+  },
+  "confidence": {
+    "high_min_prob": 0.7,
+    "medium_min_prob": 0.6,
+    "full_depth_min_games": 8,
+    "note": "Tier from pick probability (Low < 60% <= Medium < 70% <= High); downgraded one tier when either team has fewer than 8 current-season games."
+  },
+  "reasoning": {
+    "method": "Contribution = coefficient x standardized feature value (home term: coefficient x home_court flag). impact_pts = 100 x (p - p with that term removed). Oriented to the viewed team by sign.",
+    "baseline": "A standardized feature at 0 means the training-set average game; a factor is relative to that baseline.",
+    "min_abs_impact_pts": 0.5,
+    "max_supporting": 3,
+    "max_opposing": 2,
+    "expected_sign": {
+      "net_rating": 1,
+      "sos_adj_net": 1,
+      "efg_margin": 1,
+      "tov_margin": 1,
+      "orb_margin": 1,
+      "ftr_margin": 1,
+      "pace": 0,
+      "form10": 1,
+      "form5": 1,
+      "home_court": 1,
+      "rest": 1,
+      "back_to_back": -1,
+      "games_last7": -1,
+      "availability": 1,
+      "continuity": 1,
+      "concentration": 0
+    },
+    "sign_rule": "Contributions from a feature whose coefficient sign differs from expected_sign (0 = no expectation) go to adjustments, not supporting/opposing. Every contribution stays in the prediction record."
+  },
+  "source": "ESPN site.web.api WNBA scoreboard (dates=YYYY) + summary?event=<id>"
+}

@@ -1,0 +1,879 @@
+{
+  "receipt_id": "pbe-wnba-model-v1/validation",
+  "model_id": "pbe-wnba-model-v1",
+  "artifact_sha256": "180dfcf50ca8fa96c2a71b7ee37abde80aacc5ff5f403783b03b4769436394f3",
+  "feature_spec_sha256": "83c36ef3394d48ef6fbb8af7dc9a7d586475efe8fd3f12ecf25076ad83c48752",
+  "dataset": {
+    "source": "ESPN site.web.api WNBA scoreboard (dates=YYYY) + summary?event=<id>",
+    "seasons_harvested": "2002-2026 (1997-2001 scoreboard statuses are unusable: IN_PROGRESS/TBD for finals)",
+    "usable_final_games": 5953,
+    "team_game_rows": 11906,
+    "rows_sha256": "19b4b8e19f444b7f997321c1a9b272ba87b0b00caa5a11c07a8519052cc29253",
+    "excluded": {
+      "non_franchise_team": 21
+    },
+    "box_completeness": {
+      "2002": {
+        "usable_finals": 271,
+        "box_complete": 0
+      },
+      "2003": {
+        "usable_finals": 257,
+        "box_complete": 196
+      },
+      "2004": {
+        "usable_finals": 240,
+        "box_complete": 214
+      },
+      "2005": {
+        "usable_finals": 238,
+        "box_complete": 229
+      },
+      "2006": {
+        "usable_finals": 257,
+        "box_complete": 255
+      },
+      "2007": {
+        "usable_finals": 242,
+        "box_complete": 242
+      },
+      "2008": {
+        "usable_finals": 259,
+        "box_complete": 257
+      },
+      "2009": {
+        "usable_finals": 242,
+        "box_complete": 242
+      },
+      "2010": {
+        "usable_finals": 220,
+        "box_complete": 220
+      },
+      "2011": {
+        "usable_finals": 224,
+        "box_complete": 224
+      },
+      "2012": {
+        "usable_finals": 223,
+        "box_complete": 222
+      },
+      "2013": {
+        "usable_finals": 221,
+        "box_complete": 221
+      },
+      "2014": {
+        "usable_finals": 222,
+        "box_complete": 222
+      },
+      "2015": {
+        "usable_finals": 225,
+        "box_complete": 225
+      },
+      "2016": {
+        "usable_finals": 220,
+        "box_complete": 220
+      },
+      "2017": {
+        "usable_finals": 219,
+        "box_complete": 219
+      },
+      "2018": {
+        "usable_finals": 220,
+        "box_complete": 220
+      },
+      "2019": {
+        "usable_finals": 220,
+        "box_complete": 220
+      },
+      "2020": {
+        "usable_finals": 147,
+        "box_complete": 147
+      },
+      "2021": {
+        "usable_finals": 210,
+        "box_complete": 210
+      },
+      "2022": {
+        "usable_finals": 240,
+        "box_complete": 240
+      },
+      "2023": {
+        "usable_finals": 261,
+        "box_complete": 261
+      },
+      "2024": {
+        "usable_finals": 263,
+        "box_complete": 263
+      },
+      "2025": {
+        "usable_finals": 311,
+        "box_complete": 311
+      },
+      "2026": {
+        "usable_finals": 301,
+        "box_complete": 301
+      }
+    },
+    "first_target_season": 2005,
+    "market_data_available": "2026 only (ESPN pickcenter moneyline, 301 games) — evaluation only"
+  },
+  "protocol": {
+    "split": "walk-forward by season; train on prior seasons only (window chosen in selection); no random split",
+    "validation_seasons": [
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "holdout_seasons": [
+      2025,
+      2026
+    ],
+    "holdout_evaluated_once": true,
+    "selection_metric": "pooled walk-forward log loss on eligible games",
+    "simplicity_rule": "fewest features among configs within 0.002 log loss of the best",
+    "configs_evaluated": 1344,
+    "grid": {
+      "k": [
+        4,
+        8,
+        12,
+        20
+      ],
+      "r": [
+        0.4,
+        0.6,
+        0.8
+      ],
+      "C": [
+        0.01,
+        0.03,
+        0.1,
+        0.3,
+        1,
+        3,
+        10,
+        100
+      ],
+      "windows": [
+        "expanding",
+        "last8"
+      ],
+      "feature_sets": {
+        "A_core": [
+          "net_rating",
+          "home_court"
+        ],
+        "B_four_factors": [
+          "efg_margin",
+          "tov_margin",
+          "orb_margin",
+          "ftr_margin",
+          "home_court"
+        ],
+        "C_core_situation": [
+          "net_rating",
+          "home_court",
+          "rest",
+          "back_to_back",
+          "games_last7"
+        ],
+        "D_core_form_situation": [
+          "net_rating",
+          "form10",
+          "form5",
+          "home_court",
+          "rest",
+          "back_to_back",
+          "games_last7"
+        ],
+        "E_core_form_situation_rotation": [
+          "net_rating",
+          "form10",
+          "home_court",
+          "rest",
+          "back_to_back",
+          "availability",
+          "continuity"
+        ],
+        "F_sos_form_situation_rotation": [
+          "sos_adj_net",
+          "form10",
+          "home_court",
+          "rest",
+          "back_to_back",
+          "availability",
+          "continuity"
+        ],
+        "G_all": [
+          "net_rating",
+          "sos_adj_net",
+          "efg_margin",
+          "tov_margin",
+          "orb_margin",
+          "ftr_margin",
+          "pace",
+          "form10",
+          "form5",
+          "home_court",
+          "rest",
+          "back_to_back",
+          "games_last7",
+          "availability",
+          "continuity",
+          "concentration"
+        ]
+      }
+    }
+  },
+  "chosen_recipe": {
+    "k": 4,
+    "r": 0.6,
+    "feature_set": "F_sos_form_situation_rotation",
+    "window": "last8",
+    "C": 10,
+    "log_loss": 0.60498,
+    "brier": 0.20896,
+    "accuracy": 0.6688,
+    "roc_auc": 0.7279,
+    "ece": 0.0323,
+    "n": 2023
+  },
+  "best_by_validation_log_loss": {
+    "k": 4,
+    "r": 0.6,
+    "feature_set": "F_sos_form_situation_rotation",
+    "window": "last8",
+    "C": 10,
+    "log_loss": 0.60498,
+    "brier": 0.20896,
+    "accuracy": 0.6688,
+    "roc_auc": 0.7279,
+    "ece": 0.0323,
+    "n": 2023
+  },
+  "validation": {
+    "logistic_chosen": {
+      "pooled": {
+        "n": 2023,
+        "brier": 0.20896,
+        "log_loss": 0.60498,
+        "accuracy": 0.6688,
+        "roc_auc": 0.7279,
+        "ece": 0.0323,
+        "calibration_slope": 1.045,
+        "calibration_intercept": -0.127,
+        "reliability": [
+          {
+            "bin": "0.0-0.1",
+            "n": 3,
+            "mean_p": 0.0922,
+            "observed": 0
+          },
+          {
+            "bin": "0.1-0.2",
+            "n": 43,
+            "mean_p": 0.1628,
+            "observed": 0.186
+          },
+          {
+            "bin": "0.2-0.3",
+            "n": 119,
+            "mean_p": 0.2532,
+            "observed": 0.2437
+          },
+          {
+            "bin": "0.3-0.4",
+            "n": 219,
+            "mean_p": 0.3517,
+            "observed": 0.3105
+          },
+          {
+            "bin": "0.4-0.5",
+            "n": 254,
+            "mean_p": 0.4536,
+            "observed": 0.4173
+          },
+          {
+            "bin": "0.5-0.6",
+            "n": 357,
+            "mean_p": 0.5499,
+            "observed": 0.5014
+          },
+          {
+            "bin": "0.6-0.7",
+            "n": 396,
+            "mean_p": 0.6507,
+            "observed": 0.6515
+          },
+          {
+            "bin": "0.7-0.8",
+            "n": 367,
+            "mean_p": 0.7501,
+            "observed": 0.6975
+          },
+          {
+            "bin": "0.8-0.9",
+            "n": 243,
+            "mean_p": 0.8437,
+            "observed": 0.8724
+          },
+          {
+            "bin": "0.9-1.0",
+            "n": 22,
+            "mean_p": 0.9206,
+            "observed": 0.9545
+          }
+        ]
+      },
+      "per_season": {
+        "2015": {
+          "n": 204,
+          "brier": 0.22338,
+          "log_loss": 0.63455,
+          "accuracy": 0.6471,
+          "roc_auc": 0.6272,
+          "ece": 0.0992,
+          "calibration_slope": 0.85,
+          "calibration_intercept": 0.104
+        },
+        "2016": {
+          "n": 201,
+          "brier": 0.21177,
+          "log_loss": 0.60741,
+          "accuracy": 0.6368,
+          "roc_auc": 0.7243,
+          "ece": 0.0973,
+          "calibration_slope": 1.069,
+          "calibration_intercept": -0.226
+        },
+        "2017": {
+          "n": 199,
+          "brier": 0.19825,
+          "log_loss": 0.58136,
+          "accuracy": 0.6884,
+          "roc_auc": 0.7537,
+          "ece": 0.0702,
+          "calibration_slope": 1.196,
+          "calibration_intercept": -0.085
+        },
+        "2018": {
+          "n": 199,
+          "brier": 0.22812,
+          "log_loss": 0.65301,
+          "accuracy": 0.6482,
+          "roc_auc": 0.6785,
+          "ece": 0.0902,
+          "calibration_slope": 0.723,
+          "calibration_intercept": -0.082
+        },
+        "2019": {
+          "n": 200,
+          "brier": 0.21058,
+          "log_loss": 0.60766,
+          "accuracy": 0.67,
+          "roc_auc": 0.7016,
+          "ece": 0.0493,
+          "calibration_slope": 1.073,
+          "calibration_intercept": 0.037
+        },
+        "2020": {
+          "n": 129,
+          "brier": 0.19035,
+          "log_loss": 0.5707,
+          "accuracy": 0.7442,
+          "roc_auc": 0.7882,
+          "ece": 0.0773,
+          "calibration_slope": 1.17,
+          "calibration_intercept": -0.198
+        },
+        "2021": {
+          "n": 189,
+          "brier": 0.20669,
+          "log_loss": 0.59839,
+          "accuracy": 0.6561,
+          "roc_auc": 0.7269,
+          "ece": 0.1142,
+          "calibration_slope": 0.989,
+          "calibration_intercept": -0.103
+        },
+        "2022": {
+          "n": 218,
+          "brier": 0.20877,
+          "log_loss": 0.60622,
+          "accuracy": 0.6651,
+          "roc_auc": 0.7266,
+          "ece": 0.0458,
+          "calibration_slope": 1.155,
+          "calibration_intercept": -0.244
+        },
+        "2023": {
+          "n": 241,
+          "brier": 0.20277,
+          "log_loss": 0.58945,
+          "accuracy": 0.6805,
+          "roc_auc": 0.7562,
+          "ece": 0.0747,
+          "calibration_slope": 1.159,
+          "calibration_intercept": -0.271
+        },
+        "2024": {
+          "n": 243,
+          "brier": 0.20426,
+          "log_loss": 0.5936,
+          "accuracy": 0.6749,
+          "roc_auc": 0.7546,
+          "ece": 0.0902,
+          "calibration_slope": 1.064,
+          "calibration_intercept": -0.146
+        }
+      }
+    },
+    "hgb_tree_baseline_best": {
+      "params": {
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "max_iter": 200,
+        "min_samples_leaf": 80,
+        "l2_regularization": 5
+      },
+      "n": 2023,
+      "log_loss": 0.62322,
+      "brier": 0.21649,
+      "accuracy": 0.6495,
+      "roc_auc": 0.7039,
+      "ece": 0.0429,
+      "calibration_slope": 0.858,
+      "calibration_intercept": -0.11
+    },
+    "hgb_runs": [
+      {
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.05,
+          "max_iter": 150,
+          "min_samples_leaf": 40,
+          "l2_regularization": 1
+        },
+        "n": 2023,
+        "log_loss": 0.62825,
+        "brier": 0.21849,
+        "accuracy": 0.6515,
+        "roc_auc": 0.6988,
+        "ece": 0.0399,
+        "calibration_slope": 0.82,
+        "calibration_intercept": -0.09
+      },
+      {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "max_iter": 300,
+          "min_samples_leaf": 60,
+          "l2_regularization": 1
+        },
+        "n": 2023,
+        "log_loss": 0.6288,
+        "brier": 0.21898,
+        "accuracy": 0.653,
+        "roc_auc": 0.6967,
+        "ece": 0.04,
+        "calibration_slope": 0.812,
+        "calibration_intercept": -0.096
+      },
+      {
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.03,
+          "max_iter": 200,
+          "min_samples_leaf": 80,
+          "l2_regularization": 5
+        },
+        "n": 2023,
+        "log_loss": 0.62322,
+        "brier": 0.21649,
+        "accuracy": 0.6495,
+        "roc_auc": 0.7039,
+        "ece": 0.0429,
+        "calibration_slope": 0.858,
+        "calibration_intercept": -0.11
+      }
+    ],
+    "naive_baselines": {
+      "coin_0.5": {
+        "n": 2023,
+        "brier": 0.25,
+        "log_loss": 0.69315,
+        "accuracy": 0.562,
+        "roc_auc": 0.5,
+        "ece": 0.062,
+        "calibration_slope": 0,
+        "calibration_intercept": 0.249
+      },
+      "home_rate": {
+        "n": 2023,
+        "brier": 0.24644,
+        "log_loss": 0.68602,
+        "accuracy": 0.562,
+        "roc_auc": 0.5225,
+        "ece": 0.0244,
+        "calibration_slope": 1.022,
+        "calibration_intercept": -0.108
+      },
+      "net_rating_sign": {
+        "n": 2023,
+        "brier": 0.22532,
+        "log_loss": 0.64295,
+        "accuracy": 0.6589,
+        "roc_auc": 0.6714,
+        "ece": 0.0588,
+        "calibration_slope": 1.285,
+        "calibration_intercept": 0.26
+      }
+    },
+    "tiers": {
+      "High": {
+        "n": 691,
+        "hit_rate": 0.7713,
+        "mean_pick_prob": 0.789
+      },
+      "Low": {
+        "n": 508,
+        "hit_rate": 0.5787,
+        "mean_pick_prob": 0.5795
+      },
+      "Medium": {
+        "n": 630,
+        "hit_rate": 0.6873,
+        "mean_pick_prob": 0.6722
+      },
+      "NO_CALL": {
+        "n": 194,
+        "hit_rate": 0.4794,
+        "mean_pick_prob": 0.5146
+      }
+    }
+  },
+  "holdout": {
+    "logistic_chosen": {
+      "pooled": {
+        "n": 566,
+        "brier": 0.21156,
+        "log_loss": 0.61082,
+        "accuracy": 0.6466,
+        "roc_auc": 0.7164,
+        "ece": 0.0389,
+        "calibration_slope": 0.876,
+        "calibration_intercept": 0.072,
+        "reliability": [
+          {
+            "bin": "0.0-0.1",
+            "n": 2,
+            "mean_p": 0.093,
+            "observed": 0.5
+          },
+          {
+            "bin": "0.1-0.2",
+            "n": 25,
+            "mean_p": 0.1693,
+            "observed": 0.2
+          },
+          {
+            "bin": "0.2-0.3",
+            "n": 43,
+            "mean_p": 0.2505,
+            "observed": 0.2326
+          },
+          {
+            "bin": "0.3-0.4",
+            "n": 74,
+            "mean_p": 0.3512,
+            "observed": 0.4595
+          },
+          {
+            "bin": "0.4-0.5",
+            "n": 94,
+            "mean_p": 0.4476,
+            "observed": 0.4894
+          },
+          {
+            "bin": "0.5-0.6",
+            "n": 85,
+            "mean_p": 0.5503,
+            "observed": 0.4824
+          },
+          {
+            "bin": "0.6-0.7",
+            "n": 68,
+            "mean_p": 0.6535,
+            "observed": 0.6324
+          },
+          {
+            "bin": "0.7-0.8",
+            "n": 94,
+            "mean_p": 0.7455,
+            "observed": 0.7447
+          },
+          {
+            "bin": "0.8-0.9",
+            "n": 65,
+            "mean_p": 0.8427,
+            "observed": 0.8462
+          },
+          {
+            "bin": "0.9-1.0",
+            "n": 16,
+            "mean_p": 0.9221,
+            "observed": 0.9375
+          }
+        ]
+      },
+      "per_season": {
+        "2025": {
+          "n": 289,
+          "brier": 0.22059,
+          "log_loss": 0.62942,
+          "accuracy": 0.6263,
+          "roc_auc": 0.6925,
+          "ece": 0.0817,
+          "calibration_slope": 0.744,
+          "calibration_intercept": 0.095
+        },
+        "2026": {
+          "n": 277,
+          "brier": 0.20215,
+          "log_loss": 0.59142,
+          "accuracy": 0.6679,
+          "roc_auc": 0.7433,
+          "ece": 0.0741,
+          "calibration_slope": 1.043,
+          "calibration_intercept": 0.047
+        }
+      }
+    },
+    "hgb_tree_baseline": {
+      "n": 566,
+      "brier": 0.22179,
+      "log_loss": 0.63541,
+      "accuracy": 0.6325,
+      "roc_auc": 0.6913,
+      "ece": 0.0617,
+      "calibration_slope": 0.731,
+      "calibration_intercept": 0.115
+    },
+    "naive_baselines": {
+      "coin_0.5": {
+        "n": 566,
+        "brier": 0.25,
+        "log_loss": 0.69315,
+        "accuracy": 0.5654,
+        "roc_auc": 0.5,
+        "ece": 0.0654,
+        "calibration_slope": 0,
+        "calibration_intercept": 0.263
+      },
+      "home_rate": {
+        "n": 566,
+        "brier": 0.24586,
+        "log_loss": 0.68485,
+        "accuracy": 0.5654,
+        "roc_auc": 0.5022,
+        "ece": 0.0118,
+        "calibration_slope": 0.054,
+        "calibration_intercept": 0.251
+      },
+      "net_rating_sign": {
+        "n": 566,
+        "brier": 0.22322,
+        "log_loss": 0.63862,
+        "accuracy": 0.6643,
+        "roc_auc": 0.6592,
+        "ece": 0.0649,
+        "calibration_slope": 0.965,
+        "calibration_intercept": 0.294
+      }
+    },
+    "by_min_current_games": {
+      "3-5": {
+        "n": 45,
+        "brier": 0.25896,
+        "log_loss": 0.7132,
+        "accuracy": 0.4889,
+        "roc_auc": 0.5751,
+        "ece": 0.1851,
+        "calibration_slope": 0.45,
+        "calibration_intercept": -0.149
+      },
+      "6-10": {
+        "n": 70,
+        "brier": 0.18164,
+        "log_loss": 0.53696,
+        "accuracy": 0.7,
+        "roc_auc": 0.7962,
+        "ece": 0.1031,
+        "calibration_slope": 1.388,
+        "calibration_intercept": 0.474
+      },
+      "11-20": {
+        "n": 140,
+        "brier": 0.24091,
+        "log_loss": 0.68258,
+        "accuracy": 0.5857,
+        "roc_auc": 0.6439,
+        "ece": 0.1074,
+        "calibration_slope": 0.481,
+        "calibration_intercept": 0.228
+      },
+      "21-99": {
+        "n": 311,
+        "brier": 0.19823,
+        "log_loss": 0.58033,
+        "accuracy": 0.6849,
+        "roc_auc": 0.7577,
+        "ece": 0.025,
+        "calibration_slope": 1.122,
+        "calibration_intercept": -0.054
+      }
+    },
+    "tiers": {
+      "High": {
+        "n": 219,
+        "hit_rate": 0.8037,
+        "mean_pick_prob": 0.7934
+      },
+      "Low": {
+        "n": 150,
+        "hit_rate": 0.5,
+        "mean_pick_prob": 0.5789
+      },
+      "Medium": {
+        "n": 145,
+        "hit_rate": 0.6276,
+        "mean_pick_prob": 0.6767
+      },
+      "NO_CALL": {
+        "n": 52,
+        "hit_rate": 0.4615,
+        "mean_pick_prob": 0.5161
+      }
+    },
+    "market_comparison_2026_eval_only": {
+      "n": 277,
+      "pbe": {
+        "n": 277,
+        "brier": 0.20215,
+        "log_loss": 0.59142,
+        "accuracy": 0.6679,
+        "roc_auc": 0.7433,
+        "ece": 0.0741,
+        "calibration_slope": 1.043,
+        "calibration_intercept": 0.047
+      },
+      "market_devig": {
+        "n": 277,
+        "brier": 0.19678,
+        "log_loss": 0.57866,
+        "accuracy": 0.6968,
+        "roc_auc": 0.7585,
+        "ece": 0.0643,
+        "calibration_slope": 1.097,
+        "calibration_intercept": 0.055
+      },
+      "mean_abs_gap_pts": 6.76,
+      "corr": 0.904,
+      "note": "market probabilities are ESPN pickcenter moneylines (timing not published; treat as near-close), de-vigged proportionally"
+    }
+  },
+  "production_artifact": {
+    "note": "The frozen artifact is the chosen recipe refit on every eligible game in its training window through the freeze date. Holdout numbers measure the recipe trained without 2025/2026; they are not in-sample scores of this artifact.",
+    "training_window": {
+      "seasons": [
+        2019,
+        2026
+      ],
+      "window": "last8",
+      "first_game_utc": "2019-06-05T02:00:00.000Z",
+      "last_game_utc": "2026-08-31T00:30:00.000Z",
+      "rows": 1786,
+      "eligible_only": true,
+      "season_types": [
+        2,
+        3
+      ],
+      "as_of_offset_minutes": 15
+    }
+  },
+  "leakage_audit": {
+    "params": {
+      "prior_games": 4,
+      "carryover": 0.6,
+      "min_current_games": 3
+    },
+    "sampled_games": 305,
+    "L1_future_rows_corrupted": 279,
+    "L2_own_rows_corrupted": 279,
+    "L3_same_day_injected": 279,
+    "failures": [],
+    "L4_banned_tokens_in_feature_code": [],
+    "pass": true,
+    "run_at": "2026-09-15T19:09:11.435Z"
+  },
+  "policy_fixed_before_holdout": {
+    "eligibility": {
+      "min_current_games": 3,
+      "note": "Both teams need at least 3 final games this season before the prediction instant."
+    },
+    "no_call": {
+      "min_pick_probability": 0.53,
+      "note": "Below 53% for the favoured side the model publishes NO CALL (model_near_coin_flip)."
+    },
+    "confidence": {
+      "high_min_prob": 0.7,
+      "medium_min_prob": 0.6,
+      "full_depth_min_games": 8,
+      "note": "Tier from pick probability (Low < 60% <= Medium < 70% <= High); downgraded one tier when either team has fewer than 8 current-season games."
+    },
+    "reasoning": {
+      "method": "Contribution = coefficient x standardized feature value (home term: coefficient x home_court flag). impact_pts = 100 x (p - p with that term removed). Oriented to the viewed team by sign.",
+      "baseline": "A standardized feature at 0 means the training-set average game; a factor is relative to that baseline.",
+      "min_abs_impact_pts": 0.5,
+      "max_supporting": 3,
+      "max_opposing": 2
+    }
+  },
+  "display_policy_added_after_holdout": {
+    "expected_sign": {
+      "net_rating": 1,
+      "sos_adj_net": 1,
+      "efg_margin": 1,
+      "tov_margin": 1,
+      "orb_margin": 1,
+      "ftr_margin": 1,
+      "pace": 0,
+      "form10": 1,
+      "form5": 1,
+      "home_court": 1,
+      "rest": 1,
+      "back_to_back": -1,
+      "games_last7": -1,
+      "availability": 1,
+      "continuity": 1,
+      "concentration": 0
+    },
+    "rule": "Contributions from a feature whose coefficient sign differs from expected_sign (0 = no expectation) go to adjustments, not supporting/opposing. Every contribution stays in the prediction record.",
+    "added": "after holdout; display only"
+  },
+  "known_limits": [
+    "No historical injury reports exist in the source; late scratches are invisible to the model until they show up in observed minutes.",
+    "Rotation features see only who played, not why a player did not.",
+    "Travel is not modelled (not objectively derivable from the source without a venue geography layer).",
+    "Market data for evaluation exists for 2026 only; pickcenter timing is not published.",
+    "Postseason games are scored with the same regular-season model."
+  ]
+}

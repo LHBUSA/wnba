@@ -1,0 +1,88 @@
+{
+  "model_id": "pbe-wnba-model-v1",
+  "model_type": "logistic_regression_l2_structural_home",
+  "target": "P(listed home team wins)",
+  "formula": "logit = home_coefficient * home_court + sum_j coefficients[j] * (x_j - mean[j]) / std[j]",
+  "feature_schema": "pbe-wnba-features/1.0.0",
+  "feature_order": [
+    "sos_adj_net",
+    "form10",
+    "home_court",
+    "rest",
+    "back_to_back",
+    "availability",
+    "continuity"
+  ],
+  "home_term": {
+    "feature": "home_court",
+    "coefficient": 0.2912627563869154,
+    "standardized": false,
+    "penalized": false
+  },
+  "standardized_features": [
+    "sos_adj_net",
+    "form10",
+    "rest",
+    "back_to_back",
+    "availability",
+    "continuity"
+  ],
+  "standardization": {
+    "mean": [
+      0.053669725420048525,
+      -0.014208070432096475,
+      0.13717805151175813,
+      -0.011198208286674132,
+      -0.0007820120995344054,
+      -0.0010078387458006708
+    ],
+    "std": [
+      8.237031581298236,
+      5.482858663495482,
+      1.0137330746173447,
+      0.22668559338844024,
+      0.10028543972328079,
+      0.20481082125450245
+    ],
+    "ddof": 0
+  },
+  "coefficients": [
+    0.8991379462345517,
+    0.06511134749374858,
+    0.056087074650854725,
+    -0.03503843618702121,
+    0.17634788939359433,
+    -0.06548412935862705
+  ],
+  "intercept": null,
+  "calibration": null,
+  "params": {
+    "prior_games": 4,
+    "carryover": 0.6,
+    "min_current_games": 3
+  },
+  "regularization": {
+    "penalty": "l2 on standardized coefficients (home term unpenalized)",
+    "C": 10.0,
+    "objective": "sum log loss + 0.5 * ||w||^2 / C",
+    "solver": "scipy L-BFGS-B"
+  },
+  "training_window": {
+    "seasons": [
+      2019,
+      2026
+    ],
+    "window": "last8",
+    "first_game_utc": "2019-06-05T02:00:00.000Z",
+    "last_game_utc": "2026-08-31T00:30:00.000Z",
+    "rows": 1786,
+    "eligible_only": true,
+    "season_types": [
+      2,
+      3
+    ],
+    "as_of_offset_minutes": 15
+  },
+  "dataset_sha256": "043ed0d02605617a9d30d6375f2ef5542a7a997d50bda77c9a0554519e20e93b",
+  "rows_sha256": "19b4b8e19f444b7f997321c1a9b272ba87b0b00caa5a11c07a8519052cc29253"
+}
