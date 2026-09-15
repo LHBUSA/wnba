@@ -1,6 +1,6 @@
 # WNBA Pro — paywall & entitlement activation
 
-**State 2026-09-15: FAIL-CLOSED.** Stripe objects exist and are wired into `src/data/pricing.js` (IDs only). The billing Worker + production ledger pass 12/12 signed canaries for WNBA. Checkout stays disabled because WNBA members cannot yet obtain a verified session (gate 15) and no real checkout has been run (gates 6, 11, 12).
+**State 2026-09-15: FAIL-CLOSED.** Stripe objects exist and are wired into `src/data/pricing.js` (IDs only). The billing Worker + production ledger pass 12/12 signed canaries for WNBA. Checkout stays disabled: WNBA sign-in is built and tested but not deployed (gates 15c–15e), and no real checkout has been run (gates 6, 12).
 
 ## Offer (fixed)
 
@@ -65,10 +65,10 @@ Evidence: `docs/evidence/billing/wnba-billing-canaries-2026-09-15.json` (run `wn
 | 13 | Expired / past_due denied | ✓ PROVEN | canaries 10, 12 |
 | 14 | WNBA independent of NBA/NHL/UFC (one email, separate subscriptions) | ✓ PROVEN | canaries 04, 07 |
 | 15a | Session contract captured | ✓ | table above |
-| 15b | `wnba-api` verifies `pbe_session` itself and reads the ledger via the billing Worker | ✓ in code + tests | not deployed |
-| 15c | `wnba-api` reachable on a `propbetedge.ai` host with credentials | ✗ | cookie is `Domain=.propbetedge.ai` `SameSite=Lax`; needs `wnba-api.propbetedge.ai` |
-| 15d | **WNBA members can sign in** | ✗ **BLOCKER** | `auth.propbetedge.ai` (auth-magic v2.1, source not in Git) runs `allow_any_subscriber:false`, sends links only to registered legacy-MLB emails, and allows CORS only from `mlb.propbetedge.ai`. Owner decision 2026-09-15: extend the shared auth-magic (capture its source into Git → add the WNBA origin/redirect → treat an active `pbe_sport_entitlements` email as registered) |
-| 15e | Secrets on `wnba-api` | ✗ | `PBE_SESSION_JWT_SECRET` (= auth-magic `MAGIC_JWT_SECRET`, owner-held) · `ENTITLEMENT_READ_TOKEN` |
+| 15b | Identity for WNBA (owner decision 2026-09-15: WNBA-owned passwordless sign-in, not auth-magic) | ✓ code + tests | `workers/wnba-api/src/auth.js`: one-time emailed link, `__Host-wnba_session` HS256; `tests/pbe-access.test.mjs` |
+| 15c | `wnba-api` on a `propbetedge.ai` host | ✓ config · ✗ deployed | `routes` custom domain `wnba-api.propbetedge.ai` in wrangler.toml; created by the held `wnba-api` deploy |
+| 15d | Sign-in email sending | ✗ | `mail.wnba.propbetedge.ai` not onboarded: wrangler OAuth lacks `email_sending:write` (owner `wrangler login`) |
+| 15e | Secrets on `wnba-api` | ✗ | `WNBA_SESSION_SECRET`, `ENTITLEMENT_READ_TOKEN`, `WNBA_OWNER_EMAILS`, `PBE_SUPABASE_URL`, `PBE_SUPABASE_SERVICE_ROLE_KEY` — binding was classifier-blocked; see docs/PBE_RELEASE.md |
 | 16 | Browser cannot self-grant | ✓ | no query/header/body/localStorage path reaches the decision; guard rule 7 |
 
 ## Atomic activation (one commit, one deploy)
