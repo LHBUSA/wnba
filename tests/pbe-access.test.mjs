@@ -250,15 +250,31 @@ test('sign-in link: GET never consumes; POST consumes once, sets a host-only ses
   const page = await verifyPage(new Request(`${API}/v1/auth/verify?t=${token}`), env);
   assert.equal(page.status, 200);
   assert.ok(env.WNBA_KV.map.has(`auth:link:${await sha256Hex(token)}`), 'GET must not consume');
-  const form = () => new Request(`${API}/v1/auth/verify`, { method: 'POST', headers: { origin: API, 'content-type': 'application/x-www-form-urlencoded' }, body: `t=${token}` });
+  const pageCookie = page.headers.get('set-cookie');
+  assert.match(pageCookie, /^__Host-wnba_verify=[A-Za-z0-9_-]+; Path=\/; Secure; HttpOnly; SameSite=Lax; Max-Age=900$/);
+  const nonce = pageCookie.split(';')[0].split('=')[1];
+  const html = await page.text();
+  assert.ok(html.includes(`name="n" value="${nonce}"`), 'form carries the same nonce');
+  assert.match(page.headers.get('content-security-policy'), /form-action 'self' https:\/\/wnba\.propbetedge\.ai/);
+  assert.equal(page.headers.get('referrer-policy'), 'same-origin');
+  // Real browsers may send Origin: null for this POST (the production regression of 2026-09-15). That must work.
+  const form = ({ origin = 'null', withCookie = true, n = nonce } = {}) => new Request(`${API}/v1/auth/verify`, { method: 'POST', headers: { ...(origin ? { origin } : {}), ...(withCookie ? { cookie: `__Host-wnba_verify=${nonce}` } : {}), 'content-type': 'application/x-www-form-urlencoded' }, body: `t=${token}&n=${n}` });
+  // Refusals never consume the link.
+  assert.equal((await verifyConsume(form({ withCookie: false }), env)).status, 403, 'cross-site POST without the nonce cookie');
+  assert.equal((await verifyConsume(form({ n: 'x'.repeat(32) }), env)).status, 403, 'nonce mismatch');
+  assert.equal((await verifyConsume(form({ origin: 'https://evil.example' }), env)).status, 403, 'explicit foreign origin');
+  assert.ok(env.WNBA_KV.map.has(`auth:link:${await sha256Hex(token)}`), 'refused attempts left the link unconsumed');
   const first = await verifyConsume(form(), env);
-  assert.equal(first.status, 303);
+  assert.equal(first.status, 303, 'Origin: null with a matching nonce signs in');
   assert.equal(first.headers.get('location'), `${APP}/pbe-picks`);
-  const set = first.headers.get('set-cookie');
+  const sets = first.headers.getSetCookie();
+  const set = sets.find((s) => s.startsWith('__Host-wnba_session='));
   assert.match(set, /^__Host-wnba_session=[^;]+; Path=\/; Secure; HttpOnly; SameSite=Lax; Max-Age=2592000$/);
+  assert.ok(sets.some((s) => /^__Host-wnba_verify=; .*Max-Age=0$/.test(s)), 'nonce cookie cleared');
   const jwt = set.split(';')[0].split('=')[1];
   assert.equal((await verifySession(jwt, SECRET)).email, 'pro@example.com');
   assert.equal((await verifyConsume(form(), env)).status, 410, 'second use');
+  assert.equal((await verifyConsume(form({ origin: null }), env)).status, 410, 'no Origin header at all still reaches the token check');
   assert.equal(safeNext('/teams/20'), '/teams/20');
   assert.equal(safeNext('https://evil.example'), '/pbe-picks');
   assert.equal(safeNext('/\\evil'), '/pbe-picks');

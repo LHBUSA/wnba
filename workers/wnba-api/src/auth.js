@@ -189,27 +189,63 @@ export async function requestLink(request, env) {
   return privateJson(request, { ok: true, data: { sent: true, expires_in_s: LINK_TTL_S, message: 'Check your inbox for a sign-in link.' } });
 }
 
+// Login-CSRF protection for the confirm step. Browsers may send `Origin: null` on this form POST (privacy settings,
+// referrer policy, email-client webviews), so the Origin header cannot be the gate. Instead the confirm page sets a
+// short-lived host-only nonce cookie and embeds the same nonce in the form; the POST must present both. A cross-site
+// page can neither read the nonce nor make a SameSite=Lax cookie ride along on its POST.
+export const VERIFY_COOKIE = '__Host-wnba_verify';
+const VERIFY_TTL_S = 900;
+const verifyCookie = (value, maxAge) => `${VERIFY_COOKIE}=${value}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+
+async function sameValue(a, b) {
+  const key = await crypto.subtle.importKey('raw', crypto.getRandomValues(new Uint8Array(32)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const [x, y] = await Promise.all([crypto.subtle.sign('HMAC', key, enc.encode(String(a))), crypto.subtle.sign('HMAC', key, enc.encode(String(b)))]);
+  const xa = new Uint8Array(x); const ya = new Uint8Array(y);
+  let d = 0;
+  for (let i = 0; i < xa.length; i += 1) d |= xa[i] ^ ya[i];
+  return d === 0;
+}
+
+// The confirm page and the redemption POST share this header set; the 303 target (the WNBA app) must be a permitted
+// form-action destination, and Referrer-Policy same-origin keeps the token out of any cross-origin Referer.
+const CONFIRM_HEADERS = {
+  'referrer-policy': 'same-origin',
+  'content-security-policy': `default-src 'none'; style-src 'unsafe-inline'; form-action 'self' ${APP_ORIGIN}; frame-ancestors 'none'; base-uri 'none'`
+};
+
 export async function verifyPage(request, env) {
   const t = new URL(request.url).searchParams.get('t') || '';
-  if (!/^[A-Za-z0-9_-]{40,60}$/.test(t)) return page('Sign-in link invalid', `<h1>This link is not valid</h1><p>Request a new sign-in link from WNBA Pro.</p><a class="b" href="${APP_ORIGIN}/pro">Back to WNBA Pro</a>`, 400);
-  return page('Sign in to PropBetEdge WNBA', `<h1>Sign in to PropBetEdge WNBA</h1><p>Confirm to finish signing in on this device.</p><form method="post" action="/v1/auth/verify"><input type="hidden" name="t" value="${esc(t)}"><button type="submit">Continue</button></form><small>The link works once and expires 15 minutes after it was sent.</small>`);
+  if (!/^[A-Za-z0-9_-]{40,60}$/.test(t)) return page('Sign-in link invalid', `<h1>This link is not valid</h1><p>Request a new sign-in link from WNBA Pro.</p><a class="b" href="${APP_ORIGIN}/pro">Back to WNBA Pro</a>`, 400, CONFIRM_HEADERS);
+  const nonce = b64url(crypto.getRandomValues(new Uint8Array(24)));
+  return page('Sign in to PropBetEdge WNBA', `<h1>Sign in to PropBetEdge WNBA</h1><p>Confirm to finish signing in on this device.</p><form method="post" action="/v1/auth/verify"><input type="hidden" name="t" value="${esc(t)}"><input type="hidden" name="n" value="${nonce}"><button type="submit">Continue</button></form><small>The link works once and expires 15 minutes after it was sent.</small>`, 200, { ...CONFIRM_HEADERS, 'set-cookie': verifyCookie(nonce, VERIFY_TTL_S) });
 }
 
 export async function verifyConsume(request, env) {
   const missing = configured(env);
-  if (missing.length) return page('Sign-in unavailable', '<h1>Sign-in is not available yet</h1>', 503);
+  if (missing.length) return page('Sign-in unavailable', '<h1>Sign-in is not available yet</h1>', 503, CONFIRM_HEADERS);
+  const self = new URL(request.url).origin;
   const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(request.url).origin && origin !== env.AUTH_PUBLIC_BASE) return page('Sign-in refused', '<h1>Sign-in refused</h1>', 403);
+  // An explicit foreign origin is always refused. Absent or opaque ("null") origins are allowed only because the
+  // nonce check below is the real gate.
+  if (origin && origin !== 'null' && origin !== self && origin !== env.AUTH_PUBLIC_BASE) return page('Sign-in refused', '<h1>Sign-in refused</h1>', 403, CONFIRM_HEADERS);
   let t = '';
-  try { t = String((await request.formData()).get('t') || ''); } catch { /* fall through */ }
-  if (!/^[A-Za-z0-9_-]{40,60}$/.test(t)) return page('Sign-in link invalid', `<h1>This link is not valid</h1><a class="b" href="${APP_ORIGIN}/pro">Back to WNBA Pro</a>`, 400);
+  let n = '';
+  try { const f = await request.formData(); t = String(f.get('t') || ''); n = String(f.get('n') || ''); } catch { /* fall through */ }
+  if (!/^[A-Za-z0-9_-]{40,60}$/.test(t)) return page('Sign-in link invalid', `<h1>This link is not valid</h1><a class="b" href="${APP_ORIGIN}/pro">Back to WNBA Pro</a>`, 400, CONFIRM_HEADERS);
+  const cookieNonce = readCookie(request, VERIFY_COOKIE);
+  if (!/^[A-Za-z0-9_-]{30,40}$/.test(n) || !cookieNonce || !(await sameValue(n, cookieNonce))) {
+    return page('Open the link again', `<h1>Please open your sign-in link again</h1><p>This confirmation did not come from the page your link opened. Your link has not been used; open it from your email and press Continue.</p>`, 403, CONFIRM_HEADERS);
+  }
   const key = `auth:link:${await sha256Hex(t)}`;
   const rec = await env.WNBA_KV.get(key, 'json');
-  if (!rec?.email) return page('Sign-in link expired', `<h1>This link has expired or was already used</h1><p>Request a new one. Links work once, for 15 minutes.</p><a class="b" href="${APP_ORIGIN}/pro">Get a new link</a>`, 410);
+  if (!rec?.email) return page('Sign-in link expired', `<h1>This link has expired or was already used</h1><p>Request a new one. Links work once, for 15 minutes.</p><a class="b" href="${APP_ORIGIN}/pro">Get a new link</a>`, 410, CONFIRM_HEADERS);
   await env.WNBA_KV.delete(key);
   const sid = b64url(crypto.getRandomValues(new Uint8Array(18)));
   const jwt = await signSession({ email: rec.email, sid }, env.WNBA_SESSION_SECRET);
-  return new Response(null, { status: 303, headers: { location: `${APP_ORIGIN}${safeNext(rec.next)}`, 'set-cookie': cookie(jwt, SESSION_TTL_S), 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' } });
+  const headers = new Headers({ location: `${APP_ORIGIN}${safeNext(rec.next)}`, 'cache-control': 'no-store', ...CONFIRM_HEADERS });
+  headers.append('set-cookie', cookie(jwt, SESSION_TTL_S));
+  headers.append('set-cookie', verifyCookie('', 0));
+  return new Response(null, { status: 303, headers });
 }
 
 export async function logout(request, env) {
