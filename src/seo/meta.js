@@ -158,8 +158,12 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: `WNBA Teams: Records, Rosters & Schedules | ${BRAND}`, description: 'All WNBA teams with current record and seed, linking to each team’s roster, schedule, observed rotation, injuries and news.' });
     case 'players':
       return m({ title: `WNBA Players: Rosters, Stats & Profiles | ${BRAND}`, description: 'Every current WNBA roster player with team and position, linking to season stats, game logs, injury status and news. Photos only where license and identity are verified.' });
+    case 'pbe-picks':
+      return m({ title: `PBE Picks: WNBA Model Win Probabilities & PBE Edge | ${BRAND}`, description: 'PBE WNBA model calls: an independent win probability for every covered game, the de-vigged sportsbook consensus beside it, PBE Edge, confidence and the model reasoning. Locked 15 minutes before tip.' });
+    case 'pbe-model':
+      return m({ title: `How the PBE WNBA Model Works | ${BRAND}`, description: 'How PBE WNBA model v1 turns pregame team data into a win probability: features, walk-forward validation, calibration, the market benchmark, lock policy and known limits.' });
     case 'track-record':
-      return m({ title: `PropBetEdge WNBA Track Record | ${BRAND}`, description: 'How PropBetEdge WNBA records and grades picks: recorded before the outcome, priced at the recorded line, graded deterministically, losses shown as losses.' });
+      return m({ title: `PBE WNBA Live Track Record | ${BRAND}`, description: 'Every official PBE WNBA locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.' });
     case 'pro':
       return m({ title: `PropBetEdge WNBA Pro | ${BRAND}`, description: 'PropBetEdge WNBA Pro membership: the full WNBA research desk. $9.99 a month or $3.99 a week, cancel anytime.' });
     case 'sources':

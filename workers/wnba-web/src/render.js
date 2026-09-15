@@ -133,8 +133,12 @@ export async function renderRoute(pathname, api) {
     }
     case 'props':
       return out(200, routeMeta(id, { path }), intro('Best line', 'Props & best line', 'The best price a sportsbook offers and the market’s no-vig consensus, clearly separated and timestamped. Player props are captured inside 36 hours of tip.', [['/matchups', 'Matchups'], ['/news/c/props', 'Prop Watch stories'], ['/methodology', 'How market data works']]));
+    case 'pbe-picks':
+      return out(200, routeMeta(id, { path }), intro('WNBA Pro', 'PBE Picks', 'An independent WNBA win probability for every covered game, built only from pregame team data, with the de-vigged sportsbook consensus beside it. Calls lock 15 minutes before tip.', [['/track-record', 'Track Record'], ['/pbe-picks/model', 'How the Model Works'], ['/pro', 'WNBA Pro']]));
+    case 'pbe-model':
+      return out(200, routeMeta(id, { path }), intro('PBE Picks', 'How the model works', 'A deterministic probability model from pregame team data: walk-forward validated, calibrated, benchmarked against the market, locked 15 minutes before tip.', [['/pbe-picks', 'PBE Picks'], ['/track-record', 'Track Record']]));
     case 'track-record':
-      return out(200, routeMeta(id, { path }), intro('Track record', 'Track record', 'Picks are recorded before the outcome with the recorded price, graded deterministically, and losing results render as losing.', [['/methodology', 'Methodology']]));
+      return out(200, routeMeta(id, { path }), intro('PBE Picks', 'Live track record', 'Every official locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.', [['/pbe-picks', 'PBE Picks'], ['/pbe-picks/model', 'How the Model Works']]));
     case 'pro':
       return out(200, routeMeta(id, { path }), intro('Membership', 'PropBetEdge WNBA Pro', 'The full WNBA research desk: $9.99 a month or $3.99 a week. Cancel anytime.'));
     case 'sources': {

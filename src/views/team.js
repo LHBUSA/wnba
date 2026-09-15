@@ -4,6 +4,7 @@ import { sourceLine, errorState, playerCard, gameCard, statusBadge, avatar, badg
 import { logoEntry, teamColors } from '../ui/logo.js';
 import { articleList } from '../ui/articles.js';
 import { num, fmtDateET, relTime } from '../lib/format.js';
+import { pbeTeaser } from '../ui/pbe.js';
 
 export async function loadTeam(api, id) {
   // External coverage (features, profiles, analysis from approved publishers) lives here and on player pages — linked,
@@ -41,6 +42,8 @@ export function teamView({ id, res, arts, wire }) {
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:14px" aria-label="Last 10 results">${res10.map((x) => html`<a href="/cast/${x.g.game_id}" title="${fmtDateET(x.g.start_utc, { month: 'short', day: 'numeric' })} ${x.g.home?.team_id === id ? 'vs' : '@'} ${x.them?.abbr} ${x.us?.score}-${x.them?.score}" class="badge" style="${x.w ? 'color:var(--pos);border-color:rgba(82,181,127,.4)' : 'color:var(--neg);border-color:rgba(224,90,90,.4)'}">${x.w ? 'W' : 'L'} ${x.them?.abbr}</a>`)}</div>
       </div>
     </section>
+
+    ${upcoming[0] ? html`<div class="pbe-slot" data-pbe-slot>${pbeTeaser(nextMatchup(upcoming[0], id))}</div>` : ''}
 
     ${upcoming.length ? html`<section class="section"><div class="sec-head"><h2 class="sec-title bc">Next games · lines</h2><span class="note">stored snapshots · The Odds API</span></div><div class="slate-grid">${upcoming.map((g) => gameCard(g, { showDate: true }))}</div></section>` : ''}
 
@@ -84,4 +87,10 @@ export function teamView({ id, res, arts, wire }) {
     </section>
     <div style="margin-top:16px">${sourceLine(res.meta)}</div>
   `;
+}
+
+/** The team's next game as the PBE teaser needs it: identity and tip time only. */
+export function nextMatchup(g, id) {
+  const isHome = String(g.home?.team_id) === String(id);
+  return { team: isHome ? g.home : g.away, opponent: isHome ? g.away : g.home, isHome, tipUtc: g.start_utc, gameId: g.game_id, next: `/pro?next=${encodeURIComponent(`/teams/${id}`)}` };
 }

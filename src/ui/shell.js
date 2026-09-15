@@ -5,6 +5,7 @@ import { NETWORK, CURRENT_SPORT } from './network.js';
 // behind one "More" disclosure. The drawer (tablet/mobile) lists every destination.
 export const PRIMARY_NAV = [
   ['today', '/', 'Today'],
+  ['pbe-picks', '/pbe-picks', 'PBE Picks'],
   ['cast', '/cast', 'WNBACast'],
   ['props', '/props', 'Props'],
   ['matchups', '/matchups', 'Matchups'],
@@ -23,7 +24,7 @@ export const SECONDARY_NAV = [
 export const NAV = [...PRIMARY_NAV, ...SECONDARY_NAV];
 
 /** Route id → the nav group it lights up (sub-pages highlight their section). */
-export const NAV_GROUP = { player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'news-team': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' };
+export const NAV_GROUP = { 'pbe-model': 'pbe-picks', player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'news-team': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' };
 
 const ICON = {
   today: '<path d="M4 5h16v15H4zM4 9h16M9 3v4M15 3v4" />',
@@ -46,7 +47,9 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>WNBA intelligence desk</small></span>
         </a>
         <nav class="nav" aria-label="Primary">
-          ${PRIMARY_NAV.map(([id, href, label]) => html`<a href="${href}" data-nav="${id}" class="${id === 'cast' ? 'cast-link' : ''}">${label}</a>`)}
+          ${PRIMARY_NAV.map(([id, href, label]) => id === 'pbe-picks'
+            ? html`<a href="${href}" data-nav="${id}" class="nav-pbe">${label}<span class="nav-pro" aria-label="WNBA Pro">PRO</span></a>`
+            : html`<a href="${href}" data-nav="${id}" class="${id === 'cast' ? 'cast-link' : ''}">${label}</a>`)}
           <div class="nav-more" data-more-wrap>
             <button class="nav-more-btn" type="button" aria-expanded="false" aria-controls="nav-more-menu" data-more>More<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <div class="nav-more-menu" id="nav-more-menu" hidden>

@@ -5,6 +5,39 @@
 export const API_BASE = import.meta.env.VITE_WNBA_API || 'https://wnba-api.sales-fd3.workers.dev';
 export const NEWS_BASE = import.meta.env.VITE_WNBA_NEWS || 'https://wnba-news.sales-fd3.workers.dev';
 export const INTL_BASE = import.meta.env.VITE_WNBA_INTL || 'https://wnba-international.sales-fd3.workers.dev';
+// Credentialed surfaces (sign-in, account, WNBA Pro data) answer only on the propbetedge.ai API host, where the
+// HttpOnly __Host-wnba_session cookie lives. Never memory-cached: access is decided per request by the server.
+export const PRIVATE_BASE = import.meta.env.VITE_WNBA_PRIVATE_API || 'https://wnba-api.propbetedge.ai';
+
+// The credentialed host exists only once the wnba-api release that serves /v1/pbe/status is deployed. Until /health
+// lists that route, private calls resolve locally as unavailable (signed out) instead of failing in the browser.
+let privateReady = null;
+function privateAvailable() {
+  if (!privateReady) privateReady = getJson(`${API_BASE}/health`).then((r) => Boolean(r.ok && Array.isArray(r.routes) && r.routes.includes('/v1/pbe/status'))).catch(() => false);
+  return privateReady;
+}
+
+async function privateJson(path, { method = 'GET', body, timeoutMs = 12000 } = {}) {
+  if (!(await privateAvailable())) return { ok: false, status: 0, data: null, error: { code: 'private_api_unavailable' } };
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    const res = await fetch(`${PRIVATE_BASE}${path}`, {
+      method,
+      credentials: 'include',
+      cache: 'no-store',
+      signal: ctrl.signal,
+      headers: body ? { accept: 'application/json', 'content-type': 'application/json' } : { accept: 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    clearTimeout(timer);
+    const json = await res.json().catch(() => null);
+    if (!json) return { ok: false, status: res.status, data: null, error: { code: `http_${res.status}` } };
+    return { ...json, status: res.status };
+  } catch (e) {
+    return { ok: false, status: 0, data: null, error: { code: e.name === 'AbortError' ? 'timeout' : 'network', message: e.message } };
+  }
+}
 
 const mem = new Map(); // url -> { at, body }
 const inflight = new Map();
@@ -76,7 +109,15 @@ export const api = {
   odds: (event) => getJson(`${API_BASE}/v1/odds${q({ event })}`),
   props: () => getJson(`${API_BASE}/v1/props`),
   trackRecord: () => getJson(`${API_BASE}/v1/track-record`),
-  account: () => getJson(`${API_BASE}/v1/account`, { fresh: true }),
+  account: () => privateJson('/v1/account'),
+  authRequest: (email, next) => privateJson('/v1/auth/request', { method: 'POST', body: { email, next } }),
+  authLogout: () => privateJson('/v1/auth/logout', { method: 'POST', body: {} }),
+  pbePicks: () => privateJson('/v1/pbe/picks'),
+  pbeGame: (id) => privateJson(`/v1/pbe/games/${encodeURIComponent(id)}`),
+  pbeTeam: (id) => privateJson(`/v1/pbe/teams/${encodeURIComponent(id)}`),
+  trackRecordLedger: () => privateJson('/v1/track-record/ledger'),
+  pbeStatus: async () => ((await privateAvailable()) ? getJson(`${API_BASE}/v1/pbe/status`) : { ok: false, data: null, error: { code: 'pbe_api_unavailable', message: 'Model details are not published yet.' } }),
+  pbeCoverage: async () => ((await privateAvailable()) ? getJson(`${API_BASE}/v1/pbe/coverage`, { fresh: true }) : { ok: false, data: null, error: { code: 'pbe_api_unavailable' } }),
   sources: () => getJson(`${API_BASE}/v1/sources`, { fresh: true, timeoutMs: 30000 }),
   health: () => getJson(`${API_BASE}/health`, { fresh: true }),
   news: (p) => getJson(`${NEWS_BASE}/v1/news${q(p)}`),

@@ -6,6 +6,7 @@ import './styles/pages.css';
 import './styles/identity.css';
 import './styles/newsroom.css';
 import './styles/international.css';
+import './styles/pbe.css';
 import { mountShell } from './ui/shell.js';
 import { createRouter } from './lib/router.js';
 

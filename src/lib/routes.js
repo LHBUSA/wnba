@@ -18,6 +18,8 @@ export const ROUTE_TABLE = [
   { id: 'stats', re: /^\/stats$/ },
   { id: 'teams', re: /^\/teams$/ },
   { id: 'team', re: /^\/teams\/(\d{1,8})$/, keys: ['teamId'] },
+  { id: 'pbe-picks', re: /^\/pbe-picks$/ },
+  { id: 'pbe-model', re: /^\/pbe-picks\/model$/ },
   { id: 'track-record', re: /^\/track-record$/ },
   { id: 'pro', re: /^\/pro$/ },
   { id: 'sources', re: /^\/sources$/ },

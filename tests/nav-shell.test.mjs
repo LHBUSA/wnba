@@ -13,7 +13,7 @@ const moreMenu = between(navBlock, 'id="nav-more-menu"', '</div>');
 const drawer = between(doc, 'class="drawer-panel"', '</div>\n    </div>');
 
 test('primary desktop nav keeps the high-frequency destinations in order, International included', () => {
-  assert.deepEqual(PRIMARY_NAV.map(([, , l]) => l), ['Today', 'WNBACast', 'Props', 'Matchups', 'Players', 'Injuries', 'News', 'International']);
+  assert.deepEqual(PRIMARY_NAV.map(([, , l]) => l), ['Today', 'PBE Picks', 'WNBACast', 'Props', 'Matchups', 'Players', 'Injuries', 'News', 'International']);
   const order = [...navBlock.matchAll(/<a href="([^"]+)" data-nav="([^"]+)"/g)].map((m) => m[2]);
   assert.deepEqual(order.slice(0, PRIMARY_NAV.length), PRIMARY_NAV.map(([id]) => id));
   assert.ok(!NAV.some(([id, href]) => id === 'world-cup' || href === '/world-cup'), 'World Cup is not a top-level destination');
