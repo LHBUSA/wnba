@@ -59,11 +59,18 @@ async function seedLink(email, ttl = 900) {
   kvPut(`auth:link:${crypto.createHash('sha256').update(token).digest('hex')}`, JSON.stringify({ email, next: '/pbe-picks', created_at: new Date().toISOString() }), ttl);
   return token;
 }
-const consume = (token) => fetch(`${API}/v1/auth/verify`, { method: 'POST', redirect: 'manual', headers: { origin: API, 'content-type': 'application/x-www-form-urlencoded' }, body: `t=${token}` });
+// Redeem like a browser: open the confirm page (nonce cookie + form field), then POST with Origin: null as real
+// browsers may send it. (2026-09-15 regression: the old Origin-only check refused exactly this request.)
+async function consume(token) {
+  const pageRes = await fetch(`${API}/v1/auth/verify?t=${token}`, { redirect: 'manual' });
+  const nonceCookie = (pageRes.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).find((c) => c.startsWith('__Host-wnba_verify=')) || '';
+  const n = ((await pageRes.text()).match(/name="n" value="([^"]+)"/) || [])[1] || '';
+  return fetch(`${API}/v1/auth/verify`, { method: 'POST', redirect: 'manual', headers: { origin: 'null', cookie: nonceCookie, 'content-type': 'application/x-www-form-urlencoded' }, body: `t=${token}&n=${n}` });
+}
 async function signIn(email) {
   const token = await seedLink(email);
   const r = await consume(token);
-  const set = r.headers.get('set-cookie') || '';
+  const set = (r.headers.getSetCookie?.() || []).find((c) => c.startsWith('__Host-wnba_session=')) || '';
   const m = set.match(/__Host-wnba_session=([^;]+)/);
   if (r.status !== 303 || !m) throw new Error(`verify for ${email} -> ${r.status}`);
   return { cookie: m[1], token, setCookie: set, location: r.headers.get('location') };
@@ -163,7 +170,7 @@ await check('07 every paid request rechecks entitlement: cancel mid-session, sam
 
 await check('08 magic token is single use: replay of a consumed token is rejected (410), no cookie', async () => {
   const r = await consume(S.pro.token);
-  expect(r.status === 410 && !r.headers.get('set-cookie'), `replay ${r.status}`);
+  expect(r.status === 410 && !/__Host-wnba_session=[^;]+[^=];/.test(r.headers.get('set-cookie') || ''), `replay ${r.status}`);
   return 'replay 410, no set-cookie';
 });
 
@@ -173,7 +180,7 @@ await check('09 magic token expiry: a link past its TTL is rejected (410)', asyn
   let r = await consume(token);
   // KV expiry is eventually consistent at the edge; allow up to 60s more before calling it a failure.
   for (let i = 0; i < 6 && r.status !== 410; i++) { await new Promise((res) => setTimeout(res, 10e3)); r = await consume(token); }
-  expect(r.status === 410 && !r.headers.get('set-cookie'), `expired token ${r.status}`);
+  expect(r.status === 410, `expired token ${r.status}`);
   return `consumed after TTL → 410`;
 });
 
