@@ -1,0 +1,779 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "supabase/migrations/20260915200000_wnba_pbe_ledger_v1.sql",
+  "migration_sha256": "8a31662d8176daddad77dd9df6ebc4fed4210acf99cc267d60569d7f4e7abbd8",
+  "reviewed_commit": "70575e5",
+  "applied_at_db": "2026-09-15 19:50:44.83202+00",
+  "apply_client_started": "2026-09-15T19:50:34.1482837Z",
+  "server_version": "PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit",
+  "fingerprint_before": "6936461fa9b3d6693c8ed1b96fccdd3f",
+  "fingerprint_after": "6936461fa9b3d6693c8ed1b96fccdd3f",
+  "rollback_proof_fingerprint_2026_09_15T19_47Z": "6936461fa9b3d6693c8ed1b96fccdd3f",
+  "checks": {
+    "tables_exist": true,
+    "view_current_grades_security_invoker": true,
+    "functions_exist": true,
+    "functions_not_security_definer_and_pinned_search_path": true,
+    "rls_enabled_all_tables": true,
+    "zero_policies": true,
+    "zero_anon_authenticated_grants": true,
+    "anon_authenticated_no_privilege_matrix": true,
+    "service_role_select_insert_tables_only": true,
+    "service_role_view_select_only": false,
+    "champion_fn_execute_service_role_only": true,
+    "immutable_update_delete_wnba_pbe_grade_revisions": true,
+    "no_truncate_wnba_pbe_grade_revisions": true,
+    "immutable_update_delete_wnba_pbe_locked_predictions": true,
+    "no_truncate_wnba_pbe_locked_predictions": true,
+    "immutable_update_delete_wnba_pbe_model_promotions": true,
+    "no_truncate_wnba_pbe_model_promotions": true,
+    "immutable_update_delete_wnba_pbe_model_versions": true,
+    "no_truncate_wnba_pbe_model_versions": true,
+    "immutable_update_delete_wnba_pbe_prediction_observations": true,
+    "no_truncate_wnba_pbe_prediction_observations": true,
+    "insert_guards": true,
+    "all_15_triggers_enabled": true,
+    "one_lock_per_game_unique": true,
+    "ledger_empty": true,
+    "non_wnba_fingerprint_unchanged": true
+  },
+  "failed": 1,
+  "inventory": {
+    "tables": [
+      {
+        "name": "wnba_pbe_grade_revisions",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "name": "wnba_pbe_locked_predictions",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "name": "wnba_pbe_model_promotions",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "name": "wnba_pbe_model_versions",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "name": "wnba_pbe_prediction_observations",
+        "rls": true,
+        "force_rls": false
+      }
+    ],
+    "views": [
+      {
+        "name": "wnba_pbe_current_grades",
+        "reloptions": [
+          "security_invoker=true"
+        ]
+      }
+    ],
+    "indexes": [
+      "wnba_pbe_grade_prediction_idx",
+      "wnba_pbe_grade_revision_unique",
+      "wnba_pbe_grade_revisions_pkey",
+      "wnba_pbe_lock_one_per_game",
+      "wnba_pbe_lock_team_away_idx",
+      "wnba_pbe_lock_team_home_idx",
+      "wnba_pbe_lock_tip_idx",
+      "wnba_pbe_locked_predictions_pkey",
+      "wnba_pbe_model_promotions_latest_idx",
+      "wnba_pbe_model_promotions_pkey",
+      "wnba_pbe_model_versions_artifact_sha256_key",
+      "wnba_pbe_model_versions_pkey",
+      "wnba_pbe_obs_game_idx",
+      "wnba_pbe_obs_model_idx",
+      "wnba_pbe_prediction_observations_pkey"
+    ],
+    "functions": [
+      {
+        "name": "wnba_pbe_current_champion",
+        "security_definer": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "wnba_pbe_grade_insert",
+        "security_definer": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "wnba_pbe_lock_insert",
+        "security_definer": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "wnba_pbe_observation_insert",
+        "security_definer": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "wnba_pbe_reject_mutation",
+        "security_definer": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "wnba_pbe_reject_truncate",
+        "security_definer": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "wnba_pbe_stamp_insert",
+        "security_definer": false,
+        "config": [
+          "search_path=\"\""
+        ],
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      }
+    ],
+    "triggers": [
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grades_immutable",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_grades_immutable BEFORE DELETE OR UPDATE ON public.wnba_pbe_grade_revisions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_reject_mutation('append a correcting revision')"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grades_insert",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_grades_insert BEFORE INSERT ON public.wnba_pbe_grade_revisions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_grade_insert()"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grades_no_truncate",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_grades_no_truncate BEFORE TRUNCATE ON public.wnba_pbe_grade_revisions FOR EACH STATEMENT EXECUTE FUNCTION wnba_pbe_reject_truncate()"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_immutable",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_locked_immutable BEFORE DELETE OR UPDATE ON public.wnba_pbe_locked_predictions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_reject_mutation('an official locked prediction never changes')"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_insert",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_locked_insert BEFORE INSERT ON public.wnba_pbe_locked_predictions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_lock_insert()"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_no_truncate",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_locked_no_truncate BEFORE TRUNCATE ON public.wnba_pbe_locked_predictions FOR EACH STATEMENT EXECUTE FUNCTION wnba_pbe_reject_truncate()"
+      },
+      {
+        "table": "wnba_pbe_model_promotions",
+        "name": "wnba_pbe_model_promotions_immutable",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_model_promotions_immutable BEFORE DELETE OR UPDATE ON public.wnba_pbe_model_promotions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_reject_mutation('append a new promotion')"
+      },
+      {
+        "table": "wnba_pbe_model_promotions",
+        "name": "wnba_pbe_model_promotions_no_truncate",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_model_promotions_no_truncate BEFORE TRUNCATE ON public.wnba_pbe_model_promotions FOR EACH STATEMENT EXECUTE FUNCTION wnba_pbe_reject_truncate()"
+      },
+      {
+        "table": "wnba_pbe_model_promotions",
+        "name": "wnba_pbe_model_promotions_stamp",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_model_promotions_stamp BEFORE INSERT ON public.wnba_pbe_model_promotions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_stamp_insert('promoted_at')"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_immutable",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_model_versions_immutable BEFORE DELETE OR UPDATE ON public.wnba_pbe_model_versions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_reject_mutation('register a new model version')"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_no_truncate",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_model_versions_no_truncate BEFORE TRUNCATE ON public.wnba_pbe_model_versions FOR EACH STATEMENT EXECUTE FUNCTION wnba_pbe_reject_truncate()"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_stamp",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_model_versions_stamp BEFORE INSERT ON public.wnba_pbe_model_versions FOR EACH ROW EXECUTE FUNCTION wnba_pbe_stamp_insert('registered_at')"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_observations_immutable",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_observations_immutable BEFORE DELETE OR UPDATE ON public.wnba_pbe_prediction_observations FOR EACH ROW EXECUTE FUNCTION wnba_pbe_reject_mutation('observations are append-only')"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_observations_insert",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_observations_insert BEFORE INSERT ON public.wnba_pbe_prediction_observations FOR EACH ROW EXECUTE FUNCTION wnba_pbe_observation_insert()"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_observations_no_truncate",
+        "enabled": "O",
+        "def": "CREATE TRIGGER wnba_pbe_observations_no_truncate BEFORE TRUNCATE ON public.wnba_pbe_prediction_observations FOR EACH STATEMENT EXECUTE FUNCTION wnba_pbe_reject_truncate()"
+      }
+    ],
+    "constraints": [
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_chain",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revision_unique",
+        "type": "u"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revisions_away_score_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revisions_home_score_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revisions_pkey",
+        "type": "p"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revisions_prediction_id_fkey",
+        "type": "f"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revisions_result_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revisions_revision_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_revisions_supersedes_grade_id_fkey",
+        "type": "f"
+      },
+      {
+        "table": "wnba_pbe_grade_revisions",
+        "name": "wnba_pbe_grade_scores",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_lock_call",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_lock_edge",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_lock_generated",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_lock_one_per_game",
+        "type": "u"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_lock_teams",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_artifact_sha256_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_call_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_confidence_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_feature_hash_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_feature_spec_sha256_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_market_devig_probability_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_model_id_fkey",
+        "type": "f"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_p_home_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_pkey",
+        "type": "p"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_season_type_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_selected_side_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_source_observation_id_fkey",
+        "type": "f"
+      },
+      {
+        "table": "wnba_pbe_locked_predictions",
+        "name": "wnba_pbe_locked_predictions_win_probability_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_model_promotions",
+        "name": "wnba_pbe_model_promotions_model_id_fkey",
+        "type": "f"
+      },
+      {
+        "table": "wnba_pbe_model_promotions",
+        "name": "wnba_pbe_model_promotions_pkey",
+        "type": "p"
+      },
+      {
+        "table": "wnba_pbe_model_promotions",
+        "name": "wnba_pbe_model_promotions_supersedes_model_id_fkey",
+        "type": "f"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_artifact_sha256_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_artifact_sha256_key",
+        "type": "u"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_feature_spec_sha256_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_pkey",
+        "type": "p"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_role_at_registration_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_model_versions",
+        "name": "wnba_pbe_model_versions_validation_receipt_sha256_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_obs_asof",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_obs_call",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_obs_teams",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_call_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_confidence_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_feature_hash_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_market_devig_probability_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_model_id_fkey",
+        "type": "f"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_p_home_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_pick_probability_check",
+        "type": "c"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_pkey",
+        "type": "p"
+      },
+      {
+        "table": "wnba_pbe_prediction_observations",
+        "name": "wnba_pbe_prediction_observations_season_type_check",
+        "type": "c"
+      }
+    ],
+    "policies": 0,
+    "table_grants": [
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_current_grades",
+        "privilege": "INSERT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_current_grades",
+        "privilege": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_grade_revisions",
+        "privilege": "INSERT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_grade_revisions",
+        "privilege": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_locked_predictions",
+        "privilege": "INSERT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_locked_predictions",
+        "privilege": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_model_promotions",
+        "privilege": "INSERT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_model_promotions",
+        "privilege": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_model_versions",
+        "privilege": "INSERT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_model_versions",
+        "privilege": "SELECT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_prediction_observations",
+        "privilege": "INSERT"
+      },
+      {
+        "grantee": "service_role",
+        "table": "wnba_pbe_prediction_observations",
+        "privilege": "SELECT"
+      }
+    ],
+    "privilege_matrix": [
+      {
+        "role": "anon",
+        "object": "public.wnba_pbe_current_grades",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "anon",
+        "object": "public.wnba_pbe_grade_revisions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "anon",
+        "object": "public.wnba_pbe_locked_predictions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "anon",
+        "object": "public.wnba_pbe_model_promotions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "anon",
+        "object": "public.wnba_pbe_model_versions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "anon",
+        "object": "public.wnba_pbe_prediction_observations",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "authenticated",
+        "object": "public.wnba_pbe_current_grades",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "authenticated",
+        "object": "public.wnba_pbe_grade_revisions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "authenticated",
+        "object": "public.wnba_pbe_locked_predictions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "authenticated",
+        "object": "public.wnba_pbe_model_promotions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "authenticated",
+        "object": "public.wnba_pbe_model_versions",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "authenticated",
+        "object": "public.wnba_pbe_prediction_observations",
+        "select": false,
+        "insert": false,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "service_role",
+        "object": "public.wnba_pbe_current_grades",
+        "select": true,
+        "insert": true,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "service_role",
+        "object": "public.wnba_pbe_grade_revisions",
+        "select": true,
+        "insert": true,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "service_role",
+        "object": "public.wnba_pbe_locked_predictions",
+        "select": true,
+        "insert": true,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "service_role",
+        "object": "public.wnba_pbe_model_promotions",
+        "select": true,
+        "insert": true,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "service_role",
+        "object": "public.wnba_pbe_model_versions",
+        "select": true,
+        "insert": true,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      },
+      {
+        "role": "service_role",
+        "object": "public.wnba_pbe_prediction_observations",
+        "select": true,
+        "insert": true,
+        "update": false,
+        "delete": false,
+        "truncate": false,
+        "references": false,
+        "trigger": false
+      }
+    ],
+    "function_execute": [
+      {
+        "role": "anon",
+        "function": "public.wnba_pbe_current_champion()",
+        "execute": false
+      },
+      {
+        "role": "authenticated",
+        "function": "public.wnba_pbe_current_champion()",
+        "execute": false
+      },
+      {
+        "role": "service_role",
+        "function": "public.wnba_pbe_current_champion()",
+        "execute": true
+      }
+    ],
+    "row_counts": {
+      "model_versions": 0,
+      "model_promotions": 0,
+      "observations": 0,
+      "locked_predictions": 0,
+      "grade_revisions": 0
+    }
+  }
+}

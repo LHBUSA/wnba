@@ -1,0 +1,183 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "at": "2026-09-15T19:47:42.0190115Z",
+  "passed": 29,
+  "total": 29,
+  "relations_after": 0,
+  "results": [
+    {
+      "step": "00",
+      "pass": true,
+      "check": "environment",
+      "detail": "PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit · db postgres · user postgres"
+    },
+    {
+      "step": "01",
+      "pass": true,
+      "check": "clean install: no wnba_pbe_* object exists before the migration",
+      "detail": "0 pre-existing wnba_pbe relations"
+    },
+    {
+      "step": "02",
+      "pass": true,
+      "check": "second execution succeeds and creates nothing new",
+      "detail": "relations 22, functions 7, triggers 15 after both runs"
+    },
+    {
+      "step": "03",
+      "pass": true,
+      "check": "access: RLS on all 5 tables, zero policies, anon/authenticated hold no privilege",
+      "detail": "rls=5/5 · policies=0 · anon/authenticated grants=0 · service_role: select+insert only"
+    },
+    {
+      "step": "04",
+      "pass": true,
+      "check": "registry insert stamps the server clock (backdated registered_at/promoted_at ignored)",
+      "detail": "champion = pbe-wnba-model-v1"
+    },
+    {
+      "step": "05",
+      "pass": true,
+      "check": "pre-lock observation insert allowed (as service_role; recorded_at forced to server clock)",
+      "detail": "observation 6f72c290-62dc-4e8f-b33d-74cdbc4970e3 recorded_at 2026-09-15 19:47:46.499004+00"
+    },
+    {
+      "step": "06",
+      "pass": true,
+      "check": "observation update rejected (append-only)",
+      "detail": "42501 permission denied for table wnba_pbe_prediction_observations"
+    },
+    {
+      "step": "07",
+      "pass": true,
+      "check": "official lock insert allowed (champion model, matches its observation, locked_at forced)",
+      "detail": "prediction 56f13957-75e1-434d-ad13-c02dd52f4b04"
+    },
+    {
+      "step": "08",
+      "pass": true,
+      "check": "lock from a non-champion model rejected",
+      "detail": "wnba_pbe: official locks come only from the current champion (pbe-wnba-model-v1), not pbe-wnba-challenger-proof"
+    },
+    {
+      "step": "09",
+      "pass": true,
+      "check": "lock whose probability differs from its source observation rejected",
+      "detail": "wnba_pbe: lock for game proof-game-1 does not match its source observation"
+    },
+    {
+      "step": "10",
+      "pass": true,
+      "check": "locked selection update rejected",
+      "detail": "42501 permission denied for table wnba_pbe_locked_predictions"
+    },
+    {
+      "step": "11",
+      "pass": true,
+      "check": "locked probability update rejected",
+      "detail": "42501 permission denied for table wnba_pbe_locked_predictions"
+    },
+    {
+      "step": "12a",
+      "pass": true,
+      "check": "locked reasoning update rejected",
+      "detail": "42501 permission denied for table wnba_pbe_locked_predictions"
+    },
+    {
+      "step": "12b",
+      "pass": true,
+      "check": "locked model version update rejected",
+      "detail": "42501 permission denied for table wnba_pbe_locked_predictions"
+    },
+    {
+      "step": "13",
+      "pass": true,
+      "check": "locked deletion rejected",
+      "detail": "42501 permission denied for table wnba_pbe_locked_predictions"
+    },
+    {
+      "step": "14",
+      "pass": true,
+      "check": "owner-role update, delete and truncate of a lock rejected by trigger",
+      "detail": "wnba_pbe: wnba_pbe_locked_predictions cannot be truncated"
+    },
+    {
+      "step": "15",
+      "pass": true,
+      "check": "locked row byte-identical after every rejected mutation",
+      "detail": "to_jsonb equal"
+    },
+    {
+      "step": "16",
+      "pass": true,
+      "check": "duplicate official lock for the same game + contract rejected",
+      "detail": "23505 duplicate key value violates unique constraint \"wnba_pbe_lock_one_per_game\""
+    },
+    {
+      "step": "17",
+      "pass": true,
+      "check": "first grade append allowed (revision 1)",
+      "detail": "grade 9b3d6e48-a300-4f7a-8c47-26f06ee391f8"
+    },
+    {
+      "step": "17a",
+      "pass": true,
+      "check": "grade contradicting the score rejected",
+      "detail": "wnba_pbe: result loss contradicts the score (expected win)"
+    },
+    {
+      "step": "18",
+      "pass": true,
+      "check": "correction append allowed (revision 2 supersedes revision 1 with a reason)",
+      "detail": "grade 54f69cad-8520-4514-ae01-a61facba4fea"
+    },
+    {
+      "step": "18a",
+      "pass": true,
+      "check": "correction without a reason rejected",
+      "detail": "23514 new row for relation \"wnba_pbe_grade_revisions\" violates check constraint \"wnba_pbe_grade_chain\""
+    },
+    {
+      "step": "18b",
+      "pass": true,
+      "check": "out-of-sequence revision rejected",
+      "detail": "wnba_pbe: revision 3 must follow revision 1 and supersede it"
+    },
+    {
+      "step": "19",
+      "pass": true,
+      "check": "prior grade (revision 1) remains unchanged after the correction",
+      "detail": "revision 1 still win, byte-identical"
+    },
+    {
+      "step": "19a",
+      "pass": true,
+      "check": "in-place grade update rejected",
+      "detail": "42501 permission denied for table wnba_pbe_grade_revisions"
+    },
+    {
+      "step": "19b",
+      "pass": true,
+      "check": "grade deletion rejected",
+      "detail": "42501 permission denied for table wnba_pbe_grade_revisions"
+    },
+    {
+      "step": "20",
+      "pass": true,
+      "check": "current grade = latest revision (view shows revision 2 loss); 2 revisions auditable",
+      "detail": "current revision 2 (loss) · history 2 rows"
+    },
+    {
+      "step": "21",
+      "pass": true,
+      "check": "anon cannot read the locked ledger or the grade view (permission denied)",
+      "detail": "permission denied for view wnba_pbe_current_grades"
+    },
+    {
+      "step": "22",
+      "pass": true,
+      "check": "unrelated schemas untouched: catalog fingerprint of every non-wnba_pbe object identical before/after",
+      "detail": "before 6936461fa9b3d6693c8ed1b96fccdd3f · after 6936461fa9b3d6693c8ed1b96fccdd3f · non-wnba_pbe relations 1089 → 1089"
+    }
+  ]
+}
