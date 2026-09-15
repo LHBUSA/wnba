@@ -116,6 +116,21 @@ const active = /WNBA_PURCHASE_ACTIVE\s*=\s*"true"/.test(apiToml);
 if (hasUrls !== active) fail('checkout-atomic', `payment links ${hasUrls ? 'set' : 'unset'} but WNBA_PURCHASE_ACTIVE=${active}`);
 if (/localStorage[^\n]*(pro|entitle|premium)/i.test(src.map(read).join('\n'))) fail('no-client-entitlement', 'localStorage used for entitlement');
 
+// 7a. Atmosphere is one owned raster. CSS never paints SVG or data-URI background art, and every CSS url()
+// points at a self-hosted font or the raster plate.
+const ATMO = '/media/atmosphere/pbe-wnba-arena-2400.webp';
+if (!fs.existsSync(path.join(ROOT, 'public', ATMO))) fail('atmosphere-raster-missing', ATMO);
+for (const f of src.filter((x) => x.endsWith('.css'))) {
+  // quote-aware: a data URI may itself contain the other quote character
+  for (const m of read(f).matchAll(/url\(\s*(['"]?)([\s\S]*?)\1\s*\)/g)) {
+    const u = m[2].trim();
+    if (/^data:/i.test(u) || /\.svg(\?|#|$)/i.test(u)) fail('no-svg-background-art', `${rel(f)} -> ${u.slice(0, 40)}`);
+    else if (!(u.startsWith('/fonts/') || u === ATMO)) fail('css-url-origin', `${rel(f)} -> ${u}`);
+  }
+}
+if (fs.existsSync(path.join(ROOT, 'src', 'ui', 'art.js'))) fail('no-svg-background-art', 'src/ui/art.js (decorative SVG) is back');
+for (const f of src) if (/class="(hero2-art|sm-court)"/.test(read(f))) fail('no-svg-background-art', rel(f));
+
 // 8. Volatile Worker routes carry source/freshness metadata.
 const apiSrc = read(path.join(ROOT, 'workers', 'wnba-api', 'src', 'index.js'));
 const okCalls = apiSrc.match(/return ok\(/g)?.length || 0;

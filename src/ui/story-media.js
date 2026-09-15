@@ -64,10 +64,10 @@ function intlBoard(v, { slot = 'card', compact = false } = {}) {
   const [w, l] = v.teams;
   const row = (t, win) => html`<span class="ib-row ${win ? 'ib-row--win' : ''}">${flagSrc(t.flag) ? html`<img class="ib-flag" src="${flagSrc(t.flag)}" alt="" width="60" height="40" decoding="async" />` : html`<span class="ib-flag ib-flag--none"></span>`}<span class="ib-name">${t.name}</span><span class="ib-score">${t.score ?? ''}</span></span>`;
   const kicker = [v.medal ? MEDAL_LABEL[v.medal] : v.round, v.status].filter(Boolean).join(' · ');
-  return html`<span class="ib ${compact ? 'ib--band' : 'ib--full'} ib--${slot}" role="img" aria-label="${`${w.name} ${w.score}, ${l.name} ${l.score}. ${kicker}. ${v.competition_name || v.competition || ''}`}">${compact ? '' : COURT}<span class="ib-kicker">${v.medal ? html`<span class="ib-medal ib-medal--${v.medal}" aria-hidden="true"></span>` : ''}${kicker}</span><span class="ib-rows">${row(w, true)}${row(l, false)}</span><span class="ib-foot"><span class="ib-comp">${slot === 'hero' || slot === 'lead' ? v.competition_name || v.competition || '' : v.competition || v.competition_name || ''}</span><span class="ib-brand">PropBetEdge International</span></span></span>`;
+  return html`<span class="ib ${compact ? 'ib--band' : 'ib--full'} ib--${slot}" role="img" aria-label="${`${w.name} ${w.score}, ${l.name} ${l.score}. ${kicker}. ${v.competition_name || v.competition || ''}`}"><span class="ib-kicker">${v.medal ? html`<span class="ib-medal ib-medal--${v.medal}" aria-hidden="true"></span>` : ''}${kicker}</span><span class="ib-rows">${row(w, true)}${row(l, false)}</span><span class="ib-foot"><span class="ib-comp">${slot === 'hero' || slot === 'lead' ? v.competition_name || v.competition || '' : v.competition || v.competition_name || ''}</span><span class="ib-brand">PropBetEdge International</span></span></span>`;
 }
 
-const COURT = html`<svg class="sm-court" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2"><rect x="-10" y="18" width="340" height="150"/><line x1="160" y1="18" x2="160" y2="168"/><circle cx="160" cy="93" r="26"/><path d="M-10 48h58a45 45 0 0 1 0 90h-58M330 48h-58a45 45 0 0 0 0 90h58"/></g></svg>`;
+// Story-media frames carry no court art: identity comes from team colour fields and the brand line (CSS), never SVG backgrounds.
 
 /**
  * slot: 'lead' | 'hero' | 'card' | 'small'.  Returns the 16:9 media box (photo, matchup or team composition)
@@ -97,13 +97,13 @@ export function storyMedia(media, { slot = 'card', eager = false, credit = true,
     cls += ' sm--duo sm--photo';
   } else if (m.layout === 'brand' || !(m.teams || []).length) {
     // Deterministic PropBetEdge story visual for league-wide stories with no team: desk label and brand on the court.
-    inner = html`${COURT}<span class="sm-brand"><span class="sm-brand-desk">${m.visual?.desk || 'WNBA Newsroom'}</span><span class="sm-brand-mark">PropBetEdge WNBA</span></span>`;
+    inner = html`<span class="sm-brand"><span class="sm-brand-desk">${m.visual?.desk || 'WNBA Newsroom'}</span><span class="sm-brand-mark">PropBetEdge WNBA</span></span>`;
     cls += ' sm--brand';
   } else if ((m.teams || []).length >= 2) {
-    inner = html`${COURT}${teamPanel(m.teams[0], { side: 'a' })}${teamPanel(m.teams[1], { side: 'h' })}<span class="sm-vs" aria-hidden="true">at</span>`;
+    inner = html`${teamPanel(m.teams[0], { side: 'a' })}${teamPanel(m.teams[1], { side: 'h' })}<span class="sm-vs" aria-hidden="true">at</span>`;
     cls += ' sm--teams';
   } else {
-    inner = html`${COURT}${teamPanel((m.teams || [])[0])}`;
+    inner = html`${teamPanel((m.teams || [])[0])}`;
     cls += ' sm--teamonly';
   }
   const tc = teamColors({ team_id: (m.teams || [])[0] }).color || '#d4af37';

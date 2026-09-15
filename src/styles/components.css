@@ -111,7 +111,7 @@ main { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--s4); paddin
 @media (max-width: 760px) { .g2, .g3 { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 480px) { .g4 { grid-template-columns: minmax(0, 1fr); } }
 
-.card { background: linear-gradient(180deg, var(--ink-2), var(--ink-1)); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--sh-1); min-width: 0; }
+.card { background: linear-gradient(180deg, rgba(28, 24, 19, .9), rgba(21, 18, 14, .93)); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--sh-1); min-width: 0; }
 .card-pad { padding: var(--s4); }
 .card-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); }
 .card-title { font: 700 12px/1.2 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--paper-2); }
@@ -221,7 +221,7 @@ a.chip:hover { border-color: var(--gold-line); color: var(--paper); }
 
 /* ------------------------------------------------------------ stat tiles */
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--s3); }
-.tile { background: var(--ink-2); border: 1px solid var(--line); border-radius: var(--r2); padding: 12px 14px; min-width: 0; }
+.tile { background: rgba(28, 24, 19, .88); border: 1px solid var(--line); border-radius: var(--r2); padding: 12px 14px; min-width: 0; }
 .tile small { display: block; font: 600 10px/1.2 var(--f-data); letter-spacing: .14em; color: var(--faint); text-transform: uppercase; }
 .tile b { display: block; font: 700 28px/1.05 var(--f-display); margin-top: 6px; font-variant-numeric: tabular-nums; }
 .tile span { display: block; font: 500 11px/1.3 var(--f-data); color: var(--faint); margin-top: 4px; }

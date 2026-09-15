@@ -3,7 +3,6 @@ import { html, raw } from '../lib/dom.js';
 import { gameCard, sourceLine, empty, errorState } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
 import { articleCard, articleMini } from '../ui/articles.js';
-import { HERO_ART } from '../ui/art.js';
 import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, plural, fmtTimeET, american, bookName } from '../lib/format.js';
 import logoManifest from '../../data/team-logos.json' with { type: 'json' };
 import { buildTicker } from '../lib/ticker.js';
@@ -62,7 +61,6 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
     ${tickerRail(ticker, { freshness: today.meta?.served_at ? `Updated ${relTime(today.meta.served_at)}` : null })}
 
     <section class="hero2">
-      ${raw(HERO_ART)}
       <div class="hero2-in">
         <div>
           <span class="kicker">${d.season?.label || 'WNBA'}${d.next_phase ? ` · ${d.next_phase.name} ${fmtDateET(d.next_phase.starts, { month: 'short', day: 'numeric' })}` : ''}</span>

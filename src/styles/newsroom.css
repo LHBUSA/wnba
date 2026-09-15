@@ -24,7 +24,6 @@
   linear-gradient(135deg, var(--ink-1), var(--ink-3)); }
 .sm--teams .sm-frame { display: grid; grid-template-columns: 1fr 1fr; background:
   linear-gradient(100deg, color-mix(in srgb, var(--tc1) 40%, var(--ink-1)) 0 49.6%, rgba(212, 175, 55, .55) 49.6% 50.4%, color-mix(in srgb, var(--tc2) 40%, var(--ink-1)) 50.4%); }
-.sm-court { position: absolute; inset: 0; width: 100%; height: 100%; color: rgba(245, 241, 235, .12); z-index: 0; }
 .sm-team { position: relative; z-index: 1; display: grid; place-items: center; align-content: center; gap: 8px; min-width: 0; padding: 8%; }
 .sm--teamonly .sm-team { position: absolute; inset: 0; }
 .sm-mark { width: clamp(56px, 28%, 180px); height: auto; filter: drop-shadow(0 10px 24px rgba(0, 0, 0, .5)); }
@@ -52,7 +51,6 @@
   radial-gradient(ellipse 60% 90% at 88% 20%, color-mix(in srgb, var(--c1) 38%, transparent), transparent 70%),
   radial-gradient(ellipse 55% 80% at 92% 100%, color-mix(in srgb, var(--c2) 30%, transparent), transparent 72%),
   linear-gradient(135deg, #15110d 0%, #0f0d0a 60%, #1a150f 100%); }
-.ib--full .sm-court { color: rgba(212, 175, 55, .08); }
 .ib-kicker { position: relative; display: inline-flex; align-items: center; gap: 1.4cqw; font: 800 3.1cqw/1 var(--f-display); letter-spacing: .16em; text-transform: uppercase; color: var(--gold-bright); }
 .ib-medal { width: 2.6cqw; height: 2.6cqw; border-radius: 50%; box-shadow: inset 0 0 0 .35cqw rgba(0,0,0,.25); }
 .ib-medal--gold { background: radial-gradient(circle at 35% 30%, #fff3b0, #d4af37 55%, #8a6a12); }
@@ -184,7 +182,7 @@
   .front-lead .scard--lead .sm-credit a { color: rgba(245, 241, 235, .9); }
   /* International lead: the scoreboard takes the right half, the headline keeps the open left side. */
   .front-lead .scard--lead .ib--full { left: 50%; padding: 4cqw 4cqw 4cqw 2cqw; gap: 1.6cqw; background: transparent; }
-  .front-lead .scard--lead .ib--full .sm-court, .front-lead .scard--lead .ib--full .ib-foot { display: none; }
+  .front-lead .scard--lead .ib--full .ib-foot { display: none; }
   .front-lead .scard--lead .ib--full .ib-kicker { font-size: 1.8cqw; }
   .front-lead .scard--lead .ib--full .ib-row { grid-template-columns: 5.4cqw minmax(0, 1fr) auto; gap: 1.6cqw; }
   .front-lead .scard--lead .ib--full .ib-flag { width: 5.4cqw; height: 3.6cqw; }
