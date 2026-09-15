@@ -1,0 +1,18 @@
+{
+  "checked_at": "2026-09-15T21:34:45.430Z",
+  "model_versions": [
+    {
+      "model_id": "pbe-wnba-model-v1",
+      "role_at_registration": "champion_candidate",
+      "artifact_sha256": "180dfcf50ca8fa96c2a71b7ee37abde80aacc5ff5f403783b03b4769436394f3",
+      "feature_spec_sha256": "83c36ef3394d48ef6fbb8af7dc9a7d586475efe8fd3f12ecf25076ad83c48752",
+      "validation_receipt_sha256": "bd13420633d2a73a3c50f19f5a9b7785084963222f9925db269ce09e76d325c5",
+      "registered_at": "2026-09-15T20:56:47.729583+00:00"
+    }
+  ],
+  "promotions": "*/0",
+  "current_champion": null,
+  "observations": "*/0",
+  "locked_predictions": "*/0",
+  "grade_revisions": "*/0"
+}
