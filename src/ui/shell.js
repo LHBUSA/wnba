@@ -39,6 +39,9 @@ const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 
 const BRAND_MARK = `<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1813"/><circle cx="32" cy="32" r="19" fill="none" stroke="#d4af37" stroke-width="3.5"/><path d="M13 32h38M32 13v38M19 18c7 6 7 22 0 28M45 18c-7 6-7 22 0 28" fill="none" stroke="#ff7a2f" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 
+const MOTHER_VERIFY_URL = 'https://mother.proptechusa.ai/verify/xgH9unhpY6TDvTtmG8CsUWrq0O6M10TS';
+const MOTHER_BADGE_URL = 'https://api.mother.proptechusa.ai/badge/xgH9unhpY6TDvTtmG8CsUWrq0O6M10TS.svg';
+
 /** The site shell as HTML. `main` is the page content (server-rendered by the publishing Worker); `ssrPath` marks it. */
 export function shellHtml({ main = '', ssrPath = null } = {}) {
   return html`
@@ -75,35 +78,72 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
     </div>
     <main id="main" tabindex="-1" ${ssrPath ? html`data-ssr-path="${ssrPath}"` : ''}>${main}</main>
     <footer class="foot">
-      <div class="foot-in">
-        <div>
-          <a class="brand" href="/">${raw(BRAND_MARK)}<span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>Independent WNBA intelligence</small></span></a>
-          <p class="note" style="margin-top:12px;max-width:44ch">Built from real WNBA source data with visible source and freshness on every volatile number. Sportsbook prices, market consensus and PropBetEdge model outputs are always kept separate.</p>
-          <ul style="margin-top:14px">
+      <div class="foot-in foot-world">
+        <section class="foot-pro-panel" aria-label="WNBA Pro">
+          <div class="foot-pro-copy">
+            <span class="foot-kicker">WNBA PRO · PROPBETEDGE INTELLIGENCE</span>
+            <h3>Go deeper than the box score.</h3>
+            <p>Live PBE Picks, matchup intelligence, model context and a permanent track record — built for people who want the research layer behind every game.</p>
+          </div>
+          <a class="foot-pro-cta" href="/pro">Get WNBA Pro <span aria-hidden="true">→</span></a>
+        </section>
+
+        <div class="foot-brand-col">
+          <a class="brand" href="/" aria-label="PropBetEdge WNBA home">${raw(BRAND_MARK)}<span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>Independent WNBA intelligence</small></span></a>
+          <p class="note foot-brand-note">Built from real WNBA source data with visible source and freshness on volatile numbers. Sportsbook prices, market consensus and PropBetEdge model outputs stay clearly separated.</p>
+          <div class="foot-trust-chips" aria-label="PropBetEdge WNBA trust principles">
+            <span>Independent</span><span>Source-linked</span><span>Auditable</span>
+          </div>
+        </div>
+
+        <div class="foot-col">
+          <h4>WNBA Intelligence</h4>
+          <ul>
+            <li><a href="/">Today</a></li>
+            <li><a href="/pbe-picks">PBE Picks <span class="foot-pro-mini">PRO</span></a></li>
+            <li><a href="/cast">WNBACast</a></li>
+            <li><a href="/matchups">Matchups</a></li>
+            <li><a href="/news">News</a></li>
             <li><a href="/history">WNBA History</a></li>
+            <li><a href="/track-record">Track Record</a></li>
+          </ul>
+        </div>
+
+        <div class="foot-col">
+          <h4>Research &amp; Trust</h4>
+          <ul>
+            <li><a href="/methodology">Methodology</a></li>
             <li><a href="/about">About the newsroom</a></li>
             <li><a href="/editorial-policy">Editorial policy</a></li>
             <li><a href="/corrections">Corrections &amp; revisions</a></li>
-            <li><a href="/methodology">Methodology</a></li>
-            <li><a href="/track-record">Track record doctrine</a></li>
             <li><a href="/rss.xml">Newsroom RSS</a></li>
           </ul>
         </div>
-        <div>
-          <h4>PropBetEdge</h4>
-          <ul>
+
+        <div class="foot-col foot-network-col">
+          <h4>PropBetEdge Network</h4>
+          <ul class="foot-network-links">
             <li><a href="${NETWORK.news.href}">${NETWORK.news.label}</a></li>
             <li><a href="${NETWORK.store.href}">${NETWORK.store.label}</a></li>
             <li><a href="${NETWORK.discord.href}">${NETWORK.discord.label}</a></li>
           </ul>
-        </div>
-        <div>
-          <h4>Sports</h4>
-          <div class="sports-rail">
+          <div class="sports-rail" aria-label="PropBetEdge sports network">
             ${NETWORK.sports.map((s) => html`<a href="${s.href}" class="${s.key === CURRENT_SPORT ? 'here' : ''}" ${s.key === CURRENT_SPORT ? raw('aria-current="true"') : ''} title="${s.name}">${s.label}</a>`)}
           </div>
-          <p class="note" style="margin-top:14px">The NBA season runs on the same research desk: <a href="https://nba.propbetedge.ai/" style="color:var(--gold)">PropBetEdge NBA</a>.</p>
+          <p class="note foot-network-note">One research network across the major sports desks.</p>
         </div>
+
+        <div class="foot-security">
+          <a class="foot-mother-badge" href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Verify PropTechUSA.ai Mother AI protection status (opens in a new tab)">
+            <img src="${MOTHER_BADGE_URL}" alt="Mother AI Protected — live verification for PropTechUSA.ai" width="236" height="48" loading="lazy" decoding="async" />
+          </a>
+          <div class="foot-security-copy">
+            <strong>Mother AI Protected</strong>
+            <span>Live verification for the PropTechUSA.ai network security layer.</span>
+            <a href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer">Verify protection status →</a>
+          </div>
+        </div>
+
         <p class="foot-note">PropBetEdge WNBA is independent and is not affiliated with, endorsed by or sponsored by the WNBA, its teams or players. Scores, play-by-play, rosters, standings and injury statuses are sourced from ESPN's public data; sportsbook prices from The Odds API; external news links open on the publisher's site. Player photos are Wikimedia Commons images used under their stated licenses with credit on each player page. For entertainment and research — bet responsibly. 21+.</p>
       </div>
     </footer>
