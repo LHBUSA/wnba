@@ -1,0 +1,229 @@
+/* Final product-surface polish. Loaded last so these refinements can tune the shared shell
+   without changing the underlying component contracts. */
+
+/* ------------------------------------------------------------ desktop header */
+@media (min-width: 1181px) {
+  .hdr-in {
+    gap: 0;
+    padding-inline: 30px;
+  }
+
+  .hdr .brand {
+    padding-right: 22px;
+    margin-right: 18px;
+    border-right: 1px solid rgba(255,255,255,.075);
+  }
+
+  .nav {
+    margin-left: 0;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .nav a,
+  .nav-more-btn {
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    letter-spacing: .045em;
+    transition: color .16s ease, background .16s ease, border-color .16s ease, transform .16s ease;
+  }
+
+  .nav a:hover,
+  .nav-more-btn:hover,
+  .nav-more-btn[aria-expanded='true'] {
+    color: var(--paper);
+    background: rgba(255,255,255,.045);
+    border-color: rgba(255,255,255,.07);
+  }
+
+  .nav a[aria-current='page'],
+  .nav-more-btn.on {
+    color: var(--paper);
+    background: linear-gradient(180deg, rgba(212,175,55,.115), rgba(212,175,55,.045));
+    border-color: rgba(212,175,55,.30);
+    box-shadow: inset 0 -2px 0 var(--gold), 0 5px 18px rgba(0,0,0,.14);
+  }
+
+  .nav .nav-pbe {
+    color: var(--gold-bright);
+  }
+
+  .nav .nav-pbe:hover {
+    color: #fff1a8;
+  }
+
+  .nav-more {
+    margin-left: 3px;
+  }
+
+  .nav-more-menu {
+    top: calc(100% + 11px);
+    min-width: 220px;
+    gap: 3px;
+    padding: 8px;
+    border-color: rgba(255,255,255,.10);
+    background: linear-gradient(180deg, rgba(28,24,19,.99), rgba(19,16,12,.99));
+    box-shadow: 0 22px 55px rgba(0,0,0,.55), 0 0 0 1px rgba(212,175,55,.035) inset;
+  }
+
+  .nav-more-menu a {
+    padding: 11px 13px;
+    border-radius: 8px;
+  }
+
+  .hdr-actions {
+    margin-left: 18px;
+    padding-left: 20px;
+    border-left: 1px solid rgba(255,255,255,.075);
+  }
+
+  .hdr-actions .btn-pro {
+    padding: 11px 19px;
+    letter-spacing: .10em;
+    box-shadow: 0 8px 24px rgba(212,175,55,.27), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+
+  .hdr-actions .btn-pro:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 11px 28px rgba(212,175,55,.32), inset 0 1px 0 rgba(255,255,255,.30);
+  }
+}
+
+@media (min-width: 1181px) and (max-width: 1380px) {
+  .hdr-in { padding-inline: 20px; }
+  .hdr .brand { padding-right: 15px; margin-right: 11px; }
+  .nav { gap: 2px; }
+  .nav a, .nav-more-btn { padding-inline: 9px; font-size: 12px; }
+  .hdr-actions { margin-left: 10px; padding-left: 13px; }
+  .hdr-actions .btn-pro { padding-inline: 15px; }
+}
+
+/* ------------------------------------------------------------ homepage WNBA Pro promo */
+/* This is the one card directly after the team rail on Today. */
+nav[aria-label='Teams'] + section.card.card-pad {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 25px 28px;
+  border-color: rgba(212,175,55,.40) !important;
+  background:
+    radial-gradient(circle at 82% 20%, rgba(246,218,68,.16), transparent 25%),
+    radial-gradient(circle at 8% 120%, rgba(255,122,47,.10), transparent 34%),
+    linear-gradient(118deg, rgba(31,27,18,.97), rgba(20,18,13,.98) 52%, rgba(24,21,14,.97)) !important;
+  box-shadow: 0 18px 46px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+nav[aria-label='Teams'] + section.card.card-pad::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold), var(--flame));
+  box-shadow: 0 0 26px rgba(212,175,55,.40);
+}
+
+nav[aria-label='Teams'] + section.card.card-pad::after {
+  content: 'PBE PRO';
+  position: absolute;
+  top: 19px;
+  right: 24px;
+  z-index: -1;
+  font: 800 48px/1 var(--f-display);
+  letter-spacing: .08em;
+  color: rgba(255,255,255,.025);
+  pointer-events: none;
+}
+
+nav[aria-label='Teams'] + section.card.card-pad > div {
+  position: relative;
+  z-index: 1;
+  gap: 28px !important;
+}
+
+nav[aria-label='Teams'] + section.card.card-pad .eyebrow {
+  color: var(--gold-bright);
+  letter-spacing: .18em;
+}
+
+nav[aria-label='Teams'] + section.card.card-pad .sec-title {
+  margin-top: 9px !important;
+  font: 700 clamp(23px, 2vw, 30px)/1.05 var(--f-editorial);
+  letter-spacing: -.01em;
+  text-transform: none;
+  color: var(--paper);
+}
+
+nav[aria-label='Teams'] + section.card.card-pad p.note {
+  margin-top: 10px !important;
+  max-width: 76ch !important;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--dim);
+}
+
+nav[aria-label='Teams'] + section.card.card-pad .pill-row {
+  gap: 8px;
+  margin-top: 15px !important;
+}
+
+nav[aria-label='Teams'] + section.card.card-pad .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-color: rgba(212,175,55,.18);
+  background: rgba(212,175,55,.055);
+  color: var(--paper-2);
+  font-size: 11.5px;
+}
+
+nav[aria-label='Teams'] + section.card.card-pad .pill::before {
+  content: '✓';
+  color: var(--gold-bright);
+  font-weight: 800;
+}
+
+nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child {
+  flex: 0 0 auto;
+  min-width: 215px;
+  justify-content: flex-end;
+  padding: 14px 0 14px 24px;
+  border-left: 1px solid rgba(212,175,55,.18);
+}
+
+nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child b {
+  color: var(--paper);
+  letter-spacing: -.02em;
+}
+
+nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child .btn-pro {
+  padding: 12px 17px;
+  box-shadow: 0 10px 28px rgba(212,175,55,.25), inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child .btn-pro:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+  nav[aria-label='Teams'] + section.card.card-pad {
+    padding: 21px 19px;
+  }
+  nav[aria-label='Teams'] + section.card.card-pad::after {
+    font-size: 34px;
+    top: 18px;
+    right: 14px;
+  }
+  nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+    padding: 15px 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(212,175,55,.18);
+  }
+  nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child > div {
+    text-align: left !important;
+  }
+}
