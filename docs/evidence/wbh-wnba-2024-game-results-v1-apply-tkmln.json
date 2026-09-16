@@ -1,13 +1,14 @@
 {
   "ref": "tkmlnhmylqnttmnsnief",
   "edition_id": "wnba_2024",
-  "status": "complete_postseason_partial_regular_season",
+  "status": "complete_postseason_partial_regular_season_with_cup",
   "semantics": "Canonical score-only game/result facts curated from readable official WNBA/team references. No provider payload bodies are retained; no box scores, play-by-play, player appearances, roster stints, or model inputs are written by this milestone.",
   "source_strategy": {
     "approved_canonical_source": "pbe_curation",
     "official_references": [
       "Indiana Fever official game notes",
       "Las Vegas Aces official game notes",
+      "New York Liberty official game notes",
       "WNBA.com official game summaries"
     ],
     "espn": "prohibited; 0 canonical WBH games",
@@ -19,27 +20,30 @@
     "wbh_wnba_2024_indiana_late_game_results_v1",
     "wbh_wnba_2024_indiana_complete_results_v1",
     "wbh_wnba_2024_aces_results_v1",
-    "wbh_wnba_2024_complete_playoffs_v1"
+    "wbh_wnba_2024_complete_playoffs_v1",
+    "wbh_wnba_2024_liberty_results_v1"
   ],
   "verification": {
-    "edition_games": 98,
-    "regular_games": 76,
+    "edition_games": 132,
+    "regular_games": 109,
+    "commissioners_cup_championship_games": 1,
     "postseason_games": 22,
     "playoff_game_type": 17,
     "finals_game_type": 5,
-    "game_team_rows": 196,
-    "final_status_games": 98,
-    "score_only_games": 98,
-    "overtime_games": 4,
+    "game_team_rows": 264,
+    "final_status_games": 132,
+    "score_only_games": 132,
     "bad_two_team_games": 0,
-    "first_date": "2024-05-14",
-    "last_date": "2024-10-20",
     "indiana_team_games": 42,
     "indiana_regular_games": 40,
     "indiana_playoff_games": 2,
     "las_vegas_team_games": 46,
     "las_vegas_regular_games": 40,
     "las_vegas_playoff_games": 6,
+    "new_york_team_games": 52,
+    "new_york_regular_games": 40,
+    "new_york_cup_games": 1,
+    "new_york_postseason_games": 11,
     "wbh_roster_stints": 0,
     "wbh_player_game_stats": 0,
     "wnba_pbe_relations": 22,
@@ -48,6 +52,7 @@
   },
   "postseason": {
     "complete": true,
+    "postseason_games": 22,
     "first_round_and_semifinal_games": 17,
     "finals_games": 5,
     "finals_game_1": "2024-10-10 MIN 95 at NYL 93, OT",
@@ -56,22 +61,35 @@
     "finals_game_4": "2024-10-18 NYL 80 at MIN 82",
     "finals_game_5": "2024-10-20 MIN 62 at NYL 67, OT"
   },
+  "commissioners_cup": {
+    "stage_id": "wnba_2024_commissioners_cup_final",
+    "complete": true,
+    "game": "2024-06-25 MIN 94 at NYL 89",
+    "counts_for_regular_season_standings": false
+  },
   "dedupe": {
     "policy": "deterministic game id plus exact-or-fail score/classification validation",
     "aces_cross_source_test": {
       "inserted_games": 42,
       "validated_existing_games": 4,
       "disagreements": 0
+    },
+    "liberty_cross_source_test": {
+      "inserted_games": 34,
+      "validated_existing_games": 7,
+      "disagreements": 0
     }
   },
   "coverage_goal": {
     "regular_season_unique_games": 240,
-    "current_unique_regular_games": 76,
+    "current_unique_regular_games": 109,
     "league_regular_season_complete": false,
-    "remaining_unique_regular_games": 164,
+    "remaining_unique_regular_games": 131,
     "postseason_unique_games": 22,
     "current_unique_postseason_games": 22,
     "league_postseason_complete": true,
+    "commissioners_cup_championship_unique_games": 1,
+    "current_commissioners_cup_championship_games": 1,
     "next_method": "continue team-by-team official notes/summaries; deterministic game IDs turn overlap into validation rather than duplicates"
   }
 }
