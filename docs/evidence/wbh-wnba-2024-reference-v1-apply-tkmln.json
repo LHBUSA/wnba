@@ -1,0 +1,85 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "verified_at_db": "2026-09-16T10:01:11.064158Z",
+  "manifest": "data/wbh/manifests/wnba-2024-reference-v1.json",
+  "manifest_commit": "c7db12066577821aee39f9e4640cb9b0f4f2f629",
+  "migration": "supabase/migrations/20260916101500_wbh_wnba_2024_reference_v1.sql",
+  "migration_commit": "7f0d43be0db44f7901b06f71c88e04007d11369a",
+  "supabase_migration_version": "20260916100054",
+  "supabase_migration_name": "wbh_wnba_2024_reference_v1",
+  "verification": {
+    "edition": {
+      "edition_id": "wnba_2024",
+      "competition_id": "wnba",
+      "season_label": "2024",
+      "season_year": 2024,
+      "start_date": "2024-05-14",
+      "end_date": "2024-10-20",
+      "team_count": 12,
+      "status": "complete",
+      "completeness": "partial",
+      "is_synthetic": false
+    },
+    "stages": [
+      {
+        "stage_id": "wnba_2024_regular_season",
+        "display_name": "Regular Season",
+        "season_phase": "regular_season",
+        "ordinal": 10,
+        "is_synthetic": false
+      },
+      {
+        "stage_id": "wnba_2024_playoffs",
+        "display_name": "Playoffs",
+        "season_phase": "playoffs",
+        "ordinal": 20,
+        "is_synthetic": false
+      },
+      {
+        "stage_id": "wnba_2024_finals",
+        "display_name": "WNBA Finals",
+        "season_phase": "final",
+        "ordinal": 30,
+        "is_synthetic": false
+      }
+    ],
+    "team_editions": 12,
+    "franchises": 12,
+    "teams": 12,
+    "persons": 0,
+    "games": 0,
+    "pbe_relations": 22,
+    "ingestion_run": {
+      "source_id": "pbe_curation",
+      "adapter_id": "manual_manifest",
+      "adapter_version": "1.0.0",
+      "transformation_version": "wbh_reference_v1",
+      "mode": "ingest",
+      "status": "ok",
+      "is_synthetic": false,
+      "counts": {
+        "organizations": 1,
+        "competitions": 1,
+        "editions": 1,
+        "stages": 3,
+        "franchises": 12,
+        "teams": 12,
+        "team_editions": 12
+      }
+    }
+  },
+  "teams": [
+    "Atlanta Dream",
+    "Chicago Sky",
+    "Connecticut Sun",
+    "Dallas Wings",
+    "Indiana Fever",
+    "Las Vegas Aces",
+    "Los Angeles Sparks",
+    "Minnesota Lynx",
+    "New York Liberty",
+    "Phoenix Mercury",
+    "Seattle Storm",
+    "Washington Mystics"
+  ]
+}
