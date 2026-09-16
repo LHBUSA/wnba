@@ -16,8 +16,8 @@ const IDLE_POLL_MS = 120000;
 
 // The shared international directory predates curated historical coverage and
 // appends "coverage coming" to every non-live competition. For the browser view
-// only, suppress that legacy label when a verified historical archive exists.
-// The Worker registry still truthfully reports coverage='historical'.
+// only, replace that legacy state with the verified archive summary. The Worker
+// registry still truthfully distinguishes historical coverage from a live feed.
 function homeViewModel(data) {
   if (!data?.home?.ok) return data;
   return {
@@ -26,9 +26,12 @@ function homeViewModel(data) {
       ...data.home,
       data: {
         ...data.home.data,
-        competitions: (data.home.data.competitions || []).map((c) =>
-          internationalHistoryFor(c.competition_id) ? { ...c, coverage: 'full' } : c
-        )
+        competitions: (data.home.data.competitions || []).map((c) => {
+          const archive = internationalHistoryFor(c.competition_id);
+          return archive
+            ? { ...c, coverage: 'full', status: `historical · ${archive.champion} champion` }
+            : c;
+        })
       }
     }
   };
@@ -58,8 +61,8 @@ export async function mount(root, ctx) {
       live = Boolean(data.ov?.data?.scoreboard?.live?.length);
       if (first && data.ov?.ok) ctx.setMeta(routeMeta(id, { path: ctx.path, params: ctx.params, data: data.ov.data }));
       const comp = data.ov?.data?.competition;
-      const history = comp ? internationalHistoryFor(comp.competition_id) : null;
-      body = history && !data.ov?.data?.scoreboard ? historicalCompetitionView(comp, history) : competitionView(data);
+      const archive = comp ? internationalHistoryFor(comp.competition_id) : null;
+      body = archive && !data.ov?.data?.scoreboard ? historicalCompetitionView(comp, archive) : competitionView(data);
     } else if (id === 'intl-game') {
       const data = await loadIntlGame(api, ctx.params.gameId);
       live = data.res?.data?.game?.status === 'live';
