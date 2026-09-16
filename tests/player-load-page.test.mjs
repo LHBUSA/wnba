@@ -8,8 +8,9 @@ const view = fs.readFileSync(new URL('../src/views/player-load.js', import.meta.
 test('Player Load never falls back to a warming-up blank page', () => {
   assert.ok(!page.includes('Player Load is warming up'));
   assert.match(page, /playerLoadExplainer/);
-  assert.match(page, /Live board temporarily unavailable/);
   assert.match(page, /Methodology available below/);
+  assert.match(view, /Live board temporarily unavailable/);
+  assert.match(view, /No substitute or guessed player values are shown/);
 });
 
 test('Player Load explainer documents meaning, inputs, bands and limits', () => {
