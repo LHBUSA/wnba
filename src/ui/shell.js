@@ -3,7 +3,7 @@ import { NETWORK, CURRENT_SPORT } from './network.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-16.4';
+export const SHELL_REV = '2026-09-16.5';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -20,6 +20,7 @@ export const PRIMARY_NAV = [
 ];
 export const SECONDARY_NAV = [
   ['players', '/players', 'Players'],
+  ['player-load', '/player-load', 'Player Load'],
   ['history', '/history', 'History'],
   ['standings', '/standings', 'Standings'],
   ['stats', '/stats', 'Stats'],
@@ -89,7 +90,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <div class="foot-pro-copy">
             <span class="foot-kicker">WNBA PRO · PROPBETEDGE INTELLIGENCE</span>
             <h3>Go deeper than the box score.</h3>
-            <p>Live PBE Picks, matchup intelligence, model context and a permanent track record — built for people who want the research layer behind every game.</p>
+            <p>Live PBE Picks, Player Load Intelligence, matchup research, model context and a permanent track record — built for people who want the research layer behind every game.</p>
           </div>
           <a class="foot-pro-cta" href="/pro">Get WNBA Pro <span aria-hidden="true">→</span></a>
         </section>
@@ -107,6 +108,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <ul>
             <li><a href="/">Today</a></li>
             <li><a href="/pbe-picks">PBE Picks <span class="foot-pro-mini">PRO</span></a></li>
+            <li><a href="/player-load">Player Load <span class="foot-pro-mini">PRO</span></a></li>
             <li><a href="/cast">WNBACast</a></li>
             <li><a href="/matchups">Matchups</a></li>
             <li><a href="/news">News</a></li>
