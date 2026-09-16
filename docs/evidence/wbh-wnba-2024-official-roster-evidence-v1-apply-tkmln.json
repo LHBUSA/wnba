@@ -1,7 +1,7 @@
 {
   "ref": "tkmlnhmylqnttmnsnief",
   "edition_id": "wnba_2024",
-  "semantics": "Official-source roster observations only; these rows do not populate appearance-derived wbh_roster_stints.",
+  "semantics": "Team-issued roster observations only; direct team pages/game notes are preferred, with Indiana and Dallas team news releases accessed through an archival syndication. These rows are source evidence and do not populate appearance-derived wbh_roster_stints.",
   "table": "public.wbh_season_roster_evidence",
   "applied_migrations": [
     "wbh_season_roster_evidence_v1",
@@ -10,23 +10,35 @@
     "wbh_wnba_2024_atlanta_roster_evidence_v1",
     "wbh_wnba_2024_phoenix_roster_evidence_v1",
     "wbh_wnba_2024_los_angeles_roster_evidence_v1",
-    "wbh_wnba_2024_connecticut_roster_evidence_v1"
+    "wbh_wnba_2024_connecticut_roster_evidence_v1",
+    "wbh_wnba_2024_chicago_roster_evidence_v1",
+    "wbh_wnba_2024_indiana_roster_evidence_v1",
+    "wbh_wnba_2024_minnesota_roster_evidence_v1",
+    "wbh_wnba_2024_washington_roster_evidence_v1",
+    "wbh_wnba_2024_dallas_roster_evidence_v1"
   ],
   "verification": {
-    "rows": 83,
-    "linked": 82,
-    "conflict": 1,
+    "rows": 144,
+    "linked": 141,
+    "conflict": 3,
     "unresolved": 0,
-    "teams_covered": 7,
+    "distinct_linked_people": 138,
+    "teams_covered": 12,
     "teams_total": 12,
+    "all_evidence_runs_ok": true,
     "by_team": {
-      "Atlanta Dream": 12,
-      "Connecticut Sun": 12,
-      "Las Vegas Aces": 12,
-      "Los Angeles Sparks": 14,
-      "New York Liberty": 11,
-      "Phoenix Mercury": 11,
-      "Seattle Storm": 11
+      "Atlanta Dream": {"rows": 12, "linked": 12, "conflict": 0, "unresolved": 0},
+      "Chicago Sky": {"rows": 12, "linked": 11, "conflict": 1, "unresolved": 0},
+      "Connecticut Sun": {"rows": 12, "linked": 12, "conflict": 0, "unresolved": 0},
+      "Dallas Wings": {"rows": 11, "linked": 10, "conflict": 1, "unresolved": 0},
+      "Indiana Fever": {"rows": 13, "linked": 13, "conflict": 0, "unresolved": 0},
+      "Las Vegas Aces": {"rows": 12, "linked": 11, "conflict": 1, "unresolved": 0},
+      "Los Angeles Sparks": {"rows": 14, "linked": 14, "conflict": 0, "unresolved": 0},
+      "Minnesota Lynx": {"rows": 13, "linked": 13, "conflict": 0, "unresolved": 0},
+      "New York Liberty": {"rows": 11, "linked": 11, "conflict": 0, "unresolved": 0},
+      "Phoenix Mercury": {"rows": 11, "linked": 11, "conflict": 0, "unresolved": 0},
+      "Seattle Storm": {"rows": 11, "linked": 11, "conflict": 0, "unresolved": 0},
+      "Washington Mystics": {"rows": 12, "linked": 12, "conflict": 0, "unresolved": 0}
     },
     "wbh_roster_stints": 0,
     "wbh_games": 0,
@@ -88,21 +100,76 @@
       "publisher": "Connecticut Sun",
       "url": "https://cdn.wnba.com/sites/1611661330/2024/08/Game-26-at-ATL.pdf",
       "rows": 12
+    },
+    {
+      "team": "Chicago Sky",
+      "effective_on": "2024-05-18",
+      "kind": "dated_roster",
+      "publisher": "Chicago Sky",
+      "url": "https://cdn.wnba.com/sites/1611661329/2024/05/CHI-GAME-NOTES-518.pdf",
+      "rows": 12
+    },
+    {
+      "team": "Indiana Fever",
+      "effective_on": "2024-05-13",
+      "kind": "opening_roster",
+      "publisher": "Indiana Fever News Release / OurSports Central archive",
+      "url": "https://www.oursportscentral.com/services/releases/indiana-fever-announce-2024-opening-night-roster/n-6093821",
+      "rows": 13
+    },
+    {
+      "team": "Minnesota Lynx",
+      "effective_on": "2024-05-13",
+      "kind": "opening_roster",
+      "publisher": "Minnesota Lynx",
+      "url": "https://lynx.wnba.com/news/minnesota-lynx-finalize-2024-roster",
+      "rows": 13
+    },
+    {
+      "team": "Washington Mystics",
+      "effective_on": "2024-05-19",
+      "kind": "dated_roster",
+      "publisher": "Washington Mystics",
+      "url": "https://cdn.wnba.com/sites/1611661322/2024/05/WAS.SEA-05.19.24-1.pdf",
+      "rows": 12
+    },
+    {
+      "team": "Dallas Wings",
+      "effective_on": "2024-05-12",
+      "kind": "opening_roster",
+      "publisher": "Dallas Wings News Release / OurSports Central archive",
+      "url": "https://www.oursportscentral.com/services/releases/dallas-wings-waive-veronica-burton/n-6093449",
+      "rows": 11
     }
   ],
   "identity_review": [
     {
       "source_player_name": "Tiffany Hayes",
+      "team": "Las Vegas Aces",
       "candidate_person_id": "gp_8QTWA540X83F",
       "status": "conflict",
-      "reason": "Official Aces game notes list DOB 1989-08-20 while the current Wikidata-backed canonical record lists 1989-09-20; no automatic identity decision was made."
+      "source_birth_date": "1989-08-20",
+      "canonical_birth_date": "1989-09-20",
+      "reason": "Official Aces game notes and the current Wikidata-backed canonical record disagree on DOB; no automatic correction was made."
+    },
+    {
+      "source_player_name": "Diamond DeShields",
+      "team": "Chicago Sky",
+      "candidate_person_id": "gp_YXRG5F81147F",
+      "status": "conflict",
+      "source_birth_date": "1996-08-01",
+      "canonical_birth_date": "1995-03-05",
+      "reason": "Official Chicago game notes and the current Wikidata-backed canonical record disagree on DOB; no automatic correction was made."
+    },
+    {
+      "source_player_name": "Stephanie Soares",
+      "team": "Dallas Wings",
+      "candidate_person_id": "gp_26XNYNAPEQXC",
+      "status": "conflict",
+      "source_birth_date": "2000-09-17",
+      "canonical_birth_date": "2000-04-17",
+      "reason": "Dallas Wings news release and the current Wikidata-backed canonical record disagree on DOB; no automatic correction was made."
     }
   ],
-  "remaining_teams": [
-    "Chicago Sky",
-    "Dallas Wings",
-    "Indiana Fever",
-    "Minnesota Lynx",
-    "Washington Mystics"
-  ]
+  "remaining_teams": []
 }
