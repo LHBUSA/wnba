@@ -1,16 +1,17 @@
 import { html, render, raw } from '../lib/dom.js';
 import { api } from '../data/api.js';
 import { pageHead, sourceLine, empty, errorState, skeleton, avatar } from '../ui/components.js';
+import { propEdgeSection } from '../ui/prop-edge.js';
 import { currentState } from '../data/freshness.js';
 import { teamLogo } from '../ui/logo.js';
 import { american, bookName, fmtDateTimeET, fmtTimeET, fmtDateET, pct, plural } from '../lib/format.js';
 import { sparkline } from '../ui/charts.js';
 
-export const title = () => 'Props & best line';
-export const description = () => 'WNBA best-line board: sportsbook prices and no-vig market consensus with source, book and capture-time context.';
+export const title = () => 'Props & PBE Prop Edge';
+export const description = () => 'WNBA player props, best sportsbook prices, no-vig market consensus and WNBA Pro PBE Prop Edge model intelligence.';
 
 const MARKET_LABEL = { player_points: 'Points', player_rebounds: 'Rebounds', player_assists: 'Assists', player_threes: '3-pointers made' };
-const SUB = 'The best price a sportsbook offers and the market’s no-vig consensus, clearly separated and timestamped.';
+const SUB = 'Real player-prop markets first. WNBA Pro adds independent PBE projections, model probabilities and transparent model-vs-market disagreement.';
 
 /** Handicap/total lines print as published: no forced decimals, explicit sign on spreads. */
 const sline = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : `${Number(v) > 0 ? '+' : ''}${Number(v)}`);
@@ -39,8 +40,8 @@ function spreadMove(hist) {
 }
 
 export async function mount(root, ctx) {
-  render(root, html`${pageHead({ eyebrow: 'Props · Best line', title: 'Best line board', sub: SUB })}${skeleton(44)}${skeleton(260)}`);
-  const [odds, props, teams] = await Promise.all([api.odds(), api.props(), api.teams()]);
+  render(root, html`${pageHead({ eyebrow: 'Props · PBE Prop Edge', title: 'Player props intelligence', sub: SUB })}${skeleton(44)}${skeleton(260)}`);
+  const [odds, props, teams, account, edge] = await Promise.all([api.odds(), api.props(), api.teams(), api.account(), api.propEdge()]);
   if (!ctx.isCurrent()) return;
   const tIdx = new Map((teams.ok ? teams.data.teams : []).map((t) => [t.team_id, t]));
   const events = (odds.ok ? odds.data.events || [] : []).slice().sort((a, b) => a.commence_time.localeCompare(b.commence_time));
@@ -53,6 +54,7 @@ export async function mount(root, ctx) {
   const readRail = html`<div class="read-rail" aria-label="How to read this board">
     <span class="rk rk-best" tabindex="0"><b>Best price</b><span>sportsbook offer</span><span class="rk-tip">The best number any book in this snapshot posts for that side, with the book named.</span></span>
     <span class="rk rk-cons" tabindex="0"><b>Consensus</b><span>no-vig market benchmark</span><span class="rk-tip">Median no-vig probability across books (two or more), computed from the prices in the stored snapshot.</span></span>
+    <a class="rk rk-pbe" href="#pbe-prop-edge"><b>PBE Prop Edge</b><span>independent model · WNBA Pro</span><span class="rk-tip">Projection first, market comparison second. Tracking beta until historical validation is complete.</span></a>
   </div>`;
 
   const snapRail = (meta, capturedAt, extra = '') => html`<div class="snap-rail">
@@ -145,7 +147,7 @@ export async function mount(root, ctx) {
   // ---------------------------------------------------------------- render
 
   render(root, html`
-    ${pageHead({ eyebrow: 'Props · Best line', title: 'Best line board', sub: SUB })}
+    ${pageHead({ eyebrow: 'Props · PBE Prop Edge', title: 'Player props intelligence', sub: SUB })}
     ${readRail}
 
     <section class="section">
@@ -175,5 +177,7 @@ export async function mount(root, ctx) {
           <div class="board-foot">${sourceLine(props.meta)}<p class="note">Players are joined to rosters by exact name only; an unmatched name is shown as published and never guessed.</p></div>
         </div>`}
     </section>
+
+    ${propEdgeSection({ account, edge })}
   `);
 }
