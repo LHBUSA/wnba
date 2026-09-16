@@ -24,6 +24,7 @@ const PAGES = {
   'news-team': () => import('../pages/news.js'),
   story: () => import('../pages/story.js'),
   article: () => import('../pages/article.js'),
+  history: () => import('../pages/history.js'),
   standings: () => import('../pages/standings.js'),
   stats: () => import('../pages/stats.js'),
   teams: () => import('../pages/teams.js'),
