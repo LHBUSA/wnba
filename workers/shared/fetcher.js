@@ -6,14 +6,24 @@
 //   age, when the provider fails. It never pretends to be current.
 // * ESPN site traffic has two observed hosts. A transport failure or invalid
 //   payload on one gets one failover attempt on the other before we fall back.
+// * ESPN's broad WNBA scoreboard date ranges can return 403 even while team
+//   schedule endpoints remain healthy. When both scoreboard hosts reject a
+//   date range, rebuild that range from the 15 team schedules and de-duplicate
+//   by ESPN event id. No game is invented.
 // * In-isolate coalescing: concurrent identical requests share one fetch.
 
 const inflight = new Map();
 
 const DEFAULT_UA = 'PropBetEdge-WNBA/1.0 (+https://wnba.propbetedge.ai)';
 const ESPN_SITE_HOSTS = Object.freeze(['site.web.api.espn.com', 'site.api.espn.com']);
+const ET_DATE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+});
 
-export async function fetchJsonWithTimeout(url, { timeoutMs = 9000, headers = {} } = {}) {
+async function rawJson(url, { timeoutMs = 9000, headers = {} } = {}) {
   const res = await fetch(url, {
     headers: { 'user-agent': DEFAULT_UA, accept: 'application/json', ...headers },
     signal: AbortSignal.timeout(timeoutMs),
@@ -36,6 +46,114 @@ export async function fetchJsonWithTimeout(url, { timeoutMs = 9000, headers = {}
   }
 }
 
+function rangeRequest(url) {
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  if (!ESPN_SITE_HOSTS.includes(u.hostname) || !u.pathname.endsWith('/scoreboard')) return null;
+  const dates = u.searchParams.get('dates') || '';
+  const m = dates.match(/^(\d{8})-(\d{8})$/);
+  if (!m) return null;
+  return { url: u, from: m[1], to: m[2], season: Number(m[1].slice(0, 4)) };
+}
+
+function eventEtDate(event) {
+  const d = new Date(event?.date || '');
+  if (!Number.isFinite(d.getTime())) return null;
+  return ET_DATE.format(d).replaceAll('-', '');
+}
+
+async function fetchWithHostFailover(url, options) {
+  let lastError = null;
+  for (const candidate of providerCandidates(url)) {
+    try {
+      return await rawJson(candidate, options);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('upstream_unavailable');
+}
+
+async function rebuildScoreboardRangeFromTeamSchedules(request, options) {
+  const root = `${request.url.origin}${request.url.pathname.replace(/\/scoreboard$/, '')}`;
+  const teamsBody = await fetchWithHostFailover(`${root}/teams`, options);
+  const teamIds = [...new Set(
+    (teamsBody?.sports?.[0]?.leagues?.[0]?.teams || [])
+      .map((x) => String(x?.team?.id || ''))
+      .filter(Boolean)
+  )];
+  if (!teamIds.length) throw new Error('schedule_fallback_no_teams');
+
+  const results = await Promise.allSettled(
+    teamIds.map(async (teamId) => ({
+      teamId,
+      body: await fetchWithHostFailover(`${root}/teams/${teamId}/schedule?season=${request.season}`, options)
+    }))
+  );
+
+  const eventMap = new Map();
+  let season = null;
+  let succeeded = 0;
+  const failedTeams = [];
+  for (let i = 0; i < results.length; i += 1) {
+    const row = results[i];
+    if (row.status !== 'fulfilled') {
+      failedTeams.push(teamIds[i]);
+      continue;
+    }
+    succeeded += 1;
+    const body = row.value.body;
+    for (const event of body?.events || []) {
+      const id = String(event?.id || '');
+      const day = eventEtDate(event);
+      if (!id || !day || day < request.from || day > request.to) continue;
+      if (!season && event?.season) season = event.season;
+      const prior = eventMap.get(id);
+      // Team schedule responses describe the same event twice. Prefer the copy
+      // carrying the larger competition payload, otherwise keep first-seen.
+      if (!prior || JSON.stringify(event?.competitions || []).length > JSON.stringify(prior?.competitions || []).length) {
+        eventMap.set(id, event);
+      }
+    }
+  }
+
+  const events = [...eventMap.values()].sort((a, b) => String(a?.date || '').localeCompare(String(b?.date || '')) || String(a?.id || '').localeCompare(String(b?.id || '')));
+  if (!events.length) {
+    const err = new Error('schedule_fallback_empty');
+    err.failed_teams = failedTeams;
+    throw err;
+  }
+
+  return {
+    season: season || { year: request.season },
+    events,
+    pbe_schedule_recovery: {
+      method: 'team_schedules',
+      requested_teams: teamIds.length,
+      succeeded_teams: succeeded,
+      failed_teams: failedTeams,
+      from: request.from,
+      to: request.to
+    }
+  };
+}
+
+export async function fetchJsonWithTimeout(url, { timeoutMs = 9000, headers = {} } = {}) {
+  const options = { timeoutMs, headers };
+  try {
+    return await fetchWithHostFailover(url, options);
+  } catch (e) {
+    const range = rangeRequest(url);
+    if (!range) throw e;
+    try {
+      return await rebuildScoreboardRangeFromTeamSchedules(range, options);
+    } catch (fallbackError) {
+      fallbackError.cause = e;
+      throw fallbackError;
+    }
+  }
+}
+
 function providerCandidates(url) {
   let parsed;
   try { parsed = new URL(url); } catch { return [url]; }
@@ -48,6 +166,9 @@ function providerCandidates(url) {
 
 async function fetchValidatedJson(url, { timeoutMs, validate }) {
   let lastError = null;
+  // fetchJsonWithTimeout already tries the alternate ESPN site host and, for
+  // rejected WNBA date ranges, the team-schedule recovery path. Keep this loop
+  // for non-ESPN providers and backward-compatible behavior.
   for (const candidate of providerCandidates(url)) {
     try {
       const body = await fetchJsonWithTimeout(candidate, { timeoutMs });
