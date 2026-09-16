@@ -118,6 +118,18 @@ export async function mount(root, ctx) {
 
   const propGames = props.ok ? props.data.games || [] : [];
   const propRows = propGames.flatMap((g) => (g.props || []).map((p) => ({ ...p, game: g })));
+  const propErrors = propGames.filter((g) => g.error);
+  const propEmptyState = () => {
+    if (propGames.length) {
+      const gameWord = plural(propGames.length, 'game');
+      const capture = props.data?.captured_at ? ` At the ${fmtDateTimeET(props.data.captured_at)} capture,` : ' At the latest capture,';
+      const detail = propErrors.length
+        ? `${capture} the upstream player-prop request returned no usable tracked markets for ${plural(propErrors.length, 'game')}.`
+        : `${capture} sportsbooks had not posted any of the tracked Points, Rebounds, Assists or 3PM markets yet.`;
+      return empty('Player prop markets not posted yet', `${gameWord} ${propGames.length === 1 ? 'is' : 'are'} already inside the 36-hour capture window.${detail} Player props often open later than game lines as tip approaches. PropBetEdge will not invent placeholder lines; the board populates on the next scheduled capture after real markets appear.`);
+    }
+    return empty('No player props captured yet', 'The latest player-prop snapshot did not contain a game inside the 36-hour capture window. No placeholder lines are shown.');
+  };
 
   const propRow = (p) => html`<tr>
     <td class="pp-who">
@@ -166,7 +178,7 @@ export async function mount(root, ctx) {
 
     <section class="section">
       <div class="sec-head"><h2 class="sec-title">Player props</h2><span class="note">best over/under · no-vig consensus when 2+ books are available</span></div>
-      ${!props.ok ? errorState(props, 'The props snapshot') : !propRows.length ? empty('No player props captured yet', 'Player props are captured for games tipping within 36 hours, at the same 8:00 / 1:00 / 6:00 ET ingest. The next slate is outside that window right now, so there is nothing real to show — no placeholder lines.') : html`
+      ${!props.ok ? errorState(props, 'The props snapshot') : !propRows.length ? propEmptyState() : html`
         ${snapRail(props.meta, props.data.captured_at)}
         <div class="board-shell">
           <table class="board pboard">
