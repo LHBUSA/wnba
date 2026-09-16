@@ -1,0 +1,109 @@
+{
+  "dataset": "wnba_2024_team_wikidata_crosswalk_v1",
+  "scope": "Exact Wikidata QID aliases for the 12 canonical teams in the 2024 WNBA reference slice",
+  "license": "CC0-1.0",
+  "source": "Wikidata structured data",
+  "capture_method": "Manual verification of each exact Wikidata entity page. Each source-document hash covers the normalized capture string defined below rather than raw page HTML.",
+  "capture_format": "wikidata-team-crosswalk-v1|<qid>|<label>|<url>\\n",
+  "identity_method": "exact canonical team label + direct Wikidata entity page review",
+  "tier": "T1",
+  "confidence": 1.0,
+  "teams": [
+    {
+      "team_id": "tm_atlanta_dream",
+      "label": "Atlanta Dream",
+      "qid": "Q756160",
+      "url": "https://www.wikidata.org/wiki/Q756160",
+      "capture_sha256": "3b14d6017b2e48fbb77133db77f84e8be3ee62a44caae39d90a38cc7e6f316b6",
+      "capture_bytes": 87
+    },
+    {
+      "team_id": "tm_chicago_sky",
+      "label": "Chicago Sky",
+      "qid": "Q796358",
+      "url": "https://www.wikidata.org/wiki/Q796358",
+      "capture_sha256": "f0cfa037f40489ee9159107b7177ffbac5b3479834362e47a6f209d47c8fe570",
+      "capture_bytes": 85
+    },
+    {
+      "team_id": "tm_connecticut_sun",
+      "label": "Connecticut Sun",
+      "qid": "Q1126243",
+      "url": "https://www.wikidata.org/wiki/Q1126243",
+      "capture_sha256": "c2f192264f1f524b5d1e1bf791e9d64a81c56dcac3dbe3f7bd1dd16240d42c8c",
+      "capture_bytes": 91
+    },
+    {
+      "team_id": "tm_dallas_wings",
+      "label": "Dallas Wings",
+      "qid": "Q21334944",
+      "url": "https://www.wikidata.org/wiki/Q21334944",
+      "capture_sha256": "b45b98bde7386374361c81d5b1705197dbe91aff24604c55a27adc4ecf72dd1a",
+      "capture_bytes": 90
+    },
+    {
+      "team_id": "tm_indiana_fever",
+      "label": "Indiana Fever",
+      "qid": "Q1631017",
+      "url": "https://www.wikidata.org/wiki/Q1631017",
+      "capture_sha256": "b30d2749a85c1c687157288e51fcfdbe38701ddf2e194eeea52e05968c62ade0",
+      "capture_bytes": 89
+    },
+    {
+      "team_id": "tm_las_vegas_aces",
+      "label": "Las Vegas Aces",
+      "qid": "Q42333021",
+      "url": "https://www.wikidata.org/wiki/Q42333021",
+      "capture_sha256": "bbe64bc80577debcab8785f358254bacbea8abbd8a40c6a384a200ec6c77cdd9",
+      "capture_bytes": 92
+    },
+    {
+      "team_id": "tm_los_angeles_sparks",
+      "label": "Los Angeles Sparks",
+      "qid": "Q1329633",
+      "url": "https://www.wikidata.org/wiki/Q1329633",
+      "capture_sha256": "d773bb641a104c973cf2d0fc360c02a7f3f1e13697c4c4feeab21843fa5a5082",
+      "capture_bytes": 94
+    },
+    {
+      "team_id": "tm_minnesota_lynx",
+      "label": "Minnesota Lynx",
+      "qid": "Q1474850",
+      "url": "https://www.wikidata.org/wiki/Q1474850",
+      "capture_sha256": "878400729b73d6d91695b4d09e1162898c30ccfb56e4f1961b7b34621e97a73e",
+      "capture_bytes": 90
+    },
+    {
+      "team_id": "tm_new_york_liberty",
+      "label": "New York Liberty",
+      "qid": "Q974705",
+      "url": "https://www.wikidata.org/wiki/Q974705",
+      "capture_sha256": "de22e8e1ca26c03f570c34c2907e8580c466861ea0320e8b9fae90f613ace30e",
+      "capture_bytes": 90
+    },
+    {
+      "team_id": "tm_phoenix_mercury",
+      "label": "Phoenix Mercury",
+      "qid": "Q1274643",
+      "url": "https://www.wikidata.org/wiki/Q1274643",
+      "capture_sha256": "4f7d01021c22119014c367d4040ce653b1912e49eb9bdcbf9fc9da9ffaf4f808",
+      "capture_bytes": 91
+    },
+    {
+      "team_id": "tm_seattle_storm",
+      "label": "Seattle Storm",
+      "qid": "Q1544869",
+      "url": "https://www.wikidata.org/wiki/Q1544869",
+      "capture_sha256": "b53225d7adeea7842baffaeea5839591972857463d6c4b8d66bb24cb5a2ae897",
+      "capture_bytes": 89
+    },
+    {
+      "team_id": "tm_washington_mystics",
+      "label": "Washington Mystics",
+      "qid": "Q1465192",
+      "url": "https://www.wikidata.org/wiki/Q1465192",
+      "capture_sha256": "62816a05ea074c1c9c44d933799193855fae413402f2770ce7ec601a3197574e",
+      "capture_bytes": 94
+    }
+  ]
+}
