@@ -22,6 +22,17 @@ export const INTELLIGENCE_FEATURES = Object.freeze([
     pitch: 'Turns every PBE call into a living research file instead of a flat prediction.'
   },
   {
+    id: 'prop-edge',
+    routeId: 'props',
+    name: 'PBE Prop Edge',
+    tier: 'pro',
+    href: '/props#pbe-prop-edge',
+    badge: 'PRO',
+    eyebrow: 'Player prop intelligence',
+    short: 'Independent player projections, Over/Under probabilities, market disagreement, Player Load context and transparent drivers for Points, Rebounds, Assists and 3PM.',
+    pitch: 'Turns the public player-prop market board into a model-vs-market research surface for WNBA Pro.'
+  },
+  {
     id: 'rotation-impact',
     routeId: 'rotation-impact',
     name: 'Rotation Impact',
