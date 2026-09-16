@@ -67,3 +67,45 @@ test('successful provider reads persist a per-URL last-good copy used after both
     globalThis.fetch = originalFetch;
   }
 });
+
+test('rejected WNBA scoreboard ranges recover from team schedules without duplicate games', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  const game = {
+    id: '401999001',
+    date: '2026-09-17T23:00:00Z',
+    season: { year: 2026, type: 2 },
+    competitions: [{ competitors: [] }]
+  };
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    calls.push(u);
+    if (u.includes('/scoreboard?dates=20260916-20260923')) return new Response('range rejected', { status: 403 });
+    if (u.endsWith('/teams')) {
+      return new Response(JSON.stringify({ sports: [{ leagues: [{ teams: [{ team: { id: '1' } }, { team: { id: '2' } }] }] }] }), { status: 200 });
+    }
+    if (u.includes('/teams/1/schedule?season=2026') || u.includes('/teams/2/schedule?season=2026')) {
+      return new Response(JSON.stringify({ events: [game] }), { status: 200 });
+    }
+    return new Response('unexpected', { status: 500 });
+  };
+
+  try {
+    const result = await cachedJson({
+      url: 'https://site.web.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20260916-20260923&limit=1000',
+      ttlS: 60,
+      validate: (body) => Array.isArray(body?.events)
+    });
+    assert.equal(result.cache, 'network');
+    assert.equal(result.body.events.length, 1);
+    assert.equal(result.body.events[0].id, '401999001');
+    assert.equal(result.body.pbe_schedule_recovery.method, 'team_schedules');
+    assert.equal(result.body.pbe_schedule_recovery.requested_teams, 2);
+    assert.equal(result.body.pbe_schedule_recovery.succeeded_teams, 2);
+    assert.deepEqual(result.body.pbe_schedule_recovery.failed_teams, []);
+    assert.ok(calls.some((u) => u.includes('/teams/1/schedule?season=2026')));
+    assert.ok(calls.some((u) => u.includes('/teams/2/schedule?season=2026')));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
