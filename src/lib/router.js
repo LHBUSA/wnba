@@ -32,6 +32,11 @@ const PAGES = {
   'pbe-picks': () => import('../pages/pbe-picks.js'),
   'pbe-model': () => import('../pages/pbe-model.js'),
   'player-load': () => import('../pages/player-load.js'),
+  'daily-brief': () => import('../pages/daily-brief.js'),
+  'edge-timeline': () => import('../pages/edge-timeline.js'),
+  'rotation-impact': () => import('../pages/rotation-impact.js'),
+  'scenario-lab': () => import('../pages/scenario-lab.js'),
+  watchlist: () => import('../pages/watchlist.js'),
   'track-record': () => import('../pages/track-record.js'),
   pro: () => import('../pages/pro.js'),
   sources: () => import('../pages/sources.js'),
@@ -111,7 +116,6 @@ export function createRouter({ outlet, onRoute }) {
     const my = ++token;
     const { route, params, path } = resolve(location.pathname);
     const query = Object.fromEntries(new URLSearchParams(location.search));
-    // Adopt the server-rendered page only on the first mount, and only for the exact path it was rendered for.
     const adopt = firstMount && outlet.dataset.ssrPath === path && outlet.childElementCount > 0;
     firstMount = false;
     delete outlet.dataset.ssrPath;
@@ -135,7 +139,6 @@ export function createRouter({ outlet, onRoute }) {
       outlet.append(root);
     } else {
       outlet.innerHTML = '';
-      // The published head describes the server-rendered page; client navigations own their metadata.
       document.querySelector('script[data-ld="page"]')?.remove();
       setMeta(routeMeta(route.id, { path, params }));
     }

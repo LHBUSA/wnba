@@ -3,7 +3,7 @@ import { NETWORK, CURRENT_SPORT } from './network.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-16.5';
+export const SHELL_REV = '2026-09-16.6';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -19,6 +19,7 @@ export const PRIMARY_NAV = [
   ['international', '/international', 'International']
 ];
 export const SECONDARY_NAV = [
+  ['daily-brief', '/brief', 'Daily Brief · FREE'],
   ['players', '/players', 'Players'],
   ['player-load', '/player-load', 'Player Load'],
   ['history', '/history', 'History'],
@@ -30,7 +31,7 @@ export const SECONDARY_NAV = [
 export const NAV = [...PRIMARY_NAV, ...SECONDARY_NAV];
 
 /** Route id → the nav group it lights up (sub-pages highlight their section). */
-export const NAV_GROUP = { 'pbe-model': 'pbe-picks', player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'news-team': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' };
+export const NAV_GROUP = { 'pbe-model': 'pbe-picks', 'edge-timeline': 'pbe-picks', 'rotation-impact': 'pbe-picks', 'scenario-lab': 'pbe-picks', watchlist: 'pbe-picks', player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'news-team': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' };
 
 const ICON = {
   today: '<path d="M4 5h16v15H4zM4 9h16M9 3v4M15 3v4" />',
@@ -89,8 +90,8 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         <section class="foot-pro-panel" aria-label="WNBA Pro">
           <div class="foot-pro-copy">
             <span class="foot-kicker">WNBA PRO · PROPBETEDGE INTELLIGENCE</span>
-            <h3>Go deeper than the box score.</h3>
-            <p>Live PBE Picks, Player Load Intelligence, matchup research, model context and a permanent track record — built for people who want the research layer behind every game.</p>
+            <h3>One call. A full intelligence stack.</h3>
+            <p>PBE Picks, Edge Timeline, Player Load, Rotation Impact, Scenario Lab, Watchlist, matchup research and a permanent track record — one WNBA Pro entitlement.</p>
           </div>
           <a class="foot-pro-cta" href="/pro">Get WNBA Pro <span aria-hidden="true">→</span></a>
         </section>
@@ -106,13 +107,13 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         <div class="foot-col">
           <h4>WNBA Intelligence</h4>
           <ul>
-            <li><a href="/">Today</a></li>
+            <li><a href="/brief">Daily Brief <span class="foot-pro-mini">FREE</span></a></li>
             <li><a href="/pbe-picks">PBE Picks <span class="foot-pro-mini">PRO</span></a></li>
+            <li><a href="/edge-timeline">Edge Timeline <span class="foot-pro-mini">PRO</span></a></li>
             <li><a href="/player-load">Player Load <span class="foot-pro-mini">PRO</span></a></li>
-            <li><a href="/cast">WNBACast</a></li>
-            <li><a href="/matchups">Matchups</a></li>
-            <li><a href="/news">News</a></li>
-            <li><a href="/history">WNBA History</a></li>
+            <li><a href="/rotation-impact">Rotation Impact <span class="foot-pro-mini">PRO</span></a></li>
+            <li><a href="/scenario-lab">Scenario Lab <span class="foot-pro-mini">PRO</span></a></li>
+            <li><a href="/watchlist">Watchlist <span class="foot-pro-mini">PRO</span></a></li>
             <li><a href="/track-record">Track Record</a></li>
           </ul>
         </div>
@@ -120,11 +121,13 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         <div class="foot-col">
           <h4>Research &amp; Trust</h4>
           <ul>
-            <li><a href="/methodology">Methodology</a></li>
+            <li><a href="/matchups">Matchups</a></li>
+            <li><a href="/injuries">Availability</a></li>
+            <li><a href="/pbe-picks/model">PBE methodology</a></li>
+            <li><a href="/methodology">Data methodology</a></li>
             <li><a href="/about">About the newsroom</a></li>
             <li><a href="/editorial-policy">Editorial policy</a></li>
             <li><a href="/corrections">Corrections &amp; revisions</a></li>
-            <li><a href="/rss.xml">Newsroom RSS</a></li>
           </ul>
         </div>
 
@@ -192,7 +195,6 @@ export function mountShell(root) {
     drawer.setAttribute('aria-hidden', String(!v));
     root.querySelectorAll('[data-menu]').forEach((b) => b.setAttribute('aria-expanded', String(v)));
   };
-  // Desktop "More" disclosure: click to toggle, Escape or an outside click closes, choosing a link closes.
   const moreBtn = root.querySelector('[data-more]');
   const moreMenu = root.querySelector('#nav-more-menu');
   const setMore = (v, { focusButton = false } = {}) => {
@@ -215,7 +217,6 @@ export function mountShell(root) {
     if (moreBtn?.getAttribute('aria-expanded') === 'true') setMore(false, { focusButton: true });
     open(false);
   });
-  // Keyboard users who tab out of the open menu leave it closed behind them.
   root.querySelector('[data-more-wrap]')?.addEventListener('focusout', (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setMore(false); });
 
   return {
@@ -226,7 +227,6 @@ export function mountShell(root) {
         if (a.dataset.nav === group) a.setAttribute('aria-current', 'page');
         else a.removeAttribute('aria-current');
       });
-      // A destination inside "More" lights up the More control itself.
       moreBtn?.classList.toggle('on', SECONDARY_NAV.some(([navId]) => navId === group));
     }
   };

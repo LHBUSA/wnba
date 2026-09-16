@@ -16,7 +16,7 @@ import { pbePicksPublicView } from '../views/pbe-picks-public.js';
 export const title = () => 'PBE Picks';
 export const description = () => 'PBE WNBA intelligence: independent win probabilities, de-vigged market comparison, model-market disagreement, confidence, driver-by-driver reasoning, matchup research and a permanent locked track record.';
 
-const LINKS = html`<div class="pbe-links"><a class="pill" href="/track-record">Track Record</a><a class="pill" href="/player-load">Player Load</a><a class="pill" href="/pbe-picks/model">How the Model Works</a></div>`;
+const LINKS = html`<div class="pbe-links"><a class="pill" href="/edge-timeline">Edge Timeline</a><a class="pill" href="/scenario-lab">Scenario Lab</a><a class="pill" href="/rotation-impact">Rotation Impact</a><a class="pill" href="/watchlist">Watchlist</a><a class="pill" href="/track-record">Track Record</a><a class="pill" href="/player-load">Player Load</a><a class="pill" href="/pbe-picks/model">How the Model Works</a></div>`;
 const SUB = 'The flagship WNBA Pro research board. Model probability first; market benchmark beside it; real drivers, opposing factors, team intelligence and matchup research underneath. Calls lock 15 minutes before tip.';
 const pc = (x) => Number.isFinite(x) ? `${(x * 100).toFixed(1)}%` : '—';
 const n3 = (x) => Number.isFinite(x) ? x.toFixed(3) : '—';
@@ -85,7 +85,7 @@ function commandCenter(all, status, track, generatedAt) {
 
   return html`<section class="pbe-command">
     <div class="pbe-command-top">
-      <div><span class="eyebrow">PBE Command Center</span><h2>Every call should open into research.</h2><p>Use the model as the first layer, not the last click. Open either team, the full matchup, Player Load and availability from every call. Market consensus stays separate from the model so disagreement is visible instead of blended away.</p></div>
+      <div><span class="eyebrow">PBE Command Center</span><h2>Every call should open into research.</h2><p>Use the model as the first layer, not the last click. Open the observation timeline, scenario paths, rotation pressure, either team, the full matchup, Player Load and availability from the same call. Market consensus stays separate from the model so disagreement is visible instead of blended away.</p></div>
       <span class="pbe-command-badge">${generatedAt ? `BOARD UPDATED ${fmtTimeET(generatedAt)}` : 'LIVE WNBA PRO'}</span>
     </div>
     <div class="pbe-command-tiles">
@@ -96,11 +96,16 @@ function commandCenter(all, status, track, generatedAt) {
       <div><span>Live record</span><b>${record ? `${record.wins}-${record.losses}` : '—'}</b><small>${record ? `${record.pending} pending · ${record.graded} graded` : 'official ledger'}</small></div>
     </div>
     <div class="pbe-command-links">
+      <a href="/edge-timeline"><b>PBE Edge Timeline</b><span>First read → latest → lock</span></a>
+      <a href="/scenario-lab"><b>Scenario Lab</b><span>Base · support · counter · market</span></a>
+      <a href="/rotation-impact"><b>Rotation Impact</b><span>Availability · workload · opportunity</span></a>
+      <a href="/watchlist"><b>Watchlist & Live Alerts</b><span>Your teams · one signal board</span></a>
       <a href="/player-load"><b>Player Load Intelligence</b><span>Workload · density · turnaround</span></a>
       <a href="/matchups"><b>Matchup Research</b><span>Form · rest · rotations</span></a>
       <a href="/injuries"><b>Availability</b><span>Sourced injury context</span></a>
       <a href="/track-record"><b>Track Record</b><span>Every official locked call</span></a>
       <a href="/pbe-picks/model"><b>Model Lab</b><span>Validation · methodology · limits</span></a>
+      <a href="/brief"><b>Free Daily Brief</b><span>Public funnel · slate · coverage · changes</span></a>
     </div>
     <div class="pbe-truth-panel">
       <div><b>Board signal</b><p>${biggest && picked ? `Largest current model-market disagreement: ${teamName(picked)} ${edge(biggest.market.pbe_edge_pts)}. This is disagreement with the de-vigged market, not a guaranteed betting edge.` : 'No current call has a stored multi-book market consensus, so no model-market disagreement is displayed.'}${nextLock ? ` Next pre-lock call freezes at ${fmtTimeET(nextLock.lock_at)}.` : ''}</p></div>
@@ -110,7 +115,7 @@ function commandCenter(all, status, track, generatedAt) {
 }
 
 function researchStack() {
-  return html`<section class="card card-pad section"><span class="eyebrow">WNBA Pro research stack</span><h2 style="margin-top:8px">PBE Picks is the decision layer — not a lonely pick card.</h2><div class="pill-row" style="margin-top:14px"><a class="pill" href="/player-load">Player Load</a><a class="pill" href="/matchups">Matchups</a><a class="pill" href="/injuries">Availability</a><a class="pill" href="/track-record">Track Record</a><a class="pill" href="/pbe-picks/model">Model methodology</a></div></section>`;
+  return html`<section class="card card-pad section"><span class="eyebrow">WNBA Pro research stack</span><h2 style="margin-top:8px">PBE Picks is the decision layer — not a lonely pick card.</h2><div class="pill-row" style="margin-top:14px"><a class="pill" href="/edge-timeline">Edge Timeline</a><a class="pill" href="/scenario-lab">Scenario Lab</a><a class="pill" href="/rotation-impact">Rotation Impact</a><a class="pill" href="/watchlist">Watchlist</a><a class="pill" href="/player-load">Player Load</a><a class="pill" href="/matchups">Matchups</a><a class="pill" href="/injuries">Availability</a><a class="pill" href="/track-record">Track Record</a><a class="pill" href="/pbe-picks/model">Model methodology</a></div></section>`;
 }
 
 function pickTeam(item) {
@@ -129,6 +134,6 @@ function teaserView(cov, acct) {
       <div class="pbe-head"><span class="pbe-eyebrow">Current PBE window</span><span class="pbe-lock">WNBA Pro</span></div>
       <div class="pbe-teaser-body"><b>${published ? 'Live model calls are on the other side of WNBA Pro' : 'PBE model window'}</b><span>The public view shows only covered games and tip times. Probabilities, market disagreement, confidence and reasoning are entitlement-gated.</span></div>
       ${games.length ? html`<div class="pbe-teaser-list">${games.map((g) => html`<div class="pbe-teaser-row"><div class="m"><a href="/teams/${g.away_team_id}">${teamLogo({ team_id: g.away_team_id }, 26)}<span>${teamName({ team_id: g.away_team_id }, { short: true })}</span></a><em class="note">at</em><a href="/teams/${g.home_team_id}"><span>${teamName({ team_id: g.home_team_id }, { short: true })}</span>${teamLogo({ team_id: g.home_team_id }, 26)}</a></div><small><a href="/matchups/${g.game_id}">${fmtDateET(g.scheduled_tip_utc)} · ${fmtTimeET(g.scheduled_tip_utc)} →</a></small></div>`)}</div>` : html`<div class="pbe-empty" style="margin-top:14px">No covered games are in the current public window.</div>`}
-      <a class="btn gold pbe-cta" href="/pro?next=%2Fpbe-picks">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock the full PBE board'}</a>
+      <div class="pbe-public-actions" style="margin-top:14px"><a class="btn gold pbe-cta" href="/pro?next=%2Fpbe-picks">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock the full PBE board'}</a><a class="btn" href="/brief">Read the free Daily Brief</a></div>
     </section>`;
 }

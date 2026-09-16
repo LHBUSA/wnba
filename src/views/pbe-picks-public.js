@@ -14,10 +14,11 @@ export function pbePicksPublicView() {
           <div><b>Independent model</b><span>Pregame team data produces the probability. Sportsbook prices never enter the model.</span></div>
           <div><b>Market beside it</b><span>See the de-vigged market and the exact disagreement instead of hiding the benchmark.</span></div>
           <div><b>Why / why not</b><span>Supporting factors and opposing factors come from the model's real feature contributions.</span></div>
-          <div><b>Frozen track record</b><span>Official calls lock before tip. Wins and losses stay on the board.</span></div>
+          <div><b>Beyond the pick</b><span>Pro opens Edge Timeline, Scenario Lab, Rotation Impact, Player Load and your own Watchlist around the same call.</span></div>
         </div>
         <div class="pbe-public-actions">
           <a class="btn gold" href="/pro?next=%2Fpbe-picks">Unlock WNBA Pro</a>
+          <a class="btn" href="/brief">Read the free Daily Brief</a>
           <a class="btn" href="/track-record">See the live track record</a>
           <a class="sec-link" href="/pbe-picks/model">How the model works →</a>
         </div>
@@ -25,12 +26,13 @@ export function pbePicksPublicView() {
       </div>
       <aside class="pbe-public-preview" aria-label="PBE Picks product preview">
         <span class="pbe-lock-kicker">WNBA PRO</span>
-        <h2>One board. Four layers.</h2>
+        <h2>One call. A full research stack.</h2>
         <ol>
-          <li><b>01</b><span>Model probability</span></li>
-          <li><b>02</b><span>Market consensus</span></li>
-          <li><b>03</b><span>Edge drivers + risks</span></li>
-          <li><b>04</b><span>Locked result ledger</span></li>
+          <li><b>01</b><span>Model probability + reasoning</span></li>
+          <li><b>02</b><span>Market consensus + PBE gap</span></li>
+          <li><b>03</b><span>Edge Timeline + Scenario Lab</span></li>
+          <li><b>04</b><span>Player Load + Rotation Impact</span></li>
+          <li><b>05</b><span>Locked result ledger + Watchlist</span></li>
         </ol>
         <div class="pbe-public-price"><strong>$9.99</strong><span>/month</span><small>or $3.99/week · cancel anytime</small></div>
       </aside>

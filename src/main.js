@@ -9,6 +9,7 @@ import './styles/international.css';
 import './styles/pbe.css';
 import './styles/pbe-flagship.css';
 import './styles/player-load.css';
+import './styles/pro-intelligence.css';
 import './styles/polish.css';
 import { mountShell } from './ui/shell.js';
 import { createRouter } from './lib/router.js';

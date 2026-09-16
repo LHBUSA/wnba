@@ -8,6 +8,9 @@ import { composeDocument } from './render.js';
 import { intlHomeView } from '../../../src/views/international.js';
 import { playerLoadPublicView } from '../../../src/views/player-load.js';
 import { pbePicksPublicView } from '../../../src/views/pbe-picks-public.js';
+import { dailyBriefView } from '../../../src/views/daily-brief.js';
+import { proFeaturePublicView } from '../../../src/views/pro-intelligence.js';
+import { PRO_INTELLIGENCE } from '../../../src/data/pro-features.js';
 import { INTERNATIONAL_HISTORY, internationalHistoryFor, historicalCompetitionView } from '../../../src/views/international-history.js';
 import { historicalCompetitionMeta, historicalCompetitionGraph } from '../../../src/seo/international-history-meta.js';
 import { routeMeta } from '../../../src/seo/meta.js';
@@ -25,6 +28,7 @@ const SECURITY_HEADERS = {
 };
 const SHELL_HOSTS = /^(wnba\.propbetedge\.ai|wnba-[a-z0-9-]+-justins-projects-ad4f4bb7\.vercel\.app)$/;
 const HISTORICAL_ROUTE = /^\/international\/([a-z0-9-]+-\d{4})(?:\/(games|bracket|standings|leaders|teams|players))?$/;
+const PREMIUM_PUBLIC_ROUTES = new Map(PRO_INTELLIGENCE.map((f) => [f.href, f]));
 let shellMemo = { at: 0, host: '', html: '' };
 
 const respond = (body, status, headers = {}) => new Response(body, { status, headers: { ...SECURITY_HEADERS, ...headers } });
@@ -57,10 +61,7 @@ async function historicalHome(request, env) {
 
 async function pbePicksLanding(request) {
   const seed = routeMeta('pbe-picks', { path: '/pbe-picks' });
-  const meta = {
-    ...seed,
-    description: 'PBE WNBA intelligence: independent win probabilities, de-vigged market comparison, model-market disagreement, confidence, driver-by-driver reasoning, matchup research and a permanent locked track record.'
-  };
+  const meta = { ...seed, description: 'PBE WNBA intelligence: independent win probabilities, de-vigged market comparison, model-market disagreement, confidence, driver-by-driver reasoning, matchup research and a permanent locked track record.' };
   const page = { status: 200, route: 'pbe-picks', meta, main: String(pbePicksPublicView()), graph: pageGraph('pbe-picks', meta, {}) };
   const shell = await loadShell(publicHost(request));
   return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 pbe-picks-public' });
@@ -72,6 +73,24 @@ async function playerLoadLanding(request) {
   const page = { status: 200, route: 'player-load', meta, main: String(playerLoadPublicView()), graph: null };
   const shell = await loadShell(publicHost(request));
   return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 player-load-public' });
+}
+
+async function dailyBriefLanding(request, env) {
+  const api = bindingApi(env, { timeoutMs: 12000 });
+  const [today, coverage, track, injuries, teams] = await Promise.all([api.today(), api.pbeCoverage(), api.trackRecord(), api.injuries(), api.teams()]);
+  const seed = routeMeta('pro', { path: '/brief' });
+  const meta = { ...seed, path: '/brief', url: `${SITE}/brief`, title: 'Free WNBA Daily Brief: Slate, PBE Coverage & Availability | PropBetEdge', description: 'A free WNBA intelligence brief with the current slate, PBE coverage window, sourced availability movement and the public PBE track record.' };
+  const page = { status: 200, route: 'daily-brief', meta, main: String(dailyBriefView({ today, coverage, track, injuries, teams, generatedAt: new Date().toISOString() })), graph: null };
+  const shell = await loadShell(publicHost(request));
+  return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 daily-brief' });
+}
+
+async function premiumLanding(request, feature) {
+  const seed = routeMeta('pro', { path: feature.href });
+  const meta = { ...seed, path: feature.href, url: `${SITE}${feature.href}`, title: `${feature.name} | WNBA Pro | PropBetEdge`, description: feature.short };
+  const page = { status: 200, route: feature.routeId, meta, main: String(proFeaturePublicView(feature)), graph: null };
+  const shell = await loadShell(publicHost(request));
+  return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': `wnba-web/1.0.0 ${feature.routeId}-public` });
 }
 
 async function historicalCompetition(request, slug, section) {
@@ -90,7 +109,7 @@ async function sitemapWithArchives(request, env, ctx) {
   if (!base.ok) return base;
   const text = await base.text();
   if (!text.includes('</urlset>')) return new Response(text, { status: base.status, headers: base.headers });
-  const urls = [`${SITE}/pbe-picks`, `${SITE}/player-load`, ...COMPETITIONS.filter((c) => INTERNATIONAL_HISTORY[c.competition_id]).map((c) => `${SITE}/international/${c.slug}`)]
+  const urls = [`${SITE}/pbe-picks`, `${SITE}/player-load`, `${SITE}/brief`, ...PRO_INTELLIGENCE.map((f) => `${SITE}${f.href}`), ...COMPETITIONS.filter((c) => INTERNATIONAL_HISTORY[c.competition_id]).map((c) => `${SITE}/international/${c.slug}`)]
     .filter((u) => !text.includes(`<loc>${u}</loc>`));
   const rows = urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n');
   const body = text.replace('</urlset>', `${rows ? `${rows}\n` : ''}</urlset>`);
@@ -105,6 +124,12 @@ export default {
     }
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/player-load') {
       try { return await playerLoadLanding(request); } catch (e) { console.error('player load landing failed', e?.stack || e); }
+    }
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/brief') {
+      try { return await dailyBriefLanding(request, env); } catch (e) { console.error('daily brief landing failed', e?.stack || e); }
+    }
+    if ((request.method === 'GET' || request.method === 'HEAD') && PREMIUM_PUBLIC_ROUTES.has(url.pathname)) {
+      try { return await premiumLanding(request, PREMIUM_PUBLIC_ROUTES.get(url.pathname)); } catch (e) { console.error('premium landing failed', url.pathname, e?.stack || e); }
     }
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/international') {
       try { return await historicalHome(request, env); } catch (e) { console.error('historical home failed', e?.stack || e); }

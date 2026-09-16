@@ -43,6 +43,8 @@ export function bindingApi(env, { timeoutMs = 9000 } = {}) {
     statsPlayers: () => A('/v1/stats/players'),
     statsTeams: () => A('/v1/stats/teams'),
     props: () => A('/v1/props'),
+    pbeCoverage: () => A('/v1/pbe/coverage'),
+    trackRecord: () => A('/v1/track-record'),
     news: (p) => N(`/v1/news${qs(p)}`),
     articles: (p) => N(`/v1/articles${qs(p)}`),
     article: (slug) => N(`/v1/articles/${encodeURIComponent(slug)}`),
