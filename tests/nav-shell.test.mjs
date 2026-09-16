@@ -21,7 +21,7 @@ test('primary desktop nav keeps only the highest-frequency destinations', () => 
 });
 
 test('secondary destinations live inside one accessible More disclosure', () => {
-  assert.deepEqual(SECONDARY_NAV.map(([, , l]) => l), ['Players', 'Player Load', 'History', 'Standings', 'Stats', 'Teams', 'Track Record']);
+  assert.deepEqual(SECONDARY_NAV.map(([, , l]) => l), ['Daily Brief · FREE', 'Players', 'Player Load', 'History', 'Standings', 'Stats', 'Teams', 'Track Record']);
   assert.match(navBlock, /<button class="nav-more-btn" type="button" aria-expanded="false" aria-controls="nav-more-menu" data-more>/);
   assert.match(navBlock, /id="nav-more-menu" hidden>/, 'menu starts closed');
   for (const [id, href] of SECONDARY_NAV) assert.ok(moreMenu.includes(`<a href="${href}" data-nav="${id}">`), `${href} in More menu`);
@@ -39,6 +39,10 @@ test('drawer lists every destination plus WNBA Pro; Pro stays outside the nav ro
 test('sub-routes map to their nav group', () => {
   assert.equal(NAV_GROUP.team, 'teams');
   assert.equal(NAV_GROUP.player, 'players');
+  assert.equal(NAV_GROUP['edge-timeline'], 'pbe-picks');
+  assert.equal(NAV_GROUP['rotation-impact'], 'pbe-picks');
+  assert.equal(NAV_GROUP['scenario-lab'], 'pbe-picks');
+  assert.equal(NAV_GROUP.watchlist, 'pbe-picks');
   assert.equal(NAV_GROUP['intl-competition'], 'international');
   assert.equal(NAV_GROUP['world-cup'], 'international');
 });
