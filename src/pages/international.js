@@ -6,6 +6,7 @@ import { skeleton } from '../ui/components.js';
 import { createPoller } from '../lib/poller.js';
 import { attachPbp } from '../ui/pbp.js';
 import { routeMeta } from '../seo/meta.js';
+import { historicalCompetitionMeta } from '../seo/international-history-meta.js';
 import { loadIntlHome, intlHomeView, loadCompetition, competitionView, loadIntlGame, intlGameView, loadNationalTeam, nationalTeamView, loadIntlPlayer, intlPlayerView, playerHref } from '../views/international.js';
 import { internationalHistoryFor, historicalCompetitionView } from '../views/international-history.js';
 
@@ -59,9 +60,17 @@ export async function mount(root, ctx) {
     } else if (id === 'intl-competition') {
       const data = await loadCompetition(api, ctx.params.competition, ctx.params.section || null);
       live = Boolean(data.ov?.data?.scoreboard?.live?.length);
-      if (first && data.ov?.ok) ctx.setMeta(routeMeta(id, { path: ctx.path, params: ctx.params, data: data.ov.data }));
       const comp = data.ov?.data?.competition;
       const archive = comp ? internationalHistoryFor(comp.competition_id) : null;
+      if (archive && ctx.params.section) {
+        ctx.go(`/international/${comp.slug}`, { replace: true });
+        return;
+      }
+      if (first && data.ov?.ok) {
+        ctx.setMeta(archive && !data.ov?.data?.scoreboard
+          ? historicalCompetitionMeta(comp, archive)
+          : routeMeta(id, { path: ctx.path, params: ctx.params, data: data.ov.data }));
+      }
       body = archive && !data.ov?.data?.scoreboard ? historicalCompetitionView(comp, archive) : competitionView(data);
     } else if (id === 'intl-game') {
       const data = await loadIntlGame(api, ctx.params.gameId);
