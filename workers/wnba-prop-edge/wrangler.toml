@@ -1,0 +1,17 @@
+name = "wnba-prop-edge"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "fd3a233edadd0a60916413c1199f71ee"
+workers_dev = true
+
+# Cloudflare Cron only. The Worker reads the existing props tape and final-game
+# archives from shared WNBA KV. It never calls the odds provider directly.
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[kv_namespaces]]
+binding = "WNBA_KV"
+id = "c3249a8e3552438da38c6cad0d54e172"
+
+[observability]
+enabled = true
