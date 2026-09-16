@@ -6,6 +6,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/mother-ai-protected.svg",
+      "destination": "https://api.mother.proptechusa.ai/badge/xgH9unhpY6TDvTtmG8CsUWrq0O6M10TS.svg"
+    },
+    {
       "source": "/history",
       "destination": "/app-shell.html"
     },
@@ -34,6 +38,15 @@
         {
           "key": "X-Robots-Tag",
           "value": "noindex"
+        }
+      ]
+    },
+    {
+      "source": "/mother-ai-protected.svg",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, max-age=0"
         }
       ]
     },
