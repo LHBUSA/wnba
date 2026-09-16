@@ -1,0 +1,46 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "dataset": "wnba_2024_team_wikidata_crosswalk_v1",
+  "manifest": "data/wbh/manifests/wnba-2024-team-wikidata-crosswalk-v1.json",
+  "manifest_commit": "5443edb6a812655ba7d9abcc19a5f7f2078501d6",
+  "migration": "supabase/migrations/20260916102000_wbh_wnba_2024_team_wikidata_crosswalk_v1.sql",
+  "migration_commit": "6caa262c2ce6d53d30d34655eb331181802d0082",
+  "supabase_migration_version": "20260916100659",
+  "supabase_migration_name": "wbh_wnba_2024_team_wikidata_crosswalk_v1",
+  "verification": {
+    "linked_team_qids": 12,
+    "wikidata_documents": 12,
+    "tier": "T1",
+    "confidence": 1.0,
+    "ingestion_run": {
+      "source_id": "wikidata",
+      "adapter_id": "manual_qid_crosswalk",
+      "adapter_version": "1.0.0",
+      "transformation_version": "wbh_wikidata_crosswalk_v1",
+      "mode": "ingest",
+      "status": "ok",
+      "counts": {
+        "team_qid_links": 12,
+        "source_documents": 12
+      },
+      "is_synthetic": false
+    },
+    "persons": 0,
+    "games": 0,
+    "pbe_relations": 22
+  },
+  "links": [
+    ["tm_atlanta_dream", "Q756160"],
+    ["tm_chicago_sky", "Q796358"],
+    ["tm_connecticut_sun", "Q1126243"],
+    ["tm_dallas_wings", "Q21334944"],
+    ["tm_indiana_fever", "Q1631017"],
+    ["tm_las_vegas_aces", "Q42333021"],
+    ["tm_los_angeles_sparks", "Q1329633"],
+    ["tm_minnesota_lynx", "Q1474850"],
+    ["tm_new_york_liberty", "Q974705"],
+    ["tm_phoenix_mercury", "Q1274643"],
+    ["tm_seattle_storm", "Q1544869"],
+    ["tm_washington_mystics", "Q1465192"]
+  ]
+}
