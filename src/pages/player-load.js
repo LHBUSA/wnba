@@ -1,9 +1,8 @@
 import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
-import { skeleton } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
 import { routeMeta } from '../seo/meta.js';
-import { playerLoadPublicView } from '../views/player-load.js';
+import { playerLoadExplainer, playerLoadPublicView } from '../views/player-load.js';
 
 const BAND_ORDER = ['EXTREME', 'HEAVY', 'ELEVATED', 'NORMAL', 'LIGHT'];
 const fmt = (v, suffix = '') => v === null || v === undefined ? '—' : `${v}${suffix}`;
@@ -19,9 +18,29 @@ function customMeta() {
   };
 }
 
+function loadingView() {
+  return html`
+    <section class="pl-shell">
+      <header class="pl-hero pl-loading-hero">
+        <div>
+          <span class="eyebrow">WNBA Pro · Player Intelligence</span>
+          <h1>Player <span>Load</span></h1>
+          <p class="lead">A live 0–100 workload and schedule-pressure board. Higher scores mean more recent minutes, denser scheduling, shorter turnaround or overtime pressure — not a medical diagnosis and not a guaranteed betting signal.</p>
+        </div>
+        <div class="pl-snapshot pl-loading-card">
+          <span>Live board</span>
+          <b>…</b>
+          <small>loading current snapshot</small>
+          <em>Methodology available below</em>
+        </div>
+      </header>
+      ${playerLoadExplainer()}
+    </section>`;
+}
+
 export async function mount(root, ctx) {
   ctx.setMeta(customMeta());
-  render(root, skeleton(520));
+  render(root, loadingView());
   const res = await api.playerLoad();
   if (!ctx.isCurrent()) return;
 
@@ -30,7 +49,10 @@ export async function mount(root, ctx) {
     return;
   }
   if (!res.ok) {
-    render(root, html`<section class="pl-shell"><div class="empty err"><h3>Player Load is warming up</h3><p>${res.error?.message || 'The latest workload snapshot is not available yet. No stand-in values are shown.'}</p></div></section>`);
+    render(root, playerLoadPublicView({
+      showOffer: false,
+      statusMessage: res.error?.message || 'The latest workload snapshot is temporarily unavailable. The scoring methodology remains visible while the live board reconnects.'
+    }));
     return;
   }
 
@@ -63,6 +85,8 @@ export async function mount(root, ctx) {
           </div>
         </header>
 
+        ${playerLoadExplainer()}
+
         <div class="pl-toolbar">
           <label>Search<input type="search" value="${search}" placeholder="Player or team" data-pl-search /></label>
           <label>Team<select data-pl-team><option value="all">All teams</option>${teams.map((t) => html`<option value="${t.team_id}" ${team === t.team_id ? 'selected' : ''}>${t.name || t.abbr || t.team_id}</option>`)}</select></label>
@@ -75,7 +99,7 @@ export async function mount(root, ctx) {
         ${rows.length ? html`<div class="pl-grid">${rows.map((p) => card(p))}</div>` : html`<div class="empty"><h3>No players match those filters</h3><p>Clear a team, band or search filter.</p></div>`}
 
         <footer class="pl-method-note">
-          <b>How Player Load works</b>
+          <b>Methodology integrity</b>
           <p>${d.disclaimer}</p>
           <span>Score inputs: recent minutes · 7-day game density · three-game minutes · change vs 10-game baseline · tip-to-tip turnaround · overtime. Current injury status is context only and does not change the score.</span>
         </footer>
