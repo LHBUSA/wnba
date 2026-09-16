@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { permanentArticleEnv } from '../workers/wnba-news/src/article-kv.js';
 import { ARTICLE_RETENTION_VERSION, migrateArticleRetention, putArticle } from '../workers/wnba-news/src/article-retention.js';
 
 class KV {
@@ -14,7 +15,18 @@ class KV {
     this.m.set(key, value);
     this.puts.push({ key, value, options });
   }
+  async delete(key) { this.m.delete(key); }
 }
+
+test('runtime boundary strips expiry only from published article bodies', async () => {
+  const kv = new KV();
+  const env = permanentArticleEnv({ NEWS_KV: kv, OTHER: 'ok' });
+  await env.NEWS_KV.put('art:v1:item:abc123', '{"id":"abc123"}', { expirationTtl: 10 });
+  await env.NEWS_KV.put('news:v1:lease', '{"at":"now"}', { expirationTtl: 600 });
+  assert.equal(env.OTHER, 'ok');
+  assert.equal(kv.puts[0].options, undefined, 'article body must be permanent');
+  assert.deepEqual(kv.puts[1].options, { expirationTtl: 600 }, 'non-article KV TTLs must be preserved');
+});
 
 test('published article writes have no expiration', async () => {
   const kv = new KV();
