@@ -1,0 +1,165 @@
+{
+  "dataset": "wnba_2024_reference_v1",
+  "scope": "Women's Basketball History reference skeleton for the 2024 WNBA season",
+  "curation_method": "Manual factual curation from human-readable public WNBA pages; no automated bulk WNBA ingestion.",
+  "sources": [
+    {
+      "url": "https://www.wnba.com/news/2024-wnba-season-schedule",
+      "supports": [
+        "2024 regular season began 2024-05-14",
+        "2024 regular season ended 2024-09-19",
+        "the league had 12 teams",
+        "40 regular-season games per team"
+      ]
+    },
+    {
+      "url": "https://www.wnba.com/news/wnba-postseason-dates",
+      "supports": [
+        "2024 playoffs began 2024-09-22",
+        "2024 Finals schedule ran through a possible Game 5 on 2024-10-20"
+      ]
+    },
+    {
+      "url": "https://www.wnba.com/playoffs/2024",
+      "supports": [
+        "2024 playoff structure",
+        "New York Liberty won the Finals 3-2 over Minnesota Lynx"
+      ]
+    },
+    {
+      "url": "https://www.wnba.com/all-time-wnba-champions",
+      "supports": [
+        "2024 champion New York Liberty",
+        "2024 runner-up Minnesota Lynx",
+        "2024 Finals MVP Jonquel Jones"
+      ]
+    }
+  ],
+  "organization": {
+    "org_id": "wnba",
+    "display_name": "Women's National Basketball Association",
+    "org_type": "league",
+    "country_code": "USA"
+  },
+  "competition": {
+    "competition_id": "wnba",
+    "display_name": "WNBA",
+    "competition_type": "league",
+    "gender": "women",
+    "country_code": "USA",
+    "tier": 1,
+    "first_year": 1997
+  },
+  "edition": {
+    "edition_id": "wnba_2024",
+    "season_label": "2024",
+    "season_year": 2024,
+    "start_date": "2024-05-14",
+    "regular_season_end": "2024-09-19",
+    "playoffs_start": "2024-09-22",
+    "end_date": "2024-10-20",
+    "team_count": 12,
+    "status": "complete",
+    "completeness": "partial"
+  },
+  "stages": [
+    {
+      "stage_id": "wnba_2024_regular_season",
+      "display_name": "Regular Season",
+      "season_phase": "regular_season",
+      "ordinal": 10
+    },
+    {
+      "stage_id": "wnba_2024_playoffs",
+      "display_name": "Playoffs",
+      "season_phase": "playoffs",
+      "ordinal": 20
+    },
+    {
+      "stage_id": "wnba_2024_finals",
+      "display_name": "WNBA Finals",
+      "season_phase": "final",
+      "ordinal": 30
+    }
+  ],
+  "teams": [
+    {
+      "franchise_id": "fr_atlanta_dream",
+      "team_id": "tm_atlanta_dream",
+      "team_edition_id": "te_atlanta_dream_2024",
+      "display_name": "Atlanta Dream"
+    },
+    {
+      "franchise_id": "fr_chicago_sky",
+      "team_id": "tm_chicago_sky",
+      "team_edition_id": "te_chicago_sky_2024",
+      "display_name": "Chicago Sky"
+    },
+    {
+      "franchise_id": "fr_connecticut_sun",
+      "team_id": "tm_connecticut_sun",
+      "team_edition_id": "te_connecticut_sun_2024",
+      "display_name": "Connecticut Sun"
+    },
+    {
+      "franchise_id": "fr_dallas_wings",
+      "team_id": "tm_dallas_wings",
+      "team_edition_id": "te_dallas_wings_2024",
+      "display_name": "Dallas Wings"
+    },
+    {
+      "franchise_id": "fr_indiana_fever",
+      "team_id": "tm_indiana_fever",
+      "team_edition_id": "te_indiana_fever_2024",
+      "display_name": "Indiana Fever"
+    },
+    {
+      "franchise_id": "fr_las_vegas_aces",
+      "team_id": "tm_las_vegas_aces",
+      "team_edition_id": "te_las_vegas_aces_2024",
+      "display_name": "Las Vegas Aces"
+    },
+    {
+      "franchise_id": "fr_los_angeles_sparks",
+      "team_id": "tm_los_angeles_sparks",
+      "team_edition_id": "te_los_angeles_sparks_2024",
+      "display_name": "Los Angeles Sparks"
+    },
+    {
+      "franchise_id": "fr_minnesota_lynx",
+      "team_id": "tm_minnesota_lynx",
+      "team_edition_id": "te_minnesota_lynx_2024",
+      "display_name": "Minnesota Lynx"
+    },
+    {
+      "franchise_id": "fr_new_york_liberty",
+      "team_id": "tm_new_york_liberty",
+      "team_edition_id": "te_new_york_liberty_2024",
+      "display_name": "New York Liberty"
+    },
+    {
+      "franchise_id": "fr_phoenix_mercury",
+      "team_id": "tm_phoenix_mercury",
+      "team_edition_id": "te_phoenix_mercury_2024",
+      "display_name": "Phoenix Mercury"
+    },
+    {
+      "franchise_id": "fr_seattle_storm",
+      "team_id": "tm_seattle_storm",
+      "team_edition_id": "te_seattle_storm_2024",
+      "display_name": "Seattle Storm"
+    },
+    {
+      "franchise_id": "fr_washington_mystics",
+      "team_id": "tm_washington_mystics",
+      "team_edition_id": "te_washington_mystics_2024",
+      "display_name": "Washington Mystics"
+    }
+  ],
+  "championship": {
+    "champion": "New York Liberty",
+    "runner_up": "Minnesota Lynx",
+    "series_result": "3-2",
+    "finals_mvp": "Jonquel Jones"
+  }
+}
