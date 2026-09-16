@@ -4,7 +4,7 @@
 // disappear because a cache/storage TTL elapsed. The index controls curation;
 // this module controls retention. These are deliberately separate concerns.
 
-export const ARTICLE_RETENTION_VERSION = 'pbe-news-retention/1.0.1';
+export const ARTICLE_RETENTION_VERSION = 'pbe-news-retention/1.0.2';
 export const ARTICLE_RETENTION_MIGRATION_KEY = 'art:v1:migration:permanent-retention-v1';
 
 export const articleItemKey = (id) => `art:v1:item:${id}`;
@@ -20,18 +20,25 @@ export async function putArticle(kv, article) {
  * Remove the legacy 120-day expiry from already-published article bodies.
  * Re-putting an existing KV value without expiration makes that key persistent.
  *
- * We remember ids already rewritten rather than trusting index position: the
- * newsroom may insert/sort cards as new stories arrive, and a positional cursor
- * could otherwise miss a new article. Every newly-seen id is made permanent on
- * a later five-minute newsroom tick.
+ * We remember ids already rewritten rather than trusting index position, and we
+ * also re-write any known article revised since the previous retention pass.
+ * That matters because the legacy writer can reapply its old TTL when an existing
+ * canonical story is updated; the next five-minute newsroom tick removes it again.
  */
 export async function migrateArticleRetention(kv, index, { batchSize = 32 } = {}) {
   if (!kv) return { version: ARTICLE_RETENTION_VERSION, status: 'SKIPPED', reason: 'no_kv' };
 
-  const ids = [...new Set((index || []).map((c) => String(c?.id || '')).filter(Boolean))];
+  const cards = (index || []).filter((c) => c?.id);
+  const ids = [...new Set(cards.map((c) => String(c.id)))];
   const prior = (await kv.get(ARTICLE_RETENTION_MIGRATION_KEY, 'json')) || {};
   const known = new Set(Array.isArray(prior.known_ids) ? prior.known_ids.map(String) : []);
-  const pending = ids.filter((id) => !known.has(id));
+  const priorAt = Date.parse(prior.at || 0) || 0;
+  const changed = cards
+    .filter((c) => known.has(String(c.id)))
+    .filter((c) => Math.max(Date.parse(c.revised_at || 0) || 0, Date.parse(c.first_published_at || c.published_at || 0) || 0) > priorAt)
+    .map((c) => String(c.id));
+  const unseen = ids.filter((id) => !known.has(id));
+  const pending = [...new Set([...changed, ...unseen])];
   const batch = pending.slice(0, Math.max(1, batchSize));
 
   let rewritten = 0;
@@ -49,18 +56,21 @@ export async function migrateArticleRetention(kv, index, { batchSize = 32 } = {}
     rewritten += 1;
   }
 
-  const remaining = ids.filter((id) => !known.has(id)).length;
+  const remainingNew = ids.filter((id) => !known.has(id)).length;
+  const remainingChanged = Math.max(0, pending.length - batch.length);
   const next = {
     version: ARTICLE_RETENTION_VERSION,
-    status: remaining === 0 ? 'COMPLETE' : 'IN_PROGRESS',
+    status: remainingNew === 0 && remainingChanged === 0 && missing === 0 ? 'COMPLETE' : 'IN_PROGRESS',
     at: new Date().toISOString(),
     total_indexed: ids.length,
-    permanent: ids.length - remaining,
-    remaining,
+    permanent: ids.length - remainingNew,
+    remaining: remainingNew + remainingChanged + missing,
     rewritten_total: Number(prior.rewritten_total || 0) + rewritten,
     missing_total: Number(prior.missing_total || 0) + missing,
     rewritten_this_pass: rewritten,
     missing_this_pass: missing,
+    revised_candidates_this_pass: changed.length,
+    new_candidates_this_pass: unseen.length,
     // A few hundred ids is tiny and gives us deterministic future discovery.
     known_ids: [...known].filter((id) => ids.includes(id))
   };
