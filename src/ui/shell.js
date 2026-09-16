@@ -3,7 +3,7 @@ import { NETWORK, CURRENT_SPORT } from './network.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-16.3';
+export const SHELL_REV = '2026-09-16.4';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -44,6 +44,9 @@ const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const BRAND_MARK = `<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1813"/><circle cx="32" cy="32" r="19" fill="none" stroke="#d4af37" stroke-width="3.5"/><path d="M13 32h38M32 13v38M19 18c7 6 7 22 0 28M45 18c-7 6-7 22 0 28" fill="none" stroke="#ff7a2f" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 
 const MOTHER_VERIFY_URL = 'https://mother.proptechusa.ai/verify/xgH9unhpY6TDvTtmG8CsUWrq0O6M10TS';
+// Same-origin passthrough to Mother AI's official live SVG. Vercel proxies this path to
+// api.mother.proptechusa.ai so the badge remains stateful/verifiable without weakening CSP.
+const MOTHER_BADGE_URL = '/mother-ai-protected.svg';
 
 /** The site shell as HTML. `main` is the page content (server-rendered by the publishing Worker); `ssrPath` marks it. */
 export function shellHtml({ main = '', ssrPath = null } = {}) {
@@ -138,9 +141,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
 
         <div class="foot-security">
           <a class="foot-mother-badge" href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Verify PropTechUSA.ai Mother AI protection status (opens in a new tab)">
-            <span class="foot-mother-mark" aria-hidden="true">M</span>
-            <span class="foot-mother-words"><b>Mother AI</b><small>Protected</small></span>
-            <span class="foot-mother-live"><i aria-hidden="true"></i>Live</span>
+            <img src="${MOTHER_BADGE_URL}" alt="Mother AI Protected — AI Controls Active" width="236" height="48" loading="lazy" decoding="async" />
           </a>
           <div class="foot-security-copy">
             <strong>Mother AI Protected</strong>
