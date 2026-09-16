@@ -1,6 +1,5 @@
 import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
-import { skeleton } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
 import { routeMeta } from '../seo/meta.js';
 import { intelligenceFeature } from '../data/pro-features.js';
@@ -18,10 +17,18 @@ function meta() {
 
 export async function mount(root, ctx) {
   ctx.setMeta(meta());
-  render(root, html`<section class="pi-shell">${skeleton(520)}</section>`);
+
+  // Never leave a direct route sitting on a blank/skeleton shell while account state resolves.
+  // Public visitors immediately get a useful Rotation Impact explainer; entitled users hydrate
+  // into the live team desk as soon as the private account/data calls return.
+  render(root, proFeaturePublicView(FEATURE));
+
   const account = await api.account();
   if (!ctx.isCurrent()) return;
-  if (!(account.ok && account.data?.state === 'pro')) return render(root, proFeaturePublicView(FEATURE, { signedIn: account.ok && account.data?.state === 'free' }));
+  if (!(account.ok && account.data?.state === 'pro')) {
+    if (account.ok && account.data?.state === 'free') render(root, proFeaturePublicView(FEATURE, { signedIn: true }));
+    return;
+  }
 
   const [load, injuries, teams] = await Promise.all([api.playerLoad(), api.injuries(), api.teams()]);
   if (!ctx.isCurrent()) return;
