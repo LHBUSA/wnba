@@ -10,35 +10,42 @@ import core from './index.js';
 import { listedCard } from './legacy.js';
 import { withheldBySourcePolicy } from './sources.js';
 import { mediaFor } from './media.js';
+import { permanentArticleEnv } from './article-kv.js';
 import { ARTICLE_RETENTION_MIGRATION_KEY, ARTICLE_RETENTION_VERSION, migrateArticleRetention } from './article-retention.js';
 
 const SERVICE = 'wnba-news';
-const VERSION = '2.1.0';
+const VERSION = '2.1.1';
 
 export default {
   async scheduled(event, env, ctx) {
-    await core.scheduled(event, env, ctx);
-    // This can safely run beside ingest. If a brand-new article body has not
-    // landed yet, the migration leaves it pending and retries next cron tick.
+    // The core writer sees a NEWS_KV binding that strips legacy expirations from
+    // art:v1:item:* writes. New stories and revisions are durable immediately.
+    const durableEnv = permanentArticleEnv(env);
+    await core.scheduled(event, durableEnv, ctx);
+
+    // One-time/backfill repair for article bodies written before this boundary.
+    // It can safely run beside ingest: missing/racing items remain pending and
+    // are retried on the next five-minute newsroom tick.
     ctx.waitUntil((async () => {
-      const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
-      await migrateArticleRetention(env.NEWS_KV, index, { batchSize: 40 });
+      const index = (await durableEnv.NEWS_KV.get('art:v1:index', 'json')) || [];
+      await migrateArticleRetention(durableEnv.NEWS_KV, index, { batchSize: 40 });
     })());
   },
 
   async fetch(request, env, ctx) {
+    const durableEnv = permanentArticleEnv(env);
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
     if (path === '/v1/articles' && url.searchParams.get('archive') === '1') {
-      return archiveRoute(env, url);
+      return archiveRoute(durableEnv, url);
     }
 
     if (path === '/health') {
-      const response = await core.fetch(request, env, ctx);
+      const response = await core.fetch(request, durableEnv, ctx);
       const body = await response.json().catch(() => null);
       if (!body) return response;
-      const retention = await env.NEWS_KV.get(ARTICLE_RETENTION_MIGRATION_KEY, 'json');
+      const retention = await durableEnv.NEWS_KV.get(ARTICLE_RETENTION_MIGRATION_KEY, 'json');
       return j({
         ...body,
         version: VERSION,
@@ -46,7 +53,8 @@ export default {
       }, response.status);
     }
 
-    return core.fetch(request, env, ctx);
+    // Manual article passes, if ever used, get the same permanent-write policy.
+    return core.fetch(request, durableEnv, ctx);
   }
 };
 
