@@ -1,0 +1,90 @@
+name: WBH Wikidata team memberships
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wbh-wikidata-memberships.yml'
+      - 'scripts/wbh/build-wikidata-wnba-team-memberships.py'
+      - 'data/wbh/manifests/wikidata-wnba-identity-v1.json'
+      - 'data/wbh/manifests/wnba-2024-team-wikidata-crosswalk-v1.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wbh-wikidata-memberships
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Wikidata CC0 team-membership evidence
+        run: |
+          python scripts/wbh/build-wikidata-wnba-team-memberships.py \
+            --identity-manifest data/wbh/manifests/wikidata-wnba-identity-v1.json \
+            --team-crosswalk data/wbh/manifests/wnba-2024-team-wikidata-crosswalk-v1.json \
+            --manifest data/wbh/manifests/wikidata-wnba-team-memberships-v1.json \
+            --migration supabase/migrations/20260916104500_wbh_wikidata_wnba_memberships_v1.sql \
+            --min-claims 300
+
+      - name: Validate membership evidence
+        run: |
+          python - <<'PY'
+          import json, pathlib, re
+          p = pathlib.Path('data/wbh/manifests/wikidata-wnba-team-memberships-v1.json')
+          d = json.loads(p.read_text(encoding='utf-8'))
+          claims = d['claims']
+          assert d['license'] == 'CC0-1.0'
+          assert d['source'] == 'Wikidata structured data only'
+          assert d['capture']['property'] == 'P54'
+          assert d['capture']['qualifiers'] == ['P580', 'P582']
+          assert d['capture']['raw_retained'] is False
+          assert len(claims) >= 300
+          assert len({x['membership_claim_id'] for x in claims}) == len(claims)
+          assert len({x['source_statement_id'] for x in claims}) == len(claims)
+          assert all(re.fullmatch(r'mbr_[0-9a-f]{24}', x['membership_claim_id']) for x in claims)
+          assert all(re.fullmatch(r'Q[1-9][0-9]*', x['person_qid']) for x in claims)
+          assert all(re.fullmatch(r'Q[1-9][0-9]*', x['source_team_qid']) for x in claims)
+          assert all(x['team_id'].startswith('tm_') for x in claims)
+          assert set(x['evidence_class_2024'] for x in claims) <= {'qualified_overlap','undated_claim','outside_2024'}
+          assert d['totals']['claims'] == len(claims)
+          assert sum(d['totals']['by_team'].values()) == len(claims)
+          sql = pathlib.Path('supabase/migrations/20260916104500_wbh_wikidata_wnba_memberships_v1.sql').read_text(encoding='utf-8')
+          assert "public.wbh_assert_ingestible('wikidata')" in sql
+          assert 'wbh_person_team_membership_claims' in sql
+          assert 'wbh_roster_stints' not in '\n'.join(line for line in sql.splitlines() if not line.lstrip().startswith('--'))
+          print(json.dumps(d['totals'], indent=2))
+          PY
+
+      - name: Upload generated evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: wbh-wikidata-memberships-v1
+          path: |
+            data/wbh/manifests/wikidata-wnba-team-memberships-v1.json
+            supabase/migrations/20260916104500_wbh_wikidata_wnba_memberships_v1.sql
+          if-no-files-found: error
+
+      - name: Commit generated evidence
+        run: |
+          if [ -z "$(git status --porcelain -- data/wbh/manifests/wikidata-wnba-team-memberships-v1.json supabase/migrations/20260916104500_wbh_wikidata_wnba_memberships_v1.sql)" ]; then
+            echo 'No generated changes.'
+            exit 0
+          fi
+          git config user.name 'LHBUSA'
+          git config user.email 'sales@localhomebuyersusa.com'
+          git add data/wbh/manifests/wikidata-wnba-team-memberships-v1.json supabase/migrations/20260916104500_wbh_wikidata_wnba_memberships_v1.sql
+          git commit -m 'Add Wikidata WNBA team membership evidence snapshot'
+          git push origin HEAD:main
