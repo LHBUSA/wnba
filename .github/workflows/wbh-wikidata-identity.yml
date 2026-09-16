@@ -77,12 +77,12 @@ jobs:
 
       - name: Commit generated snapshot
         run: |
-          if git diff --quiet -- data/wbh/manifests/wikidata-wnba-identity-v1.json supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql; then
-            echo 'No generated changes.'
-            exit 0
-          fi
           git config user.name 'LHBUSA'
           git config user.email 'sales@localhomebuyersusa.com'
           git add data/wbh/manifests/wikidata-wnba-identity-v1.json supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql
+          if git diff --cached --quiet; then
+            echo 'No generated changes.'
+            exit 0
+          fi
           git commit -m 'Add Wikidata WNBA player identity spine snapshot'
           git push origin HEAD:main
