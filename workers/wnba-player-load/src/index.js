@@ -9,7 +9,7 @@ import { etCompact, addDays } from '../../shared/time.js';
 import { buildPlayerLoadSnapshot, PLAYER_LOAD_VERSION } from '../../shared/player-load.js';
 
 const SERVICE = 'wnba-player-load';
-const VERSION = '1.0.2';
+const VERSION = '1.0.3';
 const SNAPSHOT_KEY = 'player-load:v1:latest';
 const STATUS_KEY = 'player-load:v1:status';
 const REFRESH_MS = 15 * 60e3;
@@ -71,9 +71,9 @@ async function writeStatus(env, patch) {
   if (!env.WNBA_KV) return;
   const prev = await env.WNBA_KV.get(STATUS_KEY, 'json').catch(() => null);
   await env.WNBA_KV.put(STATUS_KEY, JSON.stringify({
+    ...(prev || {}),
     service: SERVICE,
     version: VERSION,
-    ...(prev || {}),
     ...patch
   }));
 }
@@ -99,16 +99,55 @@ async function runScheduled(env) {
     });
     return result;
   } catch (e) {
-    const message = String(e?.message || e || 'unknown_error').slice(0, 500);
+    const message = String(e?.message || e || 'unknown_error').slice(0, 300);
+    const body = e?.body ? String(e.body).replace(/\s+/g, ' ').slice(0, 220) : '';
+    const detail = body ? `${message} · ${body}` : message;
     await writeStatus(env, {
       state: 'ERROR',
       last_attempt_at: attemptedAt,
       last_error_at: new Date().toISOString(),
-      last_error: message
+      last_error: detail
     }).catch(() => {});
-    console.error(`[${SERVICE}] scheduled refresh failed: ${message}`);
+    console.error(`[${SERVICE}] scheduled refresh failed: ${detail}`);
     throw e;
   }
+}
+
+async function loadRecentArchives(env, now) {
+  const index = await env.WNBA_KV.get('archive:v1:index', 'json');
+  const ids = Array.isArray(index) ? [...new Set(index.map(String).filter(Boolean))] : [];
+  if (!ids.length) return { games: [], indexTotal: 0, scanned: 0 };
+
+  // A WNBA season is small enough to scan the persisted archive index directly.
+  // This avoids depending on a large ESPN scoreboard date-range request just to
+  // rediscover finals that PropBetEdge has already archived and verified.
+  const docs = await Promise.all(ids.slice(-500).map((id) => env.WNBA_KV.get(`game:v1:final:${id}`, 'json')));
+  const cutoff = now - WINDOW_DAYS * 86400e3;
+  const games = docs
+    .filter((a) => a?.summary?.game && Array.isArray(a.summary?.box?.players))
+    .map((a) => ({ ...a.summary.game, players: a.summary.box.players }))
+    .filter((g) => Number.isFinite(Date.parse(g.start_utc)) && Date.parse(g.start_utc) >= cutoff && Date.parse(g.start_utc) <= now)
+    .sort((a, b) => Date.parse(a.start_utc) - Date.parse(b.start_utc));
+  return { games, indexTotal: ids.length, scanned: Math.min(ids.length, 500) };
+}
+
+async function loadUpcomingSchedule(now) {
+  const today = etCompact(new Date(now));
+  const days = Array.from({ length: UPCOMING_DAYS + 1 }, (_, i) => addDays(today, i));
+  // Daily scoreboard reads are intentionally used instead of one broad range.
+  // ESPN has returned HTTP 400 for the former 28-day-back/8-day-forward request.
+  const boards = await Promise.all(days.map((day) => fetchJsonWithTimeout(`${ESPN.site}/scoreboard?dates=${day}&limit=100`, { timeoutMs: 12000 })));
+  const seen = new Set();
+  const games = [];
+  for (const raw of boards) {
+    for (const g of normalizeScoreboard(raw).games) {
+      if (!g?.game_id || seen.has(g.game_id)) continue;
+      seen.add(g.game_id);
+      if (g.status?.state === 'pre' && Date.parse(g.start_utc) > now) games.push(g);
+    }
+  }
+  games.sort((a, b) => Date.parse(a.start_utc) - Date.parse(b.start_utc));
+  return games;
 }
 
 async function refresh(env, { force = false } = {}) {
@@ -119,21 +158,11 @@ async function refresh(env, { force = false } = {}) {
   }
 
   const now = Date.now();
-  const today = etCompact(new Date(now));
-  const from = addDays(today, -WINDOW_DAYS);
-  const to = addDays(today, UPCOMING_DAYS);
-  const raw = await fetchJsonWithTimeout(`${ESPN.site}/scoreboard?dates=${from}-${to}&limit=1000`, { timeoutMs: 20000 });
-  const schedule = normalizeScoreboard(raw);
-  const finals = schedule.games.filter((g) => g.status?.state === 'post' && g.status?.completed && Date.parse(g.start_utc) >= now - WINDOW_DAYS * 86400e3);
-  const upcoming = schedule.games.filter((g) => g.status?.state === 'pre' && Date.parse(g.start_utc) > now);
-
-  const archives = await Promise.all(finals.map(async (g) => {
-    const a = await env.WNBA_KV.get(`game:v1:final:${g.game_id}`, 'json');
-    if (!a?.summary?.game || !Array.isArray(a.summary?.box?.players)) return null;
-    return { ...a.summary.game, players: a.summary.box.players };
-  }));
-  const recentGames = archives.filter(Boolean);
-  if (!recentGames.length) throw new Error(`player_load_no_archived_finals:expected=${finals.length}`);
+  const [{ games: recentGames, indexTotal, scanned }, upcoming] = await Promise.all([
+    loadRecentArchives(env, now),
+    loadUpcomingSchedule(now)
+  ]);
+  if (!recentGames.length) throw new Error(`player_load_no_recent_archived_finals:indexed=${indexTotal}:scanned=${scanned}`);
 
   const [ref, availability] = await Promise.all([
     env.WNBA_KV.get('ref:v1:athletes', 'json'),
@@ -150,20 +179,21 @@ async function refresh(env, { force = false } = {}) {
   snapshot.coverage = {
     window_days: WINDOW_DAYS,
     upcoming_days: UPCOMING_DAYS,
-    finals_expected: finals.length,
-    finals_archived: recentGames.length,
-    archive_coverage_pct: finals.length ? Math.round(recentGames.length / finals.length * 1000) / 10 : 100,
+    archive_index_total: indexTotal,
+    archives_scanned: scanned,
+    finals_archived_recent: recentGames.length,
+    upcoming_games: upcoming.length,
     reference_captured_at: ref?.captured_at || null,
     availability_captured_at: availability?.captured_at || null
   };
   snapshot.source = {
-    schedule: 'ESPN WNBA scoreboard normalized by PropBetEdge',
+    schedule: 'ESPN WNBA daily scoreboards normalized by PropBetEdge',
     minutes: 'PropBetEdge persisted final WNBA box scores',
     availability: 'ESPN WNBA injury feed normalized by PropBetEdge (context only)'
   };
   await env.WNBA_KV.put(SNAPSHOT_KEY, JSON.stringify(snapshot));
-  console.log(`[${SERVICE}] ${PLAYER_LOAD_VERSION} players=${snapshot.summary.players} finals=${recentGames.length}/${finals.length}`);
-  return { generated_at: snapshot.generated_at, players: snapshot.summary.players, finals: recentGames.length, finals_expected: finals.length };
+  console.log(`[${SERVICE}] ${PLAYER_LOAD_VERSION} players=${snapshot.summary.players} finals=${recentGames.length} upcoming=${upcoming.length}`);
+  return { generated_at: snapshot.generated_at, players: snapshot.summary.players, finals_archived_recent: recentGames.length, upcoming_games: upcoming.length, archive_index_total: indexTotal };
 }
 
 export { refresh, runScheduled };
