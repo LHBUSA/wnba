@@ -1,3 +1,4 @@
+# Triggered for the first production Wikidata identity-spine snapshot on 2026-09-16.
 name: WBH Wikidata identity spine
 
 on:
