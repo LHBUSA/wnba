@@ -1,197 +1,88 @@
-// WNBA News & Intelligence — the PropBetEdge editorial front page, desk pages and team news pages.
-// PropBetEdge's own reporting leads: a dominant photographic lead story, top stories, Latest, then the desks
-// (Injury Desk, Roster Moves, League, Previews, Performances, Team Trends). The external Source Wire sits last,
-// visibly attributed and subordinate — headlines and links only; the reporting belongs to them.
-// Navigation stays compact: four primary desks as chips, a team selector and one "More desks" menu — all plain
-// crawlable links inside native <details> disclosures, identical in the server render and the SPA.
-// Shared by the SPA page and the wnba-web publishing Worker.
-import { html } from '../lib/dom.js';
-import { errorState, badge, entityChips } from '../ui/components.js';
-import { articleCard, articleRow, KIND_LABEL, DESK } from '../ui/articles.js';
-import { teamLogo } from '../ui/logo.js';
-import { relTime, fmtDateTimeET } from '../lib/format.js';
-import { chooseLead, topStories, storyPublishedAt } from '../lib/news-ranking.js';
+// WNBA News & Intelligence — live newsroom wrapper.
+//
+// news-base.js owns the established editorial layout. This layer adds the two
+// things a live newsroom needs without weakening the publication gate:
+//   * a fresh attributed wire near the top of the page, refreshed every pass;
+//   * a visible historical archive rail backed by the permanent article catalog.
+// Current-story curation and publication history are intentionally separate.
 
-export const DESKS = [
-  ['injury', 'Injury Desk', 'Status changes from ESPN’s injury feed and attributed reporting: the minutes at stake and what argues against the obvious read.'],
-  ['transaction', 'Roster Moves', 'Signings, waivers, trades and hardship contracts from ESPN’s transactions log and attributed reporting.'],
-  ['league', 'League', 'Awards, coaching and front-office changes, the playoff picture, expansion and labor — material league events, attributed and checked against PropBetEdge’s records.'],
-  ['preview', 'Previews', 'Form, rest, availability and the stored market for the next slate.'],
-  ['performance', 'Performances', 'Box-score stories: who carried the night and how it compares with her season.'],
-  ['trend', 'Team Trends', 'Against-the-spread and totals runs, measured against a named sportsbook’s lines.']
-];
-/** Primary desk chips, then the lower-traffic desks behind "More desks". */
-export const PRIMARY_DESKS = ['injury', 'transaction', 'league', 'international'];
-export const MORE_DESKS = ['brief', 'preview', 'performance', 'trend', 'props', 'market'];
-export const DESK_KINDS = [...PRIMARY_DESKS, ...MORE_DESKS];
+import { html, raw } from '../lib/dom.js';
+import { badge, entityChips } from '../ui/components.js';
+import { articleRow } from '../ui/articles.js';
+import { relTime } from '../lib/format.js';
+import * as base from './news-base.js';
 
-const dateline = () => new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-// A story files under its kind, and a News Brief also under its event's desk (an official injury update → Injury Desk).
-const ofKind = (items, k) => items.filter((c) => c.kind === k || c.desk === k || (k === 'performance' && c.kind === 'result'));
+export const DESKS = base.DESKS;
+export const PRIMARY_DESKS = base.PRIMARY_DESKS;
+export const MORE_DESKS = base.MORE_DESKS;
+export const DESK_KINDS = base.DESK_KINDS;
+export const deskNav = base.deskNav;
+export const newsHeadView = base.newsHeadView;
+
 const OFFICIAL_KINDS = new Set(['official', 'team_official']);
 
 export async function loadNews(api, kind = null, teamId = null) {
-  const [arts, wire, teams] = await Promise.all([
+  const [arts, wire, teams, archive] = await Promise.all([
     api.articles({ limit: teamId ? 60 : 200, kind: kind || undefined, team: teamId || undefined }),
-    kind ? Promise.resolve({ ok: false }) : api.news({ limit: teamId ? 30 : 20, lane: 'external', team: teamId || undefined }),
-    api.teams().catch(() => ({ ok: false }))
+    kind ? Promise.resolve({ ok: false }) : api.news({ limit: teamId ? 30 : 40, lane: 'external', team: teamId || undefined }),
+    api.teams().catch(() => ({ ok: false })),
+    !kind && !teamId ? api.articles({ limit: 250, archive: 1 }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
   ]);
   const teamList = teams?.ok ? [...teams.data.teams].sort((a, b) => a.name.localeCompare(b.name)) : [];
   const team = teamId ? teamList.find((t) => String(t.team_id) === String(teamId)) || null : null;
-  return { kind, teamId, team, teams: teamList, teamsOk: Boolean(teams?.ok), arts, wire };
+  return { kind, teamId, team, teams: teamList, teamsOk: Boolean(teams?.ok), arts, wire, archive };
 }
 
-function marketWatch(items) {
-  const seen = new Set();
-  const rows = items.filter((c) => c.has_market && c.market).filter((c) => { const k = `${c.market.away_abbr}@${c.market.home_abbr}`; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 8);
-  if (!rows.length) return html`<p class="note">No stored market capture is attached to a current story. Captures run at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET.</p>`;
-  return html`<div class="mw-rows">${rows.map((c) => html`<a class="mw-row" href="/news/${c.slug}">
-      <span class="mw-game">${c.market.away_abbr && c.market.home_abbr ? `${c.market.away_abbr} @ ${c.market.home_abbr}` : KIND_LABEL[c.kind]}</span>
-      <span class="mw-line">${c.market.spread !== null ? `${c.market.home_abbr || 'Home'} ${c.market.spread > 0 ? '+' : ''}${c.market.spread}` : '—'}</span>
-      <span class="mw-line">${c.market.total !== null ? `O/U ${c.market.total}` : '—'}</span>
-      <span class="mw-meta">${c.market.books} books · ${relTime(c.market.captured_at)}</span>
-    </a>`)}</div>
-    <p class="note" style="margin-top:10px">Stored sportsbook prices and no-vig market consensus from The Odds API, with book count and capture time kept visible.</p>`;
-}
-
-function sourceWire(wire, { limit = 12, empty = 'Source wire unavailable.' } = {}) {
-  if (!wire?.ok) return html`<p class="note">${empty}</p>`;
-  if (!wire.data.items.length) return html`<p class="note">No attributed reports in the current window.</p>`;
-  return html`<ol class="wire">${wire.data.items.slice(0, limit).map((i) => html`<li>
-      <div class="nmeta">${badge(OFFICIAL_KINDS.has(i.source.kind) ? 'pbe' : 'ext', OFFICIAL_KINDS.has(i.source.kind) ? `${i.source.name.replace(/\s*\(official\)$/, '')} · Official` : i.source.name)}<span>${relTime(i.published_at)}</span>${i.publishers > 1 ? html`<span class="note">${i.publishers} publishers</span>` : ''}</div>
+function livePulse(wire) {
+  if (!wire?.ok || !wire.data?.items?.length) return '';
+  const items = wire.data.items.slice(0, 10);
+  return html`<section class="wire-wrap section" aria-label="Live WNBA source wire">
+    <div class="sec-head"><div>
+      <span class="eyebrow">Live desk · source wire</span>
+      <h2 class="sec-title bc">Around the league now</h2>
+      <p class="desk-sub">Fresh attributed reports from the newsroom’s monitored WNBA sources. Headlines and links belong to the publishers; PropBetEdge uses this wire to decide what deserves a sourced in-house story.</p>
+    </div><a class="sec-link" href="/sources">29-source status →</a></div>
+    <ol class="wire">${items.map((i) => html`<li>
+      <div class="nmeta">${badge(OFFICIAL_KINDS.has(i.source?.kind) ? 'pbe' : 'ext', OFFICIAL_KINDS.has(i.source?.kind) ? `${String(i.source?.name || '').replace(/\s*\(official\)$/, '')} · Official` : i.source?.name || 'Source')}<span>${relTime(i.published_at)}</span>${i.publishers > 1 ? html`<span class="note">${i.publishers} publishers</span>` : ''}</div>
       <a href="${i.url}" rel="noopener" target="_blank">${i.headline}&nbsp;<span class="note" aria-hidden="true">↗</span></a>
-      <div class="nents">${entityChips(i.entities)}</div>
-    </li>`)}</ol>`;
+      <div class="nents">${entityChips(i.entities || [])}</div>
+    </li>`)}</ol>
+  </section>`;
 }
 
-/** Desk chips + team selector + "More desks". Native <details> menus: keyboard operable without script, links crawlable. */
-export function deskNav({ kind = null, teamId = null, teams = [] } = {}) {
-  const chip = (href, label, on) => html`<a class="${on ? 'on' : ''}" href="${href}" ${on ? html`aria-current="page"` : ''}>${label}</a>`;
-  const moreOn = MORE_DESKS.includes(kind);
-  const current = teamId ? teams.find((t) => String(t.team_id) === String(teamId)) : null;
-  return html`<nav class="desk-nav" aria-label="Newsroom desks">
-    ${chip('/news', 'Latest', !kind && !teamId)}
-    ${PRIMARY_DESKS.map((k) => chip(`/news/c/${k}`, k === 'injury' ? 'Injuries' : DESK[k], kind === k))}
-    ${teams.length ? html`<details class="desk-menu" data-desk-menu>
-      <summary class="${teamId ? 'on' : ''}">${current ? current.short_name || current.name : 'Teams'}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-      <div class="desk-menu-list desk-menu-list--teams">${teams.map((t) => html`<a href="/news/teams/${t.team_id}" class="${String(t.team_id) === String(teamId) ? 'on' : ''}" ${String(t.team_id) === String(teamId) ? html`aria-current="page"` : ''}>${teamLogo({ team_id: t.team_id, name: t.name }, 18)}<span>${t.name}</span></a>`)}</div>
-    </details>` : ''}
-    <details class="desk-menu" data-desk-menu>
-      <summary class="${moreOn ? 'on' : ''}">${moreOn ? DESK[kind] : 'More desks'}<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-      <div class="desk-menu-list">${MORE_DESKS.map((k) => html`<a href="/news/c/${k}" class="${kind === k ? 'on' : ''}" ${kind === k ? html`aria-current="page"` : ''}>${DESK[k]}</a>`)}</div>
-    </details>
-  </nav>`;
+function archiveRail(archive, currentItems = []) {
+  if (!archive?.ok || !archive.data?.items?.length) return '';
+  const current = new Set((currentItems || []).map((c) => c.id));
+  const historical = archive.data.items
+    .filter((c) => !current.has(c.id))
+    .filter((c) => !['duplicate', 'superseded'].includes(c.archive_state))
+    .slice(0, 10);
+  if (!historical.length) return '';
+  return html`<section class="desk section" aria-label="PropBetEdge WNBA published archive">
+    <div class="sec-head"><div>
+      <span class="eyebrow">Published archive</span>
+      <h2 class="sec-title bc">From the PropBetEdge record</h2>
+      <p class="desk-sub">Previously published newsroom work stays part of the historical record even when it is no longer promoted as current news. Dedupe changes prominence, not existence.</p>
+    </div><span class="note">${archive.data.total} published records · ${archive.data.historical} historical</span></div>
+    <div class="srows srows--grid">${historical.map(articleRow)}</div>
+  </section>`;
 }
 
-export function newsHeadView(kind, team = null) {
-  return html`<header class="masthead"><span class="eyebrow">PropBetEdge · WNBA</span><h1 class="mast-title">${team ? `${team.name} News` : kind ? DESK[kind] || KIND_LABEL[kind] || 'Newsroom' : 'WNBA News & Intelligence'}</h1></header>`;
-}
+export function newsView(data) {
+  const view = base.newsView(data);
+  if (view?.error || data.kind || data.teamId) return view;
 
-/** Team news page: PBE stories on the team, then the team's official announcements and beat reports, attributed. */
-function teamNewsView({ team, teams, arts, wire }) {
-  const items = arts.data.items;
-  const lastRun = arts.meta?.last_run_at || null;
-  const official = wire?.ok ? wire.data.items.filter((i) => OFFICIAL_KINDS.has(i.source.kind)).length : 0;
-  const mast = html`<header class="masthead">
-    <div class="mast-row"><span class="eyebrow">PropBetEdge · WNBA · Team news</span><span class="mast-date">${dateline()}${lastRun ? ` · AUTO · updated ${relTime(lastRun)}` : ''}</span></div>
-    <h1 class="mast-title">${team.name} News</h1>
-    <p class="mast-sub">PropBetEdge stories on the ${team.name} — injuries, roster moves, previews and recaps — plus attributed beat and national coverage. <a class="gold" href="/teams/${team.team_id}">${team.short_name || team.name} team page →</a></p>
-    ${deskNav({ teamId: team.team_id, teams })}
-  </header>`;
-  const empty = !items.length && !(wire?.ok && wire.data.items.length);
-  const [first, ...rest] = items;
-  return {
-    empty,
-    body: html`${mast}
-      ${first ? html`<section class="front-lead front-lead--desk">${articleCard(first, { size: 'lead', eager: true })}</section>
-        ${rest.length ? html`<div class="ngrid section">${rest.slice(0, 12).map((c) => articleCard(c))}</div>` : ''}` : html`<div class="empty"><h3>No PropBetEdge stories on the ${team.name} in the current window</h3><p>The newsroom publishes only when a record supports a story. Official announcements and beat reports are below.</p></div>`}
-      <section class="wire-wrap section">
-        <div class="sec-head"><div><h2 class="sec-title bc">Beat &amp; national reports</h2><p class="desk-sub">Attributed beat and national reports — headline and link only; the reporting is theirs.</p></div></div>
-        ${sourceWire(wire, { limit: 20 })}
-      </section>
-      <p class="note section">Auto-updating · last newsroom pass ${lastRun ? relTime(lastRun) : 'unknown'} · <a href="/sources">Source status</a></p>`
-  };
-}
+  let body = String(view.body);
+  const pulse = livePulse(data.wire);
+  if (pulse) body = body.replace('</header>', `</header>${String(pulse)}`);
 
-/** Returns { body, empty } — `empty` lets the Worker mark a desk with no stories noindex. */
-export function newsView({ kind = null, teamId = null, team = null, teams = [], arts, wire = { ok: false } }) {
-  if (!arts?.ok) return { body: html`${newsHeadView(kind, team)}${errorState(arts, 'WNBA News & Intelligence')}`, empty: true, error: true };
-  if (teamId && team) return teamNewsView({ team, teams, arts, wire });
-  const items = arts.data.items;
-  const lastRun = arts.meta?.last_run_at || null;
-  const autoStatus = lastRun ? `AUTO · updated ${relTime(lastRun)}` : 'AUTO';
-  const mast = html`<header class="masthead">
-    <div class="mast-row"><span class="eyebrow">PropBetEdge · WNBA</span><span class="mast-date">${dateline()} · ${autoStatus}</span></div>
-    <h1 class="mast-title">${kind ? DESK[kind] || KIND_LABEL[kind] : 'WNBA News & Intelligence'}</h1>
-    <p class="mast-sub">${kind ? (DESKS.find(([k]) => k === kind)?.[2] || 'Stories from this desk, newest first.') : 'Automated, source-grounded WNBA reporting and market intelligence — continuously refreshed from injuries, transactions, box scores, standings, attributed publisher reporting and sportsbook captures.'}</p>
-    ${deskNav({ kind, teams })}
-  </header>`;
-
-  if (!items.length) {
-    return { body: html`${mast}<div class="empty"><h3>Nothing on this desk yet</h3><p>The newsroom publishes only when a record supports a story. Quiet days stay quiet.</p></div>`, empty: true };
+  const archive = archiveRail(data.archive, data.arts?.data?.items || []);
+  if (archive) {
+    const trust = '<section class="trust section">';
+    body = body.includes(trust)
+      ? body.replace(trust, `${String(archive)}${trust}`)
+      : `${body}${String(archive)}`;
   }
 
-  if (kind) {
-    const [first, ...rest] = items;
-    return {
-      body: html`${mast}
-        <section class="front-lead front-lead--desk">${articleCard(first, { size: 'lead', eager: true })}</section>
-        <div class="ngrid section">${rest.map((c) => articleCard(c))}</div>
-        <p class="note section">Auto-updating · last newsroom pass ${lastRun ? relTime(lastRun) : 'unknown'} · ${arts.data.total} stories on this desk.</p>`,
-      empty: false
-    };
-  }
-
-  const lead = chooseLead(items);
-  const tops = topStories(items, lead, { limit: 3 });
-  const shown = new Set([lead?.id, ...tops.map((c) => c.id)]);
-  // Latest is newest-first by editorial origin, so a revision never floats old coverage back up the river.
-  const latest = items.filter((c) => !shown.has(c.id)).sort((a, b) => storyPublishedAt(b) - storyPublishedAt(a)).slice(0, 8);
-  const deskItems = (k) => ofKind(items, k).filter((c) => !shown.has(c.id));
-
-  return {
-    empty: false,
-    body: html`
-      ${mast}
-      <section class="front-top">
-        <div class="front-lead">${articleCard(lead, { size: 'lead', eager: true })}</div>
-        <div class="front-side">
-          <h2 class="rail-title">Top stories</h2>
-          ${tops.length ? tops.map((c) => articleCard(c, { size: 'feature' })) : html`<p class="note">No additional stories from the last 72 hours.</p>`}
-        </div>
-      </section>
-
-      <section class="front-band section">
-        <div>
-          <div class="sec-head"><h2 class="sec-title bc">Latest</h2><span class="note">newest first · auto · last pass ${lastRun ? relTime(lastRun) : 'unknown'}</span></div>
-          <div class="srows">${latest.map(articleRow)}</div>
-        </div>
-        <aside class="panel mw">
-          <div class="sec-head"><h2 class="sec-title bc">Market Watch</h2><a class="sec-link" href="/props">Best lines →</a></div>
-          ${marketWatch(items)}
-        </aside>
-      </section>
-
-      ${DESKS.map(([k, name, sub]) => {
-        const xs = deskItems(k).slice(0, k === 'transaction' || k === 'league' ? 4 : 6);
-        if (!xs.length) return '';
-        return html`<section class="desk section">
-          <div class="sec-head"><div><h2 class="sec-title bc">${name}</h2><p class="desk-sub">${sub}</p></div><a class="sec-link" href="/news/c/${k}">All ${name.toLowerCase()} →</a></div>
-          ${k === 'transaction' || k === 'league' ? html`<div class="srows srows--grid">${xs.map(articleRow)}</div>` : html`<div class="ngrid">${xs.map((c) => articleCard(c))}</div>`}
-        </section>`;
-      })}
-
-      <section class="wire-wrap section">
-        <div class="sec-head"><div><h2 class="sec-title bc">Source wire</h2><p class="desk-sub">The external publishers the newsroom tracks — attributed, headline and link only. This is their reporting, not PropBetEdge’s. <a href="/sources">Source status →</a></p></div></div>
-        ${sourceWire(wire)}
-      </section>
-
-      <section class="trust section">
-        <span class="eyebrow">How we write</span>
-        <p>Every story is generated by PropBetEdge from structured records and passes a publication gate before it goes live: each number must appear in a cited record, the only quotations allowed are a publisher’s own headline with the publisher named, there are no picks or unsupported projection claims, and every bettor angle states what argues against it and what is still unknown. Stories that fail are held, not published. Photographs are licensed Wikimedia Commons images, matched to the player by exact name and date of birth and credited on the image.</p>
-        <p class="note"><a href="/editorial-policy">Editorial policy</a> · <a href="/corrections">Corrections &amp; revisions</a> · <a href="/methodology">Methodology</a> · <a href="/rss.xml">RSS feed</a></p>
-        <p class="note">Auto-updating this tab every 2 minutes · last newsroom pass ${lastRun ? `${relTime(lastRun)} (${fmtDateTimeET(lastRun)})` : 'unknown'} · ${arts.data.total} stories live.</p>
-      </section>
-    `
-  };
+  return { ...view, body: raw(body) };
 }
