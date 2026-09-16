@@ -1,12 +1,13 @@
 // Historical-archive publishing layer for wnba-web.
 // The main publishing Worker remains the fallback for every existing route. This
-// layer also owns the public, data-free Player Load landing response; paid load
-// values are never server-rendered into public HTML.
+// layer also owns public, data-free premium landing responses so protected values
+// are never server-rendered into public HTML.
 import current from './index.js';
 import { bindingApi } from './api.js';
 import { composeDocument } from './render.js';
 import { intlHomeView } from '../../../src/views/international.js';
 import { playerLoadPublicView } from '../../../src/views/player-load.js';
+import { pbePicksPublicView } from '../../../src/views/pbe-picks-public.js';
 import { INTERNATIONAL_HISTORY, internationalHistoryFor, historicalCompetitionView } from '../../../src/views/international-history.js';
 import { historicalCompetitionMeta, historicalCompetitionGraph } from '../../../src/seo/international-history-meta.js';
 import { routeMeta } from '../../../src/seo/meta.js';
@@ -54,6 +55,17 @@ async function historicalHome(request, env) {
   return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 international-history-home' });
 }
 
+async function pbePicksLanding(request) {
+  const seed = routeMeta('pbe-picks', { path: '/pbe-picks' });
+  const meta = {
+    ...seed,
+    description: 'PBE WNBA intelligence: independent win probabilities, de-vigged market comparison, model-market disagreement, confidence, driver-by-driver reasoning, matchup research and a permanent locked track record.'
+  };
+  const page = { status: 200, route: 'pbe-picks', meta, main: String(pbePicksPublicView()), graph: pageGraph('pbe-picks', meta, {}) };
+  const shell = await loadShell(publicHost(request));
+  return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 pbe-picks-public' });
+}
+
 async function playerLoadLanding(request) {
   const seed = routeMeta('pro', { path: '/player-load' });
   const meta = { ...seed, path: '/player-load', url: `${SITE}/player-load`, title: 'WNBA Player Load Intelligence: Workload, Rest & Rotation Pressure | PropBetEdge', description: 'WNBA Pro Player Load Intelligence: a 0–100 workload and schedule-pressure index built from recent minutes, game density, turnaround, overtime and rotation context.' };
@@ -78,7 +90,7 @@ async function sitemapWithArchives(request, env, ctx) {
   if (!base.ok) return base;
   const text = await base.text();
   if (!text.includes('</urlset>')) return new Response(text, { status: base.status, headers: base.headers });
-  const urls = [`${SITE}/player-load`, ...COMPETITIONS.filter((c) => INTERNATIONAL_HISTORY[c.competition_id]).map((c) => `${SITE}/international/${c.slug}`)]
+  const urls = [`${SITE}/pbe-picks`, `${SITE}/player-load`, ...COMPETITIONS.filter((c) => INTERNATIONAL_HISTORY[c.competition_id]).map((c) => `${SITE}/international/${c.slug}`)]
     .filter((u) => !text.includes(`<loc>${u}</loc>`));
   const rows = urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n');
   const body = text.replace('</urlset>', `${rows ? `${rows}\n` : ''}</urlset>`);
@@ -88,6 +100,9 @@ async function sitemapWithArchives(request, env, ctx) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/pbe-picks') {
+      try { return await pbePicksLanding(request); } catch (e) { console.error('pbe picks landing failed', e?.stack || e); }
+    }
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/player-load') {
       try { return await playerLoadLanding(request); } catch (e) { console.error('player load landing failed', e?.stack || e); }
     }
