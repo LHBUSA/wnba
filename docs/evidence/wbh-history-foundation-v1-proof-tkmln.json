@@ -1,0 +1,232 @@
+﻿{
+    "ref":  "tkmlnhmylqnttmnsnief",
+    "at":  "2026-09-16T09:45:53.0804342Z",
+    "passed":  37,
+    "total":  37,
+    "relations_after":  0,
+    "functions_after":  0,
+    "results":  [
+                    {
+                        "step":  "01",
+                        "pass":  true,
+                        "check":  "clean install: no wbh_* object exists before the migrations",
+                        "detail":  "0 pre-existing wbh relations"
+                    },
+                    {
+                        "step":  "02",
+                        "pass":  true,
+                        "check":  "second execution succeeds and creates nothing new",
+                        "detail":  "rels 143 fns 15 trgs 80"
+                    },
+                    {
+                        "step":  "03",
+                        "pass":  true,
+                        "check":  "unknown source is refused (fails closed)",
+                        "detail":  "wbh: source some_site_we_never_reviewed is not registered; ingestion fails closed"
+                    },
+                    {
+                        "step":  "04",
+                        "pass":  true,
+                        "check":  "prohibited source cannot open an ingest run",
+                        "detail":  "wbh: source espn is prohibited; only mode = dry_run is permitted"
+                    },
+                    {
+                        "step":  "05",
+                        "pass":  true,
+                        "check":  "dry_run against a prohibited source is allowed (measurement, no retention)",
+                        "detail":  "1 row"
+                    },
+                    {
+                        "step":  "06",
+                        "pass":  true,
+                        "check":  "prohibited source: raw retention refused",
+                        "detail":  "wbh: source espn does not permit raw retention; record the hash only"
+                    },
+                    {
+                        "step":  "07",
+                        "pass":  true,
+                        "check":  "capture stamps the true rights state, ignoring the writer",
+                        "detail":  "stamped prohibited"
+                    },
+                    {
+                        "step":  "08",
+                        "pass":  true,
+                        "check":  "stored raw must be content addressed",
+                        "detail":  "wbh: r2_key must be content addressed and contain the sha256"
+                    },
+                    {
+                        "step":  "09",
+                        "pass":  true,
+                        "check":  "captured documents are append-only (only stored -\u003e purged)",
+                        "detail":  "wbh: source documents are append-only (only stored -\u003e purged is allowed)"
+                    },
+                    {
+                        "step":  "10",
+                        "pass":  true,
+                        "check":  "approved source writes canonical rows and is stamped synthetic",
+                        "detail":  "is_synthetic t"
+                    },
+                    {
+                        "step":  "11",
+                        "pass":  true,
+                        "check":  "canonical row without an ingestion run is refused",
+                        "detail":  "wbh: wbh_venues.ingestion_run_id is required (provenance is not optional)"
+                    },
+                    {
+                        "step":  "12",
+                        "pass":  true,
+                        "check":  "a dry run cannot write canonical rows",
+                        "detail":  "wbh: a dry run may not write canonical rows"
+                    },
+                    {
+                        "step":  "13",
+                        "pass":  true,
+                        "check":  "a prohibited document cannot be laundered through an approved run",
+                        "detail":  "wbh: source espn is prohibited and may not produce canonical data"
+                    },
+                    {
+                        "step":  "14",
+                        "pass":  true,
+                        "check":  "all-star / exhibition games cannot count for standings",
+                        "detail":  "new row for relation \"wbh_games\" violates check constraint \"wbh_games_exhibition_never_counts\""
+                    },
+                    {
+                        "step":  "15",
+                        "pass":  true,
+                        "check":  "a T5 name-context match may never be linked automatically, only proposed",
+                        "detail":  "wbh: tier T5 (name plus weak context) may never be linked automatically"
+                    },
+                    {
+                        "step":  "16",
+                        "pass":  true,
+                        "check":  "a linked provider id cannot point at two people",
+                        "detail":  "duplicate key value violates unique constraint \"wbh_entity_source_ids_linked_unique\""
+                    },
+                    {
+                        "step":  "17",
+                        "pass":  true,
+                        "check":  "approval contradicting the recorded terms is refused",
+                        "detail":  "new row for relation \"wbh_sources\" violates check constraint \"wbh_sources_ingestible_needs_permission\""
+                    },
+                    {
+                        "step":  "18",
+                        "pass":  true,
+                        "check":  "raw retention cannot be enabled for a prohibited source",
+                        "detail":  "new row for relation \"wbh_sources\" violates check constraint \"wbh_sources_raw_storage_needs_approval\""
+                    },
+                    {
+                        "step":  "19",
+                        "pass":  true,
+                        "check":  "an approved source must name a licence and a reviewer",
+                        "detail":  "new row for relation \"wbh_sources\" violates check constraint \"wbh_sources_approved_needs_review\""
+                    },
+                    {
+                        "step":  "20",
+                        "pass":  true,
+                        "check":  "every rights change is recorded and the history is append-only",
+                        "detail":  "revisions 2 -\u003e 3; wbh: wbh_source_rights_revisions rows are append-only (UPDATE rejected)"
+                    },
+                    {
+                        "step":  "21",
+                        "pass":  true,
+                        "check":  "quarantine holds non-approved material and refuses approved material",
+                        "detail":  "wbh: source wikidata is approved; write canonical rows, not quarantine"
+                    },
+                    {
+                        "step":  "22",
+                        "pass":  true,
+                        "check":  "RLS is enabled on every wbh table with zero policies",
+                        "detail":  "38 wbh tables, 0 policies"
+                    },
+                    {
+                        "step":  "23",
+                        "pass":  true,
+                        "check":  "anon and authenticated hold no privilege on any wbh object",
+                        "detail":  "none"
+                    },
+                    {
+                        "step":  "23b",
+                        "pass":  true,
+                        "check":  "anon and authenticated cannot execute any wbh function",
+                        "detail":  "none"
+                    },
+                    {
+                        "step":  "24",
+                        "pass":  true,
+                        "check":  "product views are security_invoker and exclude synthetic rows",
+                        "detail":  "1 synthetic games hidden from the public view"
+                    },
+                    {
+                        "step":  "25",
+                        "pass":  true,
+                        "check":  "every canonical fact table carries the full provenance and temporal column set",
+                        "detail":  "checked source/run/version/derivation/confidence/effective/observed/recorded/synthetic columns"
+                    },
+                    {
+                        "step":  "26",
+                        "pass":  true,
+                        "check":  "no object outside wbh_* was created, altered or re-permissioned",
+                        "detail":  "fingerprint 4bedfc919120 -\u003e 4bedfc919120"
+                    },
+                    {
+                        "step":  "27",
+                        "pass":  true,
+                        "check":  "the frozen PBE ledger and the entitlement surface gained and lost nothing",
+                        "detail":  "wnba_pbe relations 22 -\u003e 22 (contents also covered by the check 26 fingerprint)"
+                    },
+                    {
+                        "step":  "28",
+                        "pass":  true,
+                        "check":  "ingestible rights states require every product permission",
+                        "detail":  "new row for relation \"wbh_sources\" violates check constraint \"wbh_sources_ingestible_needs_permission\""
+                    },
+                    {
+                        "step":  "29",
+                        "pass":  true,
+                        "check":  "purge cannot rewrite captured source metadata",
+                        "detail":  "wbh: source documents are append-only; purge cannot rewrite captured metadata"
+                    },
+                    {
+                        "step":  "30",
+                        "pass":  true,
+                        "check":  "approved run and approved document must belong to the same source",
+                        "detail":  "wbh: source document a3effbbe-5f5e-4180-a282-b29e93f8dd5a belongs to wikidata, but ingestion run 089fbbc3-e08e-44cb-a975-d0ef8c30efd3 belongs to pbe_curation"
+                    },
+                    {
+                        "step":  "31",
+                        "pass":  true,
+                        "check":  "franchises cannot bypass canonical provenance",
+                        "detail":  "wbh: wbh_franchises.ingestion_run_id is required (provenance is not optional)"
+                    },
+                    {
+                        "step":  "32",
+                        "pass":  true,
+                        "check":  "canonical correction needs a new run and leaves a revision",
+                        "detail":  "revisions 0 -\u003e 1; observed=2026-09-16 09:46:02.118689+00 source=2026-09-16 09:46:02.118689+00"
+                    },
+                    {
+                        "step":  "33",
+                        "pass":  true,
+                        "check":  "provider ids cannot target nonexistent canonical entities",
+                        "detail":  "wbh: wikidata source id points at missing canonical person gp_ZZZZZZZZZZZZ"
+                    },
+                    {
+                        "step":  "34",
+                        "pass":  true,
+                        "check":  "statistics can only reference teams participating in the game",
+                        "detail":  "insert or update on table \"wbh_team_game_stats\" violates foreign key constraint \"wbh_team_game_stats_team_in_game_fk\""
+                    },
+                    {
+                        "step":  "35",
+                        "pass":  true,
+                        "check":  "global derived datasets are unique even with NULL edition_id",
+                        "detail":  "duplicate key value violates unique constraint \"wbh_derived_datasets_unique\""
+                    },
+                    {
+                        "step":  "36",
+                        "pass":  true,
+                        "check":  "canonical primary keys are immutable",
+                        "detail":  "wbh: primary key wbh_games.game_id is immutable"
+                    }
+                ]
+}
