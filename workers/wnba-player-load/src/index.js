@@ -9,8 +9,9 @@ import { etCompact, addDays } from '../../shared/time.js';
 import { buildPlayerLoadSnapshot, PLAYER_LOAD_VERSION } from '../../shared/player-load.js';
 
 const SERVICE = 'wnba-player-load';
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const SNAPSHOT_KEY = 'player-load:v1:latest';
+const STATUS_KEY = 'player-load:v1:status';
 const REFRESH_MS = 15 * 60e3;
 const WINDOW_DAYS = 28;
 const UPCOMING_DAYS = 8;
@@ -19,22 +20,26 @@ const reply = (body, status = 200) => new Response(JSON.stringify(body), { statu
 
 export default {
   async scheduled(_event, env, ctx) {
-    ctx.waitUntil(refresh(env));
+    ctx.waitUntil(runScheduled(env));
   },
 
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method !== 'GET' && request.method !== 'HEAD') return reply({ ok: false, error: 'method_not_allowed' }, 405);
     if (url.pathname !== '/health' && url.pathname !== '/status') return reply({ ok: false, error: 'not_found' }, 404);
-    const snap = env.WNBA_KV ? await env.WNBA_KV.get(SNAPSHOT_KEY, 'json') : null;
+    const [snap, status] = env.WNBA_KV
+      ? await Promise.all([env.WNBA_KV.get(SNAPSHOT_KEY, 'json'), env.WNBA_KV.get(STATUS_KEY, 'json')])
+      : [null, null];
     return reply({
       ok: true,
       service: SERVICE,
       version: VERSION,
       runtime: 'cloudflare-workers',
       scheduler: 'cloudflare-cron',
-      cron: '*/5 * * * *',
+      cron: '* * * * *',
+      refresh_interval_s: Math.round(REFRESH_MS / 1000),
       kv: Boolean(env.WNBA_KV),
+      status: status || null,
       snapshot: snap ? {
         schema: snap.schema,
         generated_at: snap.generated_at,
@@ -45,6 +50,44 @@ export default {
     });
   }
 };
+
+async function writeStatus(env, patch) {
+  if (!env.WNBA_KV) return;
+  const prev = await env.WNBA_KV.get(STATUS_KEY, 'json').catch(() => null);
+  await env.WNBA_KV.put(STATUS_KEY, JSON.stringify({
+    service: SERVICE,
+    version: VERSION,
+    ...(prev || {}),
+    ...patch
+  }));
+}
+
+async function runScheduled(env) {
+  const attemptedAt = new Date().toISOString();
+  try {
+    const result = await refresh(env);
+    const snapshotGeneratedAt = result?.generated_at || null;
+    await writeStatus(env, {
+      state: result?.skipped ? 'HEALTHY_SKIPPED_FRESH' : 'HEALTHY',
+      last_attempt_at: attemptedAt,
+      last_success_at: new Date().toISOString(),
+      last_error: null,
+      snapshot_generated_at: snapshotGeneratedAt,
+      last_result: result || null
+    });
+    return result;
+  } catch (e) {
+    const message = String(e?.message || e || 'unknown_error').slice(0, 500);
+    await writeStatus(env, {
+      state: 'ERROR',
+      last_attempt_at: attemptedAt,
+      last_error_at: new Date().toISOString(),
+      last_error: message
+    }).catch(() => {});
+    console.error(`[${SERVICE}] scheduled refresh failed: ${message}`);
+    throw e;
+  }
+}
 
 async function refresh(env, { force = false } = {}) {
   if (!env.WNBA_KV) throw new Error('player_load_kv_unconfigured');
@@ -68,7 +111,7 @@ async function refresh(env, { force = false } = {}) {
     return { ...a.summary.game, players: a.summary.box.players };
   }));
   const recentGames = archives.filter(Boolean);
-  if (!recentGames.length) throw new Error('player_load_no_archived_finals');
+  if (!recentGames.length) throw new Error(`player_load_no_archived_finals:expected=${finals.length}`);
 
   const [ref, availability] = await Promise.all([
     env.WNBA_KV.get('ref:v1:athletes', 'json'),
@@ -98,7 +141,7 @@ async function refresh(env, { force = false } = {}) {
   };
   await env.WNBA_KV.put(SNAPSHOT_KEY, JSON.stringify(snapshot));
   console.log(`[${SERVICE}] ${PLAYER_LOAD_VERSION} players=${snapshot.summary.players} finals=${recentGames.length}/${finals.length}`);
-  return { generated_at: snapshot.generated_at, players: snapshot.summary.players, finals: recentGames.length };
+  return { generated_at: snapshot.generated_at, players: snapshot.summary.players, finals: recentGames.length, finals_expected: finals.length };
 }
 
-export { refresh };
+export { refresh, runScheduled };
