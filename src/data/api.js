@@ -108,27 +108,13 @@ const scheduleSummary = (games) => {
 async function scheduleWithVerifiedFallback(params = {}) {
   const primary = await getJson(`${API_BASE}/v1/schedule${q(params)}`);
   if (primary.ok) return primary;
-
-  // Range schedule is a convenience read. If that upstream query fails, do not
-  // blank WNBACast or Matchups while the owned /v1/today surface still has a
-  // verified current/next slate and last result. We only use this fallback for
-  // ranges that include today (or an explicit date equal to today), and we keep
-  // only games that actually fall inside the requested range. No invented data.
   if (params.season) return primary;
   const today = etCompactDate();
-  const eligible = params.date
-    ? params.date === today
-    : params.from && params.to
-      ? params.from <= today && today <= params.to
-      : !params.from && !params.to;
+  const eligible = params.date ? params.date === today : params.from && params.to ? params.from <= today && today <= params.to : !params.from && !params.to;
   if (!eligible) return primary;
-
   const verified = await getJson(`${API_BASE}/v1/today`, { fresh: true });
   if (!verified.ok) return primary;
-  const candidates = [
-    ...(verified.data?.last_results?.games || []),
-    ...(verified.data?.slate?.games || [])
-  ];
+  const candidates = [...(verified.data?.last_results?.games || []), ...(verified.data?.slate?.games || [])];
   const seen = new Set();
   const games = candidates.filter((g) => {
     if (!g?.game_id || !g?.start_utc || seen.has(g.game_id)) return false;
@@ -139,25 +125,8 @@ async function scheduleWithVerifiedFallback(params = {}) {
     return true;
   });
   if (!games.length) return primary;
-
   games.sort((a, b) => String(a.start_utc).localeCompare(String(b.start_utc)));
-  return {
-    ok: true,
-    data: {
-      requested: { date: params.date || null, from: params.from || null, to: params.to || null, season: null },
-      day: verified.data?.slate?.date || verified.data?.last_results?.date || null,
-      games,
-      summary: scheduleSummary(games)
-    },
-    meta: {
-      ...(verified.meta || {}),
-      semantics: 'SCHEDULE_FALLBACK_VERIFIED_SLATE',
-      degraded: [
-        ...((verified.meta?.degraded || []).filter(Boolean)),
-        `primary_schedule:${primary.error?.code || 'unavailable'}`
-      ]
-    }
-  };
+  return { ok: true, data: { requested: { date: params.date || null, from: params.from || null, to: params.to || null, season: null }, day: verified.data?.slate?.date || verified.data?.last_results?.date || null, games, summary: scheduleSummary(games) }, meta: { ...(verified.meta || {}), semantics: 'SCHEDULE_FALLBACK_VERIFIED_SLATE', degraded: [...((verified.meta?.degraded || []).filter(Boolean)), `primary_schedule:${primary.error?.code || 'unavailable'}`] } };
 }
 
 export const api = {
@@ -185,6 +154,8 @@ export const api = {
   pbePicks: () => privateJson('/v1/pbe/picks'),
   pbeGame: (id) => privateJson(`/v1/pbe/games/${encodeURIComponent(id)}`),
   pbeTeam: (id) => privateJson(`/v1/pbe/teams/${encodeURIComponent(id)}`),
+  playerLoad: () => privateJson('/v1/player-load'),
+  playerLoadPlayer: (id) => privateJson(`/v1/player-load/${encodeURIComponent(id)}`),
   trackRecordLedger: () => privateJson('/v1/track-record/ledger'),
   pbeStatus: async () => ((await privateAvailable()) ? getJson(`${API_BASE}/v1/pbe/status`) : { ok: false, data: null, error: { code: 'pbe_api_unavailable', message: 'Model details are not published yet.' } }),
   pbeCoverage: async () => ((await privateAvailable()) ? getJson(`${API_BASE}/v1/pbe/coverage`, { fresh: true }) : { ok: false, data: null, error: { code: 'pbe_api_unavailable' } }),

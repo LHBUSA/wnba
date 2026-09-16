@@ -31,6 +31,7 @@ const PAGES = {
   team: () => import('../pages/team.js'),
   'pbe-picks': () => import('../pages/pbe-picks.js'),
   'pbe-model': () => import('../pages/pbe-model.js'),
+  'player-load': () => import('../pages/player-load.js'),
   'track-record': () => import('../pages/track-record.js'),
   pro: () => import('../pages/pro.js'),
   sources: () => import('../pages/sources.js'),

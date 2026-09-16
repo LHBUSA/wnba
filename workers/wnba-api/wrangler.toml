@@ -1,5 +1,5 @@
 name = "wnba-api"
-main = "src/index.js"
+main = "src/index-premium.js"
 compatibility_date = "2026-09-01"
 account_id = "fd3a233edadd0a60916413c1199f71ee"
 workers_dev = true
@@ -9,37 +9,30 @@ routes = [{ pattern = "wnba-api.propbetedge.ai", custom_domain = true }]
 
 # Public read API for wnba.propbetedge.ai. No cron: user reads only.
 # Provider mediation (ESPN) with edge cache + KV last-good; market data is read
-# from snapshots written by wnba-ingest (user traffic never spends odds credits).
+# from snapshots written by WNBA Cloudflare Workers (user traffic never spends odds credits).
 
 [[kv_namespaces]]
 binding = "WNBA_KV"
 id = "c3249a8e3552438da38c6cad0d54e172"
 
-# Entitlement read: network billing ledger through propbetedge-sports-billing (POST /v1/entitlement).
 [[services]]
 binding = "BILLING"
 service = "propbetedge-sports-billing"
 
-# WNBA-owned passwordless sign-in email (Cloudflare Email Service; sending subdomain must be onboarded).
 [[send_email]]
 name = "EMAIL"
 
 [vars]
-# WNBA Pro checkout is LIVE. Stripe Payment Links, billing webhook/catalog,
-# production auth and entitlement canaries were verified before activation.
 WNBA_PURCHASE_ACTIVE = "true"
 AUTH_FROM = "signin@mail.wnba.propbetedge.ai"
 AUTH_PUBLIC_BASE = "https://wnba-api.propbetedge.ai"
-# Official PBE launch approved by owner 2026-09-16. Entitled WNBA Pro users now
-# read the official ledger; shadow documents remain non-public.
 PBE_PUBLISH = "true"
 
 [observability]
 enabled = true
 
 # Secrets:
-#   WNBA_SESSION_SECRET            HS256 key for __Host-wnba_session (generated for WNBA; never shared)
-#   ENTITLEMENT_READ_TOKEN         same value as propbetedge-sports-billing ENTITLEMENT_READ_TOKEN
-#   WNBA_OWNER_EMAILS              owner QA access (comma list)
-#   PBE_SUPABASE_URL, PBE_SUPABASE_SERVICE_ROLE_KEY   tkmln read of the official wnba_pbe ledger
-# Optional (WNBA core system of record, not yet approved): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+#   WNBA_SESSION_SECRET
+#   ENTITLEMENT_READ_TOKEN
+#   WNBA_OWNER_EMAILS
+#   PBE_SUPABASE_URL, PBE_SUPABASE_SERVICE_ROLE_KEY

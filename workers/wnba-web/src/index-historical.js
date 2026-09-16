@@ -1,12 +1,12 @@
 // Historical-archive publishing layer for wnba-web.
-//
 // The main publishing Worker remains the fallback for every existing route. This
-// thin layer owns only the verified historical international archives so the
-// first HTTP response, metadata, JSON-LD and sitemap match the client product.
+// layer also owns the public, data-free Player Load landing response; paid load
+// values are never server-rendered into public HTML.
 import current from './index.js';
 import { bindingApi } from './api.js';
 import { composeDocument } from './render.js';
 import { intlHomeView } from '../../../src/views/international.js';
+import { playerLoadPublicView } from '../../../src/views/player-load.js';
 import { INTERNATIONAL_HISTORY, internationalHistoryFor, historicalCompetitionView } from '../../../src/views/international-history.js';
 import { historicalCompetitionMeta, historicalCompetitionGraph } from '../../../src/seo/international-history-meta.js';
 import { routeMeta } from '../../../src/seo/meta.js';
@@ -33,10 +33,7 @@ async function loadShell(host) {
   const origin = SHELL_HOSTS.test(host || '') ? `https://${host}` : SITE;
   if (shellMemo.html && shellMemo.host === origin && Date.now() - shellMemo.at < 60e3) return shellMemo.html;
   const res = await fetch(`${origin}/app-shell.html`, { cf: { cacheTtlByStatus: { '200-299': 60, '400-599': 0 } } });
-  if (!res.ok) {
-    if (origin !== SITE) return loadShell('wnba.propbetedge.ai');
-    throw new Error(`shell ${res.status}`);
-  }
+  if (!res.ok) { if (origin !== SITE) return loadShell('wnba.propbetedge.ai'); throw new Error(`shell ${res.status}`); }
   const html = await res.text();
   shellMemo = { at: Date.now(), host: origin, html };
   return html;
@@ -44,16 +41,7 @@ async function loadShell(host) {
 
 function archiveHomeModel(home) {
   if (!home?.ok) return home;
-  return {
-    ...home,
-    data: {
-      ...home.data,
-      competitions: (home.data.competitions || []).map((c) => {
-        const archive = internationalHistoryFor(c.competition_id);
-        return archive ? { ...c, coverage: 'full', status: `historical · ${archive.champion} champion` } : c;
-      })
-    }
-  };
+  return { ...home, data: { ...home.data, competitions: (home.data.competitions || []).map((c) => { const archive = internationalHistoryFor(c.competition_id); return archive ? { ...c, coverage: 'full', status: `historical · ${archive.champion} champion` } : c; }) } };
 }
 
 async function historicalHome(request, env) {
@@ -61,19 +49,17 @@ async function historicalHome(request, env) {
   const home = archiveHomeModel(await api.intl());
   if (!home?.ok) return current.fetch(request, env, { waitUntil() {} });
   const meta = routeMeta('international', { path: '/international' });
-  const page = {
-    status: 200,
-    route: 'international',
-    meta,
-    main: String(intlHomeView({ home })),
-    graph: pageGraph('international', meta, home.data)
-  };
+  const page = { status: 200, route: 'international', meta, main: String(intlHomeView({ home })), graph: pageGraph('international', meta, home.data) };
   const shell = await loadShell(publicHost(request));
-  return respond(composeDocument(shell, page), 200, {
-    'content-type': 'text/html; charset=utf-8',
-    'cache-control': HTML_CACHE,
-    'x-pbe-render': 'wnba-web/1.0.0 international-history-home'
-  });
+  return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 international-history-home' });
+}
+
+async function playerLoadLanding(request) {
+  const seed = routeMeta('pro', { path: '/player-load' });
+  const meta = { ...seed, path: '/player-load', url: `${SITE}/player-load`, title: 'WNBA Player Load Intelligence: Workload, Rest & Rotation Pressure | PropBetEdge', description: 'WNBA Pro Player Load Intelligence: a 0–100 workload and schedule-pressure index built from recent minutes, game density, turnaround, overtime and rotation context.' };
+  const page = { status: 200, route: 'player-load', meta, main: String(playerLoadPublicView()), graph: null };
+  const shell = await loadShell(publicHost(request));
+  return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 player-load-public' });
 }
 
 async function historicalCompetition(request, slug, section) {
@@ -82,19 +68,9 @@ async function historicalCompetition(request, slug, section) {
   if (!competition || !archive) return null;
   if (section) return respond(null, 301, { location: `${SITE}/international/${competition.slug}`, 'cache-control': 'public, max-age=300, s-maxage=3600' });
   const meta = historicalCompetitionMeta(competition, archive);
-  const page = {
-    status: 200,
-    route: 'intl-competition',
-    meta,
-    main: String(historicalCompetitionView(competition, archive)),
-    graph: historicalCompetitionGraph(competition, archive, meta)
-  };
+  const page = { status: 200, route: 'intl-competition', meta, main: String(historicalCompetitionView(competition, archive)), graph: historicalCompetitionGraph(competition, archive, meta) };
   const shell = await loadShell(publicHost(request));
-  return respond(composeDocument(shell, page), 200, {
-    'content-type': 'text/html; charset=utf-8',
-    'cache-control': HTML_CACHE,
-    'x-pbe-render': 'wnba-web/1.0.0 intl-history'
-  });
+  return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 intl-history' });
 }
 
 async function sitemapWithArchives(request, env, ctx) {
@@ -102,10 +78,9 @@ async function sitemapWithArchives(request, env, ctx) {
   if (!base.ok) return base;
   const text = await base.text();
   if (!text.includes('</urlset>')) return new Response(text, { status: base.status, headers: base.headers });
-  const rows = COMPETITIONS
-    .filter((c) => INTERNATIONAL_HISTORY[c.competition_id])
-    .map((c) => `  <url><loc>${SITE}/international/${c.slug}</loc></url>`)
-    .join('\n');
+  const urls = [`${SITE}/player-load`, ...COMPETITIONS.filter((c) => INTERNATIONAL_HISTORY[c.competition_id]).map((c) => `${SITE}/international/${c.slug}`)]
+    .filter((u) => !text.includes(`<loc>${u}</loc>`));
+  const rows = urls.map((u) => `  <url><loc>${u}</loc></url>`).join('\n');
   const body = text.replace('</urlset>', `${rows ? `${rows}\n` : ''}</urlset>`);
   return new Response(body, { status: base.status, headers: base.headers });
 }
@@ -113,20 +88,15 @@ async function sitemapWithArchives(request, env, ctx) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/player-load') {
+      try { return await playerLoadLanding(request); } catch (e) { console.error('player load landing failed', e?.stack || e); }
+    }
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/international') {
-      try { return await historicalHome(request, env); }
-      catch (e) { console.error('historical home failed', e?.stack || e); }
+      try { return await historicalHome(request, env); } catch (e) { console.error('historical home failed', e?.stack || e); }
     }
     if ((request.method === 'GET' || request.method === 'HEAD')) {
       const m = url.pathname.match(HISTORICAL_ROUTE);
-      if (m) {
-        try {
-          const response = await historicalCompetition(request, m[1], m[2] || null);
-          if (response) return response;
-        } catch (e) {
-          console.error('historical competition failed', url.pathname, e?.stack || e);
-        }
-      }
+      if (m) { try { const response = await historicalCompetition(request, m[1], m[2] || null); if (response) return response; } catch (e) { console.error('historical competition failed', url.pathname, e?.stack || e); } }
       if (url.pathname === '/sitemap.xml') return sitemapWithArchives(request, env, ctx);
     }
     return current.fetch(request, env, ctx);
