@@ -23,24 +23,25 @@
   display: none;
 }
 
-/* Standings: conference tables are information-dense, so give each one the full page width. */
-.standings-grid {
+/* Standings is the page-head followed by a two-card grid of wide league tables.
+   Stop forcing ten columns into half-width cards: one conference per full-width card. */
+.page-head + .grid.g2:has(> .card .tbl-wrap) {
   grid-template-columns: minmax(0, 1fr) !important;
 }
-.standings-grid .tbl-wrap {
+.page-head + .grid.g2:has(> .card .tbl-wrap) .tbl-wrap {
   overflow-x: visible;
 }
-.standings-grid .tbl {
+.page-head + .grid.g2:has(> .card .tbl-wrap) .tbl {
   width: 100%;
   table-layout: fixed;
 }
-.standings-grid .tbl th,
-.standings-grid .tbl td {
+.page-head + .grid.g2:has(> .card .tbl-wrap) .tbl th,
+.page-head + .grid.g2:has(> .card .tbl-wrap) .tbl td {
   white-space: normal;
   padding-inline: 8px;
 }
-.standings-grid .tbl th:first-child,
-.standings-grid .tbl td:first-child {
+.page-head + .grid.g2:has(> .card .tbl-wrap) .tbl th:first-child,
+.page-head + .grid.g2:has(> .card .tbl-wrap) .tbl td:first-child {
   width: 30%;
 }
 
@@ -76,7 +77,7 @@ pre[style*='overflow-x: auto'] {
   word-break: break-word;
 }
 
-/* More now carries the full intelligence stack; use two columns on desktop. */
+/* More carries the intelligence stack; use two columns instead of a tall cluttered menu. */
 @media (min-width: 1181px) {
   .nav-more-menu {
     min-width: 440px;
@@ -92,18 +93,19 @@ pre[style*='overflow-x: auto'] {
 }
 
 @media (max-width: 760px) {
-  .standings-grid .tbl {
+  .page-head + .grid.g2:has(> .card .tbl-wrap) .tbl {
     table-layout: auto;
     font-size: 11px;
   }
-  .standings-grid .tbl th,
-  .standings-grid .tbl td {
+  .page-head + .grid.g2:has(> .card .tbl-wrap) .tbl th,
+  .page-head + .grid.g2:has(> .card .tbl-wrap) .tbl td {
     padding: 7px 5px;
   }
-  .standings-grid .tbl th:nth-child(8),
-  .standings-grid .tbl td:nth-child(8),
-  .standings-grid .tbl th:nth-child(9),
-  .standings-grid .tbl td:nth-child(9) {
+  /* Keep the useful standings signal without forcing a horizontal rail on phones. */
+  .page-head + .grid.g2:has(> .card .tbl-wrap) .tbl th:nth-child(8),
+  .page-head + .grid.g2:has(> .card .tbl-wrap) .tbl td:nth-child(8),
+  .page-head + .grid.g2:has(> .card .tbl-wrap) .tbl th:nth-child(9),
+  .page-head + .grid.g2:has(> .card .tbl-wrap) .tbl td:nth-child(9) {
     display: none;
   }
 }
