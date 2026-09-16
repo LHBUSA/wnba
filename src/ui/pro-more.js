@@ -1,5 +1,6 @@
 const PRO_MORE = [
   ['edge-timeline', '/edge-timeline', 'Edge Timeline · PRO'],
+  ['prop-edge', '/props#pbe-prop-edge', 'PBE Prop Edge · PRO'],
   ['rotation-impact', '/rotation-impact', 'Rotation Impact · PRO'],
   ['scenario-lab', '/scenario-lab', 'Scenario Lab · PRO'],
   ['watchlist', '/watchlist', 'Watchlist · PRO']
