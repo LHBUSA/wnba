@@ -8,18 +8,21 @@
 // is first seen and stores it (KV `news:v1:events`): later reports join the existing event; they never rename it.
 //
 // Matching, in order (never keyed to a provider article id):
-//   1. fact key — the facts of the event: roster move / injury / availability + the linked player set;
-//      coaching / front-office + team. Same fact key within FACT_WINDOW_MS of the event's latest report = same
-//      event, even from the same publisher (a team's "injury update" after its first announcement).
+//   1. fact key — the facts of the event: roster move / injury episode + the linked player set;
+//      coaching / front-office + team. Injury and availability are one event family: publisher vocabulary must
+//      never mint two stories for the same player's same availability episode. Same fact key within FACT_WINDOW_MS
+//      of the event's latest report = same event, even from the same publisher.
 //   2. shared linked player + compatible lane + headline overlap (Jaccard ≥ 0.2), cross-publisher, within 48h.
 //   3. headline Jaccard ≥ 0.55, cross-publisher, within 48h; or, for league-level events with no linked player,
 //      the same specific event type and stemmed headline Jaccard ≥ 0.4 ("WNBA releases 2026 playoff schedule" /
 //      "WNBA playoffs schedule 2026: dates released").
-// A different fact (a new status, a different player, a roster move after an injury) is a new event.
+// A different fact (a different player, a roster move after an injury) is a new event.
 
 import { tokens, jaccard } from './editorial.js';
 import { laneOf, legacyType, eventMateriality } from './taxonomy.js';
 
+// Keep the persisted schema id stable: the repair below is backward-compatible with existing registries and
+// deliberately migrates split injury/availability events in place instead of throwing away canonical ids.
 export const EVENTS_VERSION = 'wnba-events/1.0.0';
 export const FACT_WINDOW_MS = 72 * 3600e3;
 export const SIMILAR_WINDOW_MS = 48 * 3600e3;
@@ -36,6 +39,8 @@ const withoutNames = (tk, it) => {
   return new Set([...tk].filter((w) => !names.has(w)));
 };
 
+const normalizeFactKey = (key) => String(key || '').replace(/^availability:/, 'injury:');
+
 /** The fact key of an item, or null when the item carries no verifiable fact identity. */
 export function factKey(item) {
   const t = item.event_type;
@@ -43,7 +48,8 @@ export function factKey(item) {
   const teams = ids(item.entities, 'team');
   const lane = laneOf(t);
   if (lane === 'roster' && players.length) return `roster:${players.join('+')}`;
-  if ((t === 'injury' || t === 'availability') && players.length) return `${t}:${players.join('+')}`;
+  // "injury" and "availability" are source-taxonomy wording for the same player episode.
+  if ((t === 'injury' || t === 'availability') && players.length) return `injury:${players.join('+')}`;
   if ((t === 'coaching' || t === 'front_office') && teams.length === 1) return `${t}:team:${teams[0]}`;
   if (t === 'awards' && players.length) return `awards:${players.join('+')}`;
   return null;
@@ -85,6 +91,51 @@ function attach(ev, it) {
 
 const compatible = (a, b) => a === b || GENERIC.has(a) || GENERIC.has(b) || laneOf(a) === laneOf(b);
 
+/**
+ * Backward-compatible registry repair for the production split that exposed the same player injury as two briefs.
+ * Older registries may contain `availability:<player>` and `injury:<player>` as separate events. Normalize those
+ * facts, then merge temporally overlapping copies. The most recently reported event id wins so the current canonical
+ * story stays stable; every historical item mapping follows it. This mutates only the cloned registry used in a run.
+ */
+export function repairSplitFactEvents(reg) {
+  if (!reg?.events) return [];
+  const repairs = [];
+  for (const ev of Object.values(reg.events)) ev.fact_keys = [...new Set((ev.fact_keys || []).map(normalizeFactKey).filter(Boolean))];
+
+  const byInjury = new Map();
+  for (const ev of Object.values(reg.events)) {
+    for (const key of ev.fact_keys || []) {
+      if (!key.startsWith('injury:')) continue;
+      if (!byInjury.has(key)) byInjury.set(key, []);
+      byInjury.get(key).push(ev);
+    }
+  }
+
+  for (const [key, candidates] of byInjury) {
+    const live = () => candidates.filter((e) => reg.events[e.event_id]);
+    while (live().length > 1) {
+      const rows = live().sort((a, b) => (ms(b.last_published_at) ?? 0) - (ms(a.last_published_at) ?? 0));
+      const target = rows[0];
+      const source = rows.find((e, i) => i > 0 && Math.abs((ms(target.last_published_at) ?? 0) - (ms(e.last_published_at) ?? 0)) <= FACT_WINDOW_MS);
+      if (!source) break;
+
+      for (const member of source.members || []) if (!target.members.some((m) => m.item_id === member.item_id)) target.members.push(member);
+      target.fact_keys = [...new Set([...(target.fact_keys || []), ...(source.fact_keys || [])].map(normalizeFactKey))];
+      target.players = [...new Set([...(target.players || []), ...(source.players || [])])].sort();
+      target.teams = [...new Set([...(target.teams || []), ...(source.teams || [])])].sort();
+      const first = [ms(target.first_published_at), ms(source.first_published_at)].filter((x) => x !== null);
+      const last = [ms(target.last_published_at), ms(source.last_published_at)].filter((x) => x !== null);
+      if (first.length) target.first_published_at = new Date(Math.min(...first)).toISOString();
+      if (last.length) target.last_published_at = new Date(Math.max(...last)).toISOString();
+      if (GENERIC.has(target.event_type) && source.event_type && !GENERIC.has(source.event_type)) target.event_type = source.event_type;
+      for (const member of source.members || []) reg.item_event[member.item_id] = target.event_id;
+      delete reg.events[source.event_id];
+      repairs.push({ fact_key: key, kept_event_id: target.event_id, merged_event_id: source.event_id, members: target.members.length });
+    }
+  }
+  return repairs;
+}
+
 function candidate(it, events) {
   const t = ms(it.published_at) ?? 0;
   const fk = factKey(it);
@@ -100,8 +151,8 @@ function candidate(it, events) {
     const crossPublisher = !ev.members.some((m) => m.source_id === it.source_id);
     if (!crossPublisher) continue;
     // Two different facts are two events, however similar the words.
-    const evFactLanes = new Set(ev.fact_keys.map((k) => k.split(':')[0]));
-    if (fk && evFactLanes.has(fk.split(':')[0]) && !ev.fact_keys.includes(fk)) continue;
+    const evFactLanes = new Set(ev.fact_keys.map((k) => normalizeFactKey(k).split(':')[0]));
+    if (fk && evFactLanes.has(normalizeFactKey(fk).split(':')[0]) && !ev.fact_keys.includes(normalizeFactKey(fk))) continue;
     const jac = Math.max(0, ...ev.members.map((m) => jaccard(tk, tokens(m.headline))));
     // League-level events carry no player to key on: the same specific event type plus stemmed headline overlap.
     const sameTypeNoFacts = !fk && !players.length && !GENERIC.has(it.event_type) && it.event_type === ev.event_type && !ev.fact_keys.length
@@ -123,6 +174,7 @@ function candidate(it, events) {
  */
 export function assignEvents(items, registry, { keepMs = 21 * 86400e3, now = Date.now() } = {}) {
   const reg = registry?.version === EVENTS_VERSION ? structuredClone(registry) : emptyRegistry();
+  const repaired = repairSplitFactEvents(reg);
   const created = [];
   const joined = [];
   const sorted = [...items].sort((a, b) => String(a.published_at).localeCompare(String(b.published_at)) || String(a.item_id).localeCompare(String(b.item_id)));
@@ -151,7 +203,7 @@ export function assignEvents(items, registry, { keepMs = 21 * 86400e3, now = Dat
     if (!ev.members.length || (ms(ev.last_published_at) ?? 0) < now - keepMs) delete reg.events[id];
   }
   for (const [itemId, evId] of Object.entries(reg.item_event)) if (!reg.events[evId]) delete reg.item_event[itemId];
-  return { registry: reg, clusters: clustersOf(reg, items), created, joined };
+  return { registry: reg, clusters: clustersOf(reg, items), created, joined, repaired };
 }
 
 /** v1-shaped clusters over the items currently stored. Canonical = earliest report; an official source wins. */
