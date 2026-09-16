@@ -4,10 +4,11 @@ compatibility_date = "2026-09-01"
 account_id = "fd3a233edadd0a60916413c1199f71ee"
 workers_dev = true
 
-# Cloudflare Cron only. The Worker wakes every five minutes but recomputes only
-# when its shared-KV snapshot is at least 15 minutes old.
+# Cloudflare Cron only. Wake every minute so first-deploy bootstrap and failed
+# refreshes recover quickly; the Worker recomputes only when the shared-KV
+# snapshot is at least 15 minutes old.
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["* * * * *"]
 
 [[kv_namespaces]]
 binding = "WNBA_KV"
