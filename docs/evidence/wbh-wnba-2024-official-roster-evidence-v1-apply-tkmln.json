@@ -1,0 +1,108 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "edition_id": "wnba_2024",
+  "semantics": "Official-source roster observations only; these rows do not populate appearance-derived wbh_roster_stints.",
+  "table": "public.wbh_season_roster_evidence",
+  "applied_migrations": [
+    "wbh_season_roster_evidence_v1",
+    "wbh_wnba_2024_official_roster_evidence_v1",
+    "wbh_wnba_2024_seattle_roster_evidence_v1",
+    "wbh_wnba_2024_atlanta_roster_evidence_v1",
+    "wbh_wnba_2024_phoenix_roster_evidence_v1",
+    "wbh_wnba_2024_los_angeles_roster_evidence_v1",
+    "wbh_wnba_2024_connecticut_roster_evidence_v1"
+  ],
+  "verification": {
+    "rows": 83,
+    "linked": 82,
+    "conflict": 1,
+    "unresolved": 0,
+    "teams_covered": 7,
+    "teams_total": 12,
+    "by_team": {
+      "Atlanta Dream": 12,
+      "Connecticut Sun": 12,
+      "Las Vegas Aces": 12,
+      "Los Angeles Sparks": 14,
+      "New York Liberty": 11,
+      "Phoenix Mercury": 11,
+      "Seattle Storm": 11
+    },
+    "wbh_roster_stints": 0,
+    "wbh_games": 0,
+    "wnba_pbe_relations": 22
+  },
+  "sources": [
+    {
+      "team": "New York Liberty",
+      "effective_on": "2024-05-13",
+      "kind": "opening_roster",
+      "publisher": "New York Liberty",
+      "url": "https://liberty.wnba.com/news/new-york-liberty-announce-2024-regular-season-roster",
+      "rows": 11
+    },
+    {
+      "team": "Las Vegas Aces",
+      "effective_on": "2024-06-15",
+      "kind": "dated_roster",
+      "publisher": "Las Vegas Aces",
+      "url": "https://cdn.wnba.com/sites/1611661319/2024/06/2024-06-15-Aces-vs-New-York-Game-Notes-FINAL.pdf",
+      "rows": 12
+    },
+    {
+      "team": "Seattle Storm",
+      "effective_on": "2024-08-16",
+      "kind": "dated_roster",
+      "publisher": "Seattle Storm",
+      "url": "https://cdn.wnba.com/sites/1611661330/2024/08/SEA-Game-Notes-1.pdf",
+      "rows": 11
+    },
+    {
+      "team": "Atlanta Dream",
+      "effective_on": "2024-09-13",
+      "kind": "dated_roster",
+      "publisher": "Atlanta Dream",
+      "url": "https://cdn.wnba.com/sites/1611661330/2024/09/Dream-Game-Notes-Game-37-vs.-Washington-9.13.pdf",
+      "rows": 12
+    },
+    {
+      "team": "Phoenix Mercury",
+      "effective_on": "2024-09-03",
+      "kind": "dated_roster",
+      "publisher": "Phoenix Mercury",
+      "url": "https://cdn.wnba.com/sites/1611661330/2024/09/9.3.24-Mercury-Game-Notes-vs.-ATL.pdf",
+      "rows": 11
+    },
+    {
+      "team": "Los Angeles Sparks",
+      "effective_on": "2024-09-01",
+      "kind": "dated_roster",
+      "publisher": "Los Angeles Sparks",
+      "url": "https://cdn.wnba.com/sites/1611661330/2024/09/Sept-1-ATL-at-LAS-Game-Notes-1.pdf",
+      "rows": 14
+    },
+    {
+      "team": "Connecticut Sun",
+      "effective_on": "2024-08-18",
+      "kind": "dated_roster",
+      "publisher": "Connecticut Sun",
+      "url": "https://cdn.wnba.com/sites/1611661330/2024/08/Game-26-at-ATL.pdf",
+      "rows": 12
+    }
+  ],
+  "identity_review": [
+    {
+      "source_player_name": "Tiffany Hayes",
+      "candidate_person_id": "gp_8QTWA540X83F",
+      "status": "conflict",
+      "reason": "Official Aces game notes list DOB 1989-08-20 while the current Wikidata-backed canonical record lists 1989-09-20; no automatic identity decision was made."
+    }
+  ],
+  "remaining_teams": [
+    "Chicago Sky",
+    "Dallas Wings",
+    "Indiana Fever",
+    "Minnesota Lynx",
+    "Washington Mystics"
+  ]
+}
