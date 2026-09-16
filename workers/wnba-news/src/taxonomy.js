@@ -1,4 +1,4 @@
-// Event taxonomy and materiality gate for the WNBA source wire — wnba-taxonomy/1.1.1.
+// Event taxonomy and materiality gate for the WNBA source wire — wnba-taxonomy/1.1.2.
 //
 // Deterministic and stated: regular expressions over the publisher's headline, short summary and categories, plus
 // the source's tier. Nothing here calls a language model and nothing reads an article body.
@@ -8,7 +8,7 @@
 //   story_type  the legacy v1 type, kept so existing consumers (briefs, feed filters, Supabase rows) keep working
 //   materiality { score, level, material, reasons, flags } — whether the event can become a PropBetEdge story
 
-export const TAXONOMY_VERSION = 'wnba-taxonomy/1.1.1';
+export const TAXONOMY_VERSION = 'wnba-taxonomy/1.1.2';
 
 /** Score at or above which a source-wire event may become a new PropBetEdge story. */
 export const MATERIAL_THRESHOLD = 3.5;
@@ -72,7 +72,7 @@ const RULES = [
   ['front_office', /\b(general manager|\bgm\b|president of basketball|team president|front office|ownership group|new owners?|sale of the (team|franchise)|minority stake|chief executive|ceo)\b/i],
   ['draft', /\b(draft (lottery|pick|prospects?|order|board|night|rights)|no\. \d+ pick|first-round pick|\d{4} wnba draft|wnba draft)\b/i],
   ['record', /\b((sets?|breaks?|broke|ties?|tied|new|franchise|league|wnba|career|single-game|single-season) record|record-(setting|breaking)|milestone|career-high|all-time (leader|scoring|assists|rebounds)|first player (ever )?to|becomes the (first|fastest|youngest)|triple-double)\b/i],
-  ['playoff', /\b(playoffs?|postseason|clinch(es|ed|ing)?|eliminat(ed|ion)|magic number|tiebreakers?|wnba finals|first-round (series|bye)|playoff (seed|seeding|race|picture|schedule|bracket))\b/i],
+  ['playoff', /\b(clinch(es|ed|ing)?|eliminat(ed|ion)|magic number|tiebreakers?|wnba finals|first-round (series|bye)|playoff (seed|seeding|race|picture|schedule|bracket|spot|berth)|postseason (seed|seeding|race|picture|schedule|bracket|spot|berth)|earn(s|ed)? (a |the )?(playoff|postseason) (spot|berth))\b/i],
   ['league', /\b(wnba (announces|unveils|releases|reveals|sets|approves|fines|suspends)|schedule release|rule change|fine[sd]?|disciplin(e|ary)|investigation|commissioner'?s cup|all-star game|league-wide)\b/i],
   ['business', /\b(sponsor(ship)?|endorsement|media (rights|deal)|broadcast (deal|partner)|tv deal|streaming deal|ratings|viewership|attendance|sell-?outs?|ticket (sales|prices)|valuation|revenue|arena|practice facility|performance center|investment|investors?|lawsuit|sues|sued)\b/i],
   ['lineup', /\b(starting lineup|start(s|ing)? in place of|move(s|d)? to the bench|minutes restriction|rotation change|role change|will start)\b/i],
@@ -82,7 +82,7 @@ const RULES = [
   ['performance', /\b(\d{2}-point|\d{2} points|double-double|scores? \d{2}|season-high|drops \d{2}|career night)\b/i]
 ];
 
-const OPINION_STRONG = /\b(power rankings?|rankings|mailbag|takeaways|grades?|overreactions?|hot takes?|debate|column|opinion|podcast|film (room|study)|mock draft|mvp (race|ladder|odds|watch|case)|awards? (watch|predictions|ballot|picks|race|case)|winners and losers|report card|stock (up|down)|ranking every|ranked|top \d+|\d+ (things|takeaways|questions|reasons|players|storylines|keys|thoughts|observations|stats|moments|bold|best|worst)|trade (rumou?rs?|targets|ideas|candidates|machine)|rumou?rs?|speculation|what (we|i) learned|reaction(s)?|vibe check|explained|explainer|deep dive|profile)\b/i;
+const OPINION_STRONG = /\b(power rankings?|rankings|mailbag|takeaways|grades?|overreactions?|hot takes?|debate|column|opinion|podcast|film (room|study)|mock draft|mvp (race|ladder|odds|watch|case)|awards? (watch|predictions|ballot|picks|race|case)|winners and losers|report card|stock (up|down)|ranking every|ranked|top \d+|\d+ (things|takeaways|questions|reasons|players|storylines|keys|thoughts|observations|stats|moments|bold|best|worst)|trade (rumou?rs?|targets|ideas|candidates|machine)|rumou?rs?|speculation|what (we|i) learned|reaction(s)?|vibe check|explained|explainer|deep dive|profile|has faith in|express(es|ed)? thoughts on|shares? thoughts on|speaks? on|weighs? in on|ready to hype)\b/i;
 const SPECULATIVE = /(^\s*(why|how)\b|\b(should|could|would|might|may be|why the|why she|why they|why it|what's next|what’s next|what next|reasons|feels like|potential|candidates|frontrunners?|shortlist|contenders|in the running|not worried|homecoming)\b)/i;
 const EXPLAINER = /\b(how do|how does|how the .{0,30} work|what to know|everything (you need|to know)|guides?\b|explained|explainer|dates, format|faq|primer|cheat sheet)\b/i;
 const RECYCLED = /\b(on this day|throwback|flashback|look(ing)? back|lookback|anniversary|years ago|revisit(ing|ed)?|remember when|rewind|history of|oral history|retrospective|from the archives|best ever|all-time (list|team|greatest))\b/i;
@@ -122,6 +122,7 @@ const sourceAdjust = (priority) => (priority === 1 ? 1.5 : priority === 2 ? 0.5 
 // a clinch, elimination or seeding.
 const OFFICIAL_AUTHORITY = new Set(['injury', 'availability', 'trade', 'signing', 'waiver', 'roster_move', 'coaching', 'front_office', 'awards', 'expansion', 'cba', 'draft', 'league']);
 const PLAYOFF_FACT = /\b(clinch(es|ed|ing)?|eliminat(ed|ion)|earn(s|ed)? (a |the )?(playoff|postseason) (spot|berth)|playoff (seed|seeding|bracket|schedule)|no\. \d seed|first-round bye)\b/i;
+const LEAGUE_OFFICE_FACT = /\b(commissioner|league office)\b.{0,50}\b(resign(s|ed|ing)?|steps? down|retires?|retirement|appoint(s|ed|ment)?|names?|named|hires?|hired|fires?|fired|dismiss(es|ed)?|search|successor)\b|\b(resign(s|ed|ing)?|steps? down|appoint(s|ed|ment)?|names?|named|hires?|hired|fires?|fired|dismiss(es|ed)?)\b.{0,50}\bcommissioner\b/i;
 const MINOR_HONOR = /\b(player of the week|rookie of the week|coach of the week|of the month|player of the game|honou?r roll)\b/i;
 const round = (x) => Math.round(x * 10) / 10;
 
@@ -149,6 +150,7 @@ export function materiality({ headline = '', summary = '', categories = [] } = {
   const adj = source.priority === 1 && !officialCovers ? 0 : sourceAdjust(source.priority);
   if (source.priority === 1 && !officialCovers) reasons.push('official source, but not an announcement it is authoritative for: no boost');
   if (type === 'awards' && MINOR_HONOR.test(headline)) { score -= 2.5; flags.push('minor_honor'); reasons.push('weekly/monthly honour −2.5'); }
+  if (type === 'league' && LEAGUE_OFFICE_FACT.test(headline)) { score += 1.5; flags.push('league_office_fact'); reasons.push('concrete league-office action +1.5'); }
   if (adj) { score += adj; reasons.push(`${source.priority === 1 ? 'official source' : `priority ${source.priority} source`} ${adj > 0 ? '+' : '−'}${Math.abs(adj)}`); }
   // The team an official team site belongs to is attribution, not a content link, so it earns no bonus.
   if (players.length || teams.some((t) => t.method !== 'source_team')) { score += 0.5; reasons.push('linked WNBA entity +0.5'); }
