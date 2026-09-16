@@ -22,7 +22,7 @@ import { etCompact, addDays, etHour } from '../../shared/time.js';
 import { pbeTask } from './pbe-runner.js';
 
 const SERVICE = 'wnba-ingest';
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
 const PROPS_WINDOW_H = 36;
@@ -343,84 +343,108 @@ async function oddsCall(env, path) {
 async function odds(env) {
   if (!env.WNBA_KV) return { skipped: 'no_kv' };
   const slot = `${etCompact()}-${etHour()}`;
-  const lockKey = `odds:v1:lock:${slot}`;
-  if (await env.WNBA_KV.get(lockKey)) return { skipped: 'already_ran_this_slot', slot };
-  await env.WNBA_KV.put(lockKey, '1', { expirationTtl: 3 * 3600 });
-  if (!env.ODDS_API_KEY) {
-    await env.WNBA_KV.put('odds:v1:status', JSON.stringify({ at: new Date().toISOString(), status: 'NOT_CONFIGURED' }));
-    return { skipped: 'no_odds_key' };
-  }
-  const capturedAt = new Date().toISOString();
-  const teams = normalizeTeams(await fetchJsonWithTimeout(`${ESPN.site}/teams`));
-  const tIdx = teamIndex(teams);
-  const featured = await oddsCall(env, '/sports/basketball_wnba/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american');
-  let credits = featured.credits;
-  let spent = credits.last || 0;
+  // v2 separates transient in-flight state from durable slot completion. The old
+  // v1 lock could survive a failed capture for three hours and turn the next
+  // cron into a false green "already_ran_this_slot" result.
+  const lockKey = `odds:v2:lock:${slot}`;
+  const doneKey = `odds:v2:done:${slot}`;
+  const completedAt = await env.WNBA_KV.get(doneKey);
+  if (completedAt) return { status: 'ALREADY_COMPLETED', skipped: 'already_completed', slot, completed_at: completedAt };
+  if (await env.WNBA_KV.get(lockKey)) return { status: 'RUN_IN_PROGRESS', skipped: 'run_in_progress', slot };
+  await env.WNBA_KV.put(lockKey, JSON.stringify({ at: new Date().toISOString() }), { expirationTtl: 180 });
 
-  // Join each market event to an ESPN game: exact team ids + tip within 6h.
-  const today = etCompact();
-  const sb = normalizeScoreboard(await fetchJsonWithTimeout(`${ESPN.site}/scoreboard?dates=${addDays(today, -1)}-${addDays(today, 10)}&limit=200`));
-  const events = featured.body.map((ev) => {
-    const n = normalizeOddsEvent(ev, tIdx);
-    const g = sb.games.find((x) => x.home?.team_id === n.home_team_id && x.away?.team_id === n.away_team_id && Math.abs(Date.parse(x.start_utc) - Date.parse(n.commence_time)) < 6 * 3600e3);
-    return { ...n, game_id: g?.game_id || null };
-  });
+  try {
+    if (!env.ODDS_API_KEY) {
+      const status = { at: new Date().toISOString(), status: 'NOT_CONFIGURED', slot };
+      await env.WNBA_KV.put('odds:v1:status', JSON.stringify(status));
+      return { skipped: 'no_odds_key', ...status };
+    }
 
-  // Props: only for games tipping inside the window (bounded spend).
-  const soon = events.filter((e) => Date.parse(e.commence_time) - Date.now() < PROPS_WINDOW_H * 3600e3 && Date.parse(e.commence_time) > Date.now());
-  const propGames = [];
-  for (const e of soon) {
-    try {
-      const r = await oddsCall(env, `/sports/basketball_wnba/events/${e.odds_event_id}/odds?regions=us&markets=${PROP_MARKETS.join(',')}&oddsFormat=american`);
-      credits = r.credits;
-      spent += r.credits.last || 0;
-      const rosterIdx = new Map();
-      for (const tid of [e.home_team_id, e.away_team_id].filter(Boolean)) {
-        const ro = normalizeRoster(await fetchJsonWithTimeout(`${ESPN.site}/teams/${tid}/roster`));
-        for (const a of ro.athletes) rosterIdx.set(normalizeName(a.name), a);
+    const capturedAt = new Date().toISOString();
+    const teams = normalizeTeams(await fetchJsonWithTimeout(`${ESPN.site}/teams`));
+    const tIdx = teamIndex(teams);
+    const featured = await oddsCall(env, '/sports/basketball_wnba/odds?regions=us&markets=h2h,spreads,totals&oddsFormat=american');
+    let credits = featured.credits;
+    let spent = credits.last || 0;
+
+    // Join each market event to an ESPN game: exact team ids + tip within 6h.
+    // Broad scoreboard ranges automatically recover through the shared provider
+    // layer's team-schedule fallback if ESPN rejects the range request.
+    const today = etCompact();
+    const sb = normalizeScoreboard(await fetchJsonWithTimeout(`${ESPN.site}/scoreboard?dates=${addDays(today, -1)}-${addDays(today, 10)}&limit=200`));
+    const events = featured.body.map((ev) => {
+      const n = normalizeOddsEvent(ev, tIdx);
+      const g = sb.games.find((x) => x.home?.team_id === n.home_team_id && x.away?.team_id === n.away_team_id && Math.abs(Date.parse(x.start_utc) - Date.parse(n.commence_time)) < 6 * 3600e3);
+      return { ...n, game_id: g?.game_id || null };
+    });
+
+    // Props: only for games tipping inside the window (bounded spend).
+    const soon = events.filter((e) => Date.parse(e.commence_time) - Date.now() < PROPS_WINDOW_H * 3600e3 && Date.parse(e.commence_time) > Date.now());
+    const propGames = [];
+    for (const e of soon) {
+      try {
+        const r = await oddsCall(env, `/sports/basketball_wnba/events/${e.odds_event_id}/odds?regions=us&markets=${PROP_MARKETS.join(',')}&oddsFormat=american`);
+        credits = r.credits;
+        spent += r.credits.last || 0;
+        const rosterIdx = new Map();
+        for (const tid of [e.home_team_id, e.away_team_id].filter(Boolean)) {
+          const ro = normalizeRoster(await fetchJsonWithTimeout(`${ESPN.site}/teams/${tid}/roster`));
+          for (const a of ro.athletes) rosterIdx.set(normalizeName(a.name), a);
+        }
+        propGames.push({ odds_event_id: e.odds_event_id, game_id: e.game_id, commence_time: e.commence_time, home_team: e.home_team, away_team: e.away_team, home_team_id: e.home_team_id, away_team_id: e.away_team_id, props: normalizeProps(r.body, rosterIdx) });
+      } catch (err) {
+        propGames.push({ odds_event_id: e.odds_event_id, game_id: e.game_id, error: err.message, props: [] });
       }
-      propGames.push({ odds_event_id: e.odds_event_id, game_id: e.game_id, commence_time: e.commence_time, home_team: e.home_team, away_team: e.away_team, home_team_id: e.home_team_id, away_team_id: e.away_team_id, props: normalizeProps(r.body, rosterIdx) });
-    } catch (err) {
-      propGames.push({ odds_event_id: e.odds_event_id, game_id: e.game_id, error: err.message, props: [] });
     }
-  }
 
-  const snap = { captured_at: capturedAt, schedule: `${ODDS_HOURS_ET.join('/')} ET`, events, credits: { spent_this_run: spent, remaining: credits.remaining } };
-  await env.WNBA_KV.put('odds:v1:latest', JSON.stringify(snap));
-  await env.WNBA_KV.put('props:v1:latest', JSON.stringify({ captured_at: capturedAt, markets: PROP_MARKETS, window_hours: PROPS_WINDOW_H, games: propGames }));
+    const snap = { captured_at: capturedAt, schedule: `${ODDS_HOURS_ET.join('/')} ET`, events, credits: { spent_this_run: spent, remaining: credits.remaining } };
+    const propsSnap = { captured_at: capturedAt, markets: PROP_MARKETS, window_hours: PROPS_WINDOW_H, games: propGames };
+    await env.WNBA_KV.put('odds:v1:latest', JSON.stringify(snap));
+    await env.WNBA_KV.put('props:v1:latest', JSON.stringify(propsSnap));
 
-  // Last pre-tip snapshot per ESPN game: after tip the event leaves the Odds API
-  // feed, so this is what game/replay pages show as the closing market.
-  for (const e of events) {
-    if (e.game_id && Date.parse(e.commence_time) > Date.now()) {
-      await env.WNBA_KV.put(`odds:v1:game:${e.game_id}`, JSON.stringify({ captured_at: capturedAt, event: e }), { expirationTtl: 400 * 86400 });
+    // Last pre-tip snapshot per ESPN game: after tip the event leaves the Odds API
+    // feed, so this is what game/replay pages show as the closing market.
+    for (const e of events) {
+      if (e.game_id && Date.parse(e.commence_time) > Date.now()) {
+        await env.WNBA_KV.put(`odds:v1:game:${e.game_id}`, JSON.stringify({ captured_at: capturedAt, event: e }), { expirationTtl: 400 * 86400 });
+      }
     }
-  }
 
-  // Movement history per event (compact: consensus + best at the modal line).
-  for (const e of events) {
-    const hk = `odds:v1:hist:${e.odds_event_id}`;
-    const h = (await env.WNBA_KV.get(hk, 'json')) || [];
-    h.push({ at: capturedAt, ml_home: e.moneyline.consensus?.home_fair_american ?? null, ml_best_home: e.moneyline.best.home?.price ?? null, ml_best_away: e.moneyline.best.away?.price ?? null, spread: e.spread.consensus_line, total: e.total.consensus_line, books: e.book_count });
-    await env.WNBA_KV.put(hk, JSON.stringify(h.slice(-90)), { expirationTtl: 60 * 86400 });
-  }
-
-  // Durable rows (Supabase) — every book/outcome/price as published.
-  const rows = [];
-  for (const ev of featured.body) {
-    const e = events.find((x) => x.odds_event_id === ev.id);
-    for (const b of ev.bookmakers || []) for (const m of b.markets || []) for (const o of m.outcomes || []) {
-      rows.push({ captured_at: capturedAt, odds_event_id: ev.id, game_id: e?.game_id || null, commence_time: ev.commence_time, market: m.key, book: b.key, outcome: o.name, participant: null, athlete_id: null, point: o.point ?? null, price: o.price, book_updated_at: m.last_update || b.last_update || null, source: 'odds_api' });
+    // Movement history per event (compact: consensus + best at the modal line).
+    for (const e of events) {
+      const hk = `odds:v1:hist:${e.odds_event_id}`;
+      const h = (await env.WNBA_KV.get(hk, 'json')) || [];
+      h.push({ at: capturedAt, ml_home: e.moneyline.consensus?.home_fair_american ?? null, ml_best_home: e.moneyline.best.home?.price ?? null, ml_best_away: e.moneyline.best.away?.price ?? null, spread: e.spread.consensus_line, total: e.total.consensus_line, books: e.book_count });
+      await env.WNBA_KV.put(hk, JSON.stringify(h.slice(-90)), { expirationTtl: 60 * 86400 });
     }
+
+    // Durable rows (Supabase) — every book/outcome/price as published.
+    const rows = [];
+    for (const ev of featured.body) {
+      const e = events.find((x) => x.odds_event_id === ev.id);
+      for (const b of ev.bookmakers || []) for (const m of b.markets || []) for (const o of m.outcomes || []) {
+        rows.push({ captured_at: capturedAt, odds_event_id: ev.id, game_id: e?.game_id || null, commence_time: ev.commence_time, market: m.key, book: b.key, outcome: o.name, participant: null, athlete_id: null, point: o.point ?? null, price: o.price, book_updated_at: m.last_update || b.last_update || null, source: 'odds_api' });
+      }
+    }
+    for (const g of propGames) for (const p of g.props) for (const b of p.books) {
+      for (const [side, price] of [['Over', b.over], ['Under', b.under]]) if (price !== null) rows.push({ captured_at: capturedAt, odds_event_id: g.odds_event_id, game_id: g.game_id, commence_time: g.commence_time, market: p.market, book: b.book, outcome: side, participant: p.player, athlete_id: p.athlete_id, point: p.point, price, book_updated_at: b.updated || null, source: 'odds_api' });
+    }
+    await upsert(env, 'wnba_odds_snapshots', rows, 'odds_event_id,market,book,outcome,participant,point,book_updated_at', { ignoreDuplicates: true });
+    await insert(env, 'wnba_odds_runs', [{ kind: 'featured+props', events: events.length, credits_last: spent, credits_used: credits.used, credits_remaining: credits.remaining, status: 'PASS', detail: { prop_games: propGames.length, rows: rows.length } }]);
+
+    const status = { at: capturedAt, status: 'PASS', slot, events: events.length, prop_games: propGames.length, credits_spent: spent, credits_remaining: credits.remaining, rows: rows.length };
+    // Completion is written only after both public snapshots and the durable run
+    // path have succeeded. A failed first attempt therefore remains retryable.
+    await env.WNBA_KV.put('odds:v1:status', JSON.stringify(status));
+    await env.WNBA_KV.put(doneKey, capturedAt, { expirationTtl: 8 * 3600 });
+    return status;
+  } catch (e) {
+    const failure = { at: new Date().toISOString(), status: 'FAILED_RETRYABLE', slot, error: e?.message || String(e) };
+    await env.WNBA_KV.put('odds:v1:status', JSON.stringify(failure));
+    throw e;
+  } finally {
+    await env.WNBA_KV.delete(lockKey);
   }
-  for (const g of propGames) for (const p of g.props) for (const b of p.books) {
-    for (const [side, price] of [['Over', b.over], ['Under', b.under]]) if (price !== null) rows.push({ captured_at: capturedAt, odds_event_id: g.odds_event_id, game_id: g.game_id, commence_time: g.commence_time, market: p.market, book: b.book, outcome: side, participant: p.player, athlete_id: p.athlete_id, point: p.point, price, book_updated_at: b.updated || null, source: 'odds_api' });
-  }
-  await upsert(env, 'wnba_odds_snapshots', rows, 'odds_event_id,market,book,outcome,participant,point,book_updated_at', { ignoreDuplicates: true });
-  await insert(env, 'wnba_odds_runs', [{ kind: 'featured+props', events: events.length, credits_last: spent, credits_used: credits.used, credits_remaining: credits.remaining, status: 'PASS', detail: { prop_games: propGames.length, rows: rows.length } }]);
-  const status = { at: capturedAt, status: 'PASS', events: events.length, prop_games: propGames.length, credits_spent: spent, credits_remaining: credits.remaining, rows: rows.length };
-  await env.WNBA_KV.put('odds:v1:status', JSON.stringify(status));
-  return status;
 }
 
 function j(body, status = 200) {
