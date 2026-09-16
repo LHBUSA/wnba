@@ -14,6 +14,30 @@
       "destination": "/app-shell.html"
     },
     {
+      "source": "/brief",
+      "destination": "/app-shell.html"
+    },
+    {
+      "source": "/player-load",
+      "destination": "/app-shell.html"
+    },
+    {
+      "source": "/edge-timeline",
+      "destination": "/app-shell.html"
+    },
+    {
+      "source": "/rotation-impact",
+      "destination": "/app-shell.html"
+    },
+    {
+      "source": "/scenario-lab",
+      "destination": "/app-shell.html"
+    },
+    {
+      "source": "/watchlist",
+      "destination": "/app-shell.html"
+    },
+    {
       "source": "/",
       "destination": "https://wnba-web.sales-fd3.workers.dev/"
     },
