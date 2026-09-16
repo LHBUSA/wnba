@@ -86,14 +86,16 @@ begin
     raise exception 'wbh: Aces result run exists but canonical Aces game count is % not 46',v_aces_games using errcode='P0001';
   end if;
 
-  v_capture := v_rows::text;
+  select jsonb_agg(e.value order by e.ord)::text into v_capture
+    from jsonb_array_elements(v_rows) with ordinality as e(value,ord)
+   where e.value->>'game_date'<>'2024-10-06';
   insert into public.wbh_source_documents
     (source_id,source_record_id,request_url,request_method,retrieved_at,http_status,content_sha256,
      content_type,byte_size,storage_state,transformation_version,notes)
   values
     ('pbe_curation','las_vegas_aces_2024_schedule_results_through_20241004',v_notes_url,'GET',v_now,200,
      encode(extensions.digest(convert_to(v_capture,'UTF8'),'sha256'),'hex'),'application/json',octet_length(v_capture),
-     'hash_only','wbh_manual_game_results_v1','Manual factual transcription from official Las Vegas Aces Oct. 6, 2024 game notes schedule/results table; source PDF body not retained.')
+     'hash_only','wbh_manual_game_results_v1','Manual factual transcription from official Las Vegas Aces Oct. 6, 2024 game notes schedule/results table through Oct. 4; source PDF body not retained.')
   returning document_id into v_notes_doc;
 
   v_capture := '{"game_date":"2024-10-06","away":"New York Liberty","away_points":76,"home":"Las Vegas Aces","home_points":62,"wnba_event_id":"1042400204"}';
