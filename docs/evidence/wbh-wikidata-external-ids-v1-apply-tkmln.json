@@ -1,0 +1,68 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "applied_migration": {
+    "version": "20260916103521",
+    "name": "wbh_wikidata_external_ids_v1"
+  },
+  "source": {
+    "identity_manifest_commit": "43a59d5e6fe9cbbcfd631f9affc8118e27774d32",
+    "identity_manifest_path": "data/wbh/manifests/wikidata-wnba-identity-v1.json",
+    "identity_manifest_sha256": "d68a25788b9b899511aec3793b1b089ba4c427926ee2025c32dd7f9f1e1fcede",
+    "raw_wikidata_capture_sha256": "2f00c0ed3b7aab4f10a3b61182486a1488b02506963692718957deb6a470bc86",
+    "license": "CC0-1.0",
+    "direct_provider_fetches": false
+  },
+  "verification": {
+    "persons": 1314,
+    "aliases": 2046,
+    "person_wikidata_links_total": 11103,
+    "secondary_links": 8475,
+    "secondary_duplicates": 0,
+    "bad_person_targets": 0,
+    "linked_without_id_space": 0,
+    "http_extension_removed": true,
+    "pbe_relations": 22,
+    "games": 0,
+    "by_id_space": {
+      "wikidata:QID": 1314,
+      "wikidata:P3588": 1314,
+      "wikidata:P4561": 1312,
+      "wikidata:P4790": 256,
+      "wikidata:P3542": 475,
+      "wikidata:P12338": 1239,
+      "wikidata:P8286": 277,
+      "wikidata:P5815": 177,
+      "wikidata:P3957": 1321,
+      "wikidata:P3527": 1130,
+      "wikidata:P4382": 212,
+      "wikidata:P8548": 961,
+      "wikidata:P3696": 1115
+    }
+  },
+  "ingestion_run": {
+    "source_id": "wikidata",
+    "adapter_id": "wikidata_external_id_crosswalk",
+    "adapter_version": "1.0.0",
+    "transformation_version": "wbh_wikidata_external_crosswalk_v1",
+    "mode": "ingest",
+    "status": "ok",
+    "is_synthetic": false,
+    "as_of": "2026-09-16T10:29:34Z",
+    "counts": {
+      "linked_external_ids": 8475,
+      "by_property": {
+        "P4561": 1312,
+        "P4790": 256,
+        "P3542": 475,
+        "P12338": 1239,
+        "P8286": 277,
+        "P5815": 177,
+        "P3957": 1321,
+        "P3527": 1130,
+        "P4382": 212,
+        "P8548": 961,
+        "P3696": 1115
+      }
+    }
+  }
+}
