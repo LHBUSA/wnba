@@ -12,14 +12,14 @@ export const PRIMARY_NAV = [
   ['players', '/players', 'Players'],
   ['injuries', '/injuries', 'Injuries'],
   ['news', '/news', 'News'],
+  ['history', '/history', 'History'],
   ['international', '/international', 'International']
 ];
 export const SECONDARY_NAV = [
   ['standings', '/standings', 'Standings'],
   ['stats', '/stats', 'Stats'],
   ['teams', '/teams', 'Teams'],
-  ['track-record', '/track-record', 'Track Record'],
-  ['sources', '/sources', 'Source status']
+  ['track-record', '/track-record', 'Track Record']
 ];
 export const NAV = [...PRIMARY_NAV, ...SECONDARY_NAV];
 
@@ -79,11 +79,11 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <a class="brand" href="/">${raw(BRAND_MARK)}<span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>Independent WNBA intelligence</small></span></a>
           <p class="note" style="margin-top:12px;max-width:44ch">Built from real WNBA source data with visible source and freshness on every volatile number. Sportsbook prices, market consensus and PropBetEdge model outputs are always kept separate.</p>
           <ul style="margin-top:14px">
+            <li><a href="/history">WNBA History</a></li>
             <li><a href="/about">About the newsroom</a></li>
             <li><a href="/editorial-policy">Editorial policy</a></li>
             <li><a href="/corrections">Corrections &amp; revisions</a></li>
             <li><a href="/methodology">Methodology</a></li>
-            <li><a href="/sources">Source status</a></li>
             <li><a href="/track-record">Track record doctrine</a></li>
             <li><a href="/rss.xml">Newsroom RSS</a></li>
           </ul>
