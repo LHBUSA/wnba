@@ -1,0 +1,72 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "applied_migration": {
+    "version": "20260916103321",
+    "name": "wbh_wikidata_identity_v1"
+  },
+  "source": {
+    "repo_commit": "43a59d5e6fe9cbbcfd631f9affc8118e27774d32",
+    "workflow_run_id": 35085256860,
+    "workflow_artifact_id": 10442131389,
+    "manifest_path": "data/wbh/manifests/wikidata-wnba-identity-v1.json",
+    "manifest_git_blob": "abd2d5ef751063d2d393e12c860362271a6cc2be",
+    "manifest_sha256": "d68a25788b9b899511aec3793b1b089ba4c427926ee2025c32dd7f9f1e1fcede",
+    "migration_path": "supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql",
+    "migration_git_blob": "6cff9d7bda8b0376dddda452bdd139700f39fc02",
+    "migration_sha256": "5b2fcff34cceaa050e8c513c66a4b1152dfe1096615e8bafe57b3bf4d30349e3",
+    "raw_wikidata_capture_sha256": "2f00c0ed3b7aab4f10a3b61182486a1488b02506963692718957deb6a470bc86",
+    "raw_wikidata_capture_bytes": 64342570,
+    "raw_retained": false,
+    "license": "CC0-1.0"
+  },
+  "verification": {
+    "persons": 1314,
+    "persons_public": 1314,
+    "aliases": 2046,
+    "qid_links": 1314,
+    "p3588_links": 1314,
+    "distinct_qids": 1314,
+    "distinct_p3588": 1314,
+    "dob_day": 1308,
+    "dob_missing": 6,
+    "sport_country_iso3": 809,
+    "synthetic_persons": 0,
+    "bad_person_ids": 0,
+    "linked_without_id_space": 0,
+    "team_editions_2024": 12,
+    "stages_2024": 3,
+    "games": 0,
+    "pbe_relations": 22,
+    "temporary_http_extension_removed": true,
+    "anon_wbh_persons_select": false,
+    "authenticated_wbh_persons_select": false
+  },
+  "ingestion_run": {
+    "source_id": "wikidata",
+    "adapter_id": "wikidata_p3588_snapshot",
+    "adapter_version": "1.0.0",
+    "transformation_version": "wbh_wikidata_identity_v1",
+    "mode": "ingest",
+    "status": "ok",
+    "is_synthetic": false,
+    "as_of": "2026-09-16T10:29:34Z",
+    "counts": {
+      "persons": 1314,
+      "aliases": 2046,
+      "linked_source_ids": 2628,
+      "dob_day": 1308,
+      "dob_partial": 0,
+      "dob_absent": 6,
+      "sport_country_iso3": 809
+    }
+  },
+  "source_document": {
+    "source_id": "wikidata",
+    "source_record_id": "wikidata:P3588:wnba_identity_snapshot_v1",
+    "retrieved_at": "2026-09-16T10:29:34Z",
+    "content_sha256": "2f00c0ed3b7aab4f10a3b61182486a1488b02506963692718957deb6a470bc86",
+    "byte_size": 64342570,
+    "storage_state": "hash_only",
+    "is_synthetic": false
+  }
+}
