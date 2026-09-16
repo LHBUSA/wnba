@@ -1,0 +1,79 @@
+name: WBH Wikidata identity spine
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wbh-wikidata-identity.yml'
+      - 'scripts/wbh/build-wikidata-identity-spine.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wbh-wikidata-identity
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Wikidata CC0 identity snapshot
+        run: |
+          python scripts/wbh/build-wikidata-identity-spine.py \
+            --manifest data/wbh/manifests/wikidata-wnba-identity-v1.json \
+            --migration supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql \
+            --min-count 1300
+
+      - name: Validate generated snapshot
+        run: |
+          python - <<'PY'
+          import json, pathlib, re
+          p = pathlib.Path('data/wbh/manifests/wikidata-wnba-identity-v1.json')
+          d = json.loads(p.read_text(encoding='utf-8'))
+          people = d['people']
+          assert d['license'] == 'CC0-1.0'
+          assert len(people) >= 1300
+          assert len({x['person_id'] for x in people}) == len(people)
+          assert len({x['wikidata_qid'] for x in people}) == len(people)
+          assert len({x['wnba_com_id'] for x in people}) == len(people)
+          assert all(re.fullmatch(r'gp_[0-9A-HJKMNP-TV-Z]{12}', x['person_id']) for x in people)
+          assert all(re.fullmatch(r'Q[1-9][0-9]*', x['wikidata_qid']) for x in people)
+          assert d['capture']['raw_retained'] is False
+          sql = pathlib.Path('supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql').read_text(encoding='utf-8')
+          assert "'wikidata'" in sql and "'wikidata:P3588'" in sql
+          assert 'espn' not in sql.lower()
+          assert 'wnba.com/' not in sql.lower()
+          print(json.dumps(d['totals'], indent=2))
+          PY
+
+      - name: Upload generated evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: wbh-wikidata-identity-v1
+          path: |
+            data/wbh/manifests/wikidata-wnba-identity-v1.json
+            supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql
+          if-no-files-found: error
+
+      - name: Commit generated snapshot
+        run: |
+          if git diff --quiet -- data/wbh/manifests/wikidata-wnba-identity-v1.json supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql; then
+            echo 'No generated changes.'
+            exit 0
+          fi
+          git config user.name 'LHBUSA'
+          git config user.email 'sales@localhomebuyersusa.com'
+          git add data/wbh/manifests/wikidata-wnba-identity-v1.json supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql
+          git commit -m 'Add Wikidata WNBA player identity spine snapshot'
+          git push origin HEAD:main
