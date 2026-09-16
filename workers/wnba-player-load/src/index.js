@@ -9,12 +9,14 @@ import { etCompact, addDays } from '../../shared/time.js';
 import { buildPlayerLoadSnapshot, PLAYER_LOAD_VERSION } from '../../shared/player-load.js';
 
 const SERVICE = 'wnba-player-load';
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const SNAPSHOT_KEY = 'player-load:v1:latest';
 const STATUS_KEY = 'player-load:v1:status';
 const REFRESH_MS = 15 * 60e3;
 const WINDOW_DAYS = 28;
 const UPCOMING_DAYS = 8;
+const RECOVERY_RETRY_MS = 60e3;
+const RUNNING_STALE_MS = 2 * 60e3;
 
 const reply = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 
@@ -23,13 +25,26 @@ export default {
     ctx.waitUntil(runScheduled(env));
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (request.method !== 'GET' && request.method !== 'HEAD') return reply({ ok: false, error: 'method_not_allowed' }, 405);
     if (url.pathname !== '/health' && url.pathname !== '/status') return reply({ ok: false, error: 'not_found' }, 404);
+
     const [snap, status] = env.WNBA_KV
       ? await Promise.all([env.WNBA_KV.get(SNAPSHOT_KEY, 'json'), env.WNBA_KV.get(STATUS_KEY, 'json')])
       : [null, null];
+
+    // Bootstrap/recovery safety net: Cloudflare Cron remains the scheduler, but a
+    // health probe can kick one background rebuild when a first-deploy snapshot is
+    // missing or a previous attempt failed. RUNNING is written before the expensive
+    // work begins, preventing repeated health probes from fanning out rebuilds.
+    const now = Date.now();
+    const lastAttempt = status?.last_attempt_at ? Date.parse(status.last_attempt_at) : 0;
+    const runningStale = status?.state === 'RUNNING' && (!lastAttempt || now - lastAttempt >= RUNNING_STALE_MS);
+    const errorRetryDue = status?.state === 'ERROR' && (!lastAttempt || now - lastAttempt >= RECOVERY_RETRY_MS);
+    const bootstrapKicked = Boolean(env.WNBA_KV && !snap && (!status || errorRetryDue || runningStale));
+    if (bootstrapKicked && ctx?.waitUntil) ctx.waitUntil(runScheduled(env));
+
     return reply({
       ok: true,
       service: SERVICE,
@@ -39,6 +54,7 @@ export default {
       cron: '* * * * *',
       refresh_interval_s: Math.round(REFRESH_MS / 1000),
       kv: Boolean(env.WNBA_KV),
+      bootstrap_kicked: bootstrapKicked,
       status: status || null,
       snapshot: snap ? {
         schema: snap.schema,
@@ -64,6 +80,12 @@ async function writeStatus(env, patch) {
 
 async function runScheduled(env) {
   const attemptedAt = new Date().toISOString();
+  await writeStatus(env, {
+    state: 'RUNNING',
+    last_attempt_at: attemptedAt,
+    last_error: null
+  });
+
   try {
     const result = await refresh(env);
     const snapshotGeneratedAt = result?.generated_at || null;
