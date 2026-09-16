@@ -1,0 +1,30 @@
+{
+  "reviewed_at": "2026-09-16",
+  "source_id": "balldontlie",
+  "publisher": "BALLDONTLIE LLC",
+  "homepage": "https://www.balldontlie.io/",
+  "terms_url": "https://www.balldontlie.io/terms.html",
+  "rights_state": "unresolved",
+  "rights_basis": "terms_of_use",
+  "capabilities_reviewed": [
+    "teams",
+    "players",
+    "games",
+    "box_score",
+    "player_season_totals",
+    "standings",
+    "play_by_play"
+  ],
+  "permissions_noted": {
+    "commercial_use": "permitted",
+    "redistribution": "permitted",
+    "database_build": "permitted",
+    "gambling_use": "permitted"
+  },
+  "blocking_clause": "You may not use Data to create or operate products or services that compete with us.",
+  "decision": "Fail closed for canonical Women's Basketball History ingestion until the competition-clause scope is clarified in writing or explicitly accepted after legal/owner review.",
+  "production_effect": {
+    "balldontlie_rows_ingested": 0,
+    "current_wnba_model_changed": false
+  }
+}
