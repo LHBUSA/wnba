@@ -29,8 +29,9 @@ name = "EMAIL"
 WNBA_PURCHASE_ACTIVE = "false"
 AUTH_FROM = "signin@mail.wnba.propbetedge.ai"
 AUTH_PUBLIC_BASE = "https://wnba-api.propbetedge.ai"
-# Subscribers see PBE values only after the owner approves the first official lock.
-PBE_PUBLISH = "false"
+# Official PBE launch approved by owner 2026-09-16. Entitled WNBA Pro users now
+# read the official ledger; shadow documents remain non-public.
+PBE_PUBLISH = "true"
 
 [observability]
 enabled = true
