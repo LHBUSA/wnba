@@ -12,13 +12,47 @@ export const matchupsListHead = () => pageHead(LIST_HEAD);
 
 export async function loadMatchupsList(api) {
   const today = etCompact();
-  return { res: await api.schedule({ from: today, to: addDays(today, 12) }) };
+  const to = addDays(today, 12);
+  const res = await api.schedule({ from: today, to });
+  if (res?.ok) return { res };
+
+  // A wide provider schedule read should never blank the entire research desk
+  // when the owned Today endpoint still has a verified current/next slate.
+  // This is a bounded failover, not invented schedule data: it renders only
+  // games that the API itself returned and labels the degraded condition.
+  const fallback = await api.today();
+  const slate = fallback?.ok ? fallback.data?.slate : null;
+  if (slate?.games?.length) {
+    return {
+      res: {
+        ok: true,
+        data: {
+          requested: { from: today, to },
+          day: slate.date || null,
+          games: slate.games,
+          summary: slate.summary || null
+        },
+        meta: {
+          ...(fallback.meta || {}),
+          semantics: 'SCHEDULE_FALLBACK_VERIFIED_SLATE',
+          degraded: [
+            ...((fallback.meta?.degraded || []).filter(Boolean)),
+            `primary_schedule:${res?.error?.code || 'unavailable'}`
+          ]
+        }
+      }
+    };
+  }
+
+  return { res };
 }
 
 export function matchupsListView({ res }) {
   if (!res?.ok) return html`${pageHead(LIST_HEAD)}${errorState(res, 'The schedule')}`;
   const games = res.data.games.filter((g) => g.status?.state !== 'post').sort((a, b) => a.start_utc.localeCompare(b.start_utc));
+  const fallback = res.meta?.semantics === 'SCHEDULE_FALLBACK_VERIFIED_SLATE';
   return html`${pageHead(LIST_HEAD)}
+    ${fallback ? html`<div class="empty" style="margin-bottom:16px"><h3>Showing the next verified slate</h3><p>The full 12-day schedule feed is temporarily degraded. These games come from the current PropBetEdge WNBA slate and are not stand-in data.</p></div>` : ''}
     ${games.length ? html`<div class="slate-grid">${games.map((g) => gameCard(g, { showDate: true }))}</div>` : empty('No upcoming games', 'No WNBA games are scheduled in the next 12 days in the source schedule.')}
     <div style="margin-top:16px">${sourceLine(res.meta)}</div>`;
 }
