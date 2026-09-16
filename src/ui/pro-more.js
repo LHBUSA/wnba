@@ -13,10 +13,15 @@ function insertAfter(anchor, node) {
 
 function addLinks(container, afterSelector) {
   if (!container) return;
+  const playerLoad = container.querySelector('[data-nav="player-load"]');
+  if (playerLoad) playerLoad.textContent = 'Player Load · PRO';
+
   let cursor = container.querySelector(afterSelector);
   for (const [id, href, label] of PRO_MORE) {
-    if (container.querySelector(`[data-nav="${id}"]`)) {
-      cursor = container.querySelector(`[data-nav="${id}"]`);
+    const existing = container.querySelector(`[data-nav="${id}"]`);
+    if (existing) {
+      existing.textContent = label;
+      cursor = existing;
       continue;
     }
     const a = document.createElement('a');
