@@ -90,6 +90,23 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
       ${logoManifest.teams.map((t) => html`<a href="/teams/${t.team_id}" title="${t.name}" style="flex:none;padding:6px;border-radius:10px">${teamLogo({ team_id: t.team_id, name: t.name }, 40)}</a>`)}
     </nav>
 
+    <section class="card card-pad" style="margin-top:14px;border-color:var(--gold-line);background:linear-gradient(110deg,rgba(212,175,55,.08),rgba(255,122,47,.035) 55%,transparent)">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px">
+        <div style="flex:1 1 560px;min-width:0">
+          <span class="eyebrow">WNBA Pro · $9.99/month</span>
+          <h2 class="sec-title bc" style="margin-top:7px">Get the full WNBA research desk.</h2>
+          <p class="note" style="margin-top:8px;max-width:74ch">Unlock PBE Picks with independent win probabilities, market comparison, PBE Edge and model reasoning — plus the live track record, WNBACast, Best Line, matchup research and availability context.</p>
+          <div class="pill-row" style="margin-top:12px">
+            <span class="pill">PBE Picks</span><span class="pill">Model reasoning</span><span class="pill">Live track record</span><span class="pill">Best Line + Matchups</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="text-align:right"><b style="display:block;font:700 25px/1 var(--f-editorial)">$9.99</b><span class="note">per month</span></div>
+          <a class="btn-pro" href="/pro">Get WNBA Pro</a>
+        </div>
+      </div>
+    </section>
+
     <section class="section">
       <div class="sec-head"><h2 class="sec-title bc">${slate.kind === 'TODAY' ? `Today · ${fmtCompactDate(d.today_et)}` : slate.kind === 'NEXT' ? `Next slate · ${fmtCompactDate(slate.date)}` : 'Upcoming'}</h2><a class="sec-link" href="/cast">All games in WNBACast →</a></div>
       ${games.length ? html`<div class="slate-grid">${games.map((g) => gameCard(g, { showDate: slate.kind !== 'TODAY' }))}</div>` : empty('Quiet slate', 'No WNBA games are published for the coming days. Replays of completed games stay available in WNBACast.')}
