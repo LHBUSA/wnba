@@ -1,5 +1,5 @@
 name = "wnba-web"
-main = "src/index.js"
+main = "src/index-historical.js"
 compatibility_date = "2026-09-01"
 account_id = "fd3a233edadd0a60916413c1199f71ee"
 workers_dev = true
