@@ -34,14 +34,42 @@ export function proFeaturePublicView(feature, { signedIn = false } = {}) {
 }
 
 export function proUnavailableView(feature, message) {
+  const current = feature || PRO_INTELLIGENCE[0];
   return html`
-    <section class="pi-shell">
+    <section class="pi-shell pi-unavailable-shell">
+      ${proSuiteRail(current.id)}
+      <header class="pi-hero pi-unavailable-hero">
+        <div>
+          <span class="eyebrow">WNBA Pro · ${current.eyebrow}</span>
+          <h1>${current.name}</h1>
+          <p class="lead">${current.short}</p>
+        </div>
+        <aside>
+          <span>LIVE DATA STATUS</span>
+          <b>—</b>
+          <small>Snapshot unavailable</small>
+          <em>No guessed values shown</em>
+        </aside>
+      </header>
+
       <div class="pi-status-card">
-        <span class="eyebrow">${feature?.name || 'WNBA Pro'}</span>
-        <h1>Live data temporarily unavailable.</h1>
+        <span class="eyebrow">Live data temporarily unavailable</span>
+        <h2>The intelligence surface is still here.</h2>
         <p>${message || 'The latest WNBA Pro snapshot could not be loaded. No substitute or guessed values are shown.'}</p>
-        <div class="pi-actions"><a class="btn" href="${feature?.href || '/pro'}">Retry</a><a class="btn gold" href="/pbe-picks">Open PBE Picks</a></div>
+        <div class="pi-actions"><a class="btn" href="${current.href || '/pro'}">Retry live data</a><a class="btn gold" href="/pbe-picks">Open PBE Picks</a></div>
       </div>
+
+      <div class="pi-value-grid">
+        <div><b>What this measures</b><span>${current.pitch || current.short}</span></div>
+        <div><b>Source-grounded only</b><span>When the live snapshot is unavailable, PropBetEdge does not invent replacement values or silently reuse unrelated data.</span></div>
+        <div><b>Connected research</b><span>Use PBE Picks, Player Load, Matchups, Availability and the permanent Track Record while this live layer refreshes.</span></div>
+        <div><b>Automatic recovery</b><span>The Cloudflare data lane continues rebuilding the latest snapshot in the background; the page becomes live again when a valid snapshot is available.</span></div>
+      </div>
+
+      <section class="pi-explain">
+        <h2>About ${current.name}</h2>
+        <p>${current.pitch || current.short}</p>
+      </section>
     </section>`;
 }
 
