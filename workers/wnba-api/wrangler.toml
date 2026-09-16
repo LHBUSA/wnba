@@ -25,8 +25,9 @@ service = "propbetedge-sports-billing"
 name = "EMAIL"
 
 [vars]
-# Payments stay fail-closed until every billing canary passes (docs/PAYWALL.md).
-WNBA_PURCHASE_ACTIVE = "false"
+# WNBA Pro checkout is LIVE. Stripe Payment Links, billing webhook/catalog,
+# production auth and entitlement canaries were verified before activation.
+WNBA_PURCHASE_ACTIVE = "true"
 AUTH_FROM = "signin@mail.wnba.propbetedge.ai"
 AUTH_PUBLIC_BASE = "https://wnba-api.propbetedge.ai"
 # Official PBE launch approved by owner 2026-09-16. Entitled WNBA Pro users now

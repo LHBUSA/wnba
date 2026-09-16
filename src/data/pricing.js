@@ -5,9 +5,8 @@
 // (LHBUSA/propbetedge-workers catalog.js) and were canaried end to end on 2026-09-15
 // (docs/evidence/billing/wnba-billing-canaries-2026-09-15.json, 12/12).
 //
-// `url` stays null on purpose: the hosted buy.stripe.com URLs are not recorded anywhere we can verify, and
-// guard-truth rule 7 flips checkout only when the URLs and WNBA_PURCHASE_ACTIVE change together, after a
-// verified sign-in path and a real checkout canary (docs/PAYWALL.md).
+// Hosted checkout URLs were re-read directly from the LIVE Stripe Payment Link objects on 2026-09-16.
+// Both links are active, subscription-mode, no-trial, and redirect back to /pro?checkout=success.
 
 export const PRODUCT_KEY = 'wnba_pro';
 export const STRIPE_PRODUCT_ID = 'prod_VF9ThkcPbyvOTG';
@@ -22,7 +21,7 @@ export const PLANS = Object.freeze({
     note: 'Billed monthly · cancel anytime · no free trial',
     stripePriceId: 'price_1UEfAmF3CaVzg4OReyWRioNO',
     paymentLinkId: 'plink_1UEfBOF3CaVzg4ORuxdQriRX',
-    url: null
+    url: 'https://buy.stripe.com/7sY28rb2u6ai3lr5sn7wA0E'
   },
   weekly: {
     id: 'weekly',
@@ -33,7 +32,7 @@ export const PLANS = Object.freeze({
     note: 'Billed weekly · cancel anytime · no free trial',
     stripePriceId: 'price_1UEfAsF3CaVzg4OR7082zM5i',
     paymentLinkId: 'plink_1UEfBTF3CaVzg4ORy1GQeoI5',
-    url: null
+    url: 'https://buy.stripe.com/5kQeVd1rUeGO3lr3kf7wA0F'
   }
 });
 
