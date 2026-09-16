@@ -11,8 +11,8 @@ const classifyHeadline = (headline) => classify(
   { entities: [PLAYER], source: SOURCE, timestampQuality: 'publisher' }
 );
 
-test('brief coverage review version forces one-time review under the hardened taxonomy', () => {
-  assert.equal(BRIEF_VERSION, 'wnba-briefs/2.1.1');
+test('commentary hardening does not force a retroactive published-brief migration', () => {
+  assert.equal(BRIEF_VERSION, 'wnba-briefs/2.1.0');
 });
 
 test('current duplicate-producing commentary headlines cannot become material newsroom events', () => {
