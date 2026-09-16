@@ -1,0 +1,109 @@
+/* PropBetEdge UI rule: no visible horizontal scrollbar chrome.
+   Dense information should reflow, wrap, or use a wider layout instead of showing a bar. */
+
+.tbl-wrap,
+.tabs,
+.cast-rail,
+.ibracket-wrap,
+.strip-wrap,
+.pi-suite-rail,
+.drawer-panel {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tbl-wrap::-webkit-scrollbar,
+.tabs::-webkit-scrollbar,
+.cast-rail::-webkit-scrollbar,
+.ibracket-wrap::-webkit-scrollbar,
+.strip-wrap::-webkit-scrollbar,
+.pi-suite-rail::-webkit-scrollbar,
+.drawer-panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Standings: conference tables are information-dense, so give each one the full page width. */
+.standings-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.standings-grid .tbl-wrap {
+  overflow-x: visible;
+}
+.standings-grid .tbl {
+  width: 100%;
+  table-layout: fixed;
+}
+.standings-grid .tbl th,
+.standings-grid .tbl td {
+  white-space: normal;
+  padding-inline: 8px;
+}
+.standings-grid .tbl th:first-child,
+.standings-grid .tbl td:first-child {
+  width: 30%;
+}
+
+/* Navigation and product rails wrap instead of becoming horizontal scrollers. */
+.tabs,
+.cast-rail,
+.pi-suite-rail,
+nav[aria-label='Teams'] {
+  flex-wrap: wrap !important;
+  overflow-x: visible !important;
+  padding-bottom: 0 !important;
+}
+
+/* Brackets reflow to the available width. */
+.ibracket-wrap {
+  overflow-x: visible !important;
+}
+.ibracket {
+  min-width: 0 !important;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+}
+
+/* Article/news strips and raw evidence wrap rather than create inner horizontal bars. */
+.strip-wrap {
+  overflow-x: visible !important;
+  max-width: 100%;
+}
+pre[style*='overflow-x:auto'],
+pre[style*='overflow-x: auto'] {
+  overflow-x: visible !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* More now carries the full intelligence stack; use two columns on desktop. */
+@media (min-width: 1181px) {
+  .nav-more-menu {
+    min-width: 440px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 4px;
+  }
+  .nav-more-menu:not([hidden]) {
+    display: grid;
+  }
+  .nav-more-menu a {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .standings-grid .tbl {
+    table-layout: auto;
+    font-size: 11px;
+  }
+  .standings-grid .tbl th,
+  .standings-grid .tbl td {
+    padding: 7px 5px;
+  }
+  .standings-grid .tbl th:nth-child(8),
+  .standings-grid .tbl td:nth-child(8),
+  .standings-grid .tbl th:nth-child(9),
+  .standings-grid .tbl td:nth-child(9) {
+    display: none;
+  }
+}
