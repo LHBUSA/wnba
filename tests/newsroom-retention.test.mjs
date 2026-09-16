@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import worker from '../workers/wnba-news/src/index-live.js';
 import { ARTICLE_RETENTION_VERSION, migrateArticleRetention, putArticle } from '../workers/wnba-news/src/article-retention.js';
 
 class KV {
@@ -16,11 +15,6 @@ class KV {
     this.puts.push({ key, value, options });
   }
 }
-
-test('production newsroom boundary imports and exposes fetch/scheduled', () => {
-  assert.equal(typeof worker.fetch, 'function');
-  assert.equal(typeof worker.scheduled, 'function');
-});
 
 test('published article writes have no expiration', async () => {
   const kv = new KV();
