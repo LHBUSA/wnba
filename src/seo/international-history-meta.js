@@ -1,4 +1,4 @@
-import { SITE, DEFAULT_IMAGE } from './site.js';
+import { SITE, SITE_NAME, NEWSROOM_NAME, DEFAULT_IMAGE, LOGO, IDS } from './site.js';
 
 export const HISTORICAL_INDEX_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
@@ -23,6 +23,23 @@ export function historicalCompetitionGraph(c, h, meta) {
   return {
     '@context': 'https://schema.org',
     '@graph': [
+      { '@type': 'Organization', '@id': IDS.org, name: 'PropBetEdge', url: 'https://propbetedge.ai/' },
+      {
+        '@type': 'NewsMediaOrganization',
+        '@id': IDS.newsroom,
+        name: NEWSROOM_NAME,
+        url: `${SITE}/news`,
+        logo: { '@type': 'ImageObject', url: LOGO.url, width: LOGO.width, height: LOGO.height },
+        parentOrganization: { '@id': IDS.org }
+      },
+      {
+        '@type': 'WebSite',
+        '@id': IDS.website,
+        name: SITE_NAME,
+        url: `${SITE}/`,
+        inLanguage: 'en-US',
+        publisher: { '@id': IDS.newsroom }
+      },
       {
         '@type': 'WebPage',
         '@id': meta.url,
@@ -30,6 +47,7 @@ export function historicalCompetitionGraph(c, h, meta) {
         name: meta.title,
         description: meta.description,
         inLanguage: 'en-US',
+        isPartOf: { '@id': IDS.website },
         breadcrumb: { '@id': breadcrumbId },
         about: { '@id': eventId },
         citation: source
@@ -54,8 +72,7 @@ export function historicalCompetitionGraph(c, h, meta) {
           }
         },
         organizer: { '@type': 'SportsOrganization', name: 'FIBA', alternateName: 'International Basketball Federation' },
-        winner: { '@type': 'SportsTeam', name: h.champion },
-        citation: source
+        competitor: [h.champion, h.runner_up, h.third, h.fourth].filter(Boolean).map((name) => ({ '@type': 'SportsTeam', name }))
       },
       {
         '@type': 'BreadcrumbList',
