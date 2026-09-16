@@ -156,6 +156,7 @@ export const api = {
   pbeTeam: (id) => privateJson(`/v1/pbe/teams/${encodeURIComponent(id)}`),
   playerLoad: () => privateJson('/v1/player-load'),
   playerLoadPlayer: (id) => privateJson(`/v1/player-load/${encodeURIComponent(id)}`),
+  propEdge: () => privateJson('/v1/pro/prop-edge'),
   trackRecordLedger: () => privateJson('/v1/track-record/ledger'),
   pbeStatus: async () => ((await privateAvailable()) ? getJson(`${API_BASE}/v1/pbe/status`) : { ok: false, data: null, error: { code: 'pbe_api_unavailable', message: 'Model details are not published yet.' } }),
   pbeCoverage: async () => ((await privateAvailable()) ? getJson(`${API_BASE}/v1/pbe/coverage`, { fresh: true }) : { ok: false, data: null, error: { code: 'pbe_api_unavailable' } }),
