@@ -1,21 +1,22 @@
 import { html, render, raw } from '../lib/dom.js';
 import { NETWORK, CURRENT_SPORT } from './network.js';
 
-// Desktop header: the high-frequency destinations as a flat row, lower-frequency league/reference destinations
-// behind one "More" disclosure. The drawer (tablet/mobile) lists every destination.
+// Desktop header: keep the highest-frequency game/research destinations flat.
+// Lower-frequency league/reference destinations live behind one "More" disclosure.
+// The drawer (tablet/mobile) still lists every destination.
 export const PRIMARY_NAV = [
   ['today', '/', 'Today'],
   ['pbe-picks', '/pbe-picks', 'PBE Picks'],
   ['cast', '/cast', 'WNBACast'],
   ['props', '/props', 'Props'],
   ['matchups', '/matchups', 'Matchups'],
-  ['players', '/players', 'Players'],
   ['injuries', '/injuries', 'Injuries'],
   ['news', '/news', 'News'],
-  ['history', '/history', 'History'],
   ['international', '/international', 'International']
 ];
 export const SECONDARY_NAV = [
+  ['players', '/players', 'Players'],
+  ['history', '/history', 'History'],
   ['standings', '/standings', 'Standings'],
   ['stats', '/stats', 'Stats'],
   ['teams', '/teams', 'Teams'],
