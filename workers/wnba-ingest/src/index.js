@@ -22,7 +22,7 @@ import { etCompact, addDays, etHour } from '../../shared/time.js';
 import { pbeTask } from './pbe-runner.js';
 
 const SERVICE = 'wnba-ingest';
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
 const PROPS_WINDOW_H = 36;
@@ -242,7 +242,10 @@ async function backfill(env) {
 async function seasonSchedule() {
   const sb = normalizeScoreboard(await fetchJsonWithTimeout(`${ESPN.site}/scoreboard`));
   const year = sb.season?.year || Number(etCompact().slice(0, 4));
-  const r = await cachedJson({ url: `${ESPN.site}/scoreboard?dates=${year}0401-${year}1101&limit=1000`, ttlS: 1500, timeoutMs: 20000 });
+  // ESPN accepts the WNBA whole-year scoreboard form from Cloudflare egress.
+  // The Apr-Nov ranged form is rejected with 403 and was breaking both the
+  // background schedule and replay backfill despite healthy per-date reads.
+  const r = await cachedJson({ url: `${ESPN.site}/scoreboard?dates=${year}&limit=1000`, ttlS: 1500, timeoutMs: 20000 });
   if (!r.body) throw new Error(`season_schedule_unavailable:${r.error}`);
   return { year, ...normalizeScoreboard(r.body) };
 }
