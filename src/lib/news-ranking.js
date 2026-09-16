@@ -13,6 +13,16 @@ export const storyPublishedAt = (c) => Date.parse(storyOriginIso(c) || '') || 0;
 const group = (c) => (c?.kind === 'result' ? 'performance' : c?.kind);
 const isPhoto = (c) => c?.media && (c.media.layout === 'single' || c.media.layout === 'matchup');
 
+// Defensive presentation identity. The newsroom Worker owns canonical event dedupe, but a split
+// upstream cluster must never result in two cards about the same player + same development sitting
+// beside each other in Top Stories while the persisted index repairs itself.
+export function storySubjectKey(c) {
+  if (!c?.lead_player_id) return null;
+  const raw = c?.facts?.brief?.event_type || c?.context?.brief?.event_type || c?.desk || group(c) || 'story';
+  const type = ['availability', 'injury'].includes(raw) ? 'injury' : ['trade', 'signing', 'waiver', 'roster_move', 'transaction'].includes(raw) ? 'transaction' : raw;
+  return `player:${c.lead_player_id}:${String(type).toLowerCase()}`;
+}
+
 /**
  * Lead selection is freshness-first by canonical newsroom publication time.
  * A newly published material News Brief is always allowed to take the lead.
@@ -42,7 +52,7 @@ export function chooseLead(items, { tieWindowMs = HOUR } = {}) {
 /**
  * Top Stories is intentionally current. Variety is useful only among stories
  * that were actually published recently; revising old coverage does not make
- * it fresh enough to re-enter this rail.
+ * it fresh enough to re-enter this rail. The same player + material development can appear only once.
  */
 export function topStories(items, lead, { limit = 3, maxAgeMs = TOP_STORY_MAX_AGE, now = Date.now() } = {}) {
   const fresh = [...(items || [])]
@@ -53,17 +63,31 @@ export function topStories(items, lead, { limit = 3, maxAgeMs = TOP_STORY_MAX_AG
     .sort((a, b) => storyPublishedAt(b) - storyPublishedAt(a));
 
   const out = [];
-  const seen = new Set(lead ? [group(lead)] : []);
+  const seenGroups = new Set(lead ? [group(lead)] : []);
+  const seenSubjects = new Set();
+  const leadSubject = storySubjectKey(lead);
+  if (leadSubject) seenSubjects.add(leadSubject);
+  const subjectSeen = (c) => {
+    const k = storySubjectKey(c);
+    return k ? seenSubjects.has(k) : false;
+  };
+  const remember = (c) => {
+    seenGroups.add(group(c));
+    const k = storySubjectKey(c);
+    if (k) seenSubjects.add(k);
+  };
+
   for (const c of fresh) {
     if (out.length >= limit) break;
-    if (c.id === lead?.id || seen.has(group(c))) continue;
+    if (c.id === lead?.id || seenGroups.has(group(c)) || subjectSeen(c)) continue;
     out.push(c);
-    seen.add(group(c));
+    remember(c);
   }
   for (const c of fresh) {
     if (out.length >= limit) break;
-    if (c.id === lead?.id || out.some((x) => x.id === c.id)) continue;
+    if (c.id === lead?.id || out.some((x) => x.id === c.id) || subjectSeen(c)) continue;
     out.push(c);
+    remember(c);
   }
   return out;
 }
