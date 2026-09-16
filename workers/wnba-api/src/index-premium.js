@@ -3,6 +3,7 @@
 import current from './index.js';
 import { playerLoad } from './player-load.js';
 import { edgeTimeline, proWatchlist } from './pro-intelligence.js';
+import { propEdge } from './prop-edge.js';
 import { credentialedPreflight, privateJson } from './auth.js';
 
 export default {
@@ -13,7 +14,8 @@ export default {
     const loadMatch = path.match(/^\/v1\/player-load(?:\/([A-Za-z0-9_-]{1,40}))?$/);
     const timelineMatch = path.match(/^\/v1\/pro\/edge-timeline\/(\d{6,12})$/);
     const watchlistMatch = path === '/v1/pro/watchlist';
-    if (!loadMatch && !timelineMatch && !watchlistMatch) return current.fetch(request, env, ctx);
+    const propEdgeMatch = path === '/v1/pro/prop-edge';
+    if (!loadMatch && !timelineMatch && !watchlistMatch && !propEdgeMatch) return current.fetch(request, env, ctx);
 
     if (request.method === 'OPTIONS') return credentialedPreflight(request);
     try {
@@ -24,6 +26,10 @@ export default {
       if (timelineMatch) {
         if (request.method !== 'GET' && request.method !== 'HEAD') return privateJson(request, { ok: false, error: { code: 'method_not_allowed' } }, 405);
         return await edgeTimeline({ request, env, gameId: timelineMatch[1] });
+      }
+      if (propEdgeMatch) {
+        if (request.method !== 'GET' && request.method !== 'HEAD') return privateJson(request, { ok: false, error: { code: 'method_not_allowed' } }, 405);
+        return await propEdge({ request, env });
       }
       return await proWatchlist({ request, env });
     } catch (e) {
