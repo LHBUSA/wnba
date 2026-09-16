@@ -8,7 +8,6 @@ import './styles/newsroom.css';
 import './styles/international.css';
 import './styles/pbe.css';
 import './styles/polish.css';
-import './styles/footer-chrome.css';
 import { mountShell } from './ui/shell.js';
 import { createRouter } from './lib/router.js';
 
