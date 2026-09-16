@@ -1,12 +1,13 @@
 {
   "ref": "tkmlnhmylqnttmnsnief",
   "edition_id": "wnba_2024",
-  "status": "partial_league_coverage_indiana_complete",
-  "semantics": "Canonical score-only game/result facts curated from readable official WNBA/team references. No provider payload bodies are retained; no box scores, play-by-play, player appearances or model inputs are written by this milestone.",
+  "status": "complete_postseason_partial_regular_season",
+  "semantics": "Canonical score-only game/result facts curated from readable official WNBA/team references. No provider payload bodies are retained; no box scores, play-by-play, player appearances, roster stints, or model inputs are written by this milestone.",
   "source_strategy": {
     "approved_canonical_source": "pbe_curation",
     "official_references": [
       "Indiana Fever official game notes",
+      "Las Vegas Aces official game notes",
       "WNBA.com official game summaries"
     ],
     "espn": "prohibited; 0 canonical WBH games",
@@ -16,38 +17,61 @@
   "applied_migrations": [
     "wbh_wnba_2024_indiana_game_results_v1",
     "wbh_wnba_2024_indiana_late_game_results_v1",
-    "wbh_wnba_2024_indiana_complete_results_v1"
+    "wbh_wnba_2024_indiana_complete_results_v1",
+    "wbh_wnba_2024_aces_results_v1",
+    "wbh_wnba_2024_complete_playoffs_v1"
   ],
   "verification": {
-    "edition_games": 42,
-    "regular_games": 40,
-    "playoff_games": 2,
-    "game_team_rows": 84,
-    "final_games": 42,
-    "score_only_games": 42,
-    "overtime_games": 1,
+    "edition_games": 98,
+    "regular_games": 76,
+    "postseason_games": 22,
+    "playoff_game_type": 17,
+    "finals_game_type": 5,
+    "game_team_rows": 196,
+    "final_status_games": 98,
+    "score_only_games": 98,
+    "overtime_games": 4,
     "bad_two_team_games": 0,
     "first_date": "2024-05-14",
-    "last_date": "2024-09-25",
-    "indiana_games": 42,
+    "last_date": "2024-10-20",
+    "indiana_team_games": 42,
     "indiana_regular_games": 40,
     "indiana_playoff_games": 2,
+    "las_vegas_team_games": 46,
+    "las_vegas_regular_games": 40,
+    "las_vegas_playoff_games": 6,
     "wbh_roster_stints": 0,
     "wbh_player_game_stats": 0,
     "wnba_pbe_relations": 22,
     "thesportsdb_canonical_games": 0,
     "espn_canonical_games": 0
   },
-  "classification_notes": {
-    "2024-09-08_atlanta_at_indiana": "overtime_periods=1",
-    "playoff_stage": "wnba_2024_playoffs",
-    "playoff_counts_for_standings": false,
-    "playoff_counts_for_stats": true
+  "postseason": {
+    "complete": true,
+    "first_round_and_semifinal_games": 17,
+    "finals_games": 5,
+    "finals_game_1": "2024-10-10 MIN 95 at NYL 93, OT",
+    "finals_game_2": "2024-10-13 MIN 66 at NYL 80",
+    "finals_game_3": "2024-10-16 NYL 80 at MIN 77",
+    "finals_game_4": "2024-10-18 NYL 80 at MIN 82",
+    "finals_game_5": "2024-10-20 MIN 62 at NYL 67, OT"
+  },
+  "dedupe": {
+    "policy": "deterministic game id plus exact-or-fail score/classification validation",
+    "aces_cross_source_test": {
+      "inserted_games": 42,
+      "validated_existing_games": 4,
+      "disagreements": 0
+    }
   },
   "coverage_goal": {
     "regular_season_unique_games": 240,
-    "current_unique_regular_games": 40,
+    "current_unique_regular_games": 76,
     "league_regular_season_complete": false,
-    "next_method": "team-by-team official notes/summaries with deterministic game IDs; exact existing rows are validation, any disagreement fails closed"
+    "remaining_unique_regular_games": 164,
+    "postseason_unique_games": 22,
+    "current_unique_postseason_games": 22,
+    "league_postseason_complete": true,
+    "next_method": "continue team-by-team official notes/summaries; deterministic game IDs turn overlap into validation rather than duplicates"
   }
 }
