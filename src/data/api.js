@@ -90,10 +90,80 @@ const q = (params) => {
   return str ? `?${str}` : '';
 };
 
+const etCompactDate = (value = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(value);
+  const get = (type) => parts.find((p) => p.type === type)?.value || '';
+  return `${get('year')}${get('month')}${get('day')}`;
+};
+
+const scheduleSummary = (games) => {
+  const live = games.filter((g) => g.status?.state === 'in').length;
+  const final = games.filter((g) => g.status?.state === 'post').length;
+  const scheduled = games.filter((g) => g.status?.state === 'pre').length;
+  return { live, final, scheduled, total: games.length, state: live ? 'LIVE' : scheduled && !final ? 'SCHEDULED' : final && !scheduled ? 'FINAL' : scheduled || final ? 'MIXED' : 'EMPTY' };
+};
+
+async function scheduleWithVerifiedFallback(params = {}) {
+  const primary = await getJson(`${API_BASE}/v1/schedule${q(params)}`);
+  if (primary.ok) return primary;
+
+  // Range schedule is a convenience read. If that upstream query fails, do not
+  // blank WNBACast or Matchups while the owned /v1/today surface still has a
+  // verified current/next slate and last result. We only use this fallback for
+  // ranges that include today (or an explicit date equal to today), and we keep
+  // only games that actually fall inside the requested range. No invented data.
+  if (params.season) return primary;
+  const today = etCompactDate();
+  const eligible = params.date
+    ? params.date === today
+    : params.from && params.to
+      ? params.from <= today && today <= params.to
+      : !params.from && !params.to;
+  if (!eligible) return primary;
+
+  const verified = await getJson(`${API_BASE}/v1/today`, { fresh: true });
+  if (!verified.ok) return primary;
+  const candidates = [
+    ...(verified.data?.last_results?.games || []),
+    ...(verified.data?.slate?.games || [])
+  ];
+  const seen = new Set();
+  const games = candidates.filter((g) => {
+    if (!g?.game_id || !g?.start_utc || seen.has(g.game_id)) return false;
+    const day = etCompactDate(new Date(g.start_utc));
+    const inRange = params.date ? day === params.date : (!params.from || day >= params.from) && (!params.to || day <= params.to);
+    if (!inRange) return false;
+    seen.add(g.game_id);
+    return true;
+  });
+  if (!games.length) return primary;
+
+  games.sort((a, b) => String(a.start_utc).localeCompare(String(b.start_utc)));
+  return {
+    ok: true,
+    data: {
+      requested: { date: params.date || null, from: params.from || null, to: params.to || null, season: null },
+      day: verified.data?.slate?.date || verified.data?.last_results?.date || null,
+      games,
+      summary: scheduleSummary(games)
+    },
+    meta: {
+      ...(verified.meta || {}),
+      semantics: 'SCHEDULE_FALLBACK_VERIFIED_SLATE',
+      degraded: [
+        ...((verified.meta?.degraded || []).filter(Boolean)),
+        `primary_schedule:${primary.error?.code || 'unavailable'}`
+      ]
+    }
+  };
+}
+
 export const api = {
   today: () => getJson(`${API_BASE}/v1/today`),
   season: () => getJson(`${API_BASE}/v1/season`),
-  schedule: (p) => getJson(`${API_BASE}/v1/schedule${q(p)}`),
+  schedule: (p) => scheduleWithVerifiedFallback(p),
   game: (id) => getJson(`${API_BASE}/v1/games/${encodeURIComponent(id)}`),
   live: (id, since, opts) => getJson(`${API_BASE}/v1/games/${encodeURIComponent(id)}/live${q({ since })}`, opts),
   matchup: (id) => getJson(`${API_BASE}/v1/matchups/${encodeURIComponent(id)}`),
