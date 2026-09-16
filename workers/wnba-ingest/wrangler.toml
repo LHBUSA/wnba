@@ -14,9 +14,11 @@ binding = "WNBA_KV"
 id = "c3249a8e3552438da38c6cad0d54e172"
 
 [vars]
-# PBE WNBA runner. dry_run = shadow ledger in KV only (never public, never official).
-# `armed` writes the official Supabase ledger and requires owner approval + PBE_ARMED_BY + PBE_SUPABASE_* secrets.
-PBE_MODE = "dry_run"
+# PBE WNBA runner. Official launch approved by owner 2026-09-16.
+# `armed` writes the official Supabase ledger and KV mirror. The frozen model,
+# K=3 eligibility contract and T-15m/v1 lock policy remain unchanged.
+PBE_MODE = "armed"
+PBE_ARMED_BY = "Owner approval 2026-09-16: official WNBA PBE Pro launch"
 
 [observability]
 enabled = true
@@ -26,4 +28,3 @@ enabled = true
 #   ADMIN_TOKEN                bearer token for POST /run/<task>
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   (after owner approval)
 #   PBE_SUPABASE_URL, PBE_SUPABASE_SERVICE_ROLE_KEY   tkmln wnba_pbe_* writer (armed only)
-#   PBE_ARMED_BY                                    owner approval reference (armed only)
