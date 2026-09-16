@@ -44,18 +44,25 @@ jobs:
           d = json.loads(p.read_text(encoding='utf-8'))
           people = d['people']
           assert d['license'] == 'CC0-1.0'
+          assert d['source'] == 'Wikidata structured data only'
+          assert d['scope'].startswith('All human Wikidata items carrying P3588')
+          assert 'wdt:P3588' in d['capture']['query'] and 'wdt:P31 wd:Q5' in d['capture']['query']
+          assert d['capture']['raw_retained'] is False
+          assert re.fullmatch(r'[0-9a-f]{64}', d['capture']['raw_capture_sha256'])
           assert len(people) >= 1300
           assert len({x['person_id'] for x in people}) == len(people)
           assert len({x['wikidata_qid'] for x in people}) == len(people)
           assert len({x['wnba_com_id'] for x in people}) == len(people)
           assert all(re.fullmatch(r'gp_[0-9A-HJKMNP-TV-Z]{12}', x['person_id']) for x in people)
           assert all(re.fullmatch(r'Q[1-9][0-9]*', x['wikidata_qid']) for x in people)
-          assert d['capture']['raw_retained'] is False
+          assert all(x['wnba_com_id'] in x['external_ids']['P3588'] for x in people)
           sql = pathlib.Path('supabase/migrations/20260916103000_wbh_wikidata_identity_v1.sql').read_text(encoding='utf-8')
           sql_body = '\n'.join(line for line in sql.splitlines() if not line.lstrip().startswith('--'))
-          assert "'wikidata'" in sql_body and "'wikidata:P3588'" in sql_body
-          assert 'espn' not in sql_body.lower()
-          assert 'wnba.com/' not in sql_body.lower()
+          assert "public.wbh_assert_ingestible('wikidata')" in sql_body
+          assert "'wikidata:P3588'" in sql_body
+          assert "'wikidata','wikidata_p3588_snapshot'" in sql_body
+          assert "'wikidata','wikidata:P3588:wnba_identity_snapshot_v1'" in sql_body
+          assert "'hash_only'" in sql_body
           print(json.dumps(d['totals'], indent=2))
           PY
 
