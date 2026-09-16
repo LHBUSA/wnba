@@ -7,11 +7,32 @@ import { createPoller } from '../lib/poller.js';
 import { attachPbp } from '../ui/pbp.js';
 import { routeMeta } from '../seo/meta.js';
 import { loadIntlHome, intlHomeView, loadCompetition, competitionView, loadIntlGame, intlGameView, loadNationalTeam, nationalTeamView, loadIntlPlayer, intlPlayerView, playerHref } from '../views/international.js';
+import { internationalHistoryFor, historicalCompetitionView } from '../views/international-history.js';
 
 export const title = () => null;
 export const CURRENT_WORLD_CUP = 'world-cup-2026';
 const LIVE_POLL_MS = 10000;
 const IDLE_POLL_MS = 120000;
+
+// The shared international directory predates curated historical coverage and
+// appends "coverage coming" to every non-live competition. For the browser view
+// only, suppress that legacy label when a verified historical archive exists.
+// The Worker registry still truthfully reports coverage='historical'.
+function homeViewModel(data) {
+  if (!data?.home?.ok) return data;
+  return {
+    ...data,
+    home: {
+      ...data.home,
+      data: {
+        ...data.home.data,
+        competitions: (data.home.data.competitions || []).map((c) =>
+          internationalHistoryFor(c.competition_id) ? { ...c, coverage: 'full' } : c
+        )
+      }
+    }
+  };
+}
 
 export async function mount(root, ctx) {
   const id = ctx.routeId;
@@ -31,12 +52,14 @@ export async function mount(root, ctx) {
     if (id === 'international') {
       const data = await loadIntlHome(api);
       live = Boolean(data.home?.data?.live?.length);
-      body = intlHomeView(data);
+      body = intlHomeView(homeViewModel(data));
     } else if (id === 'intl-competition') {
       const data = await loadCompetition(api, ctx.params.competition, ctx.params.section || null);
       live = Boolean(data.ov?.data?.scoreboard?.live?.length);
       if (first && data.ov?.ok) ctx.setMeta(routeMeta(id, { path: ctx.path, params: ctx.params, data: data.ov.data }));
-      body = competitionView(data);
+      const comp = data.ov?.data?.competition;
+      const history = comp ? internationalHistoryFor(comp.competition_id) : null;
+      body = history && !data.ov?.data?.scoreboard ? historicalCompetitionView(comp, history) : competitionView(data);
     } else if (id === 'intl-game') {
       const data = await loadIntlGame(api, ctx.params.gameId);
       live = data.res?.data?.game?.status === 'live';
