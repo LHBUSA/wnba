@@ -1,0 +1,36 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "dataset": "wikidata_wnba_team_memberships_v1",
+  "source": "Wikidata structured data only",
+  "license": "CC0-1.0",
+  "repo_snapshot_commit": "0410c34e1c822bba7ac04b9b7603e3c811a7804d",
+  "workflow_run_id": 35087708215,
+  "workflow_artifact_id": 10443295561,
+  "manifest": {
+    "path": "data/wbh/manifests/wikidata-wnba-team-memberships-v1.json",
+    "sha256": "15bc5b84ef0f4d68fe73f4f903ba1941fc0d4e992343589a1f4d7e7c544b33c1",
+    "raw_capture_sha256": "42700afadffd2a8716f141aa2760e192f779f502f6c5f225d6b9515b3733386f",
+    "raw_bytes": 653862,
+    "raw_retained": false
+  },
+  "applied_migrations": [
+    "wbh_person_team_membership_claims_v1",
+    "wbh_membership_partial_date_range_v1",
+    "wbh_wikidata_wnba_memberships_v1",
+    "wbh_membership_evidence_conservative_v2"
+  ],
+  "verification": {
+    "claims": 982,
+    "distinct_people_in_snapshot": 633,
+    "evidence_classes_2024": {
+      "bounded_overlap": 19,
+      "unbounded_claim": 64,
+      "undated_claim": 698,
+      "outside_2024": 201
+    },
+    "classification_contract": "bounded_overlap requires both start and end qualifiers and interval overlap; one-sided or undated P54 statements never establish a 2024 roster fact",
+    "wbh_roster_stints_written": 0,
+    "wbh_games_written": 0,
+    "wnba_pbe_relations": 22
+  }
+}
