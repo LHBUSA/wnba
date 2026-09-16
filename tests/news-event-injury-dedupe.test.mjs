@@ -17,7 +17,7 @@ const item = ({ id, type, at, source, team }) => ({
     { type: 'player', id: '4433790', name: 'Azzi Fudd' },
     { type: 'team', id: team, name: team === '3' ? 'Dallas Wings' : 'New York Liberty' }
   ],
-  materiality: { score: 5, level: 'high', material: true }
+  materiality: { score: 5, level: 'high', material: true, flags: [], reasons: ['fixture material event'] }
 });
 
 test('injury and availability vocabulary share one fact key for the same player', () => {
