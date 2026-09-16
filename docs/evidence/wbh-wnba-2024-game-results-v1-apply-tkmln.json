@@ -1,0 +1,53 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "edition_id": "wnba_2024",
+  "status": "partial_league_coverage_indiana_complete",
+  "semantics": "Canonical score-only game/result facts curated from readable official WNBA/team references. No provider payload bodies are retained; no box scores, play-by-play, player appearances or model inputs are written by this milestone.",
+  "source_strategy": {
+    "approved_canonical_source": "pbe_curation",
+    "official_references": [
+      "Indiana Fever official game notes",
+      "WNBA.com official game summaries"
+    ],
+    "espn": "prohibited; 0 canonical WBH games",
+    "basketball_reference": "prohibited; 0 canonical WBH games",
+    "thesportsdb": "unresolved; 0 canonical WBH games"
+  },
+  "applied_migrations": [
+    "wbh_wnba_2024_indiana_game_results_v1",
+    "wbh_wnba_2024_indiana_late_game_results_v1",
+    "wbh_wnba_2024_indiana_complete_results_v1"
+  ],
+  "verification": {
+    "edition_games": 42,
+    "regular_games": 40,
+    "playoff_games": 2,
+    "game_team_rows": 84,
+    "final_games": 42,
+    "score_only_games": 42,
+    "overtime_games": 1,
+    "bad_two_team_games": 0,
+    "first_date": "2024-05-14",
+    "last_date": "2024-09-25",
+    "indiana_games": 42,
+    "indiana_regular_games": 40,
+    "indiana_playoff_games": 2,
+    "wbh_roster_stints": 0,
+    "wbh_player_game_stats": 0,
+    "wnba_pbe_relations": 22,
+    "thesportsdb_canonical_games": 0,
+    "espn_canonical_games": 0
+  },
+  "classification_notes": {
+    "2024-09-08_atlanta_at_indiana": "overtime_periods=1",
+    "playoff_stage": "wnba_2024_playoffs",
+    "playoff_counts_for_standings": false,
+    "playoff_counts_for_stats": true
+  },
+  "coverage_goal": {
+    "regular_season_unique_games": 240,
+    "current_unique_regular_games": 40,
+    "league_regular_season_complete": false,
+    "next_method": "team-by-team official notes/summaries with deterministic game IDs; exact existing rows are validation, any disagreement fails closed"
+  }
+}
