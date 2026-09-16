@@ -75,7 +75,7 @@ export const INTERNATIONAL_HISTORY = Object.freeze({
     dates: { start: '2025-06-28', end: '2025-07-06', label: 'Jun 28 – Jul 6, 2025' },
     host: { city: 'Santiago', country: 'Chile' },
     teams: 10,
-    games: 32,
+    games: 28,
     champion: 'United States',
     runner_up: 'Brazil',
     third: 'Canada',
@@ -87,7 +87,10 @@ export const INTERNATIONAL_HISTORY = Object.freeze({
     ],
     final_standings: ['United States', 'Brazil', 'Canada', 'Argentina', 'Colombia', 'Puerto Rico', 'Mexico', 'Dominican Republic', 'Chile', 'El Salvador'],
     leaders: [
-      leader('Points', 'Damiris Dantas', 'Brazil', '21.4 PPG')
+      leader('Points', 'Damiris Dantas', 'Brazil', '21.4 PPG'),
+      leader('Rebounds', 'Kamilla Cardoso', 'Brazil', '9.9 RPG'),
+      leader('Assists', 'Olivia Miles', 'United States', '7.1 APG'),
+      leader('Efficiency', 'Kamilla Cardoso', 'Brazil', '24.3 EFF')
     ],
     source: source('https://www.fiba.basketball/en/events/fiba-womens-americup-2025')
   }),
@@ -110,7 +113,10 @@ export const INTERNATIONAL_HISTORY = Object.freeze({
     ],
     final_standings: ['Australia', 'Japan', 'China', 'South Korea', 'New Zealand', 'Philippines', 'Lebanon', 'Indonesia'],
     leaders: [
-      leader('Points', 'Rebecca Akl', 'Lebanon', '16.5 PPG')
+      leader('Points', 'Rebecca Akl', 'Lebanon', '16.5 PPG'),
+      leader('Rebounds', 'Jack Animam', 'Philippines', '10.0 RPG'),
+      leader('Assists', 'Stephanie Reid', 'Australia', '7.4 APG'),
+      leader('Efficiency', 'Alexandra Fowler', 'Australia', '20.0 EFF')
     ],
     source: source('https://www.fiba.basketball/en/events/fiba-womens-asiacup-2025')
   }),
@@ -134,7 +140,8 @@ export const INTERNATIONAL_HISTORY = Object.freeze({
     leaders: [
       leader('Points', 'Raneem Elgedawy', 'Egypt', '20.3 PPG'),
       leader('Rebounds', 'Maria Teresa Gakdeng', 'South Sudan', '11.7 RPG'),
-      leader('Assists', 'Delicia Washington', 'South Sudan', '5.3 APG')
+      leader('Assists', 'Delicia Washington', 'South Sudan', '5.3 APG'),
+      leader('Efficiency', 'Maria Teresa Gakdeng', 'South Sudan', '18.3 EFF')
     ],
     source: source('https://www.fiba.basketball/en/events/fiba-womens-afrobasket-2025')
   })
@@ -152,7 +159,7 @@ export function historicalCardMeta(c) {
 }
 
 function podiumCard(label, team, cls = '') {
-  return html`<div class="tile ${cls}"><small>${label}</small><b>${team}</b><span>2025 tournament finish</span></div>`;
+  return html`<div class="tile ${cls}"><small>${label}</small><b>${team}</b><span>tournament finish</span></div>`;
 }
 
 function resultCard(g) {
