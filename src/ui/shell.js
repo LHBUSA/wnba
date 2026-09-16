@@ -1,6 +1,10 @@
 import { html, render, raw } from '../lib/dom.js';
 import { NETWORK, CURRENT_SPORT } from './network.js';
 
+// Shell revision lets the latest Vercel client reconcile header/footer chrome when the
+// publishing Worker is still serving an older SSR shell. Main content is never replaced.
+export const SHELL_REV = '2026-09-16.3';
+
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
 // The drawer (tablet/mobile) still lists every destination.
@@ -40,12 +44,11 @@ const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const BRAND_MARK = `<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1813"/><circle cx="32" cy="32" r="19" fill="none" stroke="#d4af37" stroke-width="3.5"/><path d="M13 32h38M32 13v38M19 18c7 6 7 22 0 28M45 18c-7 6-7 22 0 28" fill="none" stroke="#ff7a2f" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 
 const MOTHER_VERIFY_URL = 'https://mother.proptechusa.ai/verify/xgH9unhpY6TDvTtmG8CsUWrq0O6M10TS';
-const MOTHER_BADGE_URL = 'https://api.mother.proptechusa.ai/badge/xgH9unhpY6TDvTtmG8CsUWrq0O6M10TS.svg';
 
 /** The site shell as HTML. `main` is the page content (server-rendered by the publishing Worker); `ssrPath` marks it. */
 export function shellHtml({ main = '', ssrPath = null } = {}) {
   return html`
-    <header class="hdr">
+    <header class="hdr" data-shell-rev="${SHELL_REV}">
       <div class="hdr-in">
         <a class="brand" href="/" aria-label="PropBetEdge WNBA home">
           ${raw(BRAND_MARK)}
@@ -68,7 +71,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         </div>
       </div>
     </header>
-    <div class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer" id="drawer" aria-hidden="true" data-shell-rev="${SHELL_REV}">
       <div class="drawer-bg" data-close></div>
       <div class="drawer-panel" role="dialog" aria-label="Menu">
         <div class="drawer-head"><span class="eyebrow">Navigate</span><button class="menu-btn" style="display:inline-flex" type="button" aria-label="Close menu" data-close>✕</button></div>
@@ -77,7 +80,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
       </div>
     </div>
     <main id="main" tabindex="-1" ${ssrPath ? html`data-ssr-path="${ssrPath}"` : ''}>${main}</main>
-    <footer class="foot">
+    <footer class="foot" data-shell-rev="${SHELL_REV}">
       <div class="foot-in foot-world">
         <section class="foot-pro-panel" aria-label="WNBA Pro">
           <div class="foot-pro-copy">
@@ -135,7 +138,9 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
 
         <div class="foot-security">
           <a class="foot-mother-badge" href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Verify PropTechUSA.ai Mother AI protection status (opens in a new tab)">
-            <img src="${MOTHER_BADGE_URL}" alt="Mother AI Protected — live verification for PropTechUSA.ai" width="236" height="48" loading="lazy" decoding="async" />
+            <span class="foot-mother-mark" aria-hidden="true">M</span>
+            <span class="foot-mother-words"><b>Mother AI</b><small>Protected</small></span>
+            <span class="foot-mother-live"><i aria-hidden="true"></i>Live</span>
           </a>
           <div class="foot-security-copy">
             <strong>Mother AI Protected</strong>
@@ -147,7 +152,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         <p class="foot-note">PropBetEdge WNBA is independent and is not affiliated with, endorsed by or sponsored by the WNBA, its teams or players. Scores, play-by-play, rosters, standings and injury statuses are sourced from ESPN's public data; sportsbook prices from The Odds API; external news links open on the publisher's site. Player photos are Wikimedia Commons images used under their stated licenses with credit on each player page. For entertainment and research — bet responsibly. 21+.</p>
       </div>
     </footer>
-    <nav class="mnav" aria-label="Primary mobile">
+    <nav class="mnav" aria-label="Primary mobile" data-shell-rev="${SHELL_REV}">
       <a href="/" data-nav="today">${raw(svg('today'))}Today</a>
       <a href="/cast" data-nav="cast">${raw(svg('cast'))}Cast</a>
       <a href="/pbe-picks" data-nav="pbe-picks" class="mnav-pbe">${raw(svg('pbe'))}<span>PBE<sup>PRO</sup></span></a>
@@ -158,9 +163,25 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
   `;
 }
 
+function reconcileChrome(root) {
+  const header = root.querySelector('header.hdr');
+  if (!header || header.dataset.shellRev === SHELL_REV) return;
+
+  const staging = document.createElement('div');
+  render(staging, shellHtml());
+  for (const selector of ['header.hdr', '#drawer', 'footer.foot', 'nav.mnav']) {
+    const current = root.querySelector(selector);
+    const fresh = staging.querySelector(selector);
+    if (current && fresh) current.replaceWith(fresh);
+  }
+}
+
 export function mountShell(root) {
-  // A server-rendered shell is kept as-is (identical markup); it is rendered here only when the page arrived empty.
+  // The SSR Worker can lag a Vercel frontend deployment. If its shell chrome is old,
+  // replace only header/drawer/footer/mobile-nav from the latest client bundle and keep
+  // the server-rendered <main> intact. This prevents live data from masking stale chrome.
   if (!root.querySelector('header.hdr') || !root.querySelector('#main')) render(root, shellHtml());
+  else reconcileChrome(root);
 
   const drawer = root.querySelector('#drawer');
   const open = (v) => {
