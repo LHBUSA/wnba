@@ -69,17 +69,21 @@ export async function mount(root, ctx) {
     return r;
   }).sort((a, b) => (b.unavailable - a.unavailable) || (b.heavy - a.heavy) || String(a.team?.name || '').localeCompare(String(b.team?.name || '')));
 
+  const monitoredPlayers = rows.flatMap((r) => r.players);
+  const peakLoad = monitoredPlayers.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0))[0] || null;
+  const elevatedPlus = monitoredPlayers.filter((p) => Number(p.score || 0) >= 55).length;
+
   let teamFilter = '';
   const draw = () => {
     const shown = rows.filter((r) => !teamFilter || String(r.team.team_id) === teamFilter);
     render(root, html`<section class="pi-shell">
       ${proSuiteRail(FEATURE.id)}
-      <header class="pi-hero"><div><span class="eyebrow">WNBA Pro · Opportunity pressure</span><h1>Rotation <span>Impact</span></h1><p class="lead">A team-by-team view of where recent workload and sourced availability could concentrate minutes pressure. It identifies context and likely workload absorbers from recent baseline minutes — it does not pretend to know a coach's future rotation.</p></div><aside><span>Teams monitored</span><b>${rows.length}</b><small>${rows.reduce((n, r) => n + r.unavailable, 0)} currently unavailable listings</small><em>${rows.reduce((n, r) => n + r.heavy, 0)} heavy / extreme loads</em></aside></header>
+      <header class="pi-hero"><div><span class="eyebrow">WNBA Pro · Opportunity pressure</span><h1>Rotation <span>Impact</span></h1><p class="lead">A team-by-team view of where recent workload and sourced availability could concentrate minutes pressure. It identifies context and likely workload absorbers from recent baseline minutes — it does not pretend to know a coach's future rotation.</p></div><aside><span>Teams monitored</span><b>${rows.length}</b><small>${rows.reduce((n, r) => n + r.unavailable, 0)} currently unavailable listings</small><em>${peakLoad ? `Peak Load ${peakLoad.score} · ${peakLoad.band}` : 'No current Player Load values'}</em><em>${elevatedPlus} Elevated+ players</em></aside></header>
 
       <div class="pi-selector"><label>Team<select data-team><option value="">All teams</option>${rows.map((r) => html`<option value="${r.team.team_id}" ${teamFilter === String(r.team.team_id) ? 'selected' : ''}>${r.team.name || r.team.short_name || r.team.abbr || r.team.team_id}</option>`)}</select></label><div class="pi-selector-links"><a href="/player-load">Player Load →</a><a href="/injuries">Availability →</a></div></div>
 
       <div class="ri-grid">${shown.map((r) => teamCard(r))}</div>
-      <section class="pi-explain"><h2>How to use Rotation Impact</h2><p>Start with teams carrying unavailable players or multiple Heavy/Extreme Player Load scores. Then look at the highest recent baseline-minute players who remain active-like. Those names are workload-coverage candidates, not projected minute gains. Availability is sourced context; Player Load remains a separate deterministic metric.</p></section>
+      <section class="pi-explain"><h2>How to use Rotation Impact</h2><p>Start with teams carrying unavailable players or multiple Elevated+ Player Load scores. Then look at the highest recent baseline-minute players who remain active-like. Those names are workload-coverage candidates, not projected minute gains. Availability is sourced context; Player Load remains a separate deterministic metric.</p></section>
     </section>`);
     root.querySelector('[data-team]')?.addEventListener('change', (e) => { teamFilter = e.target.value; draw(); });
   };
