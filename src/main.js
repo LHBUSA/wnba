@@ -7,6 +7,7 @@ import './styles/identity.css';
 import './styles/newsroom.css';
 import './styles/international.css';
 import './styles/pbe.css';
+import './styles/pbe-flagship.css';
 import './styles/player-load.css';
 import './styles/polish.css';
 import { mountShell } from './ui/shell.js';
