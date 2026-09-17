@@ -44,6 +44,16 @@ const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').
 // The visible story age is canonical newsroom publication time. Source/event timestamps may
 // move when an existing article is revised, but that must not make old coverage look newly published.
 const storyTime = storyOriginIso;
+const ET_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+const TIP_TIME = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+const etDay = (ms) => ET_DAY.format(new Date(ms));
+function sameDayPreviewLabel(c, now = Date.now()) {
+  if (c?.kind !== 'preview') return null;
+  const game = (c.entities || []).find((e) => e?.type === 'game' && e.start_utc);
+  const start = Date.parse(game?.start_utc || '');
+  if (!Number.isFinite(start) || start <= now || etDay(start) !== etDay(now)) return null;
+  return `Tonight · ${TIP_TIME.format(new Date(start))}`;
+}
 // Short source labels for cards (the full, cited list is on the article page).
 const srcLabel = (s) => String(s).replace(/^wnba-api matchup research.*/i, 'PBE matchup research').replace(/\s*\(.*$/, '').replace(/\s*—.*$/, '');
 const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 2).join(', ');
@@ -57,9 +67,9 @@ export function articleCard(c, { lead = false, size = null, eager = false, timeL
   const sz = size || (lead ? 'lead' : 'card');
   const href = `/news/${c.slug}`;
   const slot = sz === 'lead' ? 'lead' : sz === 'compact' ? 'small' : 'card';
-  // timeLabel is presentation context only (for example, "Tonight · 7:30 PM ET" on Game Day).
-  // It never changes the canonical story origin used by newsroom ranking, RSS, schema or normal cards.
-  const visibleTime = timeLabel || relTime(storyTime(c));
+  // Game-day time is presentation context only. It never changes the canonical story origin used
+  // by newsroom ranking, RSS, schema or the article's publication/revision history.
+  const visibleTime = timeLabel || sameDayPreviewLabel(c) || relTime(storyTime(c));
   return html`<article class="scard scard--${sz}">
     ${storyMedia(c.media, { slot, eager })}
     <div class="scard-body">
