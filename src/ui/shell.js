@@ -3,7 +3,7 @@ import { NETWORK, CURRENT_SPORT } from './network.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-16.6';
+export const SHELL_REV = '2026-09-17.1';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -136,6 +136,8 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <ul class="foot-network-links">
             <li><a href="${NETWORK.news.href}">${NETWORK.news.label}</a></li>
             <li><a href="${NETWORK.store.href}">${NETWORK.store.label}</a></li>
+            <li><a href="https://billing.stripe.com/p/login/cNi3cv2vY7em3lr4oj7wA00" target="_blank" rel="noopener noreferrer">Manage billing ↗</a></li>
+            <li><a href="mailto:sales@proptechusa.ai">Contact us</a></li>
             <li><a href="${NETWORK.discord.href}">${NETWORK.discord.label}</a></li>
           </ul>
           <div class="sports-rail" aria-label="PropBetEdge sports network">
