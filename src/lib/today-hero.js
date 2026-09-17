@@ -1,3 +1,4 @@
+// Deterministic state machine for the Today command-center hero.
 const DISRUPTED = /POSTPONED|CANCELED|CANCELLED|DELAYED|SUSPENDED/i;
 
 const byStart = (a, b) => String(a?.start_utc || '').localeCompare(String(b?.start_utc || ''));
