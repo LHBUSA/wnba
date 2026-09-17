@@ -160,6 +160,22 @@
 }
 @media (min-width: 381px) and (max-width: 640px) { .desk-nav { gap: 4px 14px; letter-spacing: .09em; } }   /* 390-class phones: desks pack 4 + 4, no lone tab row (360 keeps 3/3/2) */
 
+/* Four-story editorial hero. The stacked grid keeps the section height stable while slides crossfade. */
+.news-hero { margin-bottom: 30px; }
+.news-hero-track { display: grid; min-width: 0; }
+.news-hero-slide { grid-area: 1 / 1; min-width: 0; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .36s ease, visibility .36s ease; }
+.news-hero-slide.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
+.news-hero-controls { display: flex; align-items: center; gap: 10px; min-height: 38px; margin-top: 12px; }
+.news-hero-arrow, .news-hero-dot { position: relative; z-index: 4; border: 0; color: var(--dim); background: transparent; cursor: pointer; }
+.news-hero-arrow { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--line-2); border-radius: 999px; font: 500 24px/1 var(--f-ui); transition: color .15s, border-color .15s, background .15s; }
+.news-hero-arrow:hover { color: var(--paper); border-color: var(--gold-line); background: rgba(212,175,55,.06); }
+.news-hero-dots { display: flex; align-items: center; gap: 7px; }
+.news-hero-dot { width: 24px; height: 4px; border-radius: 999px; background: var(--line-2); transition: width .2s ease, background .2s ease; }
+.news-hero-dot.is-active { width: 38px; background: var(--gold); }
+.news-hero-arrow:focus-visible, .news-hero-dot:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.news-hero-note { margin-left: auto; font: 600 10.5px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+@media (prefers-reduced-motion: reduce) { .news-hero-slide, .news-hero-dot { transition: none; } }
+
 .front-top { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
 .front-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding-left: 28px; border-left: 1px solid var(--line); }
 .rail-title { font: 700 12px/1 var(--f-data); letter-spacing: .18em; text-transform: uppercase; color: var(--gold); }
@@ -229,6 +245,12 @@
 .desk .sec-title { font: 800 22px/1 var(--f-display); letter-spacing: .06em; color: var(--paper); }
 .desk-sub { margin-top: 6px; color: var(--meta); font-size: 13.5px; max-width: 70ch; text-wrap: pretty; }
 
+/* Completed-game rail gets a slightly richer treatment so the newsroom visibly changes state after final. */
+.recap-highlights { border-top-color: rgba(212,175,55,.38); }
+.recap-highlights .eyebrow { color: var(--gold); }
+.recap-highlights .scard-video { background: rgba(212,175,55,.08); border-color: rgba(212,175,55,.55); }
+.recap-highlights .ngrid > .scard:has(.scard-video) { padding: 10px; margin: -10px; border-radius: 16px; background: linear-gradient(180deg, rgba(212,175,55,.055), rgba(212,175,55,.012)); box-shadow: inset 0 0 0 1px rgba(212,175,55,.12); }
+
 .wire-wrap { padding: 22px 24px; border: 1px dashed var(--line-2); border-radius: 16px; background: var(--ink-1); }
 .wire-wrap .sec-title { color: var(--dim); }
 .wire { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 0 28px; }
@@ -239,24 +261,19 @@
 .wire .nents { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .trust { max-width: 86ch; color: var(--dim); }
-.trust p { margin-top: 10px; font-size: 14px; line-height: 1.6; }
+.trust p { margin-top: 10px; }
 
 /* ---------------------------------------------------------------- article page */
-.story { max-width: 1060px; margin: 0 auto; }
-.story-hero { margin-bottom: 26px; }
-.story-head { max-width: 780px; }
-.story-kicker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.story-kicker .cat { font-size: 13px; }
-.story-teams { display: inline-flex; gap: 6px; }
-.story-head h1 { font: 600 clamp(32px, 4.8vw, 56px)/1.05 var(--f-editorial); letter-spacing: -.014em; margin-top: 14px; color: var(--paper); overflow-wrap: anywhere; text-wrap: balance; }
-.story-head .deck { font: 400 clamp(18px, 2.1vw, 22px)/1.45 var(--f-editorial); color: var(--paper-2); margin-top: 16px; text-wrap: pretty; }
-.byline { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin-top: 20px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font: 500 12px/1.4 var(--f-data); color: var(--faint); }
-.byline .by { color: var(--gold); font-weight: 700; }
-.story-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 44px; margin-top: 28px; align-items: start; }
-.story-body p { font: 400 19px/1.74 var(--f-editorial); color: var(--paper-2); margin: 0 0 1.1em; overflow-wrap: anywhere; }
-/* first-of-type, not first-child: v1.2.0 opens the body with a section head, so the first
-   paragraph is no longer the first child and the drop cap stopped matching */
-.story-body > p:first-of-type::first-letter { float: left; font: 600 3.4em/.82 var(--f-editorial); margin: .06em .1em 0 0; color: var(--gold); }
+.art-head { margin-bottom: 24px; }
+.story-kicker { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.story-h { font: 700 clamp(36px, 6vw, 66px)/1.02 var(--f-editorial); letter-spacing: -.025em; color: var(--paper); max-width: 19ch; text-wrap: balance; }
+.story-dek { max-width: 74ch; margin-top: 16px; color: var(--paper-2); font: 400 clamp(18px, 2vw, 22px)/1.55 var(--f-editorial); text-wrap: pretty; }
+.story-by { margin-top: 14px; display: flex; gap: 8px 18px; flex-wrap: wrap; font: 500 12px/1.4 var(--f-data); color: var(--meta); }
+.story-by b { color: var(--paper-2); font-weight: 600; }
+.story-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, .7fr); gap: 50px; align-items: start; }
+.story-body { min-width: 0; }
+.story-body p { font: 400 19px/1.75 var(--f-editorial); color: var(--paper-2); margin: 0 0 1.35em; max-width: 72ch; text-wrap: pretty; }
+.story-body h2 { font: 700 24px/1.18 var(--f-editorial); letter-spacing: -.01em; color: var(--paper); margin: 2em 0 .65em; max-width: 28ch; text-wrap: balance; }
 .story-body > h2:first-child { margin-top: 0; }
 .story-aside { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 20px; }
 .aside-title { font: 700 11px/1 var(--f-data); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: 10px; }
@@ -331,6 +348,11 @@
   .mw-row { grid-template-columns: minmax(0, 1fr) auto auto; }
   .wire-wrap, .trust-layer, .premium .bettor-box, .premium .takeaway { padding: 18px 16px; }
   .sm-frame, .sm--lead .sm-frame, .sm--hero .sm-frame { border-radius: 10px; }
+  .news-hero-controls { gap: 7px; }
+  .news-hero-arrow { width: 32px; height: 32px; }
+  .news-hero-dot { width: 18px; }
+  .news-hero-dot.is-active { width: 30px; }
+  .news-hero-note { display: none; }
 }
 
 /* Game Highlights — official video, poster-first (src/ui/video.js). Nothing loads from YouTube before a click. */
@@ -358,4 +380,3 @@
 .gh-credit a, .gh-unavailable a { color: var(--gold); }
 .art-body p.gh-unavailable, .gh-unavailable { font: 500 13px/1.5 var(--f-ui); color: var(--paper-2); margin: 10px 0 0; }
 .scard-video { font: 700 10.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(212, 175, 55, .35); border-radius: 999px; padding: 4px 8px; white-space: nowrap; }
-@media (max-width: 640px) { .game-highlights { margin: 1.1em 0 1.5em; } .gh-frame { border-radius: 10px; } .gh-meta { padding: 8px 10px; font-size: 11px; } }
