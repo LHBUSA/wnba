@@ -80,10 +80,10 @@ export function gameDayPreviewItems(items, { now = Date.now() } = {}) {
 }
 
 /**
- * The hero follows the main PropBetEdge pattern: fresh stories lead, then still-current coverage
- * fills the remaining slots. A same-day preview gets game-time relevance without rewriting its
- * canonical publication clock. One-per-desk is preferred before any desk repeats, so an injury
- * burst cannot occupy all four hero positions while other current newsroom work exists.
+ * Hero ranking is freshness-first. Variety is preferred inside the fresh 72-hour pool, but an
+ * older story can never displace a fresher story just to manufacture desk diversity. Same-day
+ * previews get game-time relevance without rewriting their canonical publication clock. Only when
+ * fewer than four fresh candidates exist may still-current older coverage fill the remaining slots.
  */
 export function heroStoryItems(items, { now = Date.now(), limit = 4 } = {}) {
   const candidates = (items || [])
@@ -93,22 +93,34 @@ export function heroStoryItems(items, { now = Date.now(), limit = 4 } = {}) {
     .sort((a, b) => b.at - a.at);
 
   const fresh = candidates.filter(({ at }) => now - at <= HERO_FRESH_MS);
-  const freshIds = new Set(fresh.map(({ c }) => c.id));
-  const ordered = [...fresh, ...candidates.filter(({ c }) => !freshIds.has(c.id))];
+  const older = candidates.filter(({ at }) => now - at > HERO_FRESH_MS);
   const out = [];
   const seenGroups = new Set();
 
-  for (const { c } of ordered) {
-    if (out.length >= limit) break;
-    const group = storyGroup(c);
-    if (seenGroups.has(group)) continue;
-    out.push(c);
-    seenGroups.add(group);
-  }
-  for (const { c } of ordered) {
-    if (out.length >= limit) break;
-    if (out.some((x) => x.id === c.id)) continue;
-    out.push(c);
+  const addDiverse = (pool) => {
+    for (const { c } of pool) {
+      if (out.length >= limit) break;
+      const group = storyGroup(c);
+      if (seenGroups.has(group)) continue;
+      out.push(c);
+      seenGroups.add(group);
+    }
+  };
+  const addAny = (pool) => {
+    for (const { c } of pool) {
+      if (out.length >= limit) break;
+      if (out.some((x) => x.id === c.id)) continue;
+      out.push(c);
+      seenGroups.add(storyGroup(c));
+    }
+  };
+
+  // Never reach backward in time for variety while fresh stories can still fill the hero.
+  addDiverse(fresh);
+  addAny(fresh);
+  if (out.length < limit) {
+    addDiverse(older);
+    addAny(older);
   }
   return out;
 }
