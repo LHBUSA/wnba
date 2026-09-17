@@ -130,7 +130,7 @@ async function scheduleWithVerifiedFallback(params = {}) {
 }
 
 export const api = {
-  today: () => getJson(`${API_BASE}/v1/today`),
+  today: (opts) => getJson(`${API_BASE}/v1/today`, opts),
   season: () => getJson(`${API_BASE}/v1/season`),
   schedule: (p) => scheduleWithVerifiedFallback(p),
   game: (id) => getJson(`${API_BASE}/v1/games/${encodeURIComponent(id)}`),

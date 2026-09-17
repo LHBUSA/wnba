@@ -1,0 +1,91 @@
+/* Today page — state-driven WNBA live command hero. */
+.live-command { border-color: rgba(255, 210, 150, .2); }
+.live-command::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(640px 260px at 18% 22%, rgba(212, 175, 55, .08), transparent 72%); }
+.live-command-live { border-color: color-mix(in srgb, var(--live) 42%, var(--line)); box-shadow: 0 0 0 1px rgba(255,255,255,.015), 0 22px 70px rgba(0,0,0,.28); }
+.live-command .hero2-in { grid-template-columns: minmax(0, 1.45fr) minmax(300px, .8fr); align-items: stretch; gap: clamp(18px, 2.8vw, 34px); }
+.lh-main { min-width: 0; display: flex; flex-direction: column; }
+.live-command .lh-title { margin-top: 12px; font-size: clamp(38px, 5.2vw, 68px); line-height: .92; }
+.live-command .lh-lead { max-width: 68ch; margin-top: 12px; }
+.lh-kicker { position: relative; }
+.lh-kicker::before { display: none !important; }
+.lh-kicker-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 12%, transparent); flex: none; }
+.lh-kicker-dot.is-live { background: var(--live); box-shadow: 0 0 0 4px var(--live-soft); animation: lh-pulse 1.8s ease-in-out infinite; }
+@keyframes lh-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.72); opacity: .62; } }
+
+.lh-matchup { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px; align-items: stretch; margin-top: 20px; }
+.lh-team { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--line-2); border-radius: 14px; background: rgba(0,0,0,.23); }
+.lh-team-name { min-width: 0; }
+.lh-team-name small, .lh-team-name span { display: block; font: 600 10px/1.25 var(--f-data); color: var(--faint); letter-spacing: .08em; text-transform: uppercase; }
+.lh-team-name b { display: block; margin: 4px 0 3px; font: 800 clamp(23px, 2.8vw, 38px)/.92 var(--f-display); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lh-score { font: 800 clamp(36px, 4vw, 58px)/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 1.25ch; text-align: right; }
+.lh-game-state { display: flex; min-width: 84px; flex-direction: column; align-items: center; justify-content: center; gap: 7px; text-align: center; }
+.lh-game-state > b { font: 800 13px/1 var(--f-data); color: var(--faint); letter-spacing: .14em; }
+.lh-game-state > small { font: 600 10px/1.2 var(--f-data); color: var(--faint); text-transform: uppercase; white-space: nowrap; }
+.lh-state { display: inline-flex; align-items: center; justify-content: center; min-height: 27px; padding: 6px 9px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(255,255,255,.035); color: var(--paper-2); font: 800 10px/1 var(--f-data); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.lh-state.is-live { border-color: color-mix(in srgb, var(--live) 45%, transparent); background: var(--live-soft); color: var(--paper); }
+
+.lh-market { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+.lh-market > div { min-width: 0; padding: 10px 11px; border: 1px solid var(--line); border-radius: 11px; background: rgba(0,0,0,.18); }
+.lh-market span, .lh-market small { display: block; font: 600 9.5px/1.25 var(--f-data); color: var(--faint); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lh-market b { display: block; margin: 5px 0 3px; font: 750 14px/1.15 var(--f-data); color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lh-market-age { border-color: color-mix(in srgb, var(--gold) 25%, var(--line)) !important; }
+.lh-market-empty { grid-template-columns: 1fr; }
+.lh-market-empty > span, .lh-market-empty > b, .lh-market-empty > small { display: block; }
+
+.lh-earlier { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.025); color: var(--paper-2); }
+.lh-earlier span, .lh-earlier small { font: 650 10px/1 var(--f-data); text-transform: uppercase; letter-spacing: .09em; color: var(--faint); }
+.lh-earlier b { font: 700 12px/1.1 var(--f-data); color: var(--paper); }
+
+.lh-selectors { display: flex; gap: 7px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+.lh-selector { flex: none; min-width: 116px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(0,0,0,.16); }
+.lh-selector:hover, .lh-selector:focus-visible, .lh-selector.active { border-color: var(--gold-line); background: rgba(212,175,55,.07); }
+.lh-selector b, .lh-selector span { display: block; white-space: nowrap; }
+.lh-selector b { font: 750 11px/1.15 var(--f-data); color: var(--paper); }
+.lh-selector span { margin-top: 4px; font: 600 9.5px/1 var(--f-data); color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
+
+.lh-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.lh-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font: 600 10px/1.2 var(--f-data); color: var(--faint); }
+.lh-meta b { color: var(--paper-2); font-weight: 650; }
+.lh-presence { display: inline-flex; align-items: center; gap: 7px; color: var(--paper-2); letter-spacing: .08em; }
+.lh-presence i { width: 7px; height: 7px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 0 3px var(--pos-soft); }
+.lh-presence.is-live i { background: var(--live); box-shadow: 0 0 0 3px var(--live-soft); animation: lh-pulse 1.8s ease-in-out infinite; }
+
+.lh-intel { display: flex; flex-direction: column; height: 100%; min-height: 100%; padding: clamp(16px, 2vw, 20px); }
+.lh-intel-main { display: flex; flex-direction: column; align-items: flex-start; flex: 1; margin-top: 12px; color: inherit; }
+.lh-intel-main b { display: block; margin-top: 9px; font: 600 clamp(20px, 2vw, 26px)/1.17 var(--f-editorial); color: var(--paper); }
+.lh-intel-main > span { display: block; margin-top: 8px; color: var(--dim); font-size: 13.5px; line-height: 1.5; }
+.lh-intel-logos { display: flex; gap: 7px; min-height: 34px; align-items: center; }
+.lh-tiles { margin-top: 14px; }
+.lh-tiles .tile b { font-size: clamp(20px, 2.2vw, 28px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lh-empty { display: flex; flex-direction: column; gap: 7px; margin-top: 22px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(0,0,0,.2); }
+.lh-empty b { font: 800 27px/1 var(--f-display); text-transform: uppercase; }
+.lh-empty span { color: var(--dim); }
+
+@media (max-width: 980px) {
+  .live-command .hero2-in { grid-template-columns: minmax(0, 1fr); }
+  .lh-intel { min-height: 0; }
+}
+
+@media (max-width: 720px) {
+  .live-command .hero2-in { padding: 18px; }
+  .live-command .lh-title { font-size: clamp(36px, 11vw, 54px); }
+  .lh-matchup { grid-template-columns: minmax(0, 1fr); gap: 7px; }
+  .lh-game-state { min-width: 0; flex-direction: row; justify-content: flex-start; padding: 1px 4px; }
+  .lh-game-state > b { display: none; }
+  .lh-team { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .lh-market { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lh-intel { padding: 15px; }
+}
+
+@media (max-width: 430px) {
+  .lh-team { padding: 11px; gap: 9px; }
+  .lh-team .tlogo { --s: 46px !important; width: 46px !important; height: 46px !important; }
+  .lh-team-name b { font-size: 25px; }
+  .lh-score { font-size: 40px; }
+  .lh-market { grid-template-columns: minmax(0, 1fr); }
+  .lh-market-age { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lh-kicker-dot.is-live, .lh-presence.is-live i { animation: none; }
+}

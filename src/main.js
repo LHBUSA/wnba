@@ -4,6 +4,7 @@ import './styles/base.css';
 import './styles/components.css';
 import './styles/pages.css';
 import './styles/identity.css';
+import './styles/live-hero.css';
 import './styles/newsroom.css';
 import './styles/international.css';
 import './styles/pbe.css';

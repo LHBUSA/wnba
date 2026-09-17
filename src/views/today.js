@@ -1,16 +1,23 @@
 // Today / command center view — shared by the SPA page and the wnba-web publishing Worker.
-import { html, raw } from '../lib/dom.js';
-import { gameCard, sourceLine, empty, errorState } from '../ui/components.js';
+import { html } from '../lib/dom.js';
+import { gameCard, empty, errorState, gameState } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
-import { articleCard, articleMini } from '../ui/articles.js';
-import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, plural, fmtTimeET, american, bookName } from '../lib/format.js';
+import { articleCard } from '../ui/articles.js';
+import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, fmtTimeET, american, bookName } from '../lib/format.js';
 import logoManifest from '../../data/team-logos.json' with { type: 'json' };
 import { buildTicker } from '../lib/ticker.js';
+import { countdownLabel, resolveTodayHero } from '../lib/today-hero.js';
 
 export async function loadToday(api) {
   // The ticker reads the international canonical layer too (live, recent finals, next games); a failure there only
-  // removes international items, never the page.
-  const [today, arts, injuries, standings, intl] = await Promise.all([api.today(), api.articles({ limit: 12 }), api.injuries(), api.standings(), api.intl ? api.intl().catch(() => null) : Promise.resolve(null)]);
+  // removes international items, never the page. Today is explicitly fresh so a live hero is never held by browser TTL.
+  const [today, arts, injuries, standings, intl] = await Promise.all([
+    api.today({ fresh: true }),
+    api.articles({ limit: 12 }),
+    api.injuries(),
+    api.standings(),
+    api.intl ? api.intl().catch(() => null) : Promise.resolve(null)
+  ]);
   return { today, arts, injuries, standings, intl };
 }
 
@@ -27,11 +34,161 @@ export function tickerRail(ticker, { freshness = null } = {}) {
     </div>`;
 }
 
+const signed = (v) => (v === null || v === undefined ? '—' : `${Number(v) > 0 ? '+' : ''}${v}`);
+const teamName = (t) => t?.short_name || t?.abbr || t?.name || 'TBD';
+const teamAbbr = (t) => t?.abbr || t?.short_name || 'TBD';
+
+function heroTitle(hero) {
+  const cd = hero.primary?.start_utc
+    ? html`<em data-live-countdown="${hero.primary.start_utc}">${countdownLabel(hero.primary.start_utc)}</em>`
+    : html`<em>LIVE DESK</em>`;
+  if (hero.mode === 'LIVE') return html`LIVE <em>NOW</em>`;
+  if (hero.mode === 'PREGAME') return html`NEXT TIP IN ${cd}`;
+  if (hero.mode === 'BETWEEN') return html`NEXT UP IN ${cd}`;
+  if (hero.mode === 'FINAL') return html`${hero.totals.final} GAMES <em>FINAL</em>`;
+  if (hero.mode === 'OFFDAY') return html`NEXT TIP IN ${cd}`;
+  if (hero.mode === 'DELAYED') return html`GAME <em>DELAYED</em>`;
+  return html`WNBA ${cd}`;
+}
+
+function heroEyebrow(hero) {
+  if (hero.mode === 'LIVE') return 'Live WNBA desk';
+  if (hero.mode === 'PREGAME') return 'Pregame desk';
+  if (hero.mode === 'BETWEEN') return 'Between games';
+  if (hero.mode === 'FINAL') return 'Slate final';
+  if (hero.mode === 'OFFDAY') return 'WNBA live desk';
+  if (hero.mode === 'DELAYED') return 'Schedule watch';
+  return 'WNBA intelligence desk';
+}
+
+function heroSubcopy(hero) {
+  if (hero.mode === 'LIVE') return 'Live score and game clock from the WNBA feed, with stored pre-tip market context and sourced availability alongside it.';
+  if (hero.mode === 'PREGAME' || hero.mode === 'BETWEEN') return 'The next tip, market snapshot and availability context update automatically as the slate moves.';
+  if (hero.mode === 'FINAL') return 'The live slate has closed. Final scores stay on the desk while newsroom and availability signals continue updating.';
+  if (hero.mode === 'OFFDAY') return 'No WNBA game is live right now. The desk stays on with the next tip, market snapshot, availability and newsroom intelligence.';
+  if (hero.mode === 'DELAYED') return 'The scheduled game is not in normal pre-tip state. The desk will move automatically when the source status changes.';
+  return 'Live scores, scheduled games, sourced availability and newsroom intelligence in one continuously refreshed desk.';
+}
+
+function renderHeroMatchup(hero) {
+  const g = hero.primary;
+  if (!g) return html`<div class="lh-empty"><b>Desk is live.</b><span>No WNBA game is published in the current or next slate yet.</span></div>`;
+  const st = gameState(g);
+  const showScore = g.status?.state === 'in' || g.status?.state === 'post';
+  return html`<div class="lh-matchup" aria-live="polite" aria-atomic="true">
+    <div class="lh-team lh-away">
+      ${teamLogo(g.away, 58)}
+      <span class="lh-team-name"><small>Away</small><b>${teamName(g.away)}</b><span>${g.away?.record || teamAbbr(g.away)}</span></span>
+      ${showScore ? html`<strong class="lh-score">${g.away?.score ?? '—'}</strong>` : ''}
+    </div>
+    <div class="lh-game-state">
+      <span class="lh-state ${hero.mode === 'LIVE' ? 'is-live' : ''}">${st.label}</span>
+      <b>${g.status?.state === 'pre' ? 'AT' : '—'}</b>
+      <small>${fmtDateET(g.start_utc, { month: 'short', day: 'numeric' })}</small>
+    </div>
+    <div class="lh-team lh-home">
+      ${teamLogo(g.home, 58)}
+      <span class="lh-team-name"><small>Home</small><b>${teamName(g.home)}</b><span>${g.home?.record || teamAbbr(g.home)}</span></span>
+      ${showScore ? html`<strong class="lh-score">${g.home?.score ?? '—'}</strong>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderHeroMarket(hero) {
+  const g = hero.primary;
+  if (!g) return '';
+  const m = g.market;
+  if (!m) return html`<div class="lh-market lh-market-empty"><span>Market snapshot</span><b>Not published yet</b><small>Nothing is filled with a stand-in number.</small></div>`;
+  return html`<div class="lh-market" aria-label="Stored market snapshot">
+    <div><span>Spread</span><b>${teamAbbr(g.home)} ${signed(m.spread?.home_line)}</b><small>${m.spread?.home_best ? `${american(m.spread.home_best.price)} · ${bookName(m.spread.home_best.book)}` : 'best price unavailable'}</small></div>
+    <div><span>Total</span><b>${m.total?.line ?? '—'}</b><small>${m.total?.over_best ? `O ${american(m.total.over_best.price)}` : 'price unavailable'}</small></div>
+    <div><span>Moneyline</span><b>${teamAbbr(g.away)} ${american(m.moneyline?.away_best?.price)}</b><small>${teamAbbr(g.home)} ${american(m.moneyline?.home_best?.price)}</small></div>
+    <div class="lh-market-age"><span>Captured</span><b>${m.captured_at ? relTime(m.captured_at) : '—'}</b><small>${m.books ? `${m.books} books` : 'stored snapshot'}</small></div>
+  </div>`;
+}
+
+function renderHeroSelectors(hero) {
+  if ((hero.selectors || []).length < 2) return '';
+  return html`<nav class="lh-selectors" aria-label="Slate game selectors">
+    ${hero.selectors.map((g) => {
+      const st = gameState(g);
+      const active = g.game_id === hero.primary?.game_id;
+      const score = g.status?.state === 'pre' ? st.label : `${g.away?.score ?? '—'}–${g.home?.score ?? '—'} · ${st.label}`;
+      return html`<a class="lh-selector ${active ? 'active' : ''}" href="/cast/${g.game_id}" aria-current="${active ? 'true' : 'false'}"><b>${teamAbbr(g.away)} @ ${teamAbbr(g.home)}</b><span>${score}</span></a>`;
+    })}
+  </nav>`;
+}
+
+function renderHeroActions(hero) {
+  const g = hero.primary;
+  if (!g) return html`<div class="lh-actions"><a class="pill on" href="/news">Newsroom</a><a class="pill" href="/injuries">Availability</a></div>`;
+  const castLabel = hero.mode === 'LIVE' ? 'Open live WNBACast' : hero.mode === 'FINAL' ? 'Open replay' : 'Open WNBACast';
+  return html`<div class="lh-actions">
+    <a class="pill on" href="/cast/${g.game_id}">${castLabel}</a>
+    <a class="pill" href="/matchups/${g.game_id}">Matchup</a>
+    ${g.status?.state === 'pre' ? html`<a class="pill" href="/props">Best line</a>` : ''}
+    <a class="pill" href="/injuries">Availability</a>
+  </div>`;
+}
+
+function relatedChange(changes, g) {
+  if (!changes.length) return null;
+  const ids = new Set([g?.away?.team_id, g?.home?.team_id].filter(Boolean).map(String));
+  return changes.find((x) => ids.has(String(x.team_id))) || null;
+}
+
+function renderHeroIntel({ hero, leadStory, changes, d }) {
+  const g = hero.primary;
+  const change = relatedChange(changes, g);
+  const fallbackChange = changes[0] || null;
+  const useChange = change || (!leadStory ? fallbackChange : null);
+  const title = hero.mode === 'LIVE' ? 'Live intelligence' : useChange ? 'Availability movement' : 'Latest intelligence';
+  const st = g ? gameState(g) : null;
+  const firstTile = hero.mode === 'LIVE' && st
+    ? { label: 'Game state', value: st.label, note: 'scoreboard feed' }
+    : hero.mode === 'FINAL'
+      ? { label: 'Final', value: hero.totals.final, note: `${hero.totals.games} games on slate` }
+      : g
+        ? { label: 'Tip', value: fmtTimeET(g.start_utc), note: fmtDateET(g.start_utc, { month: 'short', day: 'numeric' }) }
+        : { label: 'Slate', value: hero.totals.games, note: 'published games' };
+  const secondTile = g?.market
+    ? { label: 'Market', value: `${teamAbbr(g.home)} ${signed(g.market.spread?.home_line)}`, note: `Total ${g.market.total?.line ?? '—'}` }
+    : { label: 'Players out', value: d.availability?.out ?? '—', note: 'injury feed' };
+
+  return html`<aside class="hero-feature lh-intel">
+    <span class="eyebrow">${title}</span>
+    ${useChange ? html`<a class="lh-intel-main" href="${useChange.athlete_id ? `/players/${useChange.athlete_id}` : '/injuries'}">
+      <div class="lh-intel-logos">${teamLogo({ team_id: useChange.team_id }, 34)}</div>
+      <b>${useChange.name}</b>
+      <span>${useChange.status_before || 'Not listed'} → ${useChange.status_after || 'Off feed'}${useChange.captured_at ? ` · ${relTime(useChange.captured_at)}` : ''}</span>
+    </a>` : leadStory ? html`<a class="lh-intel-main" href="/news/${leadStory.slug}">
+      <div class="lh-intel-logos">${(leadStory.entities || []).filter((e) => e?.type === 'team').slice(0, 2).map((t) => teamLogo({ team_id: t.id, name: t.name }, 34))}</div>
+      <b>${leadStory.headline}</b>
+      <span>${leadStory.deck}</span>
+    </a>` : html`<div class="lh-intel-main"><b>Desk is current.</b><span>No new sourced availability or newsroom item is published right now.</span></div>`}
+    <div class="tiles lh-tiles">
+      <div class="tile"><small>${firstTile.label}</small><b>${firstTile.value}</b><span>${firstTile.note}</span></div>
+      <div class="tile"><small>${secondTile.label}</small><b>${secondTile.value}</b><span>${secondTile.note}</span></div>
+    </div>
+  </aside>`;
+}
+
+function renderHeroMeta(meta, live) {
+  const at = meta?.fetched_at || meta?.served_at || '';
+  return html`<div class="lh-meta">
+    <span class="lh-presence ${live ? 'is-live' : ''}"><i></i>${live ? 'LIVE' : 'CURRENT'}</span>
+    ${meta?.source?.name ? html`<span>Source <b>${meta.source.name}</b></span>` : ''}
+    ${at ? html`<span data-live-age="${at}">Updated ${relTime(at)}</span>` : html`<span>Update time unavailable</span>`}
+    <span>${live ? '10s scoreboard refresh' : '30s desk refresh'}</span>
+  </div>`;
+}
+
 export function todayView({ today, arts, injuries, standings, intl = null }) {
   if (!today?.ok) return { body: errorState(today, 'The WNBA slate'), live: false };
   const d = today.data;
   const slate = d.slate;
-  const live = slate.summary.live > 0;
+  const hero = resolveTodayHero(d);
+  const live = hero.mode === 'LIVE';
   const games = slate.games;
   const priced = games.filter((g) => g.market);
   const stories = arts.ok ? arts.data.items : [];
@@ -40,11 +197,6 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   const changes = (injuries.ok ? injuries.data.changes : []) || [];
   const lastResults = d.last_results?.games || [];
   const seeds = standings.ok ? standings.data.groups.map((g) => ({ name: g.name, top: g.entries.slice(0, 4) })) : [];
-  const slateWhen = slate.kind === 'TODAY' ? 'Tonight' : slate.kind === 'NEXT' ? fmtCompactDate(slate.date, { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
-
-  const heroTitle = slate.kind === 'TODAY'
-    ? live ? html`<em>Live</em> WNBA, priced and in context` : html`Tonight’s <em>WNBA</em> slate, priced and in context`
-    : slate.kind === 'NEXT' ? html`No games today. <em>${slate.games.length} games</em> ${fmtCompactDate(slate.date, { weekday: 'long' })}.` : html`The <em>WNBA</em> intelligence desk`;
   const I = intl?.ok ? intl.data : null;
   const ticker = buildTicker({
     wnbaGames: games,
@@ -56,33 +208,23 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   });
   const intlLive = ticker.items.some((x) => x.sport_scope === 'international' && x.item_type === 'live_game');
 
-
   return { live: live || intlLive, body: html`
     ${tickerRail(ticker, { freshness: today.meta?.served_at ? `Updated ${relTime(today.meta.served_at)}` : null })}
 
-    <section class="hero2">
+    <section class="hero2 live-command live-command-${hero.mode.toLowerCase()}">
       <div class="hero2-in">
-        <div>
-          <span class="kicker">${d.season?.label || 'WNBA'}${d.next_phase ? ` · ${d.next_phase.name} ${fmtDateET(d.next_phase.starts, { month: 'short', day: 'numeric' })}` : ''}</span>
-          <h1 style="margin-top:14px">${heroTitle}</h1>
-          <p class="lead">The WNBA intelligence layer for bettors: live scores and WNBACast, stored sportsbook lines with their capture time, sourced availability, and an in-house newsroom that tells you why each story matters for the market.</p>
-          <div class="pill-row" style="margin-top:16px">
-            <a class="pill on" href="/cast">Open WNBACast</a><a class="pill" href="/props">Best line board</a><a class="pill" href="/news">Newsroom</a><a class="pill" href="/injuries">Availability</a>
-          </div>
-          <div style="margin-top:16px">${sourceLine(today.meta, { label: slate.kind === 'TODAY' ? 'Today · ET' : `Next slate ${fmtCompactDate(slate.date, { month: 'short', day: 'numeric' })} · not today` })}</div>
+        <div class="lh-main">
+          <span class="kicker lh-kicker"><i class="lh-kicker-dot ${live ? 'is-live' : ''}"></i>${heroEyebrow(hero)}</span>
+          <h1 class="lh-title">${heroTitle(hero)}</h1>
+          <p class="lead lh-lead">${heroSubcopy(hero)}</p>
+          ${renderHeroMatchup(hero)}
+          ${renderHeroMarket(hero)}
+          ${hero.mode === 'BETWEEN' && hero.previous ? html`<a class="lh-earlier" href="/cast/${hero.previous.game_id}"><span>Earlier</span><b>${teamAbbr(hero.previous.away)} ${hero.previous.away?.score ?? '—'} · ${teamAbbr(hero.previous.home)} ${hero.previous.home?.score ?? '—'}</b><small>Final</small></a>` : ''}
+          ${renderHeroSelectors(hero)}
+          ${renderHeroActions(hero)}
+          ${renderHeroMeta(today.meta, live)}
         </div>
-        ${leadStory ? html`<div class="hero-feature">
-          <span class="eyebrow">Lead story</span>
-          <a href="/news/${leadStory.slug}" style="display:block;margin-top:10px">
-            <div style="display:flex;gap:8px;align-items:center">${(leadStory.entities || []).filter((e) => e && e.type === 'team').slice(0, 2).map((t) => teamLogo({ team_id: t.id, name: t.name }, 30))}</div>
-            <b style="display:block;font:600 22px/1.2 var(--f-editorial);margin-top:10px">${leadStory.headline}</b>
-            <span class="note" style="display:block;margin-top:8px">${leadStory.deck}</span>
-          </a>
-          <div class="tiles" style="margin-top:14px">
-            <div class="tile"><small>${slateWhen}</small><b>${games.length}</b><span>games · ${priced.length} priced</span></div>
-            <div class="tile"><small>Players out</small><b>${d.availability?.out ?? '—'}</b><span>injury feed</span></div>
-          </div>
-        </div>` : ''}
+        ${renderHeroIntel({ hero, leadStory, changes, d })}
       </div>
     </section>
 
