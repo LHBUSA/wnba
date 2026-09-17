@@ -1,0 +1,32 @@
+/*
+ * Article-page rules intentionally live after newsroom.css.
+ * The newsroom hero/recap pass is front-page-only; these selectors preserve the established
+ * long-form story layout and keep future front-page work from changing article presentation.
+ */
+.trust p { margin-top: 10px; font-size: 14px; line-height: 1.6; }
+
+.story { max-width: 1060px; margin: 0 auto; }
+.story-hero { margin-bottom: 26px; }
+.story-head { max-width: 780px; }
+.story-kicker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.story-kicker .cat { font-size: 13px; }
+.story-teams { display: inline-flex; gap: 6px; }
+.story-head h1 { font: 600 clamp(32px, 4.8vw, 56px)/1.05 var(--f-editorial); letter-spacing: -.014em; margin-top: 14px; color: var(--paper); overflow-wrap: anywhere; text-wrap: balance; }
+.story-head .deck { font: 400 clamp(18px, 2.1vw, 22px)/1.45 var(--f-editorial); color: var(--paper-2); margin-top: 16px; text-wrap: pretty; }
+.byline { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin-top: 20px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font: 500 12px/1.4 var(--f-data); color: var(--faint); }
+.byline .by { color: var(--gold); font-weight: 700; }
+.story-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 44px; margin-top: 28px; align-items: start; }
+.story-body p { font: 400 19px/1.74 var(--f-editorial); color: var(--paper-2); margin: 0 0 1.1em; overflow-wrap: anywhere; }
+/* first-of-type, not first-child: stories can open with a section head before the first paragraph */
+.story-body > p:first-of-type::first-letter { float: left; font: 600 3.4em/.82 var(--f-editorial); margin: .06em .1em 0 0; color: var(--gold); }
+
+@media (max-width: 1100px) {
+  .story-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .story-body p { font-size: 18px; }
+  .game-highlights { margin: 1.1em 0 1.5em; }
+  .gh-frame { border-radius: 10px; }
+  .gh-meta { padding: 8px 10px; font-size: 11px; }
+}
