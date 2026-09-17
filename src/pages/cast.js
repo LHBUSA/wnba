@@ -181,6 +181,21 @@ export async function mount(root, ctx) {
     const semLabel = sem === 'LIVE_SOURCE' ? 'Live source · ESPN play-by-play' : sem === 'FINAL_PERSISTED_ARCHIVE' ? 'Replay · PropBetEdge archive of the published event stream' : sem === 'FINAL_PROVIDER_ARCHIVE' ? 'Replay · provider event stream (archive pending)' : sem === 'SCHEDULED' ? 'Pre-game' : sem;
 
     render($stage, html`
+      <section class="card card-pad" style="margin-bottom:16px;overflow:hidden;background:linear-gradient(115deg,rgba(240,179,35,.13),rgba(239,118,34,.05) 48%,rgba(18,17,14,.94));border-color:rgba(240,179,35,.28)" aria-labelledby="wnbacast-title">
+        <div style="display:flex;gap:24px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+          <div style="flex:1 1 520px">
+            <span class="eyebrow">WNBACast · Live game intelligence</span>
+            <h1 id="wnbacast-title" style="margin:10px 0 8px;font-size:clamp(1.65rem,4vw,2.7rem);line-height:.98">Every possession. Play by play.</h1>
+            <p style="max-width:720px;color:var(--paper-2);font-size:1rem;line-height:1.55">Follow the game as it happens with an automatically updating event feed, live score, published shot locations, scoring runs and box-score context. No refresh needed.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;flex:0 1 430px;justify-content:flex-end">
+            ${badge(g.status?.state === 'in' ? 'live' : 'sched', g.status?.state === 'in' ? 'Updates every 8 seconds' : g.status?.state === 'post' ? 'Full game replay' : 'Starts automatically at tip')}
+            <span class="pill" style="cursor:default">Real play-by-play</span>
+            <span class="pill" style="cursor:default">Shot chart + game flow</span>
+          </div>
+        </div>
+      </section>
+
       <section class="card">
         <div class="score-hdr">
           <div class="sh-team away ${awayLost ? 'lost' : ''}">
