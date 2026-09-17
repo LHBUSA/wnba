@@ -29,12 +29,23 @@ const HOUR = 3600e3;
 const HERO_FRESH_MS = 72 * HOUR;
 const HERO_CURRENT_MS = 7 * 24 * HOUR;
 const RECAP_CURRENT_MS = 48 * HOUR;
-const HERO_NEWS_KINDS = new Set(['brief', 'international', 'injury', 'transaction', 'league', 'performance', 'result']);
+const HERO_NEWS_KINDS = new Set(['brief', 'international', 'injury', 'transaction', 'league', 'preview', 'performance', 'result']);
 const dateline = () => new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 const ET_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
 const etDay = (ms) => ET_DAY.format(new Date(ms));
 const gameEntityOf = (c) => (c?.entities || []).find((e) => e?.type === 'game' && e.start_utc) || null;
 const storyGroup = (c) => c?.kind === 'result' ? 'performance' : c?.desk || c?.kind || 'story';
+const heroStoryAt = (c, now) => {
+  const origin = storyPublishedAt(c);
+  if (c?.kind !== 'preview') return origin;
+  const game = gameEntityOf(c);
+  const start = Date.parse(game?.start_utc || '');
+  if (!Number.isFinite(start) || start <= now || etDay(start) !== etDay(now)) return origin;
+  // Same-day previews are current because the event is current, even if the canonical story was
+  // first published days ago. Keep the real publication timestamp untouched everywhere else.
+  // The nearest upcoming tip ranks highest inside the single Preview hero slot.
+  return now - Math.max(0, start - now) / 1000;
+};
 // A story files under its kind, and a News Brief also under its event's desk (an official injury update → Injury Desk).
 const ofKind = (items, k) => items.filter((c) => c.kind === k || c.desk === k || (k === 'performance' && c.kind === 'result'));
 const OFFICIAL_KINDS = new Set(['official', 'team_official']);
@@ -66,13 +77,14 @@ export function gameDayPreviewItems(items, { now = Date.now() } = {}) {
 
 /**
  * The hero follows the main PropBetEdge pattern: fresh stories lead, then still-current coverage
- * fills the remaining slots. One-per-desk is preferred before any desk repeats, so an injury burst
- * can never occupy all four hero positions while other recent newsroom work exists.
+ * fills the remaining slots. A same-day preview gets game-time relevance without rewriting its
+ * canonical publication clock. One-per-desk is preferred before any desk repeats, so an injury
+ * burst cannot occupy all four hero positions while other current newsroom work exists.
  */
 export function heroStoryItems(items, { now = Date.now(), limit = 4 } = {}) {
   const candidates = (items || [])
     .filter((c) => c?.status !== 'held' && HERO_NEWS_KINDS.has(c?.kind))
-    .map((c) => ({ c, at: storyPublishedAt(c) }))
+    .map((c) => ({ c, at: heroStoryAt(c, now) }))
     .filter(({ at }) => at > 0 && now - at >= 0 && now - at <= HERO_CURRENT_MS)
     .sort((a, b) => b.at - a.at);
 
@@ -257,8 +269,9 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
 
   const gameDay = gameDayPreviewItems(items);
   const gameDayIds = new Set(gameDay.map((c) => c.id));
-  const headlinePool = items.filter((c) => !gameDayIds.has(c.id));
-  const hero = heroStoryItems(headlinePool.length ? headlinePool : items);
+  // Game-day previews are intentionally allowed to appear here and in Tonight's Slate: the hero
+  // answers "what matters now," while the slate is the complete schedule context.
+  const hero = heroStoryItems(items);
   const recaps = recapHighlightItems(items);
   const heroIds = new Set(hero.map((c) => c.id));
   const recapIds = new Set(recaps.map((c) => c.id));
