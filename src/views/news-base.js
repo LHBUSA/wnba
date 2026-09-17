@@ -40,7 +40,11 @@ const heroStoryAt = (c, now) => {
   if (c?.kind !== 'preview') return origin;
   const game = gameEntityOf(c);
   const start = Date.parse(game?.start_utc || '');
-  if (!Number.isFinite(start) || start <= now || etDay(start) !== etDay(now)) return origin;
+  if (!Number.isFinite(start)) return origin;
+  // A preview stops being a hero candidate as soon as its game tips. The recap/highlights system
+  // owns the postgame surface instead of leaving stale pregame framing at the top of the newsroom.
+  if (start <= now) return 0;
+  if (etDay(start) !== etDay(now)) return origin;
   // Same-day previews are current because the event is current, even if the canonical story was
   // first published days ago. Keep the real publication timestamp untouched everywhere else.
   // The nearest upcoming tip ranks highest inside the single Preview hero slot.
