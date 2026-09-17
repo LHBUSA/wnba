@@ -1,6 +1,6 @@
 // WNBA News & Intelligence — the PropBetEdge editorial front page, desk pages and team news pages.
-// Rendering lives in src/views/news.js (shared with the publishing Worker); this page adds polling and closes the
-// desk menus (native <details>) on Escape or an outside click.
+// Rendering lives in src/views/news.js (shared with the publishing Worker); this page adds polling,
+// the four-story lead carousel and closes the desk menus (native <details>) on Escape or an outside click.
 import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
 import { skeleton } from '../ui/components.js';
@@ -8,6 +8,8 @@ import { KIND_LABEL, DESK } from '../ui/articles.js';
 import { createPoller } from '../lib/poller.js';
 import { routeMeta } from '../seo/meta.js';
 import { loadNews, newsView, newsHeadView } from '../views/news.js';
+
+const HERO_CYCLE_MS = 8000;
 
 export const title = (p) => (p.teamId ? 'Team News · WNBA News' : p.kind ? `${DESK[p.kind] || KIND_LABEL[p.kind] || 'News'} · WNBA News` : 'WNBA News & Intelligence');
 
@@ -19,6 +21,59 @@ export async function mount(root, ctx) {
   let painted = false;
   let poller = null;
   let metaSet = false;
+  let heroCycle = null;
+
+  const stopHeroCycle = () => {
+    if (heroCycle) {
+      clearInterval(heroCycle);
+      heroCycle = null;
+    }
+  };
+
+  const wireHero = () => {
+    stopHeroCycle();
+    const hero = root.querySelector('[data-news-hero]');
+    if (!hero) return;
+    const slides = [...hero.querySelectorAll('[data-news-hero-slide]')];
+    const dots = [...hero.querySelectorAll('[data-news-hero-dot]')];
+    if (slides.length <= 1) return;
+
+    let index = Math.max(0, slides.findIndex((slide) => slide.classList.contains('is-active')));
+    const show = (next) => {
+      index = (next + slides.length) % slides.length;
+      slides.forEach((slide, i) => {
+        const active = i === index;
+        slide.classList.toggle('is-active', active);
+        slide.setAttribute('aria-hidden', String(!active));
+      });
+      dots.forEach((dot, i) => {
+        const active = i === index;
+        dot.classList.toggle('is-active', active);
+        if (active) dot.setAttribute('aria-current', 'true');
+        else dot.removeAttribute('aria-current');
+      });
+    };
+    const start = () => {
+      stopHeroCycle();
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+      heroCycle = setInterval(() => show(index + 1), HERO_CYCLE_MS);
+    };
+    const manual = (next) => {
+      show(next);
+      start();
+    };
+
+    hero.querySelector('[data-news-hero-prev]')?.addEventListener('click', () => manual(index - 1));
+    hero.querySelector('[data-news-hero-next]')?.addEventListener('click', () => manual(index + 1));
+    dots.forEach((dot, i) => dot.addEventListener('click', () => manual(i)));
+
+    // Keyboard focus pauses the automatic change so controls and headlines do not move underneath a reader.
+    hero.addEventListener('focusin', stopHeroCycle);
+    hero.addEventListener('focusout', (event) => {
+      if (!hero.contains(event.relatedTarget)) start();
+    });
+    start();
+  };
 
   const draw = async () => {
     const data = await loadNews(api, kind, teamId);
@@ -30,6 +85,7 @@ export async function mount(root, ctx) {
     const v = newsView(data);
     render(root, v.body);
     root.querySelectorAll('details[data-desk-menu] > summary').forEach((s) => { if (open.includes(s.textContent.trim())) s.parentElement.open = true; });
+    wireHero();
     if (teamId && data.team && !metaSet) { ctx.setMeta(routeMeta('news-team', { path: ctx.path, params: ctx.params, data: { team: data.team }, empty: v.empty })); metaSet = true; }
     painted = true;
   };
@@ -47,5 +103,10 @@ export async function mount(root, ctx) {
   // Keep an open newsroom current without hard reloads. The shared poller pauses in hidden tabs,
   // never overlaps requests, refreshes on visibility return and stops on route unmount.
   poller = createPoller(draw, { intervalMs: 120000 });
-  return () => { poller?.stop(); document.removeEventListener('click', onDoc); document.removeEventListener('keydown', onKey); };
+  return () => {
+    stopHeroCycle();
+    poller?.stop();
+    document.removeEventListener('click', onDoc);
+    document.removeEventListener('keydown', onKey);
+  };
 }
