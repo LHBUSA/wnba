@@ -26,9 +26,37 @@ export const MORE_DESKS = ['brief', 'preview', 'performance', 'trend', 'props', 
 export const DESK_KINDS = [...PRIMARY_DESKS, ...MORE_DESKS];
 
 const dateline = () => new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+const ET_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+const etDay = (ms) => ET_DAY.format(new Date(ms));
+const gameEntityOf = (c) => (c?.entities || []).find((e) => e?.type === 'game' && e.start_utc) || null;
 // A story files under its kind, and a News Brief also under its event's desk (an official injury update → Injury Desk).
 const ofKind = (items, k) => items.filter((c) => c.kind === k || c.desk === k || (k === 'performance' && c.kind === 'result'));
 const OFFICIAL_KINDS = new Set(['official', 'team_official']);
+
+/**
+ * Current ET game-day previews are event-relevant even when the canonical article was first
+ * published days earlier. This does not mutate editorial freshness: it is a separate game slate.
+ * Once tip passes, the preview leaves the slate naturally. One canonical game = one card.
+ */
+export function gameDayPreviewItems(items, { now = Date.now() } = {}) {
+  const today = etDay(now);
+  const seen = new Set();
+  return (items || [])
+    .filter((c) => c?.kind === 'preview' && c?.status !== 'held')
+    .map((c) => ({ c, game: gameEntityOf(c) }))
+    .filter(({ game }) => {
+      const start = Date.parse(game?.start_utc || '');
+      return Number.isFinite(start) && start > now && etDay(start) === today;
+    })
+    .sort((a, b) => Date.parse(a.game.start_utc) - Date.parse(b.game.start_utc))
+    .filter(({ game }) => {
+      const key = String(game.id || `${game.name}|${game.start_utc}`);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map(({ c }) => c);
+}
 
 export async function loadNews(api, kind = null, teamId = null) {
   const [arts, wire, teams] = await Promise.all([
@@ -142,9 +170,15 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
     };
   }
 
-  const lead = chooseLead(items);
-  const tops = topStories(items, lead, { limit: 3 });
-  const shown = new Set([lead?.id, ...tops.map((c) => c.id)]);
+  const gameDay = gameDayPreviewItems(items);
+  const gameDayIds = new Set(gameDay.map((c) => c.id));
+  // Keep the editorial lead/top-story river separate from the game slate. A six-day-old canonical
+  // preview can be essential tonight without pretending it was newly published tonight.
+  const headlinePool = items.filter((c) => !gameDayIds.has(c.id));
+  const rankingPool = headlinePool.length ? headlinePool : items;
+  const lead = chooseLead(rankingPool);
+  const tops = topStories(rankingPool, lead, { limit: 3 });
+  const shown = new Set([lead?.id, ...tops.map((c) => c.id), ...gameDayIds]);
   // Latest is newest-first by editorial origin, so a revision never floats old coverage back up the river.
   const latest = items.filter((c) => !shown.has(c.id)).sort((a, b) => storyPublishedAt(b) - storyPublishedAt(a)).slice(0, 8);
   const deskItems = (k) => ofKind(items, k).filter((c) => !shown.has(c.id));
@@ -160,6 +194,11 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
           ${tops.length ? tops.map((c) => articleCard(c, { size: 'feature' })) : html`<p class="note">No additional stories from the last 72 hours.</p>`}
         </div>
       </section>
+
+      ${gameDay.length ? html`<section class="desk section game-day-slate">
+        <div class="sec-head"><div><h2 class="sec-title bc">Tonight’s WNBA Slate</h2><p class="desk-sub">Every upcoming game on today’s ET slate — form, rest, availability and the latest stored market. Ordered by tip time, independent of when the canonical preview was first published.</p></div><a class="sec-link" href="/news/c/preview">All previews →</a></div>
+        <div class="ngrid">${gameDay.map((c) => articleCard(c))}</div>
+      </section>` : ''}
 
       <section class="front-band section">
         <div>
