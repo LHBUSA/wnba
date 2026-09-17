@@ -12,7 +12,7 @@ import { DESKS } from '../../../src/seo/site.js';
 import { etCompact, addDays } from '../../shared/time.js';
 
 export const SERVICE = 'wnba-web';
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';
 const SITE = 'https://wnba.propbetedge.ai';
 
 const SECURITY_HEADERS = {
