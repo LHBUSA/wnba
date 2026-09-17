@@ -17,16 +17,18 @@ export const deskNav = base.deskNav;
 export const newsHeadView = base.newsHeadView;
 
 export async function loadNews(api, kind = null, teamId = null) {
-  const [arts, wire, teams, archive, previews] = await Promise.all([
+  const isFront = !kind && !teamId;
+  const [arts, wire, teams, archive, previews, today] = await Promise.all([
     api.articles({ limit: teamId ? 60 : 200, kind: kind || undefined, team: teamId || undefined }),
     kind ? Promise.resolve({ ok: false }) : api.news({ limit: teamId ? 30 : 40, lane: 'external', team: teamId || undefined }),
     api.teams().catch(() => ({ ok: false })),
-    !kind && !teamId ? api.articles({ limit: 250, archive: 1 }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
-    !kind && !teamId ? api.articles({ limit: 20, kind: 'preview' }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
+    isFront ? api.articles({ limit: 250, archive: 1 }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+    isFront ? api.articles({ limit: 20, kind: 'preview' }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+    isFront && api.today ? api.today({ fresh: true }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
   ]);
   const teamList = teams?.ok ? [...teams.data.teams].sort((a, b) => a.name.localeCompare(b.name)) : [];
   const team = teamId ? teamList.find((t) => String(t.team_id) === String(teamId)) || null : null;
-  return { kind, teamId, team, teams: teamList, teamsOk: Boolean(teams?.ok), arts, wire, archive, previews };
+  return { kind, teamId, team, teams: teamList, teamsOk: Boolean(teams?.ok), arts, wire, archive, previews, today };
 }
 
 function archiveRail(archive, currentItems = []) {
@@ -47,14 +49,49 @@ function archiveRail(archive, currentItems = []) {
   </section>`;
 }
 
+const sid = (v) => (v === null || v === undefined ? '' : String(v));
+
+function scheduledGameForPreview(preview, games) {
+  const gameEntity = (preview.entities || []).find((e) => e?.type === 'game');
+  const direct = gameEntity?.id ? games.find((g) => sid(g.game_id) === sid(gameEntity.id)) : null;
+  if (direct) return direct;
+
+  const away = preview.matchup?.away_team_id;
+  const home = preview.matchup?.home_team_id;
+  if (away && home) {
+    const byMatchup = games.find((g) => sid(g.away?.team_id) === sid(away) && sid(g.home?.team_id) === sid(home));
+    if (byMatchup) return byMatchup;
+  }
+
+  const teams = (preview.entities || []).filter((e) => e?.type === 'team').map((e) => sid(e.id));
+  if (teams.length >= 2) {
+    return games.find((g) => teams.includes(sid(g.away?.team_id)) && teams.includes(sid(g.home?.team_id))) || null;
+  }
+  return null;
+}
+
+function enrichPreviewWithSlate(preview, games) {
+  const game = scheduledGameForPreview(preview, games);
+  if (!game?.start_utc) return preview;
+  const entities = (preview.entities || []).filter((e) => e?.type !== 'game');
+  entities.unshift({
+    type: 'game',
+    id: game.game_id,
+    name: `${game.away?.abbr || game.away?.short_name || 'AWAY'} @ ${game.home?.abbr || game.home?.short_name || 'HOME'}`,
+    start_utc: game.start_utc,
+    status_state: game.status?.state || null
+  });
+  return { ...preview, entities };
+}
+
 function withDedicatedPreviews(data) {
   if (data.kind || data.teamId || !data.arts?.ok || !data.previews?.ok) return data;
-  const previewItems = data.previews.data?.items || [];
+  const slateGames = data.today?.ok ? (data.today.data?.slate?.games || []) : [];
+  const previewItems = (data.previews.data?.items || []).map((p) => enrichPreviewWithSlate(p, slateGames));
   if (!previewItems.length) return data;
 
-  // The generic current-news index is optimized for the editorial river. The dedicated preview
-  // route is the authoritative card shape for matchup entities/start times used by Game Day.
-  // Replace matching preview cards in-place and append any preview missing from the generic slice.
+  // The dedicated preview route supplies canonical preview cards. The Today endpoint supplies
+  // authoritative game state/start time. Joining the two keeps editorial origin and game relevance separate.
   const previewById = new Map(previewItems.map((p) => [p.id, p]));
   const seen = new Set();
   const items = (data.arts.data?.items || []).map((c) => {
