@@ -6,7 +6,7 @@
 // are intentionally separate.
 
 import { html, raw } from '../lib/dom.js';
-import { articleRow } from '../ui/articles.js';
+import { articleCard, articleRow } from '../ui/articles.js';
 import * as base from './news-base.js';
 
 export const DESKS = base.DESKS;
@@ -15,6 +15,13 @@ export const MORE_DESKS = base.MORE_DESKS;
 export const DESK_KINDS = base.DESK_KINDS;
 export const deskNav = base.deskNav;
 export const newsHeadView = base.newsHeadView;
+
+const TIP_TIME = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZoneName: 'short'
+});
 
 export async function loadNews(api, kind = null, teamId = null) {
   const isFront = !kind && !teamId;
@@ -113,12 +120,59 @@ function withDedicatedPreviews(data) {
   };
 }
 
+/**
+ * Game Day is driven by the live Today slate, not article publication age.
+ * That means a canonical preview may keep its true Sep 11 origin while still being
+ * promoted for a Sep 17 game. A game disappears as soon as the authoritative slate
+ * moves it out of pregame state. No global freshness clock is rewritten.
+ */
+function gameDayRail(data) {
+  if (!data.today?.ok || !data.previews?.ok) return '';
+  const now = Date.now();
+  const games = (data.today.data?.slate?.games || [])
+    .filter((g) => g?.status?.state === 'pre' && Date.parse(g.start_utc || '') > now)
+    .sort((a, b) => Date.parse(a.start_utc) - Date.parse(b.start_utc));
+  if (!games.length) return '';
+
+  const previews = data.previews.data?.items || [];
+  const cards = [];
+  const seenGames = new Set();
+  for (const game of games) {
+    const key = sid(game.game_id);
+    if (!key || seenGames.has(key)) continue;
+    const preview = previews.find((p) => scheduledGameForPreview(p, [game]));
+    if (!preview) continue;
+    seenGames.add(key);
+    cards.push({ game, preview: enrichPreviewWithSlate(preview, [game]) });
+  }
+  if (!cards.length) return '';
+
+  return html`<section class="desk section game-day-slate" data-game-day-count="${cards.length}">
+    <div class="sec-head"><div>
+      <span class="eyebrow">Game Day</span>
+      <h2 class="sec-title bc">Tonight’s WNBA Slate</h2>
+      <p class="desk-sub">Pregame intelligence for every scheduled game with a published PropBetEdge preview — form, rest, availability and the latest stored market. Ordered by tip, not article age.</p>
+    </div><a class="sec-link" href="/news/c/preview">All previews →</a></div>
+    <div class="ngrid">${cards.map(({ game, preview }) => articleCard(preview, { timeLabel: `Tonight · ${TIP_TIME.format(new Date(game.start_utc))}` }))}</div>
+  </section>`;
+}
+
 export function newsView(data) {
   const effective = withDedicatedPreviews(data);
   const view = base.newsView(effective);
   if (view?.error || effective.kind || effective.teamId) return view;
 
   let body = String(view.body);
+
+  // Prefer the base renderer if it already produced Game Day. Otherwise inject the authoritative
+  // Today × Preview rail immediately above Latest/Market Watch.
+  if (!body.includes('game-day-slate')) {
+    const gameDay = gameDayRail(data);
+    if (gameDay) {
+      const marker = '<section class="front-band section">';
+      body = body.includes(marker) ? body.replace(marker, `${String(gameDay)}${marker}`) : `${body}${String(gameDay)}`;
+    }
+  }
 
   const archive = archiveRail(effective.archive, effective.arts?.data?.items || []);
   if (archive) {
