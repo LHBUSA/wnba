@@ -53,14 +53,17 @@ const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 
 export const headlineText = (t) => String(t ?? '').split(/(\d[\d.]*[-–][\w.]+)/).map((s, i) => (i % 2 ? html`<span class="nobr">${s}</span>` : s));
 
 /** Standard story card. size: 'lead' | 'feature' | 'card' | 'compact'. */
-export function articleCard(c, { lead = false, size = null, eager = false } = {}) {
+export function articleCard(c, { lead = false, size = null, eager = false, timeLabel = null } = {}) {
   const sz = size || (lead ? 'lead' : 'card');
   const href = `/news/${c.slug}`;
   const slot = sz === 'lead' ? 'lead' : sz === 'compact' ? 'small' : 'card';
+  // timeLabel is presentation context only (for example, "Tonight · 7:30 PM ET" on Game Day).
+  // It never changes the canonical story origin used by newsroom ranking, RSS, schema or normal cards.
+  const visibleTime = timeLabel || relTime(storyTime(c));
   return html`<article class="scard scard--${sz}">
     ${storyMedia(c.media, { slot, eager })}
     <div class="scard-body">
-      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
+      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${visibleTime}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
       <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
       ${sz !== 'compact' && c.deck ? html`<p class="deck">${headlineText(c.deck)}</p>` : ''}
       ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
