@@ -55,6 +55,27 @@ test('the game-day slate is one canonical card per game and sorted by tip', () =
   assert.deepEqual(gameDayPreviewItems([late, early, duplicate], { now: Date.parse('2026-09-17T18:00:00Z') }).map((c) => c.id), ['early', 'late']);
 });
 
+test('an old canonical preview earns a hero slot when its game is tonight', () => {
+  const now = Date.parse('2026-09-17T18:00:00Z');
+  const items = [
+    preview(),
+    story({ id: 'injury', kind: 'injury', first: '2026-09-17T17:50:00Z' }),
+    story({ id: 'transaction', kind: 'transaction', first: '2026-09-17T17:40:00Z' }),
+    story({ id: 'league', kind: 'league', first: '2026-09-17T17:30:00Z' }),
+    story({ id: 'result', kind: 'result', first: '2026-09-17T17:20:00Z' })
+  ];
+  const hero = heroStoryItems(items, { now });
+  assert.equal(hero.length, 4);
+  assert.equal(hero[0].id, 'p1');
+  assert(hero.some((c) => c.kind === 'preview'));
+});
+
+test('a preview leaves the hero as soon as its game tips', () => {
+  const tipped = preview();
+  const now = Date.parse('2026-09-17T23:31:00Z');
+  assert.equal(heroStoryItems([tipped], { now }).length, 0);
+});
+
 test('the four-story hero prefers desk variety before repeating an injury burst', () => {
   const now = Date.parse('2026-09-17T20:00:00Z');
   const items = [
