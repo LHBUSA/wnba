@@ -1,5 +1,5 @@
 // WNBA News & Intelligence — the PropBetEdge editorial front page, desk pages and team news pages.
-// PropBetEdge's own reporting leads: a dominant photographic lead story, top stories, Latest, then the desks
+// PropBetEdge's own reporting leads: a rotating editorial hero, Game Day, recaps/highlights, Latest, then the desks
 // (Injury Desk, Roster Moves, League, Previews, Performances, Team Trends). The external Source Wire sits last,
 // visibly attributed and subordinate — headlines and links only; the reporting belongs to them.
 // Navigation stays compact: four primary desks as chips, a team selector and one "More desks" menu — all plain
@@ -10,7 +10,7 @@ import { errorState, badge, entityChips } from '../ui/components.js';
 import { articleCard, articleRow, KIND_LABEL, DESK } from '../ui/articles.js';
 import { teamLogo } from '../ui/logo.js';
 import { relTime, fmtDateTimeET } from '../lib/format.js';
-import { chooseLead, topStories, storyPublishedAt } from '../lib/news-ranking.js';
+import { storyPublishedAt } from '../lib/news-ranking.js';
 
 export const DESKS = [
   ['injury', 'Injury Desk', 'Status changes from ESPN’s injury feed and attributed reporting: the minutes at stake and what argues against the obvious read.'],
@@ -25,10 +25,16 @@ export const PRIMARY_DESKS = ['injury', 'transaction', 'league', 'international'
 export const MORE_DESKS = ['brief', 'preview', 'performance', 'trend', 'props', 'market'];
 export const DESK_KINDS = [...PRIMARY_DESKS, ...MORE_DESKS];
 
+const HOUR = 3600e3;
+const HERO_FRESH_MS = 72 * HOUR;
+const HERO_CURRENT_MS = 7 * 24 * HOUR;
+const RECAP_CURRENT_MS = 48 * HOUR;
+const HERO_NEWS_KINDS = new Set(['brief', 'international', 'injury', 'transaction', 'league', 'performance', 'result']);
 const dateline = () => new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 const ET_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
 const etDay = (ms) => ET_DAY.format(new Date(ms));
 const gameEntityOf = (c) => (c?.entities || []).find((e) => e?.type === 'game' && e.start_utc) || null;
+const storyGroup = (c) => c?.kind === 'result' ? 'performance' : c?.desk || c?.kind || 'story';
 // A story files under its kind, and a News Brief also under its event's desk (an official injury update → Injury Desk).
 const ofKind = (items, k) => items.filter((c) => c.kind === k || c.desk === k || (k === 'performance' && c.kind === 'result'));
 const OFFICIAL_KINDS = new Set(['official', 'team_official']);
@@ -55,6 +61,69 @@ export function gameDayPreviewItems(items, { now = Date.now() } = {}) {
       seen.add(key);
       return true;
     })
+    .map(({ c }) => c);
+}
+
+/**
+ * The hero follows the main PropBetEdge pattern: fresh stories lead, then still-current coverage
+ * fills the remaining slots. One-per-desk is preferred before any desk repeats, so an injury burst
+ * can never occupy all four hero positions while other recent newsroom work exists.
+ */
+export function heroStoryItems(items, { now = Date.now(), limit = 4 } = {}) {
+  const candidates = (items || [])
+    .filter((c) => c?.status !== 'held' && HERO_NEWS_KINDS.has(c?.kind))
+    .map((c) => ({ c, at: storyPublishedAt(c) }))
+    .filter(({ at }) => at > 0 && now - at >= 0 && now - at <= HERO_CURRENT_MS)
+    .sort((a, b) => b.at - a.at);
+
+  const fresh = candidates.filter(({ at }) => now - at <= HERO_FRESH_MS);
+  const freshIds = new Set(fresh.map(({ c }) => c.id));
+  const ordered = [...fresh, ...candidates.filter(({ c }) => !freshIds.has(c.id))];
+  const out = [];
+  const seenGroups = new Set();
+
+  for (const { c } of ordered) {
+    if (out.length >= limit) break;
+    const group = storyGroup(c);
+    if (seenGroups.has(group)) continue;
+    out.push(c);
+    seenGroups.add(group);
+  }
+  for (const { c } of ordered) {
+    if (out.length >= limit) break;
+    if (out.some((x) => x.id === c.id)) continue;
+    out.push(c);
+  }
+  return out;
+}
+
+/**
+ * Recent completed-game coverage becomes a dedicated recap/highlights rail. One card per game,
+ * with official-video stories preferred and broad result recaps preferred over secondary performance
+ * stories when both exist. Event time, not article revision time, controls how long a game stays current.
+ */
+export function recapHighlightItems(items, { now = Date.now(), limit = 6, maxAgeMs = RECAP_CURRENT_MS } = {}) {
+  const candidates = (items || [])
+    .filter((c) => ['result', 'performance'].includes(c?.kind) && c?.status !== 'held')
+    .map((c) => {
+      const game = gameEntityOf(c);
+      const eventAt = Date.parse(game?.start_utc || '') || storyPublishedAt(c);
+      return { c, game, eventAt };
+    })
+    .filter(({ eventAt }) => eventAt > 0 && eventAt <= now && now - eventAt <= maxAgeMs);
+
+  const byGame = new Map();
+  const score = (c) => (c?.video ? 4 : 0) + (c?.kind === 'result' ? 2 : 0) + (c?.media ? 1 : 0);
+  for (const row of candidates) {
+    const key = String(row.game?.id || row.c?.context?.game?.game_id || row.c.id);
+    const prev = byGame.get(key);
+    if (!prev || score(row.c) > score(prev.c) || (score(row.c) === score(prev.c) && storyPublishedAt(row.c) > storyPublishedAt(prev.c))) {
+      byGame.set(key, row);
+    }
+  }
+  return [...byGame.values()]
+    .sort((a, b) => b.eventAt - a.eventAt)
+    .slice(0, limit)
     .map(({ c }) => c);
 }
 
@@ -119,7 +188,6 @@ export function newsHeadView(kind, team = null) {
 function teamNewsView({ team, teams, arts, wire }) {
   const items = arts.data.items;
   const lastRun = arts.meta?.last_run_at || null;
-  const official = wire?.ok ? wire.data.items.filter((i) => OFFICIAL_KINDS.has(i.source.kind)).length : 0;
   const mast = html`<header class="masthead">
     <div class="mast-row"><span class="eyebrow">PropBetEdge · WNBA · Team news</span><span class="mast-date">${dateline()}${lastRun ? ` · AUTO · updated ${relTime(lastRun)}` : ''}</span></div>
     <h1 class="mast-title">${team.name} News</h1>
@@ -139,6 +207,23 @@ function teamNewsView({ team, teams, arts, wire }) {
       </section>
       <p class="note section">Auto-updating · last newsroom pass ${lastRun ? relTime(lastRun) : 'unknown'} · <a href="/sources">Source status</a></p>`
   };
+}
+
+function heroCarousel(items) {
+  if (!items.length) return '';
+  return html`<section class="news-hero" data-news-hero data-news-hero-count="${items.length}" aria-label="Top WNBA stories" aria-roledescription="carousel">
+    <div class="news-hero-track" aria-live="off">
+      ${items.map((c, i) => html`<div class="news-hero-slide ${i === 0 ? 'is-active' : ''}" data-news-hero-slide="${i}" aria-hidden="${i === 0 ? 'false' : 'true'}" role="group" aria-label="Story ${i + 1} of ${items.length}">
+        <div class="front-lead">${articleCard(c, { size: 'lead', eager: i === 0 })}</div>
+      </div>`)}
+    </div>
+    ${items.length > 1 ? html`<div class="news-hero-controls" aria-label="Hero story controls">
+      <button class="news-hero-arrow" type="button" data-news-hero-prev aria-label="Previous story">‹</button>
+      <div class="news-hero-dots">${items.map((c, i) => html`<button class="news-hero-dot ${i === 0 ? 'is-active' : ''}" type="button" data-news-hero-dot="${i}" aria-label="Show story ${i + 1}: ${c.headline}" ${i === 0 ? html`aria-current="true"` : ''}></button>`)}</div>
+      <button class="news-hero-arrow" type="button" data-news-hero-next aria-label="Next story">›</button>
+      <span class="news-hero-note">Top 4 · rotates every 8 seconds</span>
+    </div>` : ''}
+  </section>`;
 }
 
 /** Returns { body, empty } — `empty` lets the Worker mark a desk with no stories noindex. */
@@ -172,13 +257,12 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
 
   const gameDay = gameDayPreviewItems(items);
   const gameDayIds = new Set(gameDay.map((c) => c.id));
-  // Keep the editorial lead/top-story river separate from the game slate. A six-day-old canonical
-  // preview can be essential tonight without pretending it was newly published tonight.
   const headlinePool = items.filter((c) => !gameDayIds.has(c.id));
-  const rankingPool = headlinePool.length ? headlinePool : items;
-  const lead = chooseLead(rankingPool);
-  const tops = topStories(rankingPool, lead, { limit: 3 });
-  const shown = new Set([lead?.id, ...tops.map((c) => c.id), ...gameDayIds]);
+  const hero = heroStoryItems(headlinePool.length ? headlinePool : items);
+  const recaps = recapHighlightItems(items);
+  const heroIds = new Set(hero.map((c) => c.id));
+  const recapIds = new Set(recaps.map((c) => c.id));
+  const shown = new Set([...heroIds, ...gameDayIds, ...recapIds]);
   // Latest is newest-first by editorial origin, so a revision never floats old coverage back up the river.
   const latest = items.filter((c) => !shown.has(c.id)).sort((a, b) => storyPublishedAt(b) - storyPublishedAt(a)).slice(0, 8);
   const deskItems = (k) => ofKind(items, k).filter((c) => !shown.has(c.id));
@@ -187,17 +271,16 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
     empty: false,
     body: html`
       ${mast}
-      <section class="front-top">
-        <div class="front-lead">${articleCard(lead, { size: 'lead', eager: true })}</div>
-        <div class="front-side">
-          <h2 class="rail-title">Top stories</h2>
-          ${tops.length ? tops.map((c) => articleCard(c, { size: 'feature' })) : html`<p class="note">No additional stories from the last 72 hours.</p>`}
-        </div>
-      </section>
+      ${heroCarousel(hero)}
 
       ${gameDay.length ? html`<section class="desk section game-day-slate">
-        <div class="sec-head"><div><h2 class="sec-title bc">Tonight’s WNBA Slate</h2><p class="desk-sub">Every upcoming game on today’s ET slate — form, rest, availability and the latest stored market. Ordered by tip time, independent of when the canonical preview was first published.</p></div><a class="sec-link" href="/news/c/preview">All previews →</a></div>
+        <div class="sec-head"><div><span class="eyebrow">Game Day</span><h2 class="sec-title bc">Tonight’s WNBA Slate</h2><p class="desk-sub">Every upcoming game on today’s ET slate — form, rest, availability and the latest stored market. Ordered by tip time, independent of when the canonical preview was first published.</p></div><a class="sec-link" href="/news/c/preview">All previews →</a></div>
         <div class="ngrid">${gameDay.map((c) => articleCard(c))}</div>
+      </section>` : ''}
+
+      ${recaps.length ? html`<section class="desk section recap-highlights" data-recap-count="${recaps.length}">
+        <div class="sec-head"><div><span class="eyebrow">Finals · Video</span><h2 class="sec-title bc">Recaps &amp; Highlights</h2><p class="desk-sub">Completed games from the last 48 hours — final-score recaps first, with official game highlights surfaced whenever the verified video feed has them.</p></div><a class="sec-link" href="/news/c/performance">All recaps →</a></div>
+        <div class="ngrid">${recaps.map((c) => articleCard(c))}</div>
       </section>` : ''}
 
       <section class="front-band section">
