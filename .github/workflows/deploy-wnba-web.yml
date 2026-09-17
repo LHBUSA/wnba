@@ -1,0 +1,38 @@
+name: Deploy WNBA web publishing Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/wnba-web/**'
+      - 'src/views/**'
+      - 'src/ui/**'
+      - 'src/lib/**'
+      - 'src/seo/**'
+      - 'src/data/**'
+      - 'data/**'
+      - '.github/workflows/deploy-wnba-web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-wnba-web-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy wnba-web
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: fd3a233edadd0a60916413c1199f71ee
+          workingDirectory: workers/wnba-web
+          command: deploy
