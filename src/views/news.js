@@ -17,15 +17,16 @@ export const deskNav = base.deskNav;
 export const newsHeadView = base.newsHeadView;
 
 export async function loadNews(api, kind = null, teamId = null) {
-  const [arts, wire, teams, archive] = await Promise.all([
+  const [arts, wire, teams, archive, previews] = await Promise.all([
     api.articles({ limit: teamId ? 60 : 200, kind: kind || undefined, team: teamId || undefined }),
     kind ? Promise.resolve({ ok: false }) : api.news({ limit: teamId ? 30 : 40, lane: 'external', team: teamId || undefined }),
     api.teams().catch(() => ({ ok: false })),
-    !kind && !teamId ? api.articles({ limit: 250, archive: 1 }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
+    !kind && !teamId ? api.articles({ limit: 250, archive: 1 }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+    !kind && !teamId ? api.articles({ limit: 20, kind: 'preview' }).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
   ]);
   const teamList = teams?.ok ? [...teams.data.teams].sort((a, b) => a.name.localeCompare(b.name)) : [];
   const team = teamId ? teamList.find((t) => String(t.team_id) === String(teamId)) || null : null;
-  return { kind, teamId, team, teams: teamList, teamsOk: Boolean(teams?.ok), arts, wire, archive };
+  return { kind, teamId, team, teams: teamList, teamsOk: Boolean(teams?.ok), arts, wire, archive, previews };
 }
 
 function archiveRail(archive, currentItems = []) {
@@ -46,13 +47,43 @@ function archiveRail(archive, currentItems = []) {
   </section>`;
 }
 
+function withDedicatedPreviews(data) {
+  if (data.kind || data.teamId || !data.arts?.ok || !data.previews?.ok) return data;
+  const previewItems = data.previews.data?.items || [];
+  if (!previewItems.length) return data;
+
+  // The generic current-news index is optimized for the editorial river. The dedicated preview
+  // route is the authoritative card shape for matchup entities/start times used by Game Day.
+  // Replace matching preview cards in-place and append any preview missing from the generic slice.
+  const previewById = new Map(previewItems.map((p) => [p.id, p]));
+  const seen = new Set();
+  const items = (data.arts.data?.items || []).map((c) => {
+    const p = previewById.get(c.id);
+    if (p) {
+      seen.add(c.id);
+      return p;
+    }
+    return c;
+  });
+  for (const p of previewItems) if (!seen.has(p.id)) items.push(p);
+
+  return {
+    ...data,
+    arts: {
+      ...data.arts,
+      data: { ...data.arts.data, items }
+    }
+  };
+}
+
 export function newsView(data) {
-  const view = base.newsView(data);
-  if (view?.error || data.kind || data.teamId) return view;
+  const effective = withDedicatedPreviews(data);
+  const view = base.newsView(effective);
+  if (view?.error || effective.kind || effective.teamId) return view;
 
   let body = String(view.body);
 
-  const archive = archiveRail(data.archive, data.arts?.data?.items || []);
+  const archive = archiveRail(effective.archive, effective.arts?.data?.items || []);
   if (archive) {
     const trust = '<section class="trust section">';
     body = body.includes(trust)
