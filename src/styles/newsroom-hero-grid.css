@@ -1,0 +1,138 @@
+/* WNBA newsroom hero layout override.
+ * Keep the four-story rotating hero, but restore the editorial lead + three side-window composition.
+ * The active slide owns the large lead position; the other three automatically occupy the side rail.
+ */
+
+@media (min-width: 1101px) {
+  .news-hero-track {
+    display: grid;
+    grid-template-columns: minmax(0, 2.1fr) minmax(280px, 1fr);
+    grid-template-rows: auto repeat(3, minmax(0, 1fr));
+    column-gap: 32px;
+    row-gap: 14px;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .news-hero-track::before {
+    content: 'Top stories';
+    grid-column: 2;
+    grid-row: 1;
+    padding-left: 28px;
+    border-left: 1px solid var(--line);
+    font: 700 12px/1 var(--f-data);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    align-self: end;
+  }
+
+  .news-hero-slide {
+    grid-area: auto;
+    min-width: 0;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .28s ease;
+  }
+
+  .news-hero-slide.is-active {
+    grid-column: 1;
+    grid-row: 1 / 5;
+  }
+
+  .news-hero-slide:not(.is-active) {
+    grid-column: 2;
+    padding-left: 28px;
+    border-left: 1px solid var(--line);
+  }
+
+  /* Make the three non-active lead cards behave like the original compact side windows. */
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead {
+    display: grid;
+    grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead > .sm,
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead > .scard-body {
+    grid-area: auto;
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead > .scard-body {
+    align-self: start;
+    padding: 0;
+    max-width: none;
+    pointer-events: auto;
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead > .scard-foot,
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .deck,
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .sm-credit,
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .scard-src {
+    display: none;
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .scard-h {
+    font-size: 17px;
+    line-height: 1.2;
+    letter-spacing: -.005em;
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .sm-frame::after {
+    display: none;
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .scard-meta {
+    margin-top: 2px;
+    font-size: 10px;
+  }
+}
+
+/* Tablet: preserve all four stories without forcing a narrow sidebar. */
+@media (min-width: 760px) and (max-width: 1100px) {
+  .news-hero-track {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    min-width: 0;
+  }
+
+  .news-hero-slide {
+    grid-area: auto;
+    min-width: 0;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .news-hero-slide.is-active {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .news-hero-slide:not(.is-active) {
+    grid-row: 2;
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead > .scard-foot,
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .deck,
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .scard-src {
+    display: none;
+  }
+
+  .news-hero-slide:not(.is-active) .front-lead .scard--lead .scard-h {
+    font-size: 17px;
+    line-height: 1.22;
+  }
+}
+
+/* Phones keep the focused single-story carousel; the side windows return when space permits. */
+@media (max-width: 759px) {
+  .news-hero-slide:not(.is-active) {
+    display: block;
+  }
+}
