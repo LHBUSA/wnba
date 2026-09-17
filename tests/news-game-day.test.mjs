@@ -88,6 +88,18 @@ test('the four-story hero prefers desk variety before repeating an injury burst'
   assert.deepEqual(heroStoryItems(items, { now }).map((c) => c.id), ['injury-1', 'transaction', 'league', 'result']);
 });
 
+test('older desk variety never displaces a fresh story from the hero', () => {
+  const now = Date.parse('2026-09-17T20:00:00Z');
+  const items = [
+    preview({ id: 'tonight', gameId: 'g-tonight', start: '2026-09-17T23:30:00Z' }),
+    story({ id: 'injury-1', kind: 'injury', first: '2026-09-17T19:50:00Z' }),
+    story({ id: 'injury-2', kind: 'injury', first: '2026-09-17T19:40:00Z' }),
+    story({ id: 'injury-3', kind: 'injury', first: '2026-09-17T19:30:00Z' }),
+    story({ id: 'stale-transaction', kind: 'transaction', first: '2026-09-12T19:55:00Z' })
+  ];
+  assert.deepEqual(heroStoryItems(items, { now }).map((c) => c.id), ['tonight', 'injury-1', 'injury-2', 'injury-3']);
+});
+
 test('the hero still fills all four slots when only one desk has current stories', () => {
   const now = Date.parse('2026-09-17T20:00:00Z');
   const items = [1, 2, 3, 4].map((n) => story({ id: `injury-${n}`, kind: 'injury', first: `2026-09-17T19:${60 - n * 5}:00Z` }));
