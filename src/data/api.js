@@ -143,6 +143,7 @@ export const api = {
   player: (id) => getJson(`${API_BASE}/v1/players/${encodeURIComponent(id)}`),
   injuries: () => getJson(`${API_BASE}/v1/injuries`),
   transactions: () => getJson(`${API_BASE}/v1/transactions`),
+  statsWinba: () => getJson(`${API_BASE}/v1/stats/winba`),
   statsPlayers: () => getJson(`${API_BASE}/v1/stats/players`),
   statsTeams: () => getJson(`${API_BASE}/v1/stats/teams`),
   odds: (event) => getJson(`${API_BASE}/v1/odds${q({ event })}`),
