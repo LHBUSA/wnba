@@ -1,0 +1,13 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "20260918200000_wbh_wnba_2024_derived_standings_v1.sql",
+  "reviewed_blob": "533739652b2343a7f56426be32f82310e32d228e",
+  "applied_at_utc": "2026-09-18T14:27:55.1171775Z",
+  "verification": {
+    "standings_rows": 12,
+    "dataset_sha256": "743137023a783d0f733eebf7326369405bccebcf029a0fa3837c04c250498544",
+    "derived_datasets": 1,
+    "player_rows": 346,
+    "games_box_score": 1
+  }
+}
