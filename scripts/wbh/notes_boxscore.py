@@ -112,11 +112,11 @@ LAYOUTS = {
 }
 
 DNP_PATTERN = re.compile(r"\bD\s*NP\b|\bDNP\b|did not play", re.I)
-# "NWT" (not with team), "DND" (did not dress) and "Inactive" are explicit non-participation markers,
-# but none of them is the same claim as a coach's DNP, so they produce no stat row and, unlike a DNP,
-# no did_not_play assertion either.
+# "NWT" (not with team), "DND" (did not dress), "Inactive" and "OUT- <reason>" are all explicit
+# non-participation markers, but none of them is the same claim as a coach's DNP, so they produce no
+# stat row and, unlike a DNP, no did_not_play assertion either.
 NONPARTICIPATION_PATTERN = re.compile(
-    r"\bN\s*WT\b|not with team|Left the (game|team)|\bDND\b|\bInactive\b", re.I)
+    r"\bN\s*WT\b|not with team|Left the (game|team)|\bDND\b|\bInactive\b|\bOUT\s*-", re.I)
 ROW_Y_TOLERANCE = 3.0          # points; words within this vertical distance are one row
 BOUNDARY_MARGIN = 2.0          # points; a cell centre this close to a column edge is ambiguous
 TABLE_RIGHT_MARGIN = 10.0      # points past the last header where the table is considered to end
