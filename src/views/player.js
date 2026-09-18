@@ -23,6 +23,7 @@ export function playerView({ id, res, news, props, arts, intl }) {
   const season = d.gamelog?.seasons?.find((s) => /regular/i.test(s.name || '')) || d.gamelog?.seasons?.[0];
   const games = season?.games || [];
   const r = d.recent;
+  const w = d.winba;
   const inj = d.availability?.[0];
   const myProps = (props?.ok ? props.data.games || [] : []).flatMap((g) => (g.props || []).filter((x) => x.athlete_id === id).map((x) => ({ ...x, game: g })));
 
@@ -56,6 +57,24 @@ export function playerView({ id, res, news, props, arts, intl }) {
         <p class="note" style="margin-top:8px">${r?.method || ''}</p>
       </div>
     </section>
+
+    ${w ? html`<section class="winba-player-card section">
+      <div class="winba-player-score">
+        <span class="eyebrow">PropBetEdge original metric</span>
+        <div><strong>${num(w.score)}</strong><span>WINBA</span></div>
+        <small>${w.qualified ? `#${w.rank} qualified league rank` : 'Provisional · sample below qualification'} · ${w.sample.games} appearances · ${w.sample.wins}-${w.sample.losses}</small>
+      </div>
+      <div class="winba-player-components">
+        <div><small>Production</small><b>${num(w.components.production_percentile)}%</b><span>league percentile · Box Impact/36</span></div>
+        <div><small>Win rate</small><b>${num(w.components.win_rate)}%</b><span>games appeared · wins only</span></div>
+        <div><small>Winning output</small><b>${num(w.components.winning_output_share)}%</b><span>Box Impact produced in wins</span></div>
+        <div><small>Court share</small><b>${num(w.components.court_share)}%</b><span>${num(w.averages.min)} average minutes</span></div>
+      </div>
+      <div class="winba-player-method">
+        <p><b>WinBA Score</b> combines 45% production percentile, 25% player win rate, 20% winning-output share and 10% court share. Box Impact = PTS + 1.2×REB + 1.5×AST.</p>
+        <a class="sec-link" href="/stats">Full WinBA leaderboard →</a>
+      </div>
+    </section>` : ''}
 
     <div class="section split">
       <section class="card">
