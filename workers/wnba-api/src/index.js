@@ -35,7 +35,7 @@ import { resolveAccount } from './account.js';
 import { pbeStatus, pbeCoverage, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 
 const SERVICE = 'wnba-api';
-const VERSION = '1.0.2';
+const VERSION = '1.0.1';
 
 // Freshness windows (seconds). Live data is short; season aggregates are long.
 const TTL = {
@@ -521,14 +521,6 @@ async function game({ env, ctx, params, path }) {
 }
 
 // One call powering WNBACast: state + events since a sequence + box + derived context.
-function boxWithPhotos(box) {
-  if (!box) return box;
-  return {
-    ...box,
-    players: (box.players || []).map((p) => ({ ...p, photo: photoFor(p.athlete_id) }))
-  };
-}
-
 async function gameLive({ env, ctx, url, params, path }) {
   const since = Number(url.searchParams.get('since') || 0);
   const L = await loadSummary(env, ctx, params.id);
@@ -543,7 +535,7 @@ async function gameLive({ env, ctx, url, params, path }) {
       events,
       events_total: s.plays.length,
       last_seq: s.plays.at(-1)?.seq ?? null,
-      box: boxWithPhotos(s.box),
+      box: s.box,
       derived: { runs: d.runs, lead: d.lead, fouls: d.fouls, progression: d.progression },
       shots: shotChart(s.plays),
       leaders: s.leaders,
@@ -568,7 +560,7 @@ async function gameEvents({ env, ctx, params, path }) {
 async function gameBox({ env, ctx, params, path }) {
   const L = await loadSummary(env, ctx, params.id);
   if (!L.summary) return fail('game_unavailable', `Game ${params.id} unavailable`, gameMeta(path, L), 502);
-  return ok({ game: L.summary.game, box: boxWithPhotos(L.summary.box) }, gameMeta(path, L), { maxAge: cacheFor(L.summary.game) });
+  return ok({ game: L.summary.game, box: L.summary.box }, gameMeta(path, L), { maxAge: cacheFor(L.summary.game) });
 }
 
 async function gameShots({ env, ctx, params, path }) {
