@@ -9,7 +9,7 @@
 // Why: ESPN's FIBA feed publishes text such as "Caitlin Clark makes" while its structured fields say a made free throw
 // (type MadeFreeThrow, pointsAttempted 1, "+1 Point"). The old normalizers kept only the text.
 
-export const PBP_VERSION = 'pbe-pbp/1.0.2';
+export const PBP_VERSION = 'pbe-pbp/1.0.3';
 
 const int = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : null; };
 const str = (v) => (v === null || v === undefined ? null : String(v));
@@ -44,7 +44,7 @@ export function shotSubtype(typeText) {
 const FOUL_TYPE = (t) => { const m = String(t || '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().match(/^(.*?)\s*foul\b/); const k = m ? m[1].trim() : ''; return k || null; };
 const TURNOVER_TYPE = (t) => { const k = String(t || '').replace(/\n/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/\bturnover\b/, '').replace(/\s+/g, ' ').trim(); return k && k !== 'turnover' ? k : null; };
 
-function familyOf({ typeText, short, text, shooting, scoring, scoreValue, pointsAttempted, typeId }) {
+function familyOf({ typeText, short, text, shooting, scoring, scoreValue, pointsAttempted, scoreDelta, hasParticipant, typeId }) {
   const t = `${typeText || ''} ${short || ''} ${text || ''}`;
   const shotLike = /\b(makes|misses|made|missed)\b/i.test(t) || /\b(field ?goal|fg|2pt|3pt|jump ?shot|jumper|jumpshot|layup|lay-up|dunk|hook|tip(?:-in)?|fade ?away|floater|floating|finger[- ]?roll|alley[- ]?oop|two point shot|three point shot|three pointer)\b/i.test(t);
   const scoringValue = pointsAttempted === 1 || pointsAttempted === 2 || pointsAttempted === 3
@@ -65,16 +65,36 @@ function familyOf({ typeText, short, text, shooting, scoring, scoreValue, points
   if (/block/i.test(typeText || '') || /blocked shot/i.test(short || '')) return 'block';
   if (/foul/i.test(t)) return 'foul';
   if (/violation/i.test(t)) return 'violation';
+  // Last-resort live recovery: if ESPN's flags/text are contradictory but this exact event
+  // advances one team's score by 1/2/3, a participant-bearing event can still be classified
+  // as the corresponding scoring attempt. Obvious non-shot families above always win.
+  if (hasParticipant && scoreDelta === 1) return 'free_throw';
+  if (hasParticipant && (scoreDelta === 2 || scoreDelta === 3)) return 'shot';
   return 'other';
 }
 
 const threeWord = { 1: 'one-point', 2: 'two-point', 3: 'three-point' };
 
+function eventScoreDelta({ homeScore, awayScore, prev, teamId = null, homeTeamId = null, awayTeamId = null }) {
+  if (!prev || homeScore === null || awayScore === null || prev.home_score === null || prev.away_score === null) return null;
+  const dh = homeScore - prev.home_score;
+  const da = awayScore - prev.away_score;
+  if (dh < 0 || da < 0 || (dh > 0 && da > 0)) return null;
+  const delta = dh || da;
+  if (![1, 2, 3].includes(delta)) return null;
+  if (teamId && homeTeamId && awayTeamId) {
+    if (teamId === String(homeTeamId)) return dh === delta && da === 0 ? delta : null;
+    if (teamId === String(awayTeamId)) return da === delta && dh === 0 ? delta : null;
+    return null;
+  }
+  return delta;
+}
+
 /**
  * The canonical play. `raw` is an ESPN play (site API summary). `athleteName(id)` and `teamName(espnTeamId)` resolve
  * display names from the same payload's box score/header. `prev` is the previous play in source order (score before).
  */
-export function semanticPlay(raw, { athleteName = () => null, teamName = () => null, prev = null, order = 0 } = {}) {
+export function semanticPlay(raw, { athleteName = () => null, teamName = () => null, homeTeamId = null, awayTeamId = null, prev = null, order = 0 } = {}) {
   const typeText = str(raw.type?.text)?.replace(/\s+/g, ' ') ?? null;
   const typeId = str(raw.type?.id);
   const short = str(raw.shortDescription);
@@ -84,9 +104,12 @@ export function semanticPlay(raw, { athleteName = () => null, teamName = () => n
   const pointsAttempted = int(raw.pointsAttempted);
   const scoreValue = int(raw.scoreValue);
   const parts = (raw.participants || []).map((x) => str(x.athlete?.id)).filter(Boolean);
-  const family = familyOf({ typeText, short, text, shooting: shootingFlag, scoring: scoringFlag, scoreValue, pointsAttempted, typeId });
-  const person = (id, fallbackName = null) => (id || fallbackName ? { id: id || null, name: (id && athleteName(id)) || fallbackName || null } : null);
   const teamId = str(raw.team?.id);
+  const homeScore = int(raw.homeScore);
+  const awayScore = int(raw.awayScore);
+  const scoreDelta = eventScoreDelta({ homeScore, awayScore, prev, teamId, homeTeamId, awayTeamId });
+  const family = familyOf({ typeText, short, text, shooting: shootingFlag, scoring: scoringFlag, scoreValue, pointsAttempted, scoreDelta, hasParticipant: parts.length > 0, typeId });
+  const person = (id, fallbackName = null) => (id || fallbackName ? { id: id || null, name: (id && athleteName(id)) || fallbackName || null } : null);
   const team = teamId ? { id: teamId, name: teamName(teamId) || null } : null;
 
   // Secondary actors: only from the provider's own credit text and participant list.
@@ -122,13 +145,15 @@ export function semanticPlay(raw, { athleteName = () => null, teamName = () => n
   // During live games ESPN can transiently omit or lag the scoring/shooting flags while its own event text
   // already says "makes" or "misses". Outcome text is direct provider evidence, so use it to reconcile the
   // event instead of turning a made basket into a miss until the structured flag catches up.
-  const made = shooting ? (textOutcome ?? scoringFlag) : null;
+  const scoreOutcome = shooting && scoreDelta !== null ? true : null;
+  const made = shooting ? (scoreOutcome ?? textOutcome ?? scoringFlag) : null;
   const scoring = shooting ? made === true : scoringFlag === true;
-  const shotValue = family === 'shot' ? (pointsAttempted === 2 || pointsAttempted === 3 ? pointsAttempted : scoreValue === 2 || scoreValue === 3 ? scoreValue : null) : family === 'free_throw' ? 1 : null;
+  const outcomeReconciled = shooting && scoreDelta !== null && (textOutcome === false || scoringFlag === false || shootingFlag === false);
+  const shotValue = family === 'shot'
+    ? (scoreDelta === 2 || scoreDelta === 3 ? scoreDelta : pointsAttempted === 2 || pointsAttempted === 3 ? pointsAttempted : scoreValue === 2 || scoreValue === 3 ? scoreValue : null)
+    : family === 'free_throw' ? 1 : null;
   const ftSeq = (typeText || text).match(/free throw\s*-?\s*(\d)\s*of\s*(\d)/i);
   const distance = text.match(/\b(\d{1,2})-foot\b/)?.[1];
-  const homeScore = int(raw.homeScore);
-  const awayScore = int(raw.awayScore);
   const p = {
     pbp_version: PBP_VERSION,
     source_id: str(raw.id),
@@ -150,7 +175,9 @@ export function semanticPlay(raw, { athleteName = () => null, teamName = () => n
     made,
     scoring,
     shooting,
-    points: scoring ? (scoreValue ?? (family === 'free_throw' ? 1 : pointsAttempted ?? 0)) : 0,
+    outcome_reconciled: outcomeReconciled ? 'score_delta' : null,
+    score_delta: scoreDelta,
+    points: scoring ? (scoreDelta ?? scoreValue ?? (family === 'free_throw' ? 1 : pointsAttempted ?? 0)) : 0,
     shot_value: shotValue,
     distance_ft: distance ? Number(distance) : null,
     free_throw: family === 'free_throw' && ftSeq ? { n: Number(ftSeq[1]), of: Number(ftSeq[2]) } : null,
@@ -181,7 +208,8 @@ export function describePlay(p, sourceText = p.text_raw) {
   const who = P || T || 'Team';
   // Provider text that only says "two point shot" is less specific than its own shot type: build from structure.
   const vagueShot = p.family === 'shot' && p.subtype && /\b(two|three) point shot\b/i.test(text);
-  if (text && !vagueShot && !GENERIC_SHOT_TEXT.test(text) && DESCRIPTIVE.test(text) && !/^(\w+\s)?foul on /i.test(text) && !/^[A-Z][^.]+ (Steal|Block|Offensive Rebound|Defensive Rebound|Deadball Team Rebound)\.$/.test(text) && !/ Timeout$/.test(text) && !(p.family === 'turnover' && P && text === P)) {
+  const outcomeConflict = p.outcome_reconciled === 'score_delta' && /\bmiss(?:es|ed)?\b/i.test(text);
+  if (text && !outcomeConflict && !vagueShot && !GENERIC_SHOT_TEXT.test(text) && DESCRIPTIVE.test(text) && !/^(\w+\s)?foul on /i.test(text) && !/^[A-Z][^.]+ (Steal|Block|Offensive Rebound|Defensive Rebound|Deadball Team Rebound)\.$/.test(text) && !/ Timeout$/.test(text) && !(p.family === 'turnover' && P && text === P)) {
     return { text: sentence(text), source: 'source_text' };
   }
   const assist = p.assist?.name ? ` (${p.assist.name} assists)` : '';
@@ -225,10 +253,10 @@ export function describePlay(p, sourceText = p.text_raw) {
 }
 
 /** Canonical plays for a whole summary, in source sequence order (never reordered by clock text). */
-export function semanticPlays(rawPlays, { athleteName, teamName } = {}) {
+export function semanticPlays(rawPlays, { athleteName, teamName, homeTeamId = null, awayTeamId = null } = {}) {
   const ordered = (rawPlays || []).map((raw, i) => ({ raw, i })).sort((a, b) => (int(a.raw.sequenceNumber) ?? a.i) - (int(b.raw.sequenceNumber) ?? b.i) || a.i - b.i);
   const out = [];
-  for (const [order, { raw }] of ordered.entries()) out.push(semanticPlay(raw, { athleteName, teamName, prev: out.at(-1) || null, order }));
+  for (const [order, { raw }] of ordered.entries()) out.push(semanticPlay(raw, { athleteName, teamName, homeTeamId, awayTeamId, prev: out.at(-1) || null, order }));
   return out;
 }
 
@@ -238,7 +266,10 @@ export function resolversFromSummary(body) {
   for (const t of body?.boxscore?.players || []) for (const s of t.statistics || []) for (const a of s.athletes || []) if (a.athlete?.id) names.set(String(a.athlete.id), a.athlete.displayName || null);
   const teams = new Map();
   for (const c of body?.header?.competitions?.[0]?.competitors || []) if (c.team?.id) teams.set(String(c.team.id), c.team.displayName || c.team.name || c.team.location || null);
-  return { athleteName: (id) => names.get(String(id)) || null, teamName: (id) => teams.get(String(id)) || null };
+  const competitors = body?.header?.competitions?.[0]?.competitors || [];
+  const homeTeamId = str(competitors.find((c) => c.homeAway === 'home')?.team?.id);
+  const awayTeamId = str(competitors.find((c) => c.homeAway === 'away')?.team?.id);
+  return { athleteName: (id) => names.get(String(id)) || null, teamName: (id) => teams.get(String(id)) || null, homeTeamId, awayTeamId };
 }
 
 /**
@@ -287,6 +318,6 @@ export function upgradeNormalizedPlays(plays, { names = new Map(), teams = new M
   return plays.map((p) => {
     const s = sem.get(String(p.id ?? p.play_id));
     if (!s) return p;
-    return { ...p, pbp_version: s.pbp_version, text: s.description, text_raw: p.text_raw ?? p.text, description_source: s.description_source, family: s.family, subtype: s.subtype, shot_value: s.shot_value, free_throw: s.free_throw, assist: s.assist, stolen_by: s.stolen_by, blocked_by: s.blocked_by, rebound: s.rebound, turnover_type: s.turnover_type, foul_type: s.foul_type, score_before: s.score_before, primary: s.primary, made: s.made, scoring: s.scoring, shooting: s.shooting };
+    return { ...p, pbp_version: s.pbp_version, text: s.description, text_raw: p.text_raw ?? p.text, description_source: s.description_source, family: s.family, subtype: s.subtype, shot_value: s.shot_value, free_throw: s.free_throw, assist: s.assist, stolen_by: s.stolen_by, blocked_by: s.blocked_by, rebound: s.rebound, turnover_type: s.turnover_type, foul_type: s.foul_type, score_before: s.score_before, primary: s.primary, made: s.made, scoring: s.scoring, shooting: s.shooting, points: s.points, outcome_reconciled: s.outcome_reconciled, score_delta: s.score_delta };
   });
 }
