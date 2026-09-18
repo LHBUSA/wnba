@@ -177,8 +177,10 @@ export function normalizeCoordinate(c) {
   return { x, y };
 }
 
-function withSemantics(play, s) {
+function withSemantics(play, s, raw = null) {
   if (!s) return play;
+  const recoveredCoordinate = s.shooting ? (play.coordinate || normalizeCoordinate(raw?.coordinate)) : play.coordinate;
+  const recoveredAttempt = s.family === 'free_throw' ? 1 : (s.shot_value ?? play.points_attempted);
   return {
     ...play,
     pbp_version: s.pbp_version,
@@ -200,7 +202,11 @@ function withSemantics(play, s) {
     made: s.made,
     scoring: s.scoring,
     shooting: s.shooting,
-    points: s.points
+    points: s.points,
+    points_attempted: recoveredAttempt,
+    coordinate: recoveredCoordinate,
+    outcome_reconciled: s.outcome_reconciled,
+    score_delta: s.score_delta
   };
 }
 
@@ -299,9 +305,9 @@ export function normalizeSummary(body) {
   const comp = header.competitions?.[0] || {};
   const comps = (comp.competitors || []).map(competitorOf);
   const athletes = athleteIndexFromBox(body?.boxscore);
-  // pbe-pbp/1.0.0: structured semantics and the deterministic description ride on every play (source order kept).
+  // Canonical PBP semantics and deterministic descriptions ride on every play (source order kept).
   const sem = new Map(semanticPlays(body?.plays || [], resolversFromSummary(body)).map((p) => [p.source_id, p]));
-  const plays = (body?.plays || []).map((p) => withSemantics(normalizePlay(p, athletes), sem.get(String(p.id))));
+  const plays = (body?.plays || []).map((p) => withSemantics(normalizePlay(p, athletes), sem.get(String(p.id)), p));
   const game = {
     game_id: str(header.id),
     source: 'espn',
