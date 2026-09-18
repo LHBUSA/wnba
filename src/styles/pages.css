@@ -26,6 +26,23 @@
 .shot-point:hover .shot.miss line,
 .shot-point:focus-visible .shot.miss line,
 .shot-point.is-selected .shot.miss line { stroke-width: .42; filter: drop-shadow(0 0 .7px rgba(255,255,255,.75)); }
+.shot-photo-marker { pointer-events: none; }
+.shot-photo-halo { fill: rgba(9,9,8,.92); stroke: rgba(255,255,255,.14); stroke-width: .12; }
+.shot-photo { opacity: .98; }
+.shot-photo-marker.miss .shot-photo { opacity: .52; filter: saturate(.7) brightness(.82); }
+.shot-photo-ring { fill: none; stroke-width: .2; }
+.shot-photo-marker.h .shot-photo-ring { stroke: var(--home); }
+.shot-photo-marker.a .shot-photo-ring { stroke: var(--away); }
+.shot-photo-marker.n .shot-photo-ring { stroke: var(--dim); }
+.shot-photo-marker.miss .shot-photo-ring { stroke-dasharray: .55 .38; opacity: .82; }
+.shot-photo-result { fill: none; pointer-events: none; }
+.shot-photo-marker.made .shot-photo-result { stroke: rgba(255,255,255,.68); stroke-width: .11; }
+.shot-photo-marker.miss .shot-photo-result { stroke: rgba(255,255,255,.8); stroke-width: .17; stroke-linecap: round; }
+.shot-point.has-photo { transition: transform .16s ease, filter .16s ease; }
+.shot-point.has-photo:hover,
+.shot-point.has-photo:focus-visible,
+.shot-point.has-photo.is-selected { transform: scale(1.12); filter: drop-shadow(0 0 .75px rgba(255,255,255,.65)); }
+.shot-point.has-photo.is-selected .shot-photo-halo { stroke: var(--gold-bright); stroke-width: .18; }
 .shot-latest-ring { fill: none; stroke: transparent; stroke-width: .22; pointer-events: none; transform-box: fill-box; transform-origin: center; }
 .shot-point.is-latest .shot-latest-ring {
   stroke: rgba(255,255,255,.92);
@@ -61,7 +78,15 @@
 .shot-chart-hint { font-size: 11px; }
 .shot-chart-controls { display: grid; gap: 6px; justify-items: end; }
 .shot-result-row .pill { min-width: 54px; }
+.shot-marker-row .pill { min-width: 78px; }
 .shot-chart-legend { row-gap: 7px; }
+.shot-photo-key {
+  padding: 2px 7px;
+  border: 1px solid rgba(240,179,35,.22);
+  border-radius: 999px;
+  color: var(--paper-2);
+  background: rgba(240,179,35,.055);
+}
 .shot-latest-key i {
   display: inline-block;
   width: 9px;
@@ -125,7 +150,8 @@
   .shot-point.entering,
   .shot-point.is-latest .shot-latest-ring { animation: none; }
   .shot.made,
-  .shot.miss line { transition: none; }
+  .shot.miss line,
+  .shot-point.has-photo { transition: none; }
 }
 
 .chart { width: 100%; height: auto; display: block; }
