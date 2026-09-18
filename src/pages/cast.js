@@ -25,6 +25,12 @@ const PBP_FILTERS = [['all', 'All'], ['scoring', 'Scoring'], ['shots', 'Shots'],
 const EMPH = { 'lead-change': 'Lead change', tie: 'Tie', 'lead-taken': 'Lead' };
 const TABS = [['box', 'Box score'], ['players', 'Player progression'], ['fouls', 'Fouls'], ['market', 'Line & market']];
 
+const flowTime = (seconds) => {
+  const s = Math.max(0, Math.round(Number(seconds) || 0));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+const flowPct = (value) => `${(Number(value) || 0).toFixed(1)}%`;
+
 export async function mount(root, ctx) {
   const state = {
     gameId: ctx.params.gameId || null,
@@ -297,6 +303,10 @@ export async function mount(root, ctx) {
     };
     const ha = madeBy(g.home?.team_id);
     const aa = madeBy(g.away?.team_id);
+    const control = v.lead?.pbe_control || null;
+    const currentMargin = v.lead?.current_margin ?? 0;
+    const marginTeam = currentMargin > 0 ? g.home : currentMargin < 0 ? g.away : null;
+    const currentMarginLabel = marginTeam ? `${marginTeam.abbr} +${Math.abs(currentMargin)}` : 'Tied';
 
     return html`
       <div class="cast-grid" style="margin-top:16px">
@@ -320,12 +330,12 @@ export async function mount(root, ctx) {
           </div>
         </section>
 
-        <div class="grid" style="gap:16px">
+        <div class="grid cast-intel-grid" style="gap:16px">
           <section class="card">
             <div class="card-head shot-chart-head">
               <div>
                 <span class="card-title">Shot chart</span>
-                <span class="note shot-chart-hint">Full court · hover, focus or tap a shot to inspect the play.</span>
+                <span class="note shot-chart-hint">Vertical full court · away attacks top, home attacks bottom · hover, focus or tap a shot.</span>
               </div>
               <div class="shot-chart-controls" aria-label="Shot chart filters">
                 <div class="pill-row">
@@ -369,23 +379,70 @@ export async function mount(root, ctx) {
                 ${state.shotMarker === 'photos' && photoShotCount ? html`<span class="shot-photo-key">${photoShotCount} verified player photo${photoShotCount === 1 ? '' : 's'}</span>` : ''}
                 ${lastShotSeq !== null ? html`<span class="shot-latest-key"><i></i>Latest visible shot</span>` : ''}
               </div>
-              <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} ESPN publishes basket-relative shot coordinates; WNBACast preserves each location and rotates the away-team half onto the opposite basket for this full-court view.</p>
+              <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} ESPN publishes basket-relative shot coordinates; WNBACast preserves each location and rotates one attacking half onto the opposite basket for this vertical full-court view.</p>
             </div>
           </section>
 
-          <section class="card">
-            <div class="card-head"><span class="card-title">Game flow</span>${v.lead ? html`<span class="note">${v.lead.lead_changes} lead changes · ${v.lead.ties} ties</span>` : ''}</div>
+          <section class="card pbe-flow-card">
+            <div class="card-head pbe-flow-head">
+              <div>
+                <span class="eyebrow">PBECast live fact</span>
+                <span class="card-title">Game flow</span>
+              </div>
+              ${v.lead ? html`<span class="flow-current">${currentMarginLabel}</span>` : ''}
+            </div>
             <div class="card-body">
-              ${v.lead?.margin_timeline?.length ? raw(marginChart(v.lead.margin_timeline, { home: g.home, away: g.away, periods: Math.max(4, v.last?.period || 4) })) : html`<p class="note">Flow appears after the first score.</p>`}
-              ${v.lead ? html`<div class="tiles" style="margin-top:12px">
-                <div class="tile"><small>${g.away?.abbr} largest lead</small><b>${v.lead.largest_lead.away.margin}</b><span>${v.lead.largest_lead.away.at || '—'}</span></div>
-                <div class="tile"><small>${g.home?.abbr} largest lead</small><b>${v.lead.largest_lead.home.margin}</b><span>${v.lead.largest_lead.home.at || '—'}</span></div>
+              ${control ? html`
+                <section class="pbe-control" aria-label="PBE Control lead-time share">
+                  <div class="pbe-control-top">
+                    <div>
+                      <span class="pbe-control-name">PBE Control</span>
+                      <strong>${control.current === 'tied' ? 'EVEN' : control.current === 'home' ? g.home?.abbr : g.away?.abbr}</strong>
+                      <small>time-leading share through ${flowTime(control.elapsed_s)} played</small>
+                    </div>
+                    <div class="pbe-control-fact">
+                      <span>${g.away?.abbr}</span><b>${flowPct(control.pct.away)}</b>
+                      <span>Tied</span><b>${flowPct(control.pct.tied)}</b>
+                      <span>${g.home?.abbr}</span><b>${flowPct(control.pct.home)}</b>
+                    </div>
+                  </div>
+                  <div class="pbe-control-bar" role="img" aria-label="${g.away?.abbr} led ${flowPct(control.pct.away)}, tied ${flowPct(control.pct.tied)}, ${g.home?.abbr} led ${flowPct(control.pct.home)}">
+                    <span class="away" style="width:${control.pct.away}%"></span>
+                    <span class="tied" style="width:${control.pct.tied}%"></span>
+                    <span class="home" style="width:${control.pct.home}%"></span>
+                  </div>
+                  <div class="pbe-control-times">
+                    <span><i class="away"></i>${g.away?.abbr} led <b>${flowTime(control.seconds.away)}</b></span>
+                    <span><i class="tied"></i>Tied <b>${flowTime(control.seconds.tied)}</b></span>
+                    <span><i class="home"></i>${g.home?.abbr} led <b>${flowTime(control.seconds.home)}</b></span>
+                  </div>
+                </section>
+              ` : ''}
+              <div class="flow-facts">
+                <div><small>Current margin</small><b>${currentMarginLabel}</b></div>
+                <div><small>Lead changes</small><b>${v.lead?.lead_changes ?? 0}</b></div>
+                <div><small>Ties after tip</small><b>${v.lead?.ties ?? 0}</b></div>
+                <div><small>Current run</small><b>${v.runs?.current ? `${teamOf(v.runs.current.team_id)?.abbr} ${v.runs.current.points}-0` : '—'}</b></div>
+              </div>
+              <div class="flow-chart-wrap">
+                <div class="flow-chart-label"><span>Score-margin timeline</span><span class="note">home − away</span></div>
+                ${v.lead?.margin_timeline?.length ? raw(marginChart(v.lead.margin_timeline, {
+                  home: g.home,
+                  away: g.away,
+                  periods: Math.max(4, v.last?.period || 4),
+                  cursorS: v.last?.elapsed_s ?? null,
+                  height: 230
+                })) : html`<p class="note">Flow appears after the first score.</p>`}
+              </div>
+              ${v.lead ? html`<div class="flow-largest">
+                <div><small>${g.away?.abbr} largest lead</small><b>+${v.lead.largest_lead.away.margin}</b><span>${v.lead.largest_lead.away.at || '—'}</span></div>
+                <div><small>${g.home?.abbr} largest lead</small><b>+${v.lead.largest_lead.home.margin}</b><span>${v.lead.largest_lead.home.at || '—'}</span></div>
               </div>` : ''}
-              ${v.runs ? html`<div class="run-list" style="margin-top:14px">
-                <span class="card-title" style="margin-bottom:4px">Scoring runs</span>
-                ${v.runs.current ? html`<div class="run"><b style="color:${safeColor(teamOf(v.runs.current.team_id)?.color, 'var(--gold)')}">${v.runs.current.points}-0</b><span>${teamOf(v.runs.current.team_id)?.abbr} ${v.g.status?.state === 'in' ? 'current run' : v.atEnd ? 'closing run' : 'run at this point'}</span><span class="note">${v.runs.current.from} → ${v.runs.current.to}</span></div>` : ''}
+              ${v.runs ? html`<div class="run-list pbe-run-list">
+                <span class="card-title">Scoring runs</span>
                 ${Object.values(v.runs.largest).map((r) => html`<div class="run"><b>${r.points}-0</b><span>${teamOf(r.team_id)?.abbr} largest run</span><span class="note">${r.from} → ${r.to}</span></div>`)}
-              </div><p class="note" style="margin-top:8px">${v.runs.method}</p>` : ''}
+              </div>` : ''}
+              ${control ? html`<p class="note pbe-method">${control.method}</p>` : ''}
             </div>
           </section>
         </div>
