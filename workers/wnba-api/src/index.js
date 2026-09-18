@@ -430,7 +430,7 @@ async function loadSummary(env, ctx, id) {
   // Site summary remains the normal source. During a live game, fail over only when its play stream
   // contradicts the source-published score/box by a material amount. ESPN Core is an independent
   // representation of the same event ids and has been healthy from Cloudflare egress in canaries.
-  if (primary.game?.status?.state === 'in' && !primaryIntegrity.healthy) {
+  if (['in', 'post'].includes(primary.game?.status?.state) && !primaryIntegrity.healthy) {
     const core = await loadCorePlayCollection(ctx, id);
 
     if (core.items?.length) {
