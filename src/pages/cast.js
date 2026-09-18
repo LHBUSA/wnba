@@ -41,6 +41,7 @@ export async function mount(root, ctx) {
     playing: false,
     pbpFilter: 'all',
     pbpPeriod: 'all',
+    pbpCollapsed: false,
     pbpScroll: { top: 0, anchor: null, lastSeen: null },
     shotTeam: 'all',
     shotResult: 'all',
@@ -318,27 +319,46 @@ export async function mount(root, ctx) {
     const currentMargin = v.lead?.current_margin ?? 0;
     const marginTeam = currentMargin > 0 ? g.home : currentMargin < 0 ? g.away : null;
     const currentMarginLabel = marginTeam ? `${marginTeam.abbr} +${Math.abs(currentMargin)}` : 'Tied';
+    const latestPlay = v.evs.at(-1) || null;
+    const latestPlayTeam = latestPlay ? teamOf(latestPlay.team_id) : null;
 
     return html`
       <div class="cast-stack" style="margin-top:16px">
-        <section class="card">
-          <div class="card-head"><span class="card-title">Play-by-play</span><span class="note">${v.evs.length} events</span></div>
-          <div class="card-body" style="padding-bottom:8px"><div class="pbp-controls"><label class="pbp-select"><span class="sr-only">Show</span><select data-pbp-filter aria-label="Filter plays">${PBP_FILTERS.map(([k, l]) => html`<option value="${k}" ${state.pbpFilter === k ? 'selected' : ''}>${l}</option>`)}</select></label><label class="pbp-select"><span class="sr-only">Period</span><select data-pbp-period aria-label="Filter by period"><option value="all">All periods</option>${periodsSeen.map((n) => html`<option value="${n}" ${state.pbpPeriod === String(n) ? 'selected' : ''}>${periodName(n)}</option>`)}</select></label><button class="pbp-latest" type="button" data-pbp-latest hidden>Jump to latest ↑</button></div></div>
-          <div class="pbp" data-pbp-list role="log" aria-live="${g.status?.state === 'in' ? 'polite' : 'off'}">
-            ${plays.length ? plays.map((e) => {
-              const t = teamOf(e.team_id);
-              const isNew = state.newFrom !== null && e.seq > state.newFrom;
-              const emph = pbpEmphasis(e);
-              const tags = emph.filter((x) => EMPH[x]);
-              const nm = e.primary?.name && e.primary?.id && (e.text || '').startsWith(e.primary.name) ? e.primary : null;
-              return html`<div class="pbp-row ${e.scoring ? 'score' : ''} ${emph.join(' ')} ${isNew ? 'new' : ''}" data-seq="${e.seq}">
-                <span class="t">${periodName(e.period)} ${e.clock ?? ''}</span>
-                <span class="bar" style="background:${t ? safeColor(t.color, 'var(--ink-4)') : 'transparent'}"></span>
-                <span class="txt">${nm ? html`<a class="pbp-name" href="/players/${nm.id}">${nm.name}</a>${e.text.slice(nm.name.length)}` : e.text}${tags.length ? html` <span class="pbp-tag">${tags.map((x) => EMPH[x]).join(' · ')}</span>` : ''}</span>
-                <span class="s">${e.home_score !== null ? `${e.away_score}–${e.home_score}` : ''}</span>
-              </div>`;
-            }) : html`<p class="note" style="padding:14px">No events match this filter yet.</p>`}
+        <section class="card pbp-card ${state.pbpCollapsed ? 'is-collapsed' : ''}">
+          <div class="card-head">
+            <span class="card-title">Play-by-play</span>
+            <div class="pbp-head-actions">
+              <span class="note">${v.evs.length} events</span>
+              <button class="pbp-toggle" type="button" data-pbp-toggle aria-expanded="${state.pbpCollapsed ? 'false' : 'true'}">
+                ${state.pbpCollapsed ? 'Expand' : 'Collapse'} <span aria-hidden="true">${state.pbpCollapsed ? '↓' : '↑'}</span>
+              </button>
+            </div>
           </div>
+          ${state.pbpCollapsed ? html`
+            <button class="pbp-collapsed-summary" type="button" data-pbp-toggle aria-label="Expand play-by-play">
+              <span class="t">${latestPlay ? `${periodName(latestPlay.period)} ${latestPlay.clock ?? ''}` : 'Latest'}</span>
+              <span class="bar" style="background:${latestPlayTeam ? safeColor(latestPlayTeam.color, 'var(--ink-4)') : 'transparent'}"></span>
+              <span class="txt">${latestPlay?.text || 'No play-by-play event yet.'}</span>
+              <span class="s">${latestPlay?.home_score !== null && latestPlay?.home_score !== undefined ? `${latestPlay.away_score}–${latestPlay.home_score}` : ''}</span>
+            </button>
+          ` : html`
+            <div class="card-body" style="padding-bottom:8px"><div class="pbp-controls"><label class="pbp-select"><span class="sr-only">Show</span><select data-pbp-filter aria-label="Filter plays">${PBP_FILTERS.map(([k, l]) => html`<option value="${k}" ${state.pbpFilter === k ? 'selected' : ''}>${l}</option>`)}</select></label><label class="pbp-select"><span class="sr-only">Period</span><select data-pbp-period aria-label="Filter by period"><option value="all">All periods</option>${periodsSeen.map((n) => html`<option value="${n}" ${state.pbpPeriod === String(n) ? 'selected' : ''}>${periodName(n)}</option>`)}</select></label><button class="pbp-latest" type="button" data-pbp-latest hidden>Jump to latest ↑</button></div></div>
+            <div class="pbp" data-pbp-list role="log" aria-live="${g.status?.state === 'in' ? 'polite' : 'off'}">
+              ${plays.length ? plays.map((e) => {
+                const t = teamOf(e.team_id);
+                const isNew = state.newFrom !== null && e.seq > state.newFrom;
+                const emph = pbpEmphasis(e);
+                const tags = emph.filter((x) => EMPH[x]);
+                const nm = e.primary?.name && e.primary?.id && (e.text || '').startsWith(e.primary.name) ? e.primary : null;
+                return html`<div class="pbp-row ${e.scoring ? 'score' : ''} ${emph.join(' ')} ${isNew ? 'new' : ''}" data-seq="${e.seq}">
+                  <span class="t">${periodName(e.period)} ${e.clock ?? ''}</span>
+                  <span class="bar" style="background:${t ? safeColor(t.color, 'var(--ink-4)') : 'transparent'}"></span>
+                  <span class="txt">${nm ? html`<a class="pbp-name" href="/players/${nm.id}">${nm.name}</a>${e.text.slice(nm.name.length)}` : e.text}${tags.length ? html` <span class="pbp-tag">${tags.map((x) => EMPH[x]).join(' · ')}</span>` : ''}</span>
+                  <span class="s">${e.home_score !== null ? `${e.away_score}–${e.home_score}` : ''}</span>
+                </div>`;
+              }) : html`<p class="note" style="padding:14px">No events match this filter yet.</p>`}
+            </div>
+          `}
         </section>
 
         <div class="cast-stack-secondary">
@@ -377,7 +397,7 @@ export async function mount(root, ctx) {
                 <aside class="shot-tooltip" data-shot-tooltip hidden aria-live="polite">
                   <button class="shot-tooltip-close" type="button" data-shot-tip-close aria-label="Close shot details">×</button>
                   <span class="shot-tooltip-kicker" data-shot-tip-kicker></span>
-                  <strong data-shot-tip-player></strong>
+                  <a class="shot-tooltip-player" data-shot-tip-player-link></a>
                   <span class="shot-tooltip-meta" data-shot-tip-meta></span>
                   <p data-shot-tip-text></p>
                   <span class="shot-tooltip-score" data-shot-tip-score></span>
@@ -521,6 +541,11 @@ export async function mount(root, ctx) {
 
   // ------------------------------------------------------------ events
   function bind() {
+    $stage.querySelectorAll('[data-pbp-toggle]').forEach((b) => b.addEventListener('click', () => {
+      state.pbpCollapsed = !state.pbpCollapsed;
+      state.newFrom = null;
+      draw();
+    }));
     const fSel = $stage.querySelector('[data-pbp-filter]');
     if (fSel) fSel.addEventListener('change', () => { state.pbpFilter = fSel.value; state.newFrom = null; state.pbpScroll = { top: 0, anchor: null, lastSeen: null }; draw(); });
     const pSel = $stage.querySelector('[data-pbp-period]');
@@ -584,7 +609,7 @@ export async function mount(root, ctx) {
     const points = [...shell.querySelectorAll('[data-shot-point]')];
     const close = tip.querySelector('[data-shot-tip-close]');
     const kicker = tip.querySelector('[data-shot-tip-kicker]');
-    const player = tip.querySelector('[data-shot-tip-player]');
+    const playerLink = tip.querySelector('[data-shot-tip-player-link]');
     const meta = tip.querySelector('[data-shot-tip-meta]');
     const text = tip.querySelector('[data-shot-tip-text]');
     const score = tip.querySelector('[data-shot-tip-score]');
@@ -611,7 +636,9 @@ export async function mount(root, ctx) {
       if (!point) return;
       const d = point.dataset;
       kicker.textContent = [d.shotResult, d.shotType].filter(Boolean).join(' · ');
-      player.textContent = [d.shotPlayer, d.shotTeam].filter(Boolean).join(' · ') || 'Shot';
+      playerLink.textContent = [d.shotPlayer, d.shotTeam].filter(Boolean).join(' · ') || 'Shot';
+      if (d.shotPlayerHref) playerLink.setAttribute('href', d.shotPlayerHref);
+      else playerLink.removeAttribute('href');
       meta.textContent = [d.shotPeriod, d.shotClock].filter(Boolean).join(' · ');
       text.textContent = d.shotText || 'Play description unavailable.';
       score.textContent = d.shotScore ? `Score after play · ${d.shotScore}` : '';
@@ -637,14 +664,31 @@ export async function mount(root, ctx) {
       }
     };
 
+    const openPlayer = (point) => {
+      const href = point.dataset.shotPlayerHref;
+      if (!href) return false;
+      window.location.assign(href);
+      return true;
+    };
+
     for (const point of points) {
       point.addEventListener('mouseenter', () => show(point, { pinned: state.shotPinnedSeq === Number(point.dataset.shotSeq) }));
       point.addEventListener('mouseleave', () => hide());
       point.addEventListener('focus', () => show(point, { pinned: state.shotPinnedSeq === Number(point.dataset.shotSeq) }));
       point.addEventListener('blur', () => hide());
-      point.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); togglePin(point); });
+      point.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (point.classList.contains('has-photo') && openPlayer(point)) return;
+        togglePin(point);
+      });
       point.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePin(point); }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (point.classList.contains('has-photo') && openPlayer(point)) return;
+          togglePin(point);
+        }
+        if (e.key === ' ') { e.preventDefault(); togglePin(point); }
         if (e.key === 'Escape') { state.shotPinnedSeq = null; hide({ keepPinned: false }); point.blur(); }
       });
     }
