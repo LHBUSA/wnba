@@ -60,15 +60,15 @@ test('WNBACast client photo allowlist stays identical to the approved photo ledg
   if (rejected) assert.equal(approvedPlayerPhoto(rejected.espn_athlete_id), null);
 });
 
-test('WNBACast full court preserves basket-relative ESPN shot geometry on opposite ends', () => {
+test('WNBACast vertical full court preserves basket-relative ESPN shot geometry on opposite ends', () => {
   const homeShot = { x: 25, y: 0.25, team_id: s.game.home.team_id };
   const awayShot = { x: 25, y: 0.25, team_id: s.game.away.team_id };
   const h = fullCourtPoint(homeShot, { home: s.game.home, away: s.game.away });
   const a = fullCourtPoint(awayShot, { home: s.game.home, away: s.game.away });
-  assert.ok(Math.abs(h.x - 5.25) < 1e-9);
-  assert.ok(Math.abs(a.x - 88.75) < 1e-9);
-  assert.ok(Math.abs(h.y - 25) < 1e-9);
-  assert.ok(Math.abs(a.y - 25) < 1e-9);
+  assert.ok(Math.abs(h.x - 25) < 1e-9);
+  assert.ok(Math.abs(a.x - 25) < 1e-9);
+  assert.ok(Math.abs(h.y - 88.75) < 1e-9);
+  assert.ok(Math.abs(a.y - 5.25) < 1e-9);
   assert.equal(h.side, 'h');
   assert.equal(a.side, 'a');
 
@@ -76,11 +76,33 @@ test('WNBACast full court preserves basket-relative ESPN shot geometry on opposi
     { ...homeShot, seq: 1, made: true, points_attempted: 2, period: 1, clock: '9:00', text: 'Home makes', player: 'Home Player' },
     { ...awayShot, seq: 2, made: false, points_attempted: 2, period: 1, clock: '8:30', text: 'Away misses', player: 'Away Player' }
   ], { home: s.game.home, away: s.game.away });
-  assert.match(svg, /viewBox="-1 -1 96 52"/);
+  assert.match(svg, /viewBox="-1 -1 52 96"/);
   assert.match(svg, /class="c-team-label home"/);
   assert.match(svg, /class="c-team-label away"/);
-  assert.match(svg, /cx="5.25" cy="25"/);
-  assert.match(svg, /x1="88.15" y1="24.4"/);
+  assert.match(svg, /cx="25" cy="88.75"/);
+  assert.match(svg, /x1="24.4" y1="4.65"/);
+});
+
+test('PBECast Control is deterministic elapsed lead time from published score states', () => {
+  const plays = [
+    { seq: 1, elapsed_s: 60, home_score: 2, away_score: 0, period_label: 'Q1', clock: '9:00' },
+    { seq: 2, elapsed_s: 180, home_score: 2, away_score: 0, period_label: 'Q1', clock: '7:00' },
+    { seq: 3, elapsed_s: 240, home_score: 2, away_score: 2, period_label: 'Q1', clock: '6:00' },
+    { seq: 4, elapsed_s: 300, home_score: 2, away_score: 4, period_label: 'Q1', clock: '5:00' },
+    { seq: 5, elapsed_s: 360, home_score: 2, away_score: 4, period_label: 'Q1', clock: '4:00' }
+  ];
+  const lead = leadTracker(plays);
+  assert.equal(lead.current_margin, -2);
+  assert.equal(lead.pbe_control.elapsed_s, 360);
+  assert.deepEqual(lead.pbe_control.seconds, { away: 60, tied: 120, home: 180 });
+  assert.ok(Math.abs(lead.pbe_control.pct.away - 16.6666666667) < 1e-6);
+  assert.ok(Math.abs(lead.pbe_control.pct.tied - 33.3333333333) < 1e-6);
+  assert.ok(Math.abs(lead.pbe_control.pct.home - 50) < 1e-9);
+  assert.equal(lead.pbe_control.current, 'away');
+  assert.ok(Math.abs(
+    lead.pbe_control.pct.away + lead.pbe_control.pct.tied + lead.pbe_control.pct.home - 100
+  ) < 1e-9);
+  assert.match(lead.pbe_control.method, /no projection, odds or possession estimate/i);
 });
 
 test('WNBACast interactive court carries real play metadata and an accessible latest-shot target', () => {
@@ -103,8 +125,8 @@ test('WNBACast interactive court carries real play metadata and an accessible la
   assert.match(svg, /data-shot-player="[^"]+"/);
   assert.match(svg, /data-shot-text="[^"]+"/);
   assert.match(svg, /data-shot-score="\d+–\d+"/);
-  assert.match(svg, /Interactive full-court shot chart/);
-  assert.match(svg, /Home attacks the left basket; away attacks the right/);
+  assert.match(svg, /Interactive vertical full-court shot chart/);
+  assert.match(svg, /Away attacks the top basket; home attacks the bottom/);
 
   const photoPath = `/media/players/${made.athlete_id}/square.webp`;
   const photoSvg = courtSvg([{ ...made, photo: { square: photoPath } }], {
