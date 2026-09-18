@@ -70,14 +70,16 @@ export function leadTracker(plays) {
   for (const p of rows) {
     const margin = p.home_score - p.away_score;
     const sign = Math.sign(margin);
+    const isLeadChange = sign !== 0 && leader !== 0 && sign !== leader;
+    const isTie = sign === 0 && prevMargin !== 0;
     if (Number.isFinite(Number(p.elapsed_s))) {
       const t = Math.max(stateAt, Number(p.elapsed_s));
       addControl(t - stateAt, stateMargin);
       stateAt = t;
       stateMargin = margin;
     }
-    if (sign !== 0 && leader !== 0 && sign !== leader) leadChanges += 1;
-    if (sign === 0 && prevMargin !== 0) ties += 1;
+    if (isLeadChange) leadChanges += 1;
+    if (isTie) ties += 1;
     if (sign !== 0) leader = sign;
     if (margin > maxHome.margin) maxHome = { margin, seq: p.seq, at: `${p.period_label} ${p.clock}` };
     if (-margin > maxAway.margin) maxAway = { margin: -margin, seq: p.seq, at: `${p.period_label} ${p.clock}` };
@@ -92,7 +94,8 @@ export function leadTracker(plays) {
         text: p.text || '',
         team_id: p.team_id || null,
         scoring: Boolean(p.scoring),
-        lead_state: margin > 0 ? 'home' : margin < 0 ? 'away' : 'tied'
+        lead_state: margin > 0 ? 'home' : margin < 0 ? 'away' : 'tied',
+        transition: isLeadChange ? 'lead_change' : isTie ? 'tie' : 'score_change'
       }]);
     }
     prevMargin = margin;
