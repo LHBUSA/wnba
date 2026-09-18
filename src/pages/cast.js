@@ -325,7 +325,7 @@ export async function mount(root, ctx) {
             <div class="card-head shot-chart-head">
               <div>
                 <span class="card-title">Shot chart</span>
-                <span class="note shot-chart-hint">Hover, focus or tap a shot to inspect the play.</span>
+                <span class="note shot-chart-hint">Full court · hover, focus or tap a shot to inspect the play.</span>
               </div>
               <div class="shot-chart-controls" aria-label="Shot chart filters">
                 <div class="pill-row">
@@ -369,7 +369,7 @@ export async function mount(root, ctx) {
                 ${state.shotMarker === 'photos' && photoShotCount ? html`<span class="shot-photo-key">${photoShotCount} verified player photo${photoShotCount === 1 ? '' : 's'}</span>` : ''}
                 ${lastShotSeq !== null ? html`<span class="shot-latest-key"><i></i>Latest visible shot</span>` : ''}
               </div>
-              <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} Both teams are shown on one basket, as ESPN publishes them.</p>
+              <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} ESPN publishes basket-relative shot coordinates; WNBACast preserves each location and rotates the away-team half onto the opposite basket for this full-court view.</p>
             </div>
           </section>
 
