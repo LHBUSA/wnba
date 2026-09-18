@@ -1,0 +1,15 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "20260918150000_wbh_wnba_2024_final_eleven_evidence_v1.sql",
+  "reviewed_blob": "3c521769bd1048a40d4008401a33af35737b52ed",
+  "applied_at_utc": "2026-09-18T13:42:10.2381896Z",
+  "verification": {
+    "evidence_rows_total": 56,
+    "sep01_results": "te_chicago_sky_2024:loss te_minnesota_lynx_2024:win",
+    "sep01_points_null": 2,
+    "min_record": "30-10",
+    "chi_record": "13-27",
+    "games_missing_result": 0,
+    "fact_revisions": 4
+  }
+}
