@@ -88,7 +88,7 @@ export function marginChart(points, { home, away, cursorS = null, width = 720, h
     const aria = [period, m.clock, leader, score, m.text].filter(Boolean).join('. ');
     return `<rect x="${left}" y="${pad.t}" width="${Math.max(1, right - left)}" height="${H}" class="ch-hit-zone"
       role="button" tabindex="0" aria-label="${escapeChart(aria)}"
-      data-flow-point data-flow-x="${px}" data-flow-y="${py}" data-flow-time="${row.t}"
+      data-flow-point data-flow-seq="${escapeChart(m.seq ?? '')}" data-flow-x="${px}" data-flow-y="${py}" data-flow-time="${row.t}"
       data-flow-margin="${row.m}" data-flow-period="${escapeChart(period)}" data-flow-clock="${escapeChart(m.clock || '')}"
       data-flow-away-score="${awayScore}" data-flow-home-score="${homeScore}"
       data-flow-leader="${escapeChart(leader)}" data-flow-score="${escapeChart(score)}"
