@@ -44,6 +44,7 @@ export async function mount(root, ctx) {
     pbpCollapsed: false,
     pbpShowAll: false,
     pbpScroll: { top: 0, anchor: null, lastSeen: null },
+    flowPinnedSeq: null,
     shotTeam: 'all',
     shotResult: 'all',
     shotMarker: 'photos',
@@ -457,15 +458,25 @@ export async function mount(root, ctx) {
                 <div><small>Ties after tip</small><b>${v.lead?.ties ?? 0}</b></div>
                 <div><small>Current run</small><b>${v.runs?.current ? `${teamOf(v.runs.current.team_id)?.abbr} ${v.runs.current.points}-0` : '—'}</b></div>
               </div>
-              <div class="flow-chart-wrap">
-                <div class="flow-chart-label"><span>Score-margin timeline</span><span class="note">home − away</span></div>
-                ${v.lead?.margin_timeline?.length ? raw(marginChart(v.lead.margin_timeline, {
-                  home: g.home,
-                  away: g.away,
-                  periods: Math.max(4, v.last?.period || 4),
-                  cursorS: v.last?.elapsed_s ?? null,
-                  height: 230
-                })) : html`<p class="note">Flow appears after the first score.</p>`}
+              <div class="flow-chart-wrap" data-flow-wrap>
+                <div class="flow-chart-label"><span>Score-margin timeline</span><span class="note">hover/tap for score + play detail</span></div>
+                ${v.lead?.margin_timeline?.length ? html`
+                  ${raw(marginChart(v.lead.margin_timeline, {
+                    home: g.home,
+                    away: g.away,
+                    periods: Math.max(4, v.last?.period || 4),
+                    cursorS: v.last?.elapsed_s ?? null,
+                    height: 246
+                  }))}
+                  <aside class="flow-tooltip" data-flow-tooltip hidden aria-live="polite">
+                    <button class="flow-tooltip-close" type="button" data-flow-tip-close aria-label="Close flow details">×</button>
+                    <span class="flow-tooltip-kicker" data-flow-tip-kicker></span>
+                    <strong data-flow-tip-leader></strong>
+                    <span class="flow-tooltip-score" data-flow-tip-score></span>
+                    <p data-flow-tip-text></p>
+                    <span class="flow-tooltip-time" data-flow-tip-time></span>
+                  </aside>
+                ` : html`<p class="note">Flow appears after the first score.</p>`}
               </div>
               ${v.lead ? html`<div class="flow-largest">
                 <div><small>${g.away?.abbr} largest lead</small><b>+${v.lead.largest_lead.away.margin}</b><span>${v.lead.largest_lead.away.at || '—'}</span></div>
@@ -601,6 +612,7 @@ export async function mount(root, ctx) {
       draw();
     }));
     bindShotChart();
+    bindFlowChart();
     $stage.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { state.tab = b.dataset.tab; state.newFrom = null; draw(); }));
     const sel = $stage.querySelector('[data-prog]');
     if (sel) sel.addEventListener('change', () => { state.progPlayer = sel.value; draw(); });
@@ -611,6 +623,116 @@ export async function mount(root, ctx) {
     const restart = $stage.querySelector('[data-restart]');
     if (restart) restart.addEventListener('click', () => { state.cursor = 0; startPlay(); draw(); });
   }
+  function bindFlowChart() {
+    const wrap = $stage.querySelector('[data-flow-wrap]');
+    const svg = wrap?.querySelector('.margin-chart');
+    const tip = wrap?.querySelector('[data-flow-tooltip]');
+    if (!wrap || !svg || !tip) return;
+
+    const points = [...svg.querySelectorAll('[data-flow-point]')];
+    const hoverLine = svg.querySelector('[data-flow-hover-line]');
+    const hoverDot = svg.querySelector('[data-flow-hover-dot]');
+    const kicker = tip.querySelector('[data-flow-tip-kicker]');
+    const leader = tip.querySelector('[data-flow-tip-leader]');
+    const score = tip.querySelector('[data-flow-tip-score]');
+    const text = tip.querySelector('[data-flow-tip-text]');
+    const time = tip.querySelector('[data-flow-tip-time]');
+    const close = tip.querySelector('[data-flow-tip-close]');
+
+    const pinnedPoint = () => points.find((p) => String(p.dataset.flowSeq) === String(state.flowPinnedSeq));
+    const place = (point) => {
+      const wr = wrap.getBoundingClientRect();
+      const sr = svg.getBoundingClientRect();
+      const vb = svg.viewBox.baseVal;
+      const x = Number(point.dataset.flowX || 0);
+      const y = Number(point.dataset.flowY || 0);
+      const px = sr.left - wr.left + (x / vb.width) * sr.width;
+      const py = sr.top - wr.top + (y / vb.height) * sr.height;
+      tip.hidden = false;
+      tip.style.visibility = 'hidden';
+      tip.style.left = '0px';
+      tip.style.top = '0px';
+      const tw = tip.offsetWidth || 280;
+      const th = tip.offsetHeight || 130;
+      const left = Math.max(tw / 2 + 8, Math.min(wrap.clientWidth - tw / 2 - 8, px));
+      const above = py - th - 16 >= 32;
+      tip.style.left = `${left}px`;
+      tip.style.top = `${above ? py - th - 12 : py + 14}px`;
+      tip.style.visibility = '';
+    };
+
+    const show = (point, { pinned = false } = {}) => {
+      if (!point) return;
+      const d = point.dataset;
+      const transition = d.flowTransition === 'lead_change'
+        ? 'Lead change'
+        : d.flowTransition === 'tie'
+          ? 'Game tied'
+          : 'Score change';
+      kicker.textContent = [transition, d.flowPeriod, d.flowClock].filter(Boolean).join(' · ');
+      leader.textContent = d.flowLeader || 'Tied';
+      score.textContent = d.flowScore || '';
+      text.textContent = d.flowText || 'Score changed on this play.';
+      time.textContent = `${flowTime(d.flowTime)} elapsed`;
+      tip.dataset.pinned = pinned ? 'true' : 'false';
+
+      if (hoverLine) {
+        hoverLine.setAttribute('x1', d.flowX || '0');
+        hoverLine.setAttribute('x2', d.flowX || '0');
+        hoverLine.classList.add('is-active');
+      }
+      if (hoverDot) {
+        hoverDot.setAttribute('cx', d.flowX || '0');
+        hoverDot.setAttribute('cy', d.flowY || '0');
+        hoverDot.classList.add('is-active');
+      }
+      place(point);
+    };
+
+    const hide = ({ keepPinned = true } = {}) => {
+      const pinned = keepPinned ? pinnedPoint() : null;
+      if (pinned) return show(pinned, { pinned: true });
+      tip.hidden = true;
+      tip.dataset.pinned = 'false';
+      hoverLine?.classList.remove('is-active');
+      hoverDot?.classList.remove('is-active');
+    };
+
+    const toggle = (point) => {
+      const seq = point.dataset.flowSeq || null;
+      if (seq && String(state.flowPinnedSeq) === String(seq)) {
+        state.flowPinnedSeq = null;
+        hide({ keepPinned: false });
+      } else {
+        state.flowPinnedSeq = seq;
+        show(point, { pinned: true });
+      }
+    };
+
+    for (const point of points) {
+      point.addEventListener('mouseenter', () => show(point, { pinned: String(state.flowPinnedSeq) === String(point.dataset.flowSeq) }));
+      point.addEventListener('mouseleave', () => hide());
+      point.addEventListener('focus', () => show(point, { pinned: String(state.flowPinnedSeq) === String(point.dataset.flowSeq) }));
+      point.addEventListener('blur', () => hide());
+      point.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggle(point); });
+      point.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(point); }
+        if (e.key === 'Escape') { state.flowPinnedSeq = null; hide({ keepPinned: false }); point.blur(); }
+      });
+    }
+
+    close?.addEventListener('click', () => { state.flowPinnedSeq = null; hide({ keepPinned: false }); });
+    wrap.addEventListener('click', (e) => {
+      if (!e.target.closest('[data-flow-point]') && !e.target.closest('[data-flow-tooltip]')) {
+        state.flowPinnedSeq = null;
+        hide({ keepPinned: false });
+      }
+    });
+
+    const pinned = pinnedPoint();
+    if (pinned) show(pinned, { pinned: true });
+  }
+
   function bindShotChart() {
     const shell = $stage.querySelector('[data-court-shell]');
     const tip = shell?.querySelector('[data-shot-tooltip]');
