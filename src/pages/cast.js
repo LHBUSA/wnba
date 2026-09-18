@@ -37,6 +37,7 @@ export async function mount(root, ctx) {
     pbpScroll: { top: 0, anchor: null, lastSeen: null },
     shotTeam: 'all',
     shotResult: 'all',
+    shotMarker: 'photos',
     shotPinnedSeq: null,
     animateShotSeq: null,
     tab: 'box',
@@ -277,11 +278,17 @@ export async function mount(root, ctx) {
       return true;
     }).slice(0, 400);
     const periodsSeen = [...new Set(v.evs.map((e) => e.period).filter(Number.isFinite))];
-    const shots = v.shots.shots.filter((s) =>
-      (state.shotTeam === 'all' || s.team_id === state.shotTeam)
-      && (state.shotResult === 'all' || (state.shotResult === 'made' ? s.made === true : s.made === false))
-    );
+    const photoById = new Map((d.box?.players || [])
+      .filter((p) => p.athlete_id && p.photo?.square)
+      .map((p) => [String(p.athlete_id), p.photo]));
+    const shots = v.shots.shots
+      .map((s) => ({ ...s, photo: photoById.get(String(s.athlete_id)) || null }))
+      .filter((s) =>
+        (state.shotTeam === 'all' || s.team_id === state.shotTeam)
+        && (state.shotResult === 'all' || (state.shotResult === 'made' ? s.made === true : s.made === false))
+      );
     const lastShotSeq = shots.at(-1)?.seq ?? null;
+    const photoShotCount = shots.filter((s) => s.photo?.square).length;
     const madeBy = (tid) => {
       const xs = v.shots.shots.filter((s) => s.team_id === tid);
       return { m: xs.filter((s) => s.made).length, a: xs.length };
@@ -329,6 +336,10 @@ export async function mount(root, ctx) {
                   <button class="pill" type="button" data-shot-result="made" aria-pressed="${state.shotResult === 'made'}">Makes</button>
                   <button class="pill" type="button" data-shot-result="missed" aria-pressed="${state.shotResult === 'missed'}">Misses</button>
                 </div>
+                <div class="pill-row shot-marker-row" aria-label="Shot marker style">
+                  <button class="pill" type="button" data-shot-marker="photos" aria-pressed="${state.shotMarker === 'photos'}">Player photos</button>
+                  <button class="pill" type="button" data-shot-marker="classic" aria-pressed="${state.shotMarker === 'classic'}">Classic</button>
+                </div>
               </div>
             </div>
             <div class="card-body">
@@ -337,7 +348,8 @@ export async function mount(root, ctx) {
                   home: g.home,
                   away: g.away,
                   highlightSeq: lastShotSeq,
-                  animateSeq: state.animateShotSeq
+                  animateSeq: state.animateShotSeq,
+                  photoMode: state.shotMarker === 'photos'
                 }))}</div>
                 <aside class="shot-tooltip" data-shot-tooltip hidden aria-live="polite">
                   <button class="shot-tooltip-close" type="button" data-shot-tip-close aria-label="Close shot details">×</button>
@@ -351,7 +363,8 @@ export async function mount(root, ctx) {
               <div class="legend shot-chart-legend" style="margin-top:10px">
                 <span><i style="background:var(--away)"></i>${g.away?.abbr} ${aa.m}/${aa.a}</span>
                 <span><i style="background:var(--home)"></i>${g.home?.abbr} ${ha.m}/${ha.a}</span>
-                <span>● made · ✕ missed</span>
+                <span>${state.shotMarker === 'photos' ? '◎ bright = made · ◌ dim/X = missed' : '● made · ✕ missed'}</span>
+                ${state.shotMarker === 'photos' && photoShotCount ? html`<span class="shot-photo-key">${photoShotCount} verified player photo${photoShotCount === 1 ? '' : 's'}</span>` : ''}
                 ${lastShotSeq !== null ? html`<span class="shot-latest-key"><i></i>Latest visible shot</span>` : ''}
               </div>
               <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} Both teams are shown on one basket, as ESPN publishes them.</p>
@@ -475,6 +488,12 @@ export async function mount(root, ctx) {
       state.shotPinnedSeq = null;
       state.animateShotSeq = null;
       state.newFrom = null;
+      draw();
+    }));
+    $stage.querySelectorAll('[data-shot-marker]').forEach((b) => b.addEventListener('click', () => {
+      state.shotMarker = b.dataset.shotMarker;
+      state.shotPinnedSeq = null;
+      state.animateShotSeq = null;
       draw();
     }));
     bindShotChart();
