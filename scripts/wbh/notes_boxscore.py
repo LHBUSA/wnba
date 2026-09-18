@@ -70,6 +70,24 @@ LAYOUTS = {
         "date_pattern": r"^\d{1,2}/\d{1,2}$",
         "minutes": "mmss",
     },
+    # Phoenix Mercury 2024 game notes: one player per page, mm:ss minutes, separate made and
+    # attempted columns, a started flag, a real plus/minus column and the final score of each game.
+    "mercury_2024": {
+        "family": "D",
+        "player_heading": r"^#?(?P<number>\d+)?\s*(?P<name>[A-Z][A-Za-z .'’\-]+)$",
+        "required_headers": ["DATE", "OPP", "MIN", "PTS"],
+        "columns": {
+            "DATE": "date", "OPP": "opponent", "P/S": "start_flag", "MIN": "minutes_mmss",
+            "FG": "fgm", "FGA": "fga", "FG%": "ignore",
+            "3PM": "fg3m", "3PA": "fg3a", "3P%": "ignore",
+            "FT": "ftm", "FTA": "fta", "FT%": "ignore",
+            "OR": "oreb", "DR": "dreb", "TOT": "reb", "A": "ast", "ST": "stl", "BS": "blk",
+            "TO": "tov", "PF": "pf", "+/-": "plus_minus", "PTS": "pts",
+            "W/L": "ignore", "SCORE": "team_score_pair",
+        },
+        "date_pattern": r"^\d{2}/\d{2}/\d{2}$",
+        "minutes": "mmss",
+    },
 }
 
 DNP_PATTERN = re.compile(r"\bD\s*NP\b|\bDNP\b|did not play", re.I)
@@ -227,9 +245,16 @@ def parse_minutes(text, mode):
 def parse_date(text, season_year, pattern):
     if text is None or not re.fullmatch(pattern, text):
         return None
-    month, day = re.split(r"[./]", text)
+    parts = re.split(r"[./]", text)
+    month, day = parts[0], parts[1]
+    year = season_year
+    if len(parts) > 2:                       # layouts that print the year, e.g. 05/14/24
+        year = int(parts[2])
+        year += 2000 if year < 100 else 0
+        if year != season_year:
+            return None                      # a row from another season is not this season's row
     try:
-        return dt.date(season_year, int(month), int(day)).isoformat()
+        return dt.date(year, int(month), int(day)).isoformat()
     except ValueError:
         return None
 
@@ -317,14 +342,23 @@ def extract_player_rows(page, spec, season_year):
         gs_flag = one(cells, "gs_flag")
         if gs_flag is not None:
             started = gs_flag.strip() not in ("", "-")
+        start_flag = one(cells, "start_flag")
+        if start_flag is not None:
+            started = start_flag.strip().upper() == "S"
         rec["started"] = started
 
         minutes_field = "minutes_int" if spec["minutes"] == "int" else "minutes_mmss"
         rec["seconds_played"] = parse_minutes(one(cells, minutes_field), spec["minutes"])
 
-        fgm, fga = parse_made_attempted(one(cells, "fg"))
-        f3m, f3a = parse_made_attempted(one(cells, "fg3"))
-        ftm, fta = parse_made_attempted(one(cells, "ft"))
+        # a layout prints shooting either combined ("4-8") or as separate made and attempted columns
+        if "fg" in spec["columns"].values():
+            fgm, fga = parse_made_attempted(one(cells, "fg"))
+            f3m, f3a = parse_made_attempted(one(cells, "fg3"))
+            ftm, fta = parse_made_attempted(one(cells, "ft"))
+        else:
+            fgm, fga = parse_int(one(cells, "fgm")), parse_int(one(cells, "fga"))
+            f3m, f3a = parse_int(one(cells, "fg3m")), parse_int(one(cells, "fg3a"))
+            ftm, fta = parse_int(one(cells, "ftm")), parse_int(one(cells, "fta"))
         rec.update({
             "field_goals_made": fgm, "field_goals_attempted": fga,
             "three_pointers_made": f3m, "three_pointers_attempted": f3a,
@@ -338,9 +372,19 @@ def extract_player_rows(page, spec, season_year):
             "turnovers": parse_int(one(cells, "tov")),
             "personal_fouls": parse_int(one(cells, "pf")),
             "points": parse_int(one(cells, "pts")),
-            # the notes print no plus/minus; unknown stays unknown
-            "plus_minus": None,
+            # only populated by layouts that actually print it; unknown stays unknown
+            "plus_minus": parse_int(one(cells, "plus_minus")),
         })
+        # An early-season document prints every date on the schedule, including games not yet played,
+        # as a row of dashes. That is the source saying nothing, not a player appearing and scoring
+        # nothing, so it produces no stat row at all.
+        if all(rec.get(f) is None for f in
+               ("seconds_played", "points", "field_goals_made", "field_goals_attempted",
+                "three_pointers_made", "free_throws_made", "rebounds", "assists")):
+            rec["status"] = "no_data"
+            out_rows.append(rec)
+            continue
+
         rec["status"], rec["hold_reasons"] = validate_row(rec)
         out_rows.append(rec)
 
@@ -427,7 +471,8 @@ def extract(pdf_path: Path, layout_key: str, url: str, team: str, season_year: i
             counts[r["status"]] += 1
     artifact["summary"] = {"players": len(artifact["players"]), "rows": sum(counts.values()),
                            "ok": counts["ok"], "held": counts["hold"], "dnp": counts["dnp"],
-                           "nonparticipation": counts["nonparticipation"]}
+                           "nonparticipation": counts["nonparticipation"],
+                           "no_data": counts["no_data"]}
     return artifact
 
 

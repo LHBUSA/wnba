@@ -37,10 +37,16 @@ def lit(v):
     return "'" + str(v).replace("'", "''") + "'"
 
 
-def build(assembled, dataset, only_games=None, exclude_games=None):
+def build(assembled, dataset, only_games=None, exclude_games=None, exclude_pairs=None):
+    """exclude_pairs holds "game_id|team_edition_id" values already canonical in the database.
+
+    A loaded team-game reconciled exactly when it was written, so re-deriving it from a wider set of
+    documents could only try to add players it has no room for. Those pairs are skipped rather than
+    merged, and the wider evidence goes to team-games that are still missing."""
     entries = [e for e in assembled["team_games"]
                if (not only_games or e["game_id"] in only_games)
-               and (not exclude_games or e["game_id"] not in exclude_games)]
+               and (not exclude_games or e["game_id"] not in exclude_games)
+               and (not exclude_pairs or f"{e['game_id']}|{e['team_edition_id']}" not in exclude_pairs)]
     if not entries:
         raise SystemExit("no validated team-games selected")
     docs = {}
@@ -196,10 +202,19 @@ def main():
     ap.add_argument("--only-game", action="append")
     ap.add_argument("--exclude-game", action="append",
                     help="skip a game already loaded by an earlier migration")
+    ap.add_argument("--exclude-pairs", help="JSON file of game_id|team_edition_id already loaded")
     a = ap.parse_args()
     assembled = json.loads(Path(a.assembled).read_text(encoding="utf-8"))
+    pairs = None
+    if a.exclude_pairs:
+        raw = json.loads(Path(a.exclude_pairs).read_text(encoding="utf-8"))
+        if isinstance(raw, list):
+            raw = raw[0]
+        if isinstance(raw, dict):
+            raw = raw.get("pairs")
+        pairs = set(raw or [])
     sql, stats = build(assembled, a.dataset, set(a.only_game or []) or None,
-                       set(a.exclude_game or []) or None)
+                       set(a.exclude_game or []) or None, pairs)
     Path(a.out).write_text(sql, encoding="utf-8")
     print(json.dumps(stats))
 

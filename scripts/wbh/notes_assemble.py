@@ -158,7 +158,7 @@ def assemble(artifacts, teams, games, roster, persons_by_name=None, allow_league
         })
         for player in art["players"]:
             for row in player["rows"]:
-                if row["status"] == "nonparticipation":
+                if row["status"] in ("nonparticipation", "no_data"):
                     continue
                 game, why = resolve_game(row["date"], team_edition_id, row["opponent_code"],
                                          row["home_away"], teams, games)
