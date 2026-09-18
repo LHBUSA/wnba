@@ -87,7 +87,7 @@ export async function mount(root, ctx) {
 
   function railItem(g) {
     const st = gameState(g);
-    return html`<a href="/cast/${g.game_id}" aria-current="${g.game_id === state.gameId ? 'true' : 'false'}">
+    return html`<a href="/cast/${g.game_id}" data-cast-game="${g.game_id}" aria-current="${g.game_id === state.gameId ? 'true' : 'false'}">
       <div class="r-top"><span>${st.key === 'sched' ? fmtDateET(g.start_utc, { month: 'short', day: 'numeric' }) : st.label}</span><span>${st.key === 'sched' ? fmtTimeET(g.start_utc) : fmtDateET(g.start_utc, { month: 'short', day: 'numeric' })}</span></div>
       <div class="r-row"><span style="display:inline-flex;gap:6px;align-items:center">${teamLogo(g.away, 16)}${g.away?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.away?.score ?? ''}</span></div>
       <div class="r-row"><span style="display:inline-flex;gap:6px;align-items:center">${teamLogo(g.home, 16)}${g.home?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.home?.score ?? ''}</span></div>
@@ -100,15 +100,34 @@ export async function mount(root, ctx) {
     state.rail = { live, upcoming: upcoming.slice(0, 10), finals: finals.slice(0, 24) };
   }
 
-  function patchRailGame(game) {
+  const RAIL_GROUPS = ['live', 'upcoming', 'finals'];
+  const phaseRank = (s) => s === 'pre' ? 0 : s === 'in' ? 1 : s === 'post' ? 2 : -1;
+
+  function patchRailGame(game, { allowForwardTransition = false } = {}) {
     if (!game?.game_id) return;
-    const all = [...(state.rail.live || []), ...(state.rail.upcoming || []), ...(state.rail.finals || [])]
-      .filter((g) => g.game_id !== game.game_id);
+    for (const group of RAIL_GROUPS) {
+      const idx = (state.rail[group] || []).findIndex((g) => g.game_id === game.game_id);
+      if (idx < 0) continue;
+      const prev = state.rail[group][idx];
+      const advanced = phaseRank(game.status?.state) > phaseRank(prev.status?.state);
+      if (allowForwardTransition && advanced) {
+        const all = RAIL_GROUPS.flatMap((k) => state.rail[k] || [])
+          .filter((g) => g.game_id !== game.game_id);
+        all.push(game);
+        setRailGames(all);
+        return;
+      }
+      const next = [...state.rail[group]];
+      next[idx] = game;
+      state.rail = { ...state.rail, [group]: next };
+      return;
+    }
+    const all = RAIL_GROUPS.flatMap((k) => state.rail[k] || []);
     all.push(game);
     setRailGames(all);
   }
 
-  let lastRailRefreshAt = 0;
+  let lastRailRefreshAt = Date.now();
   async function refreshRailLive() {
     if (Date.now() - lastRailRefreshAt < 15000) return;
     lastRailRefreshAt = Date.now();
@@ -116,12 +135,7 @@ export async function mount(root, ctx) {
     if (!ctx.isCurrent() || !r.ok) return;
     const fresh = [...(r.data?.slate?.games || []), ...(r.data?.last_results?.games || [])];
     if (!fresh.length) return;
-    const byId = new Map(
-      [...(state.rail.live || []), ...(state.rail.upcoming || []), ...(state.rail.finals || [])]
-        .map((g) => [g.game_id, g])
-    );
-    for (const g of fresh) byId.set(g.game_id, g);
-    setRailGames([...byId.values()]);
+    for (const g of fresh) patchRailGame(g, { allowForwardTransition: true });
     renderRail();
   }
 
@@ -142,14 +156,56 @@ export async function mount(root, ctx) {
     }
   }
 
+  function resetForGame(gameId) {
+    stopPlay();
+    state.gameId = gameId;
+    state.data = null;
+    state.meta = null;
+    state.events = [];
+    state.cursor = null;
+    state.newFrom = null;
+    state.animateShotSeq = null;
+    state.flowPinnedSeq = null;
+    state.shotPinnedSeq = null;
+    state.progPlayer = null;
+    state.pbpScroll = { top: 0, anchor: null, lastSeen: null };
+  }
+
+  $rail.addEventListener('click', (e) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest('a[data-cast-game]');
+    if (!a) return;
+    const gameId = a.dataset.castGame;
+    if (!gameId || gameId === state.gameId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const href = a.getAttribute('href') || `/cast/${gameId}`;
+    history.pushState({}, '', href);
+    resetForGame(gameId);
+    renderRail();
+    render($stage, html`${skeleton(160)}${skeleton(420)}`);
+    loadGameArticles(gameId);
+    poller?.setInterval(8000);
+    load();
+  });
+
   let gameArticles = null;
-  api.articles({ game: state.gameId, limit: 4 }).then((r) => { gameArticles = r.ok ? r.data.items : []; if (state.data && ctx.isCurrent()) draw(); });
+  function loadGameArticles(gameId) {
+    gameArticles = null;
+    api.articles({ game: gameId, limit: 4 }).then((r) => {
+      if (!ctx.isCurrent() || gameId !== state.gameId) return;
+      gameArticles = r.ok ? r.data.items : [];
+      if (state.data) draw();
+    });
+  }
+  loadGameArticles(state.gameId);
 
   // ------------------------------------------------------------ data
   async function load() {
+    const requestedGameId = state.gameId;
     const since = state.data?.game?.status?.state === 'in' && state.events.length ? state.events.at(-1).seq : undefined;
-    const res = await api.live(state.gameId, since, { fresh: true });
-    if (!ctx.isCurrent()) return;
+    const res = await api.live(requestedGameId, since, { fresh: true });
+    if (!ctx.isCurrent() || requestedGameId !== state.gameId) return;
     if (!res.ok) {
       if (!state.data) render($stage, errorState(res, 'This game'));
       else state.meta = { ...(state.meta || {}), freshness: 'STALE' };
