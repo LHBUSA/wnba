@@ -19,21 +19,22 @@ const ARC_R = 22.146;
 const CORNER_X = 3;
 const ARC_JOIN_Y = SOURCE_RIM.y + Math.sqrt(ARC_R ** 2 - (SOURCE_RIM.x - CORNER_X) ** 2);
 
-// Source half-court -> left attacking half.
-// x' = source distance from baseline; y' = source lateral position.
-const LEFT_TX = `matrix(0 1 1 0 ${-SOURCE_BASE_Y} 0)`;
-// Same source half-court rotated 180° onto the right basket.
-const RIGHT_TX = `matrix(0 -1 -1 0 ${COURT_L + SOURCE_BASE_Y} ${COURT_W})`;
+// Source half-court -> top attacking half. ESPN x remains court width;
+// basket-relative y becomes distance down from the top baseline.
+const TOP_TX = `matrix(1 0 0 1 0 ${-SOURCE_BASE_Y})`;
+// Same source half-court rotated 180° onto the bottom basket.
+const BOTTOM_TX = `matrix(-1 0 0 -1 ${COURT_W} ${COURT_L + SOURCE_BASE_Y})`;
 
 export function fullCourtPoint(shot, { home, away } = {}) {
   if (!Number.isFinite(shot?.x) || !Number.isFinite(shot?.y)) return null;
   const side = shot.team_id === home?.team_id ? 'h' : shot.team_id === away?.team_id ? 'a' : 'n';
   const distanceFromBaseline = shot.y - SOURCE_BASE_Y;
-  if (side === 'a') {
-    return { x: COURT_L - distanceFromBaseline, y: COURT_W - shot.x, side };
+  if (side === 'h') {
+    return { x: COURT_W - shot.x, y: COURT_L - distanceFromBaseline, side };
   }
-  // Unknown-team shots stay on the left source half rather than being guessed onto an end.
-  return { x: distanceFromBaseline, y: shot.x, side };
+  // Away attacks the top basket. Unknown-team shots stay on the top source half
+  // rather than being guessed onto the home end.
+  return { x: shot.x, y: distanceFromBaseline, side };
 }
 
 function halfCourtGeometry() {
@@ -51,21 +52,21 @@ function halfCourtGeometry() {
 }
 
 export function courtSvg(shots = [], { home, away, highlightSeq = null, animateSeq = null, photoMode = false, cls = '' } = {}) {
-  const grain = Array.from({ length: 18 }, (_, i) => {
+  const grain = Array.from({ length: 10 }, (_, i) => {
     const x = 5 * (i + 1);
-    return `<line x1="${x}" y1="0" x2="${x}" y2="${COURT_W}" class="c-grain"/>`;
+    return `<line x1="${x}" y1="0" x2="${x}" y2="${COURT_L}" class="c-grain"/>`;
   }).join('');
   const half = halfCourtGeometry();
   const lines = `
-    <rect x="0" y="0" width="${COURT_L}" height="${COURT_W}" class="c-floor"/>
+    <rect x="0" y="0" width="${COURT_W}" height="${COURT_L}" class="c-floor"/>
     <g aria-hidden="true">${grain}</g>
-    <g transform="${LEFT_TX}">${half}</g>
-    <g transform="${RIGHT_TX}">${half}</g>
-    <line x1="${MID_X}" y1="0" x2="${MID_X}" y2="${COURT_W}" class="c-line c-mid"/>
-    <circle cx="${MID_X}" cy="${COURT_W / 2}" r="6" class="c-line c-center"/>
-    <rect x="0" y="0" width="${COURT_L}" height="${COURT_W}" class="c-edge"/>
-    <text x="8" y="4.4" class="c-team-label home">${escapeXml(home?.abbr || 'HOME')}</text>
-    <text x="${COURT_L - 8}" y="${COURT_W - 3.2}" text-anchor="end" class="c-team-label away">${escapeXml(away?.abbr || 'AWAY')}</text>
+    <g transform="${TOP_TX}">${half}</g>
+    <g transform="${BOTTOM_TX}">${half}</g>
+    <line x1="0" y1="${MID_X}" x2="${COURT_W}" y2="${MID_X}" class="c-line c-mid"/>
+    <circle cx="${COURT_W / 2}" cy="${MID_X}" r="6" class="c-line c-center"/>
+    <rect x="0" y="0" width="${COURT_W}" height="${COURT_L}" class="c-edge"/>
+    <text x="4" y="9" class="c-team-label away">${escapeXml(away?.abbr || 'AWAY')}</text>
+    <text x="${COURT_W - 4}" y="${COURT_L - 7}" text-anchor="end" class="c-team-label home">${escapeXml(home?.abbr || 'HOME')}</text>
   `;
 
   const marks = shots
@@ -118,8 +119,8 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
     })
     .join('');
 
-  return `<svg class="court full-court ${cls}" viewBox="-1 -1 ${COURT_L + 2} ${COURT_W + 2}" role="group"
-    aria-label="Interactive full-court shot chart. Home attacks the left basket; away attacks the right. Hover, focus, or tap a shot for the play.">
+  return `<svg class="court full-court ${cls}" viewBox="-1 -1 ${COURT_W + 2} ${COURT_L + 2}" role="group"
+    aria-label="Interactive vertical full-court shot chart. Away attacks the top basket; home attacks the bottom. Hover, focus, or tap a shot for the play.">
     <g class="c-lines">${lines}</g><g class="court-shots">${marks}</g>
   </svg>`;
 }
