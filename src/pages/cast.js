@@ -5,6 +5,7 @@
 
 import { html, render, raw, esc } from '../lib/dom.js';
 import { api } from '../data/api.js';
+import { approvedPlayerPhoto } from '../data/player-photo-map.js';
 import { createPoller } from '../lib/poller.js';
 import { gameState, badge, sourceLine, empty, errorState, skeleton, avatar, safeColor, teamDot, periodName, startFreshTicker } from '../ui/components.js';
 import { courtSvg } from '../ui/court.js';
@@ -279,8 +280,9 @@ export async function mount(root, ctx) {
     }).slice(0, 400);
     const periodsSeen = [...new Set(v.evs.map((e) => e.period).filter(Number.isFinite))];
     const photoById = new Map((d.box?.players || [])
-      .filter((p) => p.athlete_id && p.photo?.square)
-      .map((p) => [String(p.athlete_id), p.photo]));
+      .filter((p) => p.athlete_id)
+      .map((p) => [String(p.athlete_id), p.photo?.square ? p.photo : approvedPlayerPhoto(p.athlete_id)])
+      .filter(([, photo]) => photo?.square));
     const shots = v.shots.shots
       .map((s) => ({ ...s, photo: photoById.get(String(s.athlete_id)) || null }))
       .filter((s) =>
