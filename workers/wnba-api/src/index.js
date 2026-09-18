@@ -35,7 +35,7 @@ import { resolveAccount } from './account.js';
 import { pbeStatus, pbeCoverage, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 
 const SERVICE = 'wnba-api';
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 
 // Freshness windows (seconds). Live data is short; season aggregates are long.
 const TTL = {
