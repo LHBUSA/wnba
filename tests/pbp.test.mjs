@@ -11,6 +11,7 @@ import { semanticPlays, semanticPlay, resolversFromSummary, pbpQuality, describe
 import { normalizePlays, normalizeSummary as normalizeIntlSummary } from '../workers/wnba-international/src/normalize.js';
 import { normalizeSummary } from '../workers/shared/espn.js';
 import { pbpFeed, pbpEmphasis } from '../src/ui/pbp.js';
+import { shotChart } from '../workers/shared/derive.js';
 
 const read = (p) => JSON.parse(fs.readFileSync(new URL(p, import.meta.url), 'utf8'));
 const FINAL = read('./fixtures/international/espn-summary-401917260-final.json');
@@ -126,6 +127,31 @@ test('live WNBACast reconciles provider make/miss text with lagging or string bo
   assert.equal(miss.made, false);
   assert.equal(miss.scoring, false);
   assert.match(miss.text, /misses/i);
+
+  // Live WNBA can report the make through scoring/scoreValue + "Made FG" while shootingPlay is still false.
+  const madeScoringEvent = normalizeSummary({
+    ...WNBA,
+    plays: [{
+      ...madeSource,
+      text: 'Alanna Smith',
+      shortDescription: 'Made FG',
+      type: { ...madeSource.type, text: 'Field Goal' },
+      scoringPlay: true,
+      shootingPlay: false,
+      scoreValue: 2,
+      pointsAttempted: 2
+    }]
+  }).plays[0];
+  assert.equal(madeScoringEvent.family, 'shot');
+  assert.equal(madeScoringEvent.shooting, true);
+  assert.equal(madeScoringEvent.made, true);
+  assert.equal(madeScoringEvent.scoring, true);
+  assert.equal(madeScoringEvent.points, 2);
+  assert.ok(madeScoringEvent.coordinate, 'Made FG scoring event keeps its source coordinate');
+  const chart = shotChart([madeScoringEvent]);
+  assert.equal(chart.total_fga, 1);
+  assert.equal(chart.plotted, 1);
+  assert.equal(chart.shots[0].made, true, 'WNBACast shot chart renders the recovered scoring event as made');
 });
 
 test('names keep their Unicode as the identity source publishes them (no stripping, no invented diacritics)', () => {
