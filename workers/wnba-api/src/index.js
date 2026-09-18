@@ -28,6 +28,7 @@ import { deriveGame, shotChart, possessions } from '../../shared/derive.js';
 import { etCompact, addDays, isCompactDate, gameEtDate, daysBetween } from '../../shared/time.js';
 import { photoFor, photoCoverage } from './photos.js';
 import { PBE_MODEL } from '../../shared/market.js';
+import { winbaForPlayer, WINBA_VERSION } from '../../shared/winba.js';
 import { upgradeNormalizedPlays } from '../../shared/pbp.js';
 import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './market.js';
 import { requestLink, verifyPage, verifyConsume, logout, privateJson, credentialedPreflight } from './auth.js';
@@ -35,7 +36,7 @@ import { resolveAccount } from './account.js';
 import { pbeStatus, pbeCoverage, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 
 const SERVICE = 'wnba-api';
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 
 // Freshness windows (seconds). Live data is short; season aggregates are long.
 const TTL = {
@@ -104,6 +105,7 @@ const ROUTES = [
   ['/v1/players/:id/gamelog', playerGamelog],
   ['/v1/injuries', injuries],
   ['/v1/transactions', transactions],
+  ['/v1/stats/winba', statsWinba],
   ['/v1/stats/players', statsPlayers],
   ['/v1/stats/teams', statsTeams],
   ['/v1/odds', odds],
@@ -161,6 +163,20 @@ async function espn(env, ctx, url, ttlS, { kvKey = null, validate } = {}) {
 
 function degradedFrom(r) {
   return r.error ? [`source_error:${r.error}`] : [];
+}
+
+async function loadWinba(env) {
+  return env.WNBA_KV ? await env.WNBA_KV.get('winba:v1:latest', 'json') : null;
+}
+
+function winbaMap(snapshot) {
+  return new Map((snapshot?.rows || []).map((r) => [String(r.athlete_id), r]));
+}
+
+function boxWithWinba(box, snapshot) {
+  if (!box) return box;
+  const idx = winbaMap(snapshot);
+  return { ...box, players: (box.players || []).map((p) => ({ ...p, winba: idx.get(String(p.athlete_id)) || null })) };
 }
 
 // ---------------------------------------------------------------- health
@@ -523,7 +539,7 @@ async function game({ env, ctx, params, path }) {
 // One call powering WNBACast: state + events since a sequence + box + derived context.
 async function gameLive({ env, ctx, url, params, path }) {
   const since = Number(url.searchParams.get('since') || 0);
-  const L = await loadSummary(env, ctx, params.id);
+  const [L, winba] = await Promise.all([loadSummary(env, ctx, params.id), loadWinba(env)]);
   if (!L.summary) return fail('game_unavailable', `Game ${params.id} unavailable`, gameMeta(path, L), 502);
   const s = L.summary;
   const d = deriveGame(s);
@@ -535,7 +551,7 @@ async function gameLive({ env, ctx, url, params, path }) {
       events,
       events_total: s.plays.length,
       last_seq: s.plays.at(-1)?.seq ?? null,
-      box: s.box,
+      box: boxWithWinba(s.box, winba),
       derived: { runs: d.runs, lead: d.lead, fouls: d.fouls, progression: d.progression },
       shots: shotChart(s.plays),
       leaders: s.leaders,
@@ -558,9 +574,9 @@ async function gameEvents({ env, ctx, params, path }) {
 }
 
 async function gameBox({ env, ctx, params, path }) {
-  const L = await loadSummary(env, ctx, params.id);
+  const [L, winba] = await Promise.all([loadSummary(env, ctx, params.id), loadWinba(env)]);
   if (!L.summary) return fail('game_unavailable', `Game ${params.id} unavailable`, gameMeta(path, L), 502);
-  return ok({ game: L.summary.game, box: L.summary.box }, gameMeta(path, L), { maxAge: cacheFor(L.summary.game) });
+  return ok({ game: L.summary.game, box: boxWithWinba(L.summary.box, winba) }, gameMeta(path, L), { maxAge: cacheFor(L.summary.game) });
 }
 
 async function gameShots({ env, ctx, params, path }) {
@@ -749,20 +765,22 @@ async function loadRoster(env, ctx, teamId) {
 }
 
 async function teamRoster({ env, ctx, params, path }) {
-  const { r, roster } = await loadRoster(env, ctx, params.id);
+  const [{ r, roster }, winba] = await Promise.all([loadRoster(env, ctx, params.id), loadWinba(env)]);
   if (!roster) return fail('roster_unavailable', 'Roster unavailable', base(path, { freshness: freshnessOf(r), degraded: degradedFrom(r) }));
-  roster.athletes = roster.athletes.map((a) => ({ ...a, photo: photoFor(a.athlete_id) }));
+  const w = winbaMap(winba);
+  roster.athletes = roster.athletes.map((a) => ({ ...a, photo: photoFor(a.athlete_id), winba: w.get(String(a.athlete_id)) || null }));
   return ok(roster, base(path, { fetchedAt: r.fetchedAt, sourceUpdatedAt: roster.source_timestamp, freshness: freshnessOf(r), staleAfterS: TTL.roster, cache: r.cache, semantics: 'CURRENT_ROSTER', season: roster.season, degraded: degradedFrom(r) }), { maxAge: 300 });
 }
 
 async function team({ env, ctx, params, path }) {
   const st = await seasonState(env, ctx);
   const year = st.season?.year;
-  const [{ r, roster }, sched, stats, inj] = await Promise.all([
+  const [{ r, roster }, sched, stats, inj, winba] = await Promise.all([
     loadRoster(env, ctx, params.id),
     year ? teamScheduleGames(env, ctx, params.id, year) : Promise.resolve({ r: { body: null }, games: [] }),
     espn(env, ctx, `${ESPN.common}/statistics/byteam?season=${year}&seasontype=2`, TTL.leaders, { kvKey: `lg:teamstats:${year}` }),
-    espn(env, ctx, `${ESPN.site}/injuries`, TTL.injuries, { kvKey: 'lg:injuries' })
+    espn(env, ctx, `${ESPN.site}/injuries`, TTL.injuries, { kvKey: 'lg:injuries' }),
+    loadWinba(env)
   ]);
   if (!roster) return fail('team_unavailable', 'Team unavailable', base(path, { freshness: freshnessOf(r), degraded: degradedFrom(r) }));
   const standingsRows = st.r.body ? normalizeStandings(st.r.body).groups.flatMap((x) => x.entries.map((e) => ({ ...e, conference_name: x.name }))) : [];
@@ -772,7 +790,7 @@ async function team({ env, ctx, params, path }) {
       season: roster.season,
       coach: roster.coach,
       standing: standingsRows.find((x) => x.team_id === params.id) || null,
-      roster: roster.athletes.map((a) => ({ ...a, photo: photoFor(a.athlete_id) })),
+      roster: roster.athletes.map((a) => ({ ...a, photo: photoFor(a.athlete_id), winba: winbaForPlayer(winba, a.athlete_id) })),
       schedule: await attachMarkets(env, sched.games),
       rotation: await observedRotation(env, ctx, params.id, sched.games),
       season_stats: stats.body ? teamStatsRows(stats.body).find((x) => x.team_id === params.id) || null : null,
@@ -791,13 +809,14 @@ async function allRosters(env, ctx) {
 }
 
 async function players({ env, ctx, path }) {
-  const { teamsR, list, rosters } = await allRosters(env, ctx);
+  const [{ teamsR, list, rosters }, winba] = await Promise.all([allRosters(env, ctx), loadWinba(env)]);
+  const w = winbaMap(winba);
   if (!list.length) return fail('players_unavailable', 'Player index unavailable', base(path, { freshness: freshnessOf(teamsR), degraded: degradedFrom(teamsR) }));
   const out = [];
   const missing = [];
   rosters.forEach((x, i) => {
     if (!x.roster) { missing.push(list[i].abbr); return; }
-    for (const a of x.roster.athletes) out.push({ ...a, team: list[i], photo: photoFor(a.athlete_id) });
+    for (const a of x.roster.athletes) out.push({ ...a, team: list[i], photo: photoFor(a.athlete_id), winba: w.get(String(a.athlete_id)) || null });
   });
   out.sort((a, b) => String(a.last_name || a.name).localeCompare(String(b.last_name || b.name)));
   const oldest = rosters.map((x) => x.r.fetchedAt).filter(Boolean).sort()[0] || null;
@@ -810,11 +829,12 @@ async function players({ env, ctx, path }) {
 
 async function player({ env, ctx, params, path }) {
   const id = params.id;
-  const [ov, gl, stats, inj] = await Promise.all([
+  const [ov, gl, stats, inj, winba] = await Promise.all([
     espn(env, ctx, `${ESPN.common}/athletes/${id}`, TTL.athlete, { validate: (b) => b?.athlete?.id }),
     espn(env, ctx, `${ESPN.common}/athletes/${id}/gamelog`, TTL.athlete),
     espn(env, ctx, `${ESPN.common}/athletes/${id}/stats`, TTL.athlete),
-    espn(env, ctx, `${ESPN.site}/injuries`, TTL.injuries, { kvKey: 'lg:injuries' })
+    espn(env, ctx, `${ESPN.site}/injuries`, TTL.injuries, { kvKey: 'lg:injuries' }),
+    loadWinba(env)
   ]);
   if (!ov.body) return fail('player_unavailable', `Player ${id} unavailable`, base(path, { freshness: freshnessOf(ov), degraded: degradedFrom(ov) }), 404);
   const overview = normalizeAthleteOverview(ov.body);
@@ -827,6 +847,7 @@ async function player({ env, ctx, params, path }) {
       gamelog,
       recent: recentForm(games),
       career: stats.body ? normalizeAthleteStats(stats.body) : null,
+      winba: winbaForPlayer(winba, id),
       availability: inj.body ? normalizeInjuries(inj.body).filter((x) => x.athlete_id === id) : null
     },
     base(path, { fetchedAt: ov.fetchedAt, freshness: freshnessOf(ov), staleAfterS: TTL.athlete, cache: ov.cache, semantics: 'PLAYER_PAGE', degraded: [ov, gl, stats, inj].flatMap(degradedFrom) }),
@@ -880,15 +901,37 @@ async function transactions({ env, ctx, path }) {
   return ok({ items: normalizeTransactions(r.body) }, base(path, { fetchedAt: r.fetchedAt, freshness: freshnessOf(r), staleAfterS: TTL.transactions, cache: r.cache, semantics: 'TRANSACTIONS', degraded: degradedFrom(r) }), { maxAge: 120 });
 }
 
+async function statsWinba({ env, path }) {
+  const snapshot = await loadWinba(env);
+  if (!snapshot) {
+    return ok(
+      { version: WINBA_VERSION, season: null, generated_at: null, rows: [], status: 'UNAVAILABLE', formula: null },
+      base(path, { source: SOURCES.pbe, freshness: FRESHNESS.UNAVAILABLE, semantics: 'WINBA_NO_SNAPSHOT', degraded: ['winba_snapshot_missing'] }),
+      { maxAge: 30 }
+    );
+  }
+  return ok(
+    {
+      ...snapshot,
+      status: 'AVAILABLE',
+      rows: (snapshot.rows || []).map((r) => ({ ...r, photo: photoFor(r.athlete_id) }))
+    },
+    base(path, { source: SOURCES.pbe, fetchedAt: snapshot.generated_at, freshness: FRESHNESS.CACHED, staleAfterS: 900, cache: 'kv', semantics: 'WINBA_SEASON_INDEX', season: { year: snapshot.season } }),
+    { maxAge: 300 }
+  );
+}
+
 async function statsPlayers({ env, ctx, url, path }) {
   const st = await seasonState(env, ctx);
   const year = url.searchParams.get('season') || st.season?.year;
   const r = await espn(env, ctx, `${ESPN.common}/statistics/byathlete?season=${year}&seasontype=2&limit=400`, TTL.leaders, { kvKey: `lg:leaders:${year}` });
   if (!r.body) return fail('stats_unavailable', 'Player stats unavailable', base(path, { freshness: freshnessOf(r), degraded: degradedFrom(r) }));
   const L = normalizeLeaders(r.body);
+  const winba = await loadWinba(env);
+  const w = winbaMap(winba);
   const isCurrent = String(year) === String(st.season?.year);
   return ok(
-    { season: L.season, is_current: isCurrent, rows: L.rows.map((p) => ({ ...p, photo: photoFor(p.athlete_id) })) },
+    { season: L.season, is_current: isCurrent, winba: winba ? { version: winba.version, generated_at: winba.generated_at, games_used: winba.games_used, qualified_count: winba.qualified_count } : null, rows: L.rows.map((p) => ({ ...p, photo: photoFor(p.athlete_id), winba: w.get(String(p.athlete_id)) || null })) },
     base(path, { fetchedAt: r.fetchedAt, freshness: freshnessOf(r), staleAfterS: TTL.leaders, cache: r.cache, semantics: isCurrent ? 'SEASON_TO_DATE' : 'PRIOR_SEASON', season: L.season, degraded: degradedFrom(r) }),
     { maxAge: 300 }
   );
