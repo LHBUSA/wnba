@@ -199,7 +199,8 @@ function withSemantics(play, s) {
     primary: s.primary,
     made: s.made,
     scoring: s.scoring,
-    shooting: s.shooting
+    shooting: s.shooting,
+    points: s.points
   };
 }
 
