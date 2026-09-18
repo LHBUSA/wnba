@@ -1,0 +1,13 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "20260918170000_wbh_wnba_2024_0702_orientation_conflict_v1.sql",
+  "reviewed_blob": "7b99adb6f13e5c7b9621f618765127ba12a24be6",
+  "applied_at_utc": "2026-09-18T14:20:00.3861492Z",
+  "verification": {
+    "sides": "chicago_sky_2024=away:85:win atlanta_dream_2024=home:77:loss",
+    "clubs_not_at_20_home": 0,
+    "chi_record": "13-27",
+    "atl_record": "15-25",
+    "fact_revisions": 10
+  }
+}

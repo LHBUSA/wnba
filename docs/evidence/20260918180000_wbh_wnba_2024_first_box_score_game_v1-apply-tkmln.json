@@ -1,0 +1,14 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "20260918180000_wbh_wnba_2024_first_box_score_game_v1.sql",
+  "reviewed_blob": "769a130a80bda35adb20fd81813f5b9cc7ed71b8",
+  "applied_at_utc": "2026-09-18T14:22:47.6515024Z",
+  "verification": {
+    "player_rows_total": 20,
+    "rows_this_game": 20,
+    "teams_present": 2,
+    "starters": 10,
+    "completeness": "box_score",
+    "games_box_score": 1
+  }
+}
