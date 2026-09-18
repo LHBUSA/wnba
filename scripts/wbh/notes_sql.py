@@ -37,8 +37,10 @@ def lit(v):
     return "'" + str(v).replace("'", "''") + "'"
 
 
-def build(assembled, dataset, only_games=None):
-    entries = [e for e in assembled["team_games"] if not only_games or e["game_id"] in only_games]
+def build(assembled, dataset, only_games=None, exclude_games=None):
+    entries = [e for e in assembled["team_games"]
+               if (not only_games or e["game_id"] in only_games)
+               and (not exclude_games or e["game_id"] not in exclude_games)]
     if not entries:
         raise SystemExit("no validated team-games selected")
     docs = {}
@@ -192,9 +194,12 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--dataset", default="wnba_2024_player_box_scores_v1")
     ap.add_argument("--only-game", action="append")
+    ap.add_argument("--exclude-game", action="append",
+                    help="skip a game already loaded by an earlier migration")
     a = ap.parse_args()
     assembled = json.loads(Path(a.assembled).read_text(encoding="utf-8"))
-    sql, stats = build(assembled, a.dataset, set(a.only_game or []) or None)
+    sql, stats = build(assembled, a.dataset, set(a.only_game or []) or None,
+                       set(a.exclude_game or []) or None)
     Path(a.out).write_text(sql, encoding="utf-8")
     print(json.dumps(stats))
 
