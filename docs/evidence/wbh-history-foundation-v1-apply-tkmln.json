@@ -1,0 +1,48 @@
+﻿{
+    "ref":  "tkmlnhmylqnttmnsnief",
+    "reviewed_commit":  "15f76b8b3aa6e18fc1d5a622c2eb4b4df228b29a",
+    "applied_at_db":  "2026-09-16T09:52:54.169252+00:00",
+    "pre":  {
+                "version":  "PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit",
+                "db_now":  "2026-09-16 09:52:52.858184+00",
+                "wbh_tables":  0,
+                "wbh_functions":  0,
+                "pbe_relations":  22
+            },
+    "inventory":  {
+                      "db_now":  "2026-09-16T09:52:54.169252+00:00",
+                      "tables":  38,
+                      "views":  2,
+                      "functions":  15,
+                      "policies":  0,
+                      "anon_auth_grants":  0,
+                      "anon_auth_fn_exec":  0,
+                      "sources":  10,
+                      "espn_state":  "prohibited",
+                      "wikidata_state":  "approved_commercial",
+                      "synthetic_flag":  true,
+                      "games_view_security_invoker":  true,
+                      "persons_view_security_invoker":  true,
+                      "pbe_relations":  22,
+                      "canonical_games":  0,
+                      "canonical_persons":  0
+                  },
+    "checks":  {
+                   "tables_38":  true,
+                   "views_2":  true,
+                   "functions_15":  true,
+                   "zero_policies":  true,
+                   "zero_anon_authenticated_table_grants":  true,
+                   "zero_anon_authenticated_function_execute":  true,
+                   "source_registry_10":  true,
+                   "espn_prohibited":  true,
+                   "wikidata_approved":  true,
+                   "synthetic_fixture_hidden":  true,
+                   "games_view_security_invoker":  true,
+                   "persons_view_security_invoker":  true,
+                   "pbe_relations_unchanged":  true,
+                   "history_starts_empty_games":  true,
+                   "history_starts_empty_persons":  true
+               },
+    "failed":  0
+}

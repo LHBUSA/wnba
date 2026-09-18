@@ -19,3 +19,5 @@ scripts/.cache/
 __pycache__/
 supabase/proofs/proof.local.sql
 supabase/proofs/proof.remote.sql
+supabase/proofs/wbh.proof.local.sql
+supabase/proofs/wbh.proof.remote.sql
