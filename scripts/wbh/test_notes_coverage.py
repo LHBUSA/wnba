@@ -188,5 +188,96 @@ class UnlockPriority(unittest.TestCase):
         self.assertNotIn("chi", unlock, "a club that is already covered unlocks nothing")
 
 
+class SunLayoutAndOvertime(unittest.TestCase):
+    """Family E, plus the minutes expectation when canonical overtime is unpopulated."""
+
+    SUN_HEADER = [
+        ("DATE", 39, 63, 200), ("OPP", 69, 88, 200), ("MIN", 96, 114, 200),
+        ("FG-FGA", 122, 158, 200), ("3P-3PA", 163, 198, 200), ("FT-FTA", 202, 232, 200),
+        ("OR", 236, 248, 200), ("DR", 260, 272, 200), ("TOT", 282, 300, 200),
+        ("AST", 309, 327, 200), ("STL", 335, 353, 200), ("BK", 361, 373, 200),
+        ("TO", 381, 393, 200), ("PF", 404, 416, 200), ("PTS", 427, 445, 200),
+        ("HIGHS", 500, 530, 200),
+    ]
+
+    def page(self, cells):
+        heading = [("#51", 75, 95, 182), ("CAITLIN", 103, 155, 182), ("BICKLE", 160, 205, 182),
+                   ("|", 211, 215, 182), ("GAME", 218, 250, 182)]
+        return FakePage(heading + self.SUN_HEADER + cells)
+
+    def row(self, y, values):
+        xs = [(h[1] + 2, h[1] + 10) for h in self.SUN_HEADER]
+        return [(v, xs[i][0], xs[i][1], y) for i, v in enumerate(values) if v is not None]
+
+    def test_the_highs_panel_cannot_reach_the_table(self):
+        cells = self.row(220, ["8.16", "@DAL", "12", "3-6", "1-2", "2-2", "1", "3", "4",
+                               "2", "1", "0", "1", "3", "9"])
+        cells += [("OFFENSIVE", 505, 560, 220), ("5-30-21", 565, 600, 220)]
+        out = nb.extract_player_rows(self.page(cells), nb.LAYOUTS["sun_2024"], 2024)
+        r = out["rows"][0]
+        self.assertEqual(r["status"], "ok", r.get("hold_reasons"))
+        self.assertEqual(r["points"], 9)
+        self.assertEqual((r["field_goals_made"], r["field_goals_attempted"]), (3, 6))
+
+    def test_a_zero_minute_dashed_line_is_non_participation(self):
+        cells = self.row(220, ["8.16", "@DAL", "0", "-", "-", "-", "-", "-", "-",
+                               "-", "-", "-", "-", "-", "-"])
+        row = nb.extract_player_rows(self.page(cells), nb.LAYOUTS["sun_2024"], 2024)["rows"][0]
+        self.assertEqual(row["status"], "nonparticipation")
+        self.assertIsNone(row["seconds_played"])
+        self.assertIsNone(row["did_not_play"], "a zero-minute line states no reason, so it is not a DNP")
+
+
+class MinutesExpectation(unittest.TestCase):
+    """Canonical overtime_periods is unpopulated for 2024, so it cannot be the expectation."""
+
+    teams = GameResolution.teams
+    roster = {"te_chicago_sky_2024": [{"person_id": "gp_1", "name": "A One"},
+                                      {"person_id": "gp_2", "name": "B Two"}]}
+
+    def games(self, ot=0):
+        return [dict(GameResolution.games[0], ot=ot)]
+
+    def build(self, seconds_each):
+        rows = []
+        for i, (name, pts, secs) in enumerate(seconds_each):
+            rec = {"name": name, "status": "ok", "date": "2024-07-02", "opponent_code": "ATL",
+                   "home_away": "away", "raw_text": "", "ambiguities": [], "did_not_play": False,
+                   "started": True, "plus_minus": None}
+            for f in na.STAT_FIELDS:
+                rec.setdefault(f, None)
+            rec["points"], rec["seconds_played"] = pts, secs
+            rows.append(rec)
+        return {"team": "Chicago Sky", "layout": "sky_2024", "layout_family": "A",
+                "source_url": "https://example.invalid/x.pdf", "source_sha256": "a" * 64,
+                "pages_with_tables": [1],
+                "players": [{"page": 1, "number": str(i), "name": r.pop("name"), "headers": [],
+                             "column_x": {}, "rows": [r]} for i, r in enumerate(rows)]}
+
+    def test_regulation_total_is_accepted(self):
+        art = self.build([("A ONE", 40, 6000), ("B TWO", 45, 6000)])
+        out = na.assemble([art], self.teams, self.games(), self.roster)
+        self.assertEqual(len(out["team_games"]), 1)
+
+    def test_an_overtime_total_is_accepted_and_reported(self):
+        """225 player-minutes is one overtime, even though the canonical row still says zero."""
+        art = self.build([("A ONE", 40, 6750), ("B TWO", 45, 6750)])
+        out = na.assemble([art], self.teams, self.games(ot=0), self.roster)
+        self.assertEqual(len(out["team_games"]), 1)
+        self.assertEqual(out["team_games"][0]["minutes_implied_overtime_periods"], 1)
+
+    def test_a_total_between_expectations_is_still_refused(self):
+        art = self.build([("A ONE", 40, 6300), ("B TWO", 45, 6300)])   # 210 minutes: neither
+        out = na.assemble([art], self.teams, self.games(), self.roster)
+        self.assertEqual(out["team_games"], [])
+        self.assertTrue(any("neither regulation" in p["reason"]
+                            for h in out["held"] for p in h.get("problems", [])))
+
+    def test_a_short_total_is_still_refused(self):
+        art = self.build([("A ONE", 40, 5000), ("B TWO", 45, 5000)])   # 166 minutes
+        out = na.assemble([art], self.teams, self.games(), self.roster)
+        self.assertEqual(out["team_games"], [])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
