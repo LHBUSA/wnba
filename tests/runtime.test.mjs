@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { normalizeSummary, normalizeCoordinate, elapsedSeconds, parseClock, WNBA_RULES, mergeCorePlays, livePbpIntegrity, betterLivePbp } from '../workers/shared/espn.js';
 import { leadTracker, foulContext, shotChart, scoringRuns, shotZone, possessions } from '../workers/shared/derive.js';
-import { courtSvg } from '../src/ui/court.js';
+import { courtSvg, fullCourtPoint } from '../src/ui/court.js';
 import { approvedPlayerPhoto, approvedPlayerPhotoCount } from '../src/data/player-photo-map.js';
 import { americanToDecimal, probToAmerican, normalizeOddsEvent, normalizeProps, teamIndex, normalizeName, PBE_MODEL } from '../workers/shared/market.js';
 import { etCompact, addDays } from '../workers/shared/time.js';
@@ -60,6 +60,29 @@ test('WNBACast client photo allowlist stays identical to the approved photo ledg
   if (rejected) assert.equal(approvedPlayerPhoto(rejected.espn_athlete_id), null);
 });
 
+test('WNBACast full court preserves basket-relative ESPN shot geometry on opposite ends', () => {
+  const homeShot = { x: 25, y: 0.25, team_id: s.game.home.team_id };
+  const awayShot = { x: 25, y: 0.25, team_id: s.game.away.team_id };
+  const h = fullCourtPoint(homeShot, { home: s.game.home, away: s.game.away });
+  const a = fullCourtPoint(awayShot, { home: s.game.home, away: s.game.away });
+  assert.ok(Math.abs(h.x - 5.25) < 1e-9);
+  assert.ok(Math.abs(a.x - 88.75) < 1e-9);
+  assert.ok(Math.abs(h.y - 25) < 1e-9);
+  assert.ok(Math.abs(a.y - 25) < 1e-9);
+  assert.equal(h.side, 'h');
+  assert.equal(a.side, 'a');
+
+  const svg = courtSvg([
+    { ...homeShot, seq: 1, made: true, points_attempted: 2, period: 1, clock: '9:00', text: 'Home makes', player: 'Home Player' },
+    { ...awayShot, seq: 2, made: false, points_attempted: 2, period: 1, clock: '8:30', text: 'Away misses', player: 'Away Player' }
+  ], { home: s.game.home, away: s.game.away });
+  assert.match(svg, /viewBox="-1 -1 96 52"/);
+  assert.match(svg, /class="c-team-label home"/);
+  assert.match(svg, /class="c-team-label away"/);
+  assert.match(svg, /cx="5.25" cy="25"/);
+  assert.match(svg, /x1="88.15" y1="24.4"/);
+});
+
 test('WNBACast interactive court carries real play metadata and an accessible latest-shot target', () => {
   const chart = shotChart(s.plays);
   const made = chart.shots.find((x) => x.made && x.player && Number.isFinite(x.home_score) && Number.isFinite(x.away_score));
@@ -80,7 +103,8 @@ test('WNBACast interactive court carries real play metadata and an accessible la
   assert.match(svg, /data-shot-player="[^"]+"/);
   assert.match(svg, /data-shot-text="[^"]+"/);
   assert.match(svg, /data-shot-score="\d+–\d+"/);
-  assert.match(svg, /Interactive half-court shot chart/);
+  assert.match(svg, /Interactive full-court shot chart/);
+  assert.match(svg, /Home attacks the left basket; away attacks the right/);
 
   const photoPath = `/media/players/${made.athlete_id}/square.webp`;
   const photoSvg = courtSvg([{ ...made, photo: { square: photoPath } }], {
