@@ -304,6 +304,17 @@ export async function mount(root, ctx) {
     const ha = madeBy(g.home?.team_id);
     const aa = madeBy(g.away?.team_id);
     const control = v.lead?.pbe_control || null;
+    const controlKey = control
+      ? [['away', control.pct.away], ['tied', control.pct.tied], ['home', control.pct.home]]
+          .sort((a, b) => b[1] - a[1])[0][0]
+      : null;
+    const controlLabel = !control
+      ? '—'
+      : controlKey === 'home'
+        ? `${g.home?.abbr} ${flowPct(control.pct.home)}`
+        : controlKey === 'away'
+          ? `${g.away?.abbr} ${flowPct(control.pct.away)}`
+          : `TIED ${flowPct(control.pct.tied)}`;
     const currentMargin = v.lead?.current_margin ?? 0;
     const marginTeam = currentMargin > 0 ? g.home : currentMargin < 0 ? g.away : null;
     const currentMarginLabel = marginTeam ? `${marginTeam.abbr} +${Math.abs(currentMargin)}` : 'Tied';
@@ -397,8 +408,8 @@ export async function mount(root, ctx) {
                   <div class="pbe-control-top">
                     <div>
                       <span class="pbe-control-name">PBE Control</span>
-                      <strong>${control.current === 'tied' ? 'EVEN' : control.current === 'home' ? g.home?.abbr : g.away?.abbr}</strong>
-                      <small>time-leading share through ${flowTime(control.elapsed_s)} played</small>
+                      <strong>${controlLabel}</strong>
+                      <small>largest elapsed lead-state share through ${flowTime(control.elapsed_s)} played</small>
                     </div>
                     <div class="pbe-control-fact">
                       <span>${g.away?.abbr}</span><b>${flowPct(control.pct.away)}</b>
