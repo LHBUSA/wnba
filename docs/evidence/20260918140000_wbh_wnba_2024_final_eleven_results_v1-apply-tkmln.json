@@ -1,0 +1,19 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "20260918140000_wbh_wnba_2024_final_eleven_results_v1.sql",
+  "reviewed_blob": "37635b70aeafd2de19edbdb29de8a4dce4ce6625",
+  "applied_at_utc": "2026-09-18T13:36:27.1320496Z",
+  "verification": {
+    "regular_games": 240,
+    "postseason_games": 22,
+    "cup_games": 1,
+    "cup_counts_for_standings": false,
+    "games_with_two_teams": 263,
+    "total_games": 263,
+    "regular_games_with_both_scores": 239,
+    "clubs_at_40": 12,
+    "player_game_stats": 0,
+    "espn_rights_state": "prohibited",
+    "pbe_ledger_relations": 22
+  }
+}
