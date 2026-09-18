@@ -1,6 +1,6 @@
 import { html, raw } from '../lib/dom.js';
 import { STATE_LABEL, currentState, ageMs, formatAge } from '../data/freshness.js';
-import { fmtTimeET, fmtDateET, initials, relTime } from '../lib/format.js';
+import { fmtTimeET, fmtDateET, initials, relTime, num } from '../lib/format.js';
 import { teamLogo } from './logo.js';
 
 // ------------------------------------------------------------ game state
