@@ -123,6 +123,7 @@ test('WNBACast interactive court carries real play metadata and an accessible la
   assert.match(svg, /class="shot-point is-latest entering"/);
   assert.match(svg, new RegExp(`data-shot-seq="${made.seq}"`));
   assert.match(svg, /data-shot-player="[^"]+"/);
+  assert.match(svg, new RegExp(`data-shot-player-href="/players/${made.athlete_id}"`));
   assert.match(svg, /data-shot-text="[^"]+"/);
   assert.match(svg, /data-shot-score="\d+–\d+"/);
   assert.match(svg, /Interactive vertical full-court shot chart/);
