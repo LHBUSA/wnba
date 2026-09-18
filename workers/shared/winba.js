@@ -146,7 +146,10 @@ export function scoreWinbaPlayers(aggregates = [], { season = null, generatedAt 
         }
       };
     });
-  const productionValues = bases.map((p) => p.raw.box_impact_per36);
+  const qualifiedProductionValues = bases.filter((p) => p.qualified).map((p) => p.raw.box_impact_per36);
+  const productionValues = qualifiedProductionValues.length >= 2
+    ? qualifiedProductionValues
+    : bases.map((p) => p.raw.box_impact_per36);
   const scored = bases.map((p) => {
     const production = percentile(p.raw.box_impact_per36, productionValues);
     const components = {
@@ -206,6 +209,7 @@ export function scoreWinbaPlayers(aggregates = [], { season = null, generatedAt 
     formula: {
       box_impact: 'PTS + 1.2*REB + 1.5*AST',
       score: '45% production percentile + 25% player win rate + 20% winning-output share + 10% court share',
+      production_benchmark: 'Box Impact per 36 percentile against the qualification-eligible league population; provisional players are scored against that benchmark but do not move it.',
       weights: WINBA_WEIGHTS,
       qualification: WINBA_QUALIFICATION,
       interpretation: 'A 0-100 PropBetEdge index of box-score production, playing time and how that production is associated with team wins. It is not a causal wins-added metric.'
