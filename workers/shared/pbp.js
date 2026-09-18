@@ -3,8 +3,9 @@
 // One canonical basketball play for every PropBetEdge surface (WNBA via wnba-api, international via
 // wnba-international, WNBACast, the newsroom). Built from the provider's STRUCTURED fields first — type, scoringPlay,
 // shootingPlay, scoreValue, pointsAttempted, shortDescription, participants, sequenceNumber — and the provider's own
-// text only where that text carries information. Nothing is inferred from score movement, timestamps or neighbouring
-// events: a shot type, distance, free-throw number, assist, steal or block is stated only when the source states it.
+// text only where that text carries information. Shot type, distance, free-throw number, assist, steal or block are
+// never invented. Live make/miss outcome may be reconciled from the source's same-event scoreboard delta when ESPN's
+// own flags/text contradict the score; that reconciliation is explicit on the normalized event.
 //
 // Why: ESPN's FIBA feed publishes text such as "Caitlin Clark makes" while its structured fields say a made free throw
 // (type MadeFreeThrow, pointsAttempted 1, "+1 Point"). The old normalizers kept only the text.
@@ -82,7 +83,8 @@ function eventScoreDelta({ homeScore, awayScore, prev, teamId = null, homeTeamId
   if (dh < 0 || da < 0 || (dh > 0 && da > 0)) return null;
   const delta = dh || da;
   if (![1, 2, 3].includes(delta)) return null;
-  if (teamId && homeTeamId && awayTeamId) {
+  if (homeTeamId && awayTeamId) {
+    if (!teamId) return null;
     if (teamId === String(homeTeamId)) return dh === delta && da === 0 ? delta : null;
     if (teamId === String(awayTeamId)) return da === delta && dh === 0 ? delta : null;
     return null;
