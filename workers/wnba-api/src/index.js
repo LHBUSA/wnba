@@ -35,7 +35,7 @@ import { resolveAccount } from './account.js';
 import { pbeStatus, pbeCoverage, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 
 const SERVICE = 'wnba-api';
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 
 // Freshness windows (seconds). Live data is short; season aggregates are long.
 const TTL = {
@@ -359,6 +359,44 @@ async function schedule({ env, ctx, url, path }) {
 
 // ---------------------------------------------------------------- games
 
+async function loadCorePlayCollection(ctx, id) {
+  const baseUrl = `${ESPN.core}/events/${id}/competitions/${id}/plays`;
+  const fetchPage = (page = 1) => cachedJson({
+    // source=2 is the detailed Core play representation when available; keep limit high,
+    // but still honor provider pagination below.
+    url: `${baseUrl}?limit=500&source=2&page=${page}`,
+    ttlS: 4,
+    ctx,
+    validate: (b) => Array.isArray(b?.items)
+  });
+
+  const first = await fetchPage(1);
+  if (!first.body?.items?.length) return { items: [], fetchedAt: first.fetchedAt, cache: first.cache, error: first.error };
+
+  const pageCount = Math.max(1, Math.min(10, Number(first.body.pageCount) || 1));
+  const rest = pageCount > 1
+    ? await Promise.all(Array.from({ length: pageCount - 1 }, (_, i) => fetchPage(i + 2)))
+    : [];
+
+  const rows = [first, ...rest].flatMap((r) => r.body?.items || []);
+  const seen = new Set();
+  const items = rows.filter((x) => {
+    const key = String(x?.id || x?.$ref || x?.sequenceNumber || '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return {
+    items,
+    fetchedAt: [first, ...rest].map((r) => r.fetchedAt).filter(Boolean).sort().at(-1) || first.fetchedAt,
+    cache: rest.some((r) => r.cache === 'network') || first.cache === 'network' ? 'network' : first.cache,
+    error: [first, ...rest].map((r) => r.error).find(Boolean) || null,
+    pageCount,
+    count: Number(first.body.count) || items.length
+  };
+}
+
 async function loadSummary(env, ctx, id) {
   // First look for an immutable archive (written by wnba-ingest for final games).
   const archived = env.WNBA_KV ? await env.WNBA_KV.get(`game:v1:final:${id}`, 'json') : null;
@@ -393,18 +431,12 @@ async function loadSummary(env, ctx, id) {
   // contradicts the source-published score/box by a material amount. ESPN Core is an independent
   // representation of the same event ids and has been healthy from Cloudflare egress in canaries.
   if (primary.game?.status?.state === 'in' && !primaryIntegrity.healthy) {
-    const coreUrl = `${ESPN.core}/events/${id}/competitions/${id}/plays?limit=1000`;
-    const core = await cachedJson({
-      url: coreUrl,
-      ttlS: 4,
-      ctx,
-      validate: (b) => Array.isArray(b?.items)
-    });
+    const core = await loadCorePlayCollection(ctx, id);
 
-    if (core.body?.items?.length) {
+    if (core.items?.length) {
       const mergedRaw = {
         ...probe.body,
-        plays: mergeCorePlays(probe.body?.plays || [], core.body.items)
+        plays: mergeCorePlays(probe.body?.plays || [], core.items)
       };
       const candidate = normalizeSummary(mergedRaw);
       const decision = betterLivePbp(candidate, primary);
@@ -417,7 +449,8 @@ async function loadSummary(env, ctx, id) {
           archived: false,
           pbpSource: 'espn_core_failover',
           pbpIntegrity: decision.candidate,
-          pbpPrimaryIntegrity: decision.baseline
+          pbpPrimaryIntegrity: decision.baseline,
+          pbpCore: { count: core.count, items: core.items.length, pages: core.pageCount || 1 }
         };
       }
     }
