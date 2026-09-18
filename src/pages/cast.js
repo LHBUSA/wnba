@@ -36,6 +36,9 @@ export async function mount(root, ctx) {
     pbpPeriod: 'all',
     pbpScroll: { top: 0, anchor: null, lastSeen: null },
     shotTeam: 'all',
+    shotResult: 'all',
+    shotPinnedSeq: null,
+    animateShotSeq: null,
     tab: 'box',
     progPlayer: null,
     rail: []
@@ -114,6 +117,9 @@ export async function mount(root, ctx) {
       state.events = d.events;
     }
     state.newFrom = since !== undefined ? prevLast : null;
+    state.animateShotSeq = since !== undefined
+      ? ([...d.events].reverse().find((e) => e.shooting && e.coordinate)?.seq ?? null)
+      : null;
     state.data = d;
     state.meta = res.meta;
     const s = d.game.status?.state;
@@ -271,8 +277,11 @@ export async function mount(root, ctx) {
       return true;
     }).slice(0, 400);
     const periodsSeen = [...new Set(v.evs.map((e) => e.period).filter(Number.isFinite))];
-    const shots = v.shots.shots.filter((s) => state.shotTeam === 'all' || s.team_id === state.shotTeam);
-    const lastShotSeq = [...v.evs].reverse().find((e) => e.shooting && e.coordinate)?.seq ?? null;
+    const shots = v.shots.shots.filter((s) =>
+      (state.shotTeam === 'all' || s.team_id === state.shotTeam)
+      && (state.shotResult === 'all' || (state.shotResult === 'made' ? s.made === true : s.made === false))
+    );
+    const lastShotSeq = shots.at(-1)?.seq ?? null;
     const madeBy = (tid) => {
       const xs = v.shots.shots.filter((s) => s.team_id === tid);
       return { m: xs.filter((s) => s.made).length, a: xs.length };
@@ -304,21 +313,48 @@ export async function mount(root, ctx) {
 
         <div class="grid" style="gap:16px">
           <section class="card">
-            <div class="card-head"><span class="card-title">Shot chart</span>
-              <div class="pill-row">
-                <button class="pill" type="button" data-shot="all" aria-pressed="${state.shotTeam === 'all'}">Both</button>
-                <button class="pill" type="button" data-shot="${g.away?.team_id}" aria-pressed="${state.shotTeam === g.away?.team_id}">${g.away?.abbr}</button>
-                <button class="pill" type="button" data-shot="${g.home?.team_id}" aria-pressed="${state.shotTeam === g.home?.team_id}">${g.home?.abbr}</button>
+            <div class="card-head shot-chart-head">
+              <div>
+                <span class="card-title">Shot chart</span>
+                <span class="note shot-chart-hint">Hover, focus or tap a shot to inspect the play.</span>
+              </div>
+              <div class="shot-chart-controls" aria-label="Shot chart filters">
+                <div class="pill-row">
+                  <button class="pill" type="button" data-shot="all" aria-pressed="${state.shotTeam === 'all'}">Both</button>
+                  <button class="pill" type="button" data-shot="${g.away?.team_id}" aria-pressed="${state.shotTeam === g.away?.team_id}">${g.away?.abbr}</button>
+                  <button class="pill" type="button" data-shot="${g.home?.team_id}" aria-pressed="${state.shotTeam === g.home?.team_id}">${g.home?.abbr}</button>
+                </div>
+                <div class="pill-row shot-result-row">
+                  <button class="pill" type="button" data-shot-result="all" aria-pressed="${state.shotResult === 'all'}">All</button>
+                  <button class="pill" type="button" data-shot-result="made" aria-pressed="${state.shotResult === 'made'}">Makes</button>
+                  <button class="pill" type="button" data-shot-result="missed" aria-pressed="${state.shotResult === 'missed'}">Misses</button>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="court-wrap">${raw(courtSvg(shots, { home: g.home, away: g.away, highlightSeq: lastShotSeq }))}</div>
-              <div class="legend" style="margin-top:10px">
+              <div class="court-shell" data-court-shell>
+                <div class="court-wrap">${raw(courtSvg(shots, {
+                  home: g.home,
+                  away: g.away,
+                  highlightSeq: lastShotSeq,
+                  animateSeq: state.animateShotSeq
+                }))}</div>
+                <aside class="shot-tooltip" data-shot-tooltip hidden aria-live="polite">
+                  <button class="shot-tooltip-close" type="button" data-shot-tip-close aria-label="Close shot details">×</button>
+                  <span class="shot-tooltip-kicker" data-shot-tip-kicker></span>
+                  <strong data-shot-tip-player></strong>
+                  <span class="shot-tooltip-meta" data-shot-tip-meta></span>
+                  <p data-shot-tip-text></p>
+                  <span class="shot-tooltip-score" data-shot-tip-score></span>
+                </aside>
+              </div>
+              <div class="legend shot-chart-legend" style="margin-top:10px">
                 <span><i style="background:var(--away)"></i>${g.away?.abbr} ${aa.m}/${aa.a}</span>
                 <span><i style="background:var(--home)"></i>${g.home?.abbr} ${ha.m}/${ha.a}</span>
                 <span>● made · ✕ missed</span>
+                ${lastShotSeq !== null ? html`<span class="shot-latest-key"><i></i>Latest visible shot</span>` : ''}
               </div>
-              <p class="note" style="margin-top:8px">${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} Both teams are shown on one basket, as ESPN publishes them.</p>
+              <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} Both teams are shown on one basket, as ESPN publishes them.</p>
             </div>
           </section>
 
@@ -427,7 +463,21 @@ export async function mount(root, ctx) {
       }, { passive: true });
       if (latest) latest.addEventListener('click', () => { list.scrollTop = 0; sc.top = 0; sc.anchor = null; sc.lastSeen = newest; latest.hidden = true; });
     }
-    $stage.querySelectorAll('[data-shot]').forEach((b) => b.addEventListener('click', () => { state.shotTeam = b.dataset.shot; state.newFrom = null; draw(); }));
+    $stage.querySelectorAll('[data-shot]').forEach((b) => b.addEventListener('click', () => {
+      state.shotTeam = b.dataset.shot;
+      state.shotPinnedSeq = null;
+      state.animateShotSeq = null;
+      state.newFrom = null;
+      draw();
+    }));
+    $stage.querySelectorAll('[data-shot-result]').forEach((b) => b.addEventListener('click', () => {
+      state.shotResult = b.dataset.shotResult;
+      state.shotPinnedSeq = null;
+      state.animateShotSeq = null;
+      state.newFrom = null;
+      draw();
+    }));
+    bindShotChart();
     $stage.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { state.tab = b.dataset.tab; state.newFrom = null; draw(); }));
     const sel = $stage.querySelector('[data-prog]');
     if (sel) sel.addEventListener('change', () => { state.progPlayer = sel.value; draw(); });
@@ -438,6 +488,88 @@ export async function mount(root, ctx) {
     const restart = $stage.querySelector('[data-restart]');
     if (restart) restart.addEventListener('click', () => { state.cursor = 0; startPlay(); draw(); });
   }
+  function bindShotChart() {
+    const shell = $stage.querySelector('[data-court-shell]');
+    const tip = shell?.querySelector('[data-shot-tooltip]');
+    if (!shell || !tip) return;
+    const points = [...shell.querySelectorAll('[data-shot-point]')];
+    const close = tip.querySelector('[data-shot-tip-close]');
+    const kicker = tip.querySelector('[data-shot-tip-kicker]');
+    const player = tip.querySelector('[data-shot-tip-player]');
+    const meta = tip.querySelector('[data-shot-tip-meta]');
+    const text = tip.querySelector('[data-shot-tip-text]');
+    const score = tip.querySelector('[data-shot-tip-score]');
+
+    const pointForPinned = () => points.find((p) => String(p.dataset.shotSeq) === String(state.shotPinnedSeq));
+    const place = (point) => {
+      const sr = shell.getBoundingClientRect();
+      const pr = point.getBoundingClientRect();
+      const cx = pr.left + pr.width / 2 - sr.left;
+      const cy = pr.top + pr.height / 2 - sr.top;
+      tip.hidden = false;
+      tip.style.visibility = 'hidden';
+      tip.style.left = '0px';
+      tip.style.top = '0px';
+      const w = tip.offsetWidth || 250;
+      const h = tip.offsetHeight || 120;
+      const x = Math.max(w / 2 + 8, Math.min(shell.clientWidth - w / 2 - 8, cx));
+      const above = cy - h - 14 >= 6;
+      tip.style.left = `${x}px`;
+      tip.style.top = `${above ? cy - h - 12 : cy + 12}px`;
+      tip.style.visibility = '';
+    };
+    const show = (point, { pinned = false } = {}) => {
+      if (!point) return;
+      const d = point.dataset;
+      kicker.textContent = [d.shotResult, d.shotType].filter(Boolean).join(' · ');
+      player.textContent = [d.shotPlayer, d.shotTeam].filter(Boolean).join(' · ') || 'Shot';
+      meta.textContent = [d.shotPeriod, d.shotClock].filter(Boolean).join(' · ');
+      text.textContent = d.shotText || 'Play description unavailable.';
+      score.textContent = d.shotScore ? `Score after play · ${d.shotScore}` : '';
+      tip.dataset.pinned = pinned ? 'true' : 'false';
+      points.forEach((p) => p.classList.toggle('is-selected', p === point));
+      place(point);
+    };
+    const hide = ({ keepPinned = true } = {}) => {
+      const pinned = keepPinned ? pointForPinned() : null;
+      if (pinned) return show(pinned, { pinned: true });
+      tip.hidden = true;
+      tip.dataset.pinned = 'false';
+      points.forEach((p) => p.classList.remove('is-selected'));
+    };
+    const togglePin = (point) => {
+      const seq = Number(point.dataset.shotSeq);
+      if (state.shotPinnedSeq === seq) {
+        state.shotPinnedSeq = null;
+        hide({ keepPinned: false });
+      } else {
+        state.shotPinnedSeq = seq;
+        show(point, { pinned: true });
+      }
+    };
+
+    for (const point of points) {
+      point.addEventListener('mouseenter', () => show(point, { pinned: state.shotPinnedSeq === Number(point.dataset.shotSeq) }));
+      point.addEventListener('mouseleave', () => hide());
+      point.addEventListener('focus', () => show(point, { pinned: state.shotPinnedSeq === Number(point.dataset.shotSeq) }));
+      point.addEventListener('blur', () => hide());
+      point.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); togglePin(point); });
+      point.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePin(point); }
+        if (e.key === 'Escape') { state.shotPinnedSeq = null; hide({ keepPinned: false }); point.blur(); }
+      });
+    }
+    close?.addEventListener('click', () => { state.shotPinnedSeq = null; hide({ keepPinned: false }); });
+    shell.addEventListener('click', (e) => {
+      if (!e.target.closest('[data-shot-point]') && !e.target.closest('[data-shot-tooltip]')) {
+        state.shotPinnedSeq = null;
+        hide({ keepPinned: false });
+      }
+    });
+    const pinned = pointForPinned();
+    if (pinned) show(pinned, { pinned: true });
+  }
+
   function startPlay() {
     stopPlay();
     if (state.cursor === null || state.cursor >= state.events.length - 1) state.cursor = 0;
