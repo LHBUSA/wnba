@@ -123,49 +123,142 @@ Real yield is lower, because a single late-season document omits players who had
 Sun archive is the first case where a club's *whole season* of snapshots is available, which is
 exactly what closes that gap.
 
-## D. Media-relations email template
+## D. Finalised requests — approved wording, NOT yet sent
 
-Subject: **Request: 2024 game notes archive (historical statistics preservation)**
+Both are ready to send as written. Sender: Justin Erickson, PropTechUSA.ai / PropBetEdge, reply to
+justin@proptechusa.ai. Neither asks for credentials, private or unpublished material, and neither
+mentions automated collection.
+
+### D1. Seattle Storm
+
+**To:** media@stormbasketball.com
+**Subject:** Request: Seattle Storm 2024 game notes archive
 
 > Hello,
 >
-> I'm building a historical statistical archive of WNBA basketball, and I'm working through the
-> 2024 season club by club. The [CLUB] game notes are one of the best public records of that season
-> — the per-player game logs in them capture detail that is otherwise hard to reconstruct.
+> I'm preserving a statistical record of WNBA basketball season by season, and I'm working through
+> 2024 club by club. The Storm's game notes are one of the better public records of that year — the
+> per-player game logs in them capture detail that is hard to reconstruct from anywhere else.
 >
-> Your notes page publishes the current season, and I couldn't find a link to the 2024 edition.
-> Would you be willing to share a link to the club's 2024 game notes archive — pregame or postgame
-> PDFs, whichever you keep?
+> Your game notes page publishes the current season, and I couldn't find a link to the 2024 edition.
+> Would you be willing to share a link to the club's 2024 game notes archive, pregame or postgame
+> PDFs, whichever the club keeps?
 >
-> I'm only after materials the club already published and is happy to share; nothing private or
-> unpublished, and no access to any credentialed system. A public link or a folder share is ideal.
+> I'm only asking for materials the Storm already published and are happy to share — nothing private
+> or unpublished, and no access to any credentialed system. A public link or a folder share would be
+> perfect.
 >
-> Happy to say more about the project if it's useful, and thank you for keeping these notes so
-> thorough — they're genuinely valuable to anyone trying to preserve the record of the season.
+> Happy to say more about the project if that's useful. Either way, thank you for keeping those notes
+> as thorough as they are; they're genuinely valuable to anyone trying to preserve the record of a
+> season.
 >
 > Best regards,
-> [NAME], PropBetEdge
+> Justin Erickson
+> PropTechUSA.ai / PropBetEdge
+> justin@proptechusa.ai
 
-Per-club customisation: name the club, and where a club has a season-specific media page (Sparks) or
-a folder-based archive (Sun), reference that directly so the ask is concrete.
+### D2. Dallas Wings
+
+**To:** pflenke@dallaswings.com
+**Cc:** cokeefe@dallaswings.com
+**Subject:** Request: Dallas Wings 2024 game notes archive
+
+> Hello,
+>
+> I'm preserving a statistical record of WNBA basketball season by season, and I'm working through
+> 2024 club by club. The Wings' game notes are one of the better public records of that year — the
+> per-player game logs in them capture detail that is hard to reconstruct from anywhere else.
+>
+> Media Central publishes the current season's notes, and I couldn't find a link to the 2024 edition.
+> Would you be willing to share a link to the club's 2024 game notes archive, pregame or postgame
+> PDFs, whichever the club keeps?
+>
+> I'm only asking for materials the Wings already published and are happy to share — nothing private
+> or unpublished, and no access to any credentialed system. A public link or a folder share would be
+> perfect.
+>
+> Happy to say more about the project if that's useful. Either way, thank you for keeping those notes
+> as thorough as they are; they're genuinely valuable to anyone trying to preserve the record of a
+> season.
+>
+> Best regards,
+> Justin Erickson
+> PropTechUSA.ai / PropBetEdge
+> justin@proptechusa.ai
+
+### D3. Reusable shape for later clubs
+
+Minnesota is next after these two, then Washington and Los Angeles as lower-priority research
+targets. The same body works for any club: swap the club name, and name the page you checked
+(a club with a season-specific media page or a folder-based archive should have that referenced
+directly, so the ask is concrete rather than generic).
+
+## D4. Connecticut acquisition note — reproducible method
+
+Worth recording precisely, because the same shape will recur: a club publishes a real archive behind
+a link whose *listing page* is a JavaScript application, so the archive looks inaccessible to any
+tool that reads HTML.
+
+What failed: fetching the folder URL and parsing the returned page. Dropbox's web view renders its
+file list client-side, so a plain fetch returns a shell with no file names in it. Reading that page
+and concluding "cannot enumerate" was the wrong stopping point.
+
+What worked, in order:
+1. Start from the club's own notes page (`sun.wnba.com/notes`) and take the per-season link it
+   publishes, rather than trying to guess CDN paths.
+2. Request that link and **follow redirects**. Dropbox itself redirects a plain GET on a shared
+   folder to its `zip_download_get` endpoint, which returns the entire folder as a zip. No
+   credentials, no API, no access control involved — the share is public and the redirect is theirs.
+3. Enumerate the zip locally. That yields the file list the web page would not give up: 47 PDFs
+   named by date and opponent.
+4. Extract with flattened names. The folder uses one directory per game (`9.8 @ LAS/Game 35 at
+   LAS.pdf`), and on Windows a naive extract fails — `con` is a reserved device name, so any path
+   containing it errors. Flatten to safe filenames on the way out.
+
+Generalisation for future JavaScript-rendered public folders: treat the listing page as the wrong
+surface. Ask whether the host offers a bulk endpoint the share link itself resolves to, follow the
+redirect, and enumerate offline. If a host requires signing in to see the list, stop — that is an
+access control, and the answer there is an email, not a workaround.
 
 ## E. Tracking table
 
-| Club | Contact | Request sent | Response | Archive obtained | Documents downloaded | Team-games unlocked | Two-sided unlocked | Ingest status |
-|---|---|---|---|---|---|---|---|---|
-| Connecticut Sun | n/a — public folder | n/a | n/a | **yes, 2026-09-18** | 47 available, 15 parsed | 2 loaded, 38 held | 1 | **partially ingested** |
-| Seattle Storm | media@stormbasketball.com | no | — | no | 0 | 0 | 0 | blocked on archive |
-| Dallas Wings | pflenke@dallaswings.com | no | — | no | 0 | 0 | 0 | blocked on archive |
-| Minnesota Lynx | acarlson@lynxbasketball.com | no | — | no | 0 | 0 | 0 | blocked on archive |
-| Los Angeles Sparks | jquinn@la-sparks.com | no | — | no | 0 | 0 | 0 | blocked on archive |
-| Washington Mystics | no club media email published | no | — | no | 1 CDN document, probed: no player game log | 0 | 0 | blocked on archive, and their format may not carry logs |
-| Phoenix Mercury | — | no | — | public, unusable | 1 | 0 | 0 | blocked on identity (names are images) |
+| Club | Recipient | Subject | Request sent | Response | Archive obtained | Documents | Team-games unlocked | Two-sided | Ingest status |
+|---|---|---|---|---|---|---|---|---|---|
+| Connecticut Sun | n/a — public folder | n/a | n/a | n/a | **yes, 2026-09-18** | 47 available, 15 parsed | 2 loaded, 38 held | 1 | **partially ingested** |
+| **Seattle Storm** | media@stormbasketball.com | Request: Seattle Storm 2024 game notes archive | **drafted, awaiting approval** | — | no | 0 | 0 | 0 | blocked on archive |
+| **Dallas Wings** | pflenke@dallaswings.com (cc cokeefe@dallaswings.com) | Request: Dallas Wings 2024 game notes archive | **drafted, awaiting approval** | — | no | 0 | 0 | 0 | blocked on archive |
+| Minnesota Lynx | acarlson@lynxbasketball.com | *(next after Seattle and Dallas)* | no | — | no | 0 | 0 | 0 | queued behind the first two |
+| Washington Mystics | none published; Monumental Sports | — | no | — | no | 1 CDN document, probed: no player game log | 0 | 0 | lower-priority research target |
+| Los Angeles Sparks | jquinn@la-sparks.com | — | no | — | no | 0 | 0 | 0 | lower-priority research target |
+| Phoenix Mercury | — | — | closed | — | public, unusable | 1 | 0 | 0 | **closed under current format** — names are images |
+| Indiana Fever | — | — | closed | — | reachable | 1 probed | 0 | 0 | **closed under current format** — no player game log |
+| Las Vegas Aces | — | — | closed | — | reachable | 1 probed | 0 | 0 | **closed under current format** — no player game log |
+| New York Liberty | — | — | closed | — | full index public | 1 probed | 0 | 0 | **closed under current format** — no player game log |
 
-Emails are **drafted, not sent**: sending to a club is an outward-facing action and needs the owner's
-go-ahead, including the sender name and address the club should reply to.
+Sender for all requests: Justin Erickson, PropTechUSA.ai / PropBetEdge, reply to
+justin@proptechusa.ai.
+
+The Seattle and Dallas emails are **finalised and awaiting approval — nothing has been sent.**
+Writing to a club is outward-facing, so it waits for an explicit go-ahead.
+
+Order of work after those two: Minnesota, then Washington and Los Angeles as lower-priority research
+rather than immediate requests. Phoenix, Indiana, Las Vegas and New York are closed under their
+current formats and should not be re-probed; reopening one would need evidence that the format
+changed, not another pass over the same documents.
 
 ## F. Standing constraints
 
-`stats_wnba` remains prohibited and untouched. Reconciliation thresholds were not loosened. Roster
-stints remain underived. No Phoenix rows are loaded, because none of them can be attributed to a
-canonical person.
+`stats_wnba` remains prohibited and untouched. Reconciliation thresholds are intact and are not to be
+relaxed to raise a coverage number. Roster stints remain underived. No Phoenix rows are loaded,
+because none of them can be attributed to a canonical person.
+
+Connecticut's 38 held team-games stay held. They are the club's eleven-player notes missing a twelfth
+player who logged minutes, so loading them would publish a box score that looks complete and is not.
+Points reconciling exactly is not sufficient on its own — that is precisely the case the minutes
+check exists to catch.
+
+Two gate corrections stand as approved: the minutes expectation no longer tests against the
+unpopulated canonical `overtime_periods`, and non-participation markers (`DNP`, `DND`, `NWT`,
+`Inactive`, `OUT- <reason>`, zero-minute dashed lines, not-yet-played dashed rows) are read as what
+they are. Both changed how a source is interpreted; neither weakened what a row must satisfy to be
+written.
