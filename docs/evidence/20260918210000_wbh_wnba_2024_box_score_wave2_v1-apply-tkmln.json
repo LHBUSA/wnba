@@ -1,0 +1,15 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "20260918210000_wbh_wnba_2024_box_score_wave2_v1.sql",
+  "reviewed_blob": "529af5180c08cae12e9092d63ace86d4ec202c74",
+  "applied_at_utc": "2026-09-18T14:57:55.7789388Z",
+  "verification": {
+    "player_rows_total": 485,
+    "team_games_loaded": 47,
+    "games_touched": 46,
+    "games_both_sides": 1,
+    "distinct_persons": 28,
+    "unreconciled": 0,
+    "games_box_score": 1
+  }
+}

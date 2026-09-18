@@ -8,7 +8,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const suite = path.join(here, '..', 'scripts', 'wbh', 'test_notes_boxscore.py');
+const wbh = path.join(here, '..', 'scripts', 'wbh');
+const suites = ['test_notes_boxscore.py', 'test_notes_coverage.py'];
 
 function python() {
   for (const candidate of ['python', 'python3', 'py']) {
@@ -18,19 +19,21 @@ function python() {
   return null;
 }
 
-test('wbh game-notes box-score pipeline: python suite passes', (t) => {
-  const bin = python();
-  if (!bin) return t.skip('python 3 is not available on this machine');
+for (const suite of suites) {
+  test(`wbh game-notes pipeline: ${suite} passes`, (t) => {
+    const bin = python();
+    if (!bin) return t.skip('python 3 is not available on this machine');
 
-  const run = spawnSync(bin, [suite], {
-    encoding: 'utf8',
-    env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    const run = spawnSync(bin, [path.join(wbh, suite)], {
+      encoding: 'utf8',
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    });
+    const output = `${run.stdout || ''}${run.stderr || ''}`;
+    if (run.status !== 0 && /ModuleNotFoundError: No module named 'pdfplumber'/.test(output)) {
+      return t.skip('pdfplumber is not installed; run pip install pdfplumber');
+    }
+    assert.equal(run.status, 0, `python tests failed (${suite}):\n${output}`);
+    assert.match(output, /Ran \d+ tests/);
+    assert.match(output, /\bOK\b/);
   });
-  const output = `${run.stdout || ''}${run.stderr || ''}`;
-  if (run.status !== 0 && /ModuleNotFoundError: No module named 'pdfplumber'/.test(output)) {
-    return t.skip('pdfplumber is not installed; run pip install pdfplumber');
-  }
-  assert.equal(run.status, 0, `python box-score tests failed:\n${output}`);
-  assert.match(output, /Ran \d+ tests/);
-  assert.match(output, /\bOK\b/);
-});
+}
