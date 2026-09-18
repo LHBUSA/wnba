@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { normalizeSummary, normalizeCoordinate, elapsedSeconds, parseClock, WNBA_RULES } from '../workers/shared/espn.js';
+import { normalizeSummary, normalizeCoordinate, elapsedSeconds, parseClock, WNBA_RULES, mergeCorePlays, livePbpIntegrity, betterLivePbp } from '../workers/shared/espn.js';
 import { leadTracker, foulContext, shotChart, scoringRuns, shotZone, possessions } from '../workers/shared/derive.js';
 import { americanToDecimal, probToAmerican, normalizeOddsEvent, normalizeProps, teamIndex, normalizeName, PBE_MODEL } from '../workers/shared/market.js';
 import { etCompact, addDays } from '../workers/shared/time.js';
@@ -44,6 +44,55 @@ test('shot chart plots exactly the published field-goal attempts (FGA reconciles
   assert.equal(chart.total_fga, fga);
   assert.equal(chart.plotted + chart.unplotted, chart.total_fga);
   assert.ok(chart.shots.every((x) => Number.isFinite(x.x) && Number.isFinite(x.y)));
+});
+
+
+test('WNBACast integrity gate rejects a zeroed live PBP and prefers a healthier Core overlay', () => {
+  const brokenRaw = {
+    ...raw,
+    header: {
+      ...raw.header,
+      competitions: raw.header.competitions.map((comp) => ({
+        ...comp,
+        status: { ...comp.status, type: { ...comp.status.type, state: 'in', completed: false, name: 'STATUS_IN_PROGRESS', description: 'In Progress' } }
+      }))
+    },
+    plays: raw.plays.map((p) => ({
+      ...p,
+      homeScore: 0,
+      awayScore: 0,
+      scoringPlay: false,
+      text: p.shootingPlay ? String(p.text || '').replace(/\bmakes\b/i, 'misses') : p.text,
+      shortDescription: p.shootingPlay ? String(p.shortDescription || '').replace(/^\+\d+ Points?$/i, 'Missed FG') : p.shortDescription
+    }))
+  };
+
+  const broken = normalizeSummary(brokenRaw);
+  const brokenIntegrity = livePbpIntegrity(broken);
+  assert.equal(brokenIntegrity.healthy, false);
+  assert.ok(['PLAY_SCORE_STUCK_ZERO', 'MADE_FIELD_GOALS_MISSING', 'PLAY_SCORE_LAGS_GAME'].includes(brokenIntegrity.reason));
+  assert.ok(brokenIntegrity.deficits.field_goals > 0);
+
+  // Core uses the same play ids/sequence numbers but commonly represents team/athlete identity as $ref links.
+  const coreItems = raw.plays.map((p) => ({
+    ...p,
+    team: p.team?.id ? { $ref: `https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/teams/${p.team.id}` } : p.team,
+    participants: (p.participants || []).map((x) => ({
+      ...x,
+      athlete: x.athlete?.id ? { $ref: `https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/athletes/${x.athlete.id}` } : x.athlete
+    }))
+  }));
+
+  const mergedRaw = { ...brokenRaw, plays: mergeCorePlays(brokenRaw.plays, coreItems) };
+  const recovered = normalizeSummary(mergedRaw);
+  const recoveredIntegrity = livePbpIntegrity(recovered);
+  assert.equal(recoveredIntegrity.healthy, true);
+  assert.equal(recoveredIntegrity.made_field_goals, livePbpIntegrity(s).made_field_goals);
+  assert.equal(recoveredIntegrity.play_score.total, 168);
+
+  const decision = betterLivePbp(recovered, broken);
+  assert.equal(decision.use_candidate, true);
+  assert.ok(decision.candidate.deficits.field_goals < decision.baseline.deficits.field_goals);
 });
 
 test('lead changes and largest leads reproduce ESPN box totals', () => {
