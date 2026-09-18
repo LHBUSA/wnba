@@ -12,9 +12,14 @@ const ARC_R = 22.146;
 const CORNER_X = 3;
 const ARC_JOIN_Y = RIM.y + Math.sqrt(ARC_R ** 2 - (RIM.x - CORNER_X) ** 2);
 
-export function courtSvg(shots = [], { home, away, highlightSeq = null, cls = '' } = {}) {
+export function courtSvg(shots = [], { home, away, highlightSeq = null, animateSeq = null, cls = '' } = {}) {
+  const grain = Array.from({ length: 10 }, (_, i) => {
+    const x = 5 * (i + 1);
+    return `<line x1="${x}" y1="${BASE_Y}" x2="${x}" y2="${HALF_Y}" class="c-grain"/>`;
+  }).join('');
   const lines = `
     <rect x="0" y="${BASE_Y}" width="50" height="${HALF_Y - BASE_Y}" class="c-floor"/>
+    <g aria-hidden="true">${grain}</g>
     <rect x="17" y="${BASE_Y}" width="16" height="${14 - BASE_Y}" class="c-lane"/>
     <path d="M19 14 A6 6 0 0 0 31 14" class="c-line"/>
     <path d="M19 14 A6 6 0 0 1 31 14" class="c-line dash"/>
@@ -29,16 +34,48 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, cls = ''
     .filter((s) => Number.isFinite(s.x) && Number.isFinite(s.y) && s.y <= HALF_Y)
     .map((s) => {
       const side = s.team_id === home?.team_id ? 'h' : s.team_id === away?.team_id ? 'a' : 'n';
-      const hl = highlightSeq !== null && s.seq === highlightSeq ? ' hl' : '';
-      const title = `<title>${escapeXml(s.text || '')}</title>`;
-      if (s.made) return `<circle cx="${s.x}" cy="${s.y}" r="0.85" class="shot made ${side}${hl}">${title}</circle>`;
-      return `<g class="shot miss ${side}${hl}">${title}<line x1="${s.x - 0.6}" y1="${s.y - 0.6}" x2="${s.x + 0.6}" y2="${s.y + 0.6}"/><line x1="${s.x - 0.6}" y1="${s.y + 0.6}" x2="${s.x + 0.6}" y2="${s.y - 0.6}"/></g>`;
+      const latest = highlightSeq !== null && s.seq === highlightSeq;
+      const entering = animateSeq !== null && s.seq === animateSeq;
+      const team = s.team_abbr || (side === 'h' ? home?.abbr : side === 'a' ? away?.abbr : null) || '';
+      const result = s.made ? 'Made' : 'Missed';
+      const shotType = s.type || (s.value === 3 ? '3-point attempt' : 'field-goal attempt');
+      const score = Number.isFinite(s.away_score) && Number.isFinite(s.home_score) ? `${s.away_score}–${s.home_score}` : '';
+      const at = [s.period ? periodName(s.period) : '', s.clock || ''].filter(Boolean).join(' ');
+      const aria = [s.player, result, shotType, at, score ? `score ${score}` : '', s.text].filter(Boolean).join('. ');
+      const data = [
+        ['data-shot-seq', s.seq],
+        ['data-shot-player', s.player || ''],
+        ['data-shot-team', team],
+        ['data-shot-result', result],
+        ['data-shot-type', shotType],
+        ['data-shot-period', s.period ? periodName(s.period) : ''],
+        ['data-shot-clock', s.clock || ''],
+        ['data-shot-score', score],
+        ['data-shot-text', s.text || ''],
+        ['data-shot-value', s.value ?? '']
+      ].map(([k, v]) => `${k}="${escapeXml(v)}"`).join(' ');
+      const pointClass = ['shot-point', latest ? 'is-latest' : '', entering ? 'entering' : ''].filter(Boolean).join(' ');
+      const markerClass = `shot ${s.made ? 'made' : 'miss'} ${side}`;
+      const marker = s.made
+        ? `<circle cx="${s.x}" cy="${s.y}" r="0.85" class="${markerClass}"/>`
+        : `<g class="${markerClass}"><line x1="${s.x - 0.6}" y1="${s.y - 0.6}" x2="${s.x + 0.6}" y2="${s.y + 0.6}"/><line x1="${s.x - 0.6}" y1="${s.y + 0.6}" x2="${s.x + 0.6}" y2="${s.y - 0.6}"/></g>`;
+      return `<g class="${pointClass}" role="button" tabindex="0" aria-label="${escapeXml(aria)}" ${data} data-shot-point>
+        <circle cx="${s.x}" cy="${s.y}" r="1.9" class="shot-latest-ring" aria-hidden="true"/>
+        ${marker}
+        <circle cx="${s.x}" cy="${s.y}" r="2.35" class="shot-hit" aria-hidden="true"/>
+      </g>`;
     })
     .join('');
-  return `<svg class="court ${cls}" viewBox="-1 ${BASE_Y - 1} 52 ${HALF_Y - BASE_Y + 2}" role="img" aria-label="Half-court shot chart, published shot locations only">
-    <g class="c-lines">${lines}</g><g>${marks}</g></svg>`;
+  return `<svg class="court ${cls}" viewBox="-1 ${BASE_Y - 1} 52 ${HALF_Y - BASE_Y + 2}" role="group" aria-label="Interactive half-court shot chart. Hover, focus, or tap a shot for the play. Published shot locations only.">
+    <g class="c-lines">${lines}</g><g class="court-shots">${marks}</g></svg>`;
+}
+
+function periodName(n) {
+  const x = Number(n);
+  if (!x) return '';
+  return x <= 4 ? `Q${x}` : x === 5 ? 'OT' : `${x - 4}OT`;
 }
 
 function escapeXml(s) {
-  return String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+  return String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
 }
