@@ -211,7 +211,10 @@ export function normalizePlay(p, athletes = {}) {
   const participants = (p.participants || []).map((x) => str(x.athlete?.id)).filter(Boolean);
   const shootingFlag = providerBool(p.shootingPlay);
   const scoringFlag = providerBool(p.scoringPlay);
-  const shotEvidence = /\b(makes|misses)\b/i.test(String(p.text || '')) || /\b(jump ?shot|jumper|jumpshot|layup|lay-up|dunk|hook|tip(?:-in)?|fade ?away|floater|floating|finger[- ]?roll|alley[- ]?oop|two point shot|three point shot|three pointer|free ?throw)\b/i.test(`${p.type?.text || ''} ${p.shortDescription || ''} ${p.text || ''}`);
+  const eventText = `${p.type?.text || ''} ${p.shortDescription || ''} ${p.text || ''}`;
+  const shotEvidence = /\b(makes|misses|made|missed)\b/i.test(eventText)
+    || /\b(field ?goal|fg|2pt|3pt|jump ?shot|jumper|jumpshot|layup|lay-up|dunk|hook|tip(?:-in)?|fade ?away|floater|floating|finger[- ]?roll|alley[- ]?oop|two point shot|three point shot|three pointer|free ?throw)\b/i.test(eventText)
+    || (scoringFlag === true && [1, 2, 3].includes(toInt(p.scoreValue) ?? toInt(p.pointsAttempted)));
   const coordinate = (shootingFlag === true || shotEvidence) ? normalizeCoordinate(p.coordinate) : null;
   return {
     id: str(p.id),
