@@ -673,30 +673,23 @@ export async function mount(root, ctx) {
       }
     };
 
-    const openPlayer = (point) => {
-      const href = point.dataset.shotPlayerHref;
-      if (!href) return false;
-      window.location.assign(href);
-      return true;
-    };
-
     for (const point of points) {
+      const linked = point.matches('a[href]');
       point.addEventListener('mouseenter', () => show(point, { pinned: state.shotPinnedSeq === Number(point.dataset.shotSeq) }));
       point.addEventListener('mouseleave', () => hide());
       point.addEventListener('focus', () => show(point, { pinned: state.shotPinnedSeq === Number(point.dataset.shotSeq) }));
       point.addEventListener('blur', () => hide());
       point.addEventListener('click', (e) => {
+        if (linked) {
+          state.shotPinnedSeq = null;
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
-        if (point.classList.contains('has-photo') && openPlayer(point)) return;
         togglePin(point);
       });
       point.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (point.classList.contains('has-photo') && openPlayer(point)) return;
-          togglePin(point);
-        }
+        if (!linked && e.key === 'Enter') { e.preventDefault(); togglePin(point); }
         if (e.key === ' ') { e.preventDefault(); togglePin(point); }
         if (e.key === 'Escape') { state.shotPinnedSeq = null; hide({ keepPinned: false }); point.blur(); }
       });
