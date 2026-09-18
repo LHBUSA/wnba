@@ -52,9 +52,30 @@ export function leadTracker(plays) {
   let maxAway = { margin: 0, seq: null, at: null };
   let prevMargin = 0;
   const timeline = [];
+
+  // PBECast Control: elapsed game time spent in each scoreboard state.
+  // At t=0 the game is tied. The score published on a play becomes the state
+  // for the interval after that timestamp until the next timestamp.
+  let stateMargin = 0;
+  let stateAt = 0;
+  const controlSeconds = { away: 0, tied: 0, home: 0 };
+  const timedRows = rows.filter((p) => Number.isFinite(Number(p.elapsed_s)));
+  const addControl = (seconds, margin) => {
+    if (!(seconds > 0)) return;
+    if (margin > 0) controlSeconds.home += seconds;
+    else if (margin < 0) controlSeconds.away += seconds;
+    else controlSeconds.tied += seconds;
+  };
+
   for (const p of rows) {
     const margin = p.home_score - p.away_score;
     const sign = Math.sign(margin);
+    if (Number.isFinite(Number(p.elapsed_s))) {
+      const t = Math.max(stateAt, Number(p.elapsed_s));
+      addControl(t - stateAt, stateMargin);
+      stateAt = t;
+      stateMargin = margin;
+    }
     if (sign !== 0 && leader !== 0 && sign !== leader) leadChanges += 1;
     if (sign === 0 && prevMargin !== 0) ties += 1;
     if (sign !== 0) leader = sign;
@@ -63,12 +84,30 @@ export function leadTracker(plays) {
     if (margin !== prevMargin && p.elapsed_s !== null) timeline.push([p.elapsed_s, margin]);
     prevMargin = margin;
   }
+
+  const elapsedS = timedRows.length ? Math.max(0, ...timedRows.map((p) => Number(p.elapsed_s))) : 0;
+  addControl(elapsedS - stateAt, stateMargin);
+  const pct = (v) => elapsedS > 0 ? (v / elapsedS) * 100 : 0;
+  const currentMargin = rows.at(-1).home_score - rows.at(-1).away_score;
+
   return {
     method: 'Score margin after every play carrying a score in the ESPN event stream. Margin = home − away.',
     lead_changes: leadChanges,
     ties,
+    current_margin: currentMargin,
     largest_lead: { home: maxHome, away: maxAway },
-    margin_timeline: timeline
+    margin_timeline: timeline,
+    pbe_control: {
+      method: 'PBECast Control = share of elapsed game time spent leading, derived from the published score state between ESPN play timestamps. Tied time remains tied; no projection, odds or possession estimate is used.',
+      elapsed_s: elapsedS,
+      seconds: controlSeconds,
+      pct: {
+        away: pct(controlSeconds.away),
+        tied: pct(controlSeconds.tied),
+        home: pct(controlSeconds.home)
+      },
+      current: currentMargin > 0 ? 'home' : currentMargin < 0 ? 'away' : 'tied'
+    }
   };
 }
 
@@ -150,7 +189,7 @@ export function shotChart(plays) {
     if (s.made) zones[k].made += 1;
   }
   return {
-    method: 'Only field-goal attempts where ESPN published an on-court coordinate are plotted. Coordinates are ESPN feet (x 0–50 across, y from the baseline, rim ≈ (25, 0.25)); both teams are drawn toward the same basket, exactly as published. Missing coordinates are counted, never placed.',
+    method: 'Only field-goal attempts where ESPN published an on-court coordinate are plotted. Coordinates are ESPN basket-relative feet (x 0–50 across, y from the baseline, rim ≈ (25, 0.25)). WNBACast preserves those coordinates within each attacking half and may rotate one team onto the opposite basket for display. Missing coordinates are counted, never placed.',
     coordinate_system: { x: [0, 50], rim: [COORD.RIM_X, COORD.RIM_Y], units: 'feet', resolution: '1 ft (integers as published)' },
     total_fga: shots.length,
     plotted: plotted.length,
