@@ -42,6 +42,7 @@ export async function mount(root, ctx) {
     pbpFilter: 'all',
     pbpPeriod: 'all',
     pbpCollapsed: false,
+    pbpShowAll: false,
     pbpScroll: { top: 0, anchor: null, lastSeen: null },
     shotTeam: 'all',
     shotResult: 'all',
@@ -273,7 +274,7 @@ export async function mount(root, ctx) {
     const d = state.data;
     const g = v.g;
     const teamOf = (id) => (id === g.home?.team_id ? g.home : id === g.away?.team_id ? g.away : null);
-    const plays = [...v.evs].reverse().filter((e) => {
+    const filteredPlays = [...v.evs].reverse().filter((e) => {
       const f = state.pbpFilter;
       if (state.pbpPeriod !== 'all' && String(e.period) !== state.pbpPeriod) return false;
       // Canonical play families (workers/shared/pbp.js), with the provider type as the fallback for older payloads.
@@ -284,7 +285,8 @@ export async function mount(root, ctx) {
       if (f === 'rebounds') return e.family ? e.family === 'rebound' : /rebound/i.test(e.type || '');
       if (f === 'subs') return e.family ? e.family === 'substitution' : /substitution/i.test(e.type || '');
       return true;
-    }).slice(0, 400);
+    });
+    const plays = state.pbpShowAll ? filteredPlays : filteredPlays.slice(0, 10);
     const periodsSeen = [...new Set(v.evs.map((e) => e.period).filter(Number.isFinite))];
     const photoById = new Map((d.box?.players || [])
       .filter((p) => p.athlete_id)
@@ -342,7 +344,7 @@ export async function mount(root, ctx) {
               <span class="s">${latestPlay?.home_score !== null && latestPlay?.home_score !== undefined ? `${latestPlay.away_score}–${latestPlay.home_score}` : ''}</span>
             </button>
           ` : html`
-            <div class="card-body" style="padding-bottom:8px"><div class="pbp-controls"><label class="pbp-select"><span class="sr-only">Show</span><select data-pbp-filter aria-label="Filter plays">${PBP_FILTERS.map(([k, l]) => html`<option value="${k}" ${state.pbpFilter === k ? 'selected' : ''}>${l}</option>`)}</select></label><label class="pbp-select"><span class="sr-only">Period</span><select data-pbp-period aria-label="Filter by period"><option value="all">All periods</option>${periodsSeen.map((n) => html`<option value="${n}" ${state.pbpPeriod === String(n) ? 'selected' : ''}>${periodName(n)}</option>`)}</select></label><button class="pbp-latest" type="button" data-pbp-latest hidden>Jump to latest ↑</button></div></div>
+            <div class="card-body" style="padding-bottom:8px"><div class="pbp-controls"><label class="pbp-select"><span class="sr-only">Show</span><select data-pbp-filter aria-label="Filter plays">${PBP_FILTERS.map(([k, l]) => html`<option value="${k}" ${state.pbpFilter === k ? 'selected' : ''}>${l}</option>`)}</select></label><label class="pbp-select"><span class="sr-only">Period</span><select data-pbp-period aria-label="Filter by period"><option value="all">All periods</option>${periodsSeen.map((n) => html`<option value="${n}" ${state.pbpPeriod === String(n) ? 'selected' : ''}>${periodName(n)}</option>`)}</select></label>${filteredPlays.length > 10 ? html`<button class="pbp-range" type="button" data-pbp-range aria-expanded="${state.pbpShowAll ? 'true' : 'false'}">${state.pbpShowAll ? 'Last 10' : `Show all ${filteredPlays.length}`}</button>` : ''}<button class="pbp-latest" type="button" data-pbp-latest hidden>Jump to latest ↑</button></div></div>
             <div class="pbp" data-pbp-list role="log" aria-live="${g.status?.state === 'in' ? 'polite' : 'off'}">
               ${plays.length ? plays.map((e) => {
                 const t = teamOf(e.team_id);
@@ -547,9 +549,16 @@ export async function mount(root, ctx) {
       draw();
     }));
     const fSel = $stage.querySelector('[data-pbp-filter]');
-    if (fSel) fSel.addEventListener('change', () => { state.pbpFilter = fSel.value; state.newFrom = null; state.pbpScroll = { top: 0, anchor: null, lastSeen: null }; draw(); });
+    if (fSel) fSel.addEventListener('change', () => { state.pbpFilter = fSel.value; state.pbpShowAll = false; state.newFrom = null; state.pbpScroll = { top: 0, anchor: null, lastSeen: null }; draw(); });
     const pSel = $stage.querySelector('[data-pbp-period]');
-    if (pSel) pSel.addEventListener('change', () => { state.pbpPeriod = pSel.value; state.newFrom = null; state.pbpScroll = { top: 0, anchor: null, lastSeen: null }; draw(); });
+    if (pSel) pSel.addEventListener('change', () => { state.pbpPeriod = pSel.value; state.pbpShowAll = false; state.newFrom = null; state.pbpScroll = { top: 0, anchor: null, lastSeen: null }; draw(); });
+    const range = $stage.querySelector('[data-pbp-range]');
+    if (range) range.addEventListener('click', () => {
+      state.pbpShowAll = !state.pbpShowAll;
+      state.newFrom = null;
+      state.pbpScroll = { top: 0, anchor: null, lastSeen: null };
+      draw();
+    });
     // Live follow: a reader scrolled back through the feed keeps the same play in view across polls (anchored by
     // sequence); newer plays are offered with "Jump to latest" instead of moving the list.
     const list = $stage.querySelector('[data-pbp-list]');
