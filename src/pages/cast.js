@@ -320,7 +320,7 @@ export async function mount(root, ctx) {
     const currentMarginLabel = marginTeam ? `${marginTeam.abbr} +${Math.abs(currentMargin)}` : 'Tied';
 
     return html`
-      <div class="cast-grid" style="margin-top:16px">
+      <div class="cast-stack" style="margin-top:16px">
         <section class="card">
           <div class="card-head"><span class="card-title">Play-by-play</span><span class="note">${v.evs.length} events</span></div>
           <div class="card-body" style="padding-bottom:8px"><div class="pbp-controls"><label class="pbp-select"><span class="sr-only">Show</span><select data-pbp-filter aria-label="Filter plays">${PBP_FILTERS.map(([k, l]) => html`<option value="${k}" ${state.pbpFilter === k ? 'selected' : ''}>${l}</option>`)}</select></label><label class="pbp-select"><span class="sr-only">Period</span><select data-pbp-period aria-label="Filter by period"><option value="all">All periods</option>${periodsSeen.map((n) => html`<option value="${n}" ${state.pbpPeriod === String(n) ? 'selected' : ''}>${periodName(n)}</option>`)}</select></label><button class="pbp-latest" type="button" data-pbp-latest hidden>Jump to latest ↑</button></div></div>
@@ -341,7 +341,7 @@ export async function mount(root, ctx) {
           </div>
         </section>
 
-        <div class="grid cast-intel-grid" style="gap:16px">
+        <div class="cast-stack-secondary">
           <section class="card">
             <div class="card-head shot-chart-head">
               <div>
