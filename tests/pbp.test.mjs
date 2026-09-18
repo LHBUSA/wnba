@@ -1,4 +1,4 @@
-// Play-by-play semantics (pbe-pbp/1.0.1) on real provider payloads:
+// Play-by-play semantics (current canonical PBP version) on real provider payloads:
 //   tests/fixtures/international/espn-summary-401917260-final.json — USA 97–79 France, FIBA Women's World Cup final
 //   tests/fixtures/espn-summary-401857189.json                     — a WNBA regular-season game
 // The rule under test: a user understands what happened on the court from the text alone, and nothing is stated that
@@ -152,6 +152,35 @@ test('live WNBACast reconciles provider make/miss text with lagging or string bo
   assert.equal(chart.total_fga, 1);
   assert.equal(chart.plotted, 1);
   assert.equal(chart.shots[0].made, true, 'WNBACast shot chart renders the recovered scoring event as made');
+
+  // Strongest live safeguard: if ESPN literally labels the scoring shot a miss, the same-event
+  // score increase wins. This uses the source's own before/after scoreboard, never a projection.
+  const madeIndex = WNBA.plays.findIndex((p) => p.id === madeSource.id);
+  const beforeMade = WNBA.plays[madeIndex - 1];
+  assert.ok(beforeMade, 'real play immediately before the made field goal exists');
+  const contradictory = normalizeSummary({
+    ...WNBA,
+    plays: [
+      beforeMade,
+      {
+        ...madeSource,
+        text: 'Alanna Smith misses layup',
+        shortDescription: 'Missed FG',
+        scoringPlay: false,
+        shootingPlay: true
+      }
+    ]
+  }).plays[1];
+  assert.equal(contradictory.made, true, 'same-event score increase overrides a contradictory miss label');
+  assert.equal(contradictory.scoring, true);
+  assert.equal(contradictory.points, 2);
+  assert.equal(contradictory.outcome_reconciled, 'score_delta');
+  assert.equal(contradictory.score_delta, 2);
+  assert.match(contradictory.text, /makes|scores/i);
+  assert.doesNotMatch(contradictory.text, /misses/i);
+  assert.ok(contradictory.coordinate, 'score-reconciled made shot keeps the provider coordinate');
+  const reconciledChart = shotChart([contradictory]);
+  assert.equal(reconciledChart.shots[0].made, true);
 });
 
 test('names keep their Unicode as the identity source publishes them (no stripping, no invented diacritics)', () => {
