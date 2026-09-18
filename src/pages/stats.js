@@ -9,7 +9,7 @@ export async function mount(root, ctx) {
   render(root, `${statsHead()}${skeleton(420)}`);
   const data = await loadStats(api);
   if (!ctx.isCurrent()) return;
-  const state = { tab: ctx.query.view === 'teams' ? 'teams' : 'players', sort: 'avgPoints', tsort: 'avgPoints' };
+  const state = { tab: ctx.query.view === 'teams' ? 'teams' : ctx.query.view === 'players' ? 'players' : 'winba', sort: 'avgPoints', tsort: 'avgPoints' };
   render(root, statsView(data, state));
   const $b = root.querySelector('[data-body]');
   const draw = () => {
