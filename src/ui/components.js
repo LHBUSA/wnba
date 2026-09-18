@@ -118,7 +118,10 @@ export function playerCard(p) {
         : html`<div class="fallback" aria-hidden="true"><span class="init">${initials(p.name)}</span>${p.jersey ? html`<span class="jersey">#${p.jersey}</span>` : ''}</div>`}
     </div>
     <div class="pcard-meta">
-      <b>${p.name}</b>
+      <div class="pcard-name-row">
+        <b>${p.name}</b>
+        ${p.winba ? html`<span class="winba-mini ${p.winba.qualified ? '' : 'provisional'}" title="WinBA Score · PropBetEdge winning-impact index">${num(p.winba.score)}<em>WINBA</em></span>` : ''}
+      </div>
       <small>${[p.team?.abbr, p.position, p.jersey ? `#${p.jersey}` : null].filter(Boolean).join(' · ')}</small>
     </div>
   </a>`;
