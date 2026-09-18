@@ -112,11 +112,15 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
           <circle cx="${x}" cy="${y}" r="1.27" class="shot-photo-ring"/>
           ${s.made ? '<circle cx="' + x + '" cy="' + y + '" r="1.48" class="shot-photo-result"/>' : '<path d="M' + (x - 1.0) + ' ' + (y - 1.0) + ' L' + (x + 1.0) + ' ' + (y + 1.0) + ' M' + (x - 1.0) + ' ' + (y + 1.0) + ' L' + (x + 1.0) + ' ' + (y - 1.0) + '" class="shot-photo-result"/>'}
         </g>` : classicMarker;
-      return `<g class="${pointClass}" role="button" tabindex="0" aria-label="${escapeXml(aria)}" ${data} data-shot-point>
+      const body = `
         <circle cx="${x}" cy="${y}" r="${hasPhoto ? 2.1 : 1.9}" class="shot-latest-ring" aria-hidden="true"/>
         ${photoMarker}
         <circle cx="${x}" cy="${y}" r="${hasPhoto ? 2.55 : 2.35}" class="shot-hit" aria-hidden="true"/>
-      </g>`;
+      `;
+      const href = hasPhoto && s.athlete_id ? `/players/${escapeXml(s.athlete_id)}` : null;
+      return href
+        ? `<a href="${href}" class="${pointClass}" aria-label="${escapeXml(aria)}. Open player profile." ${data} data-shot-point data-shot-link>${body}</a>`
+        : `<g class="${pointClass}" role="button" tabindex="0" aria-label="${escapeXml(aria)}" ${data} data-shot-point>${body}</g>`;
     })
     .join('');
 
