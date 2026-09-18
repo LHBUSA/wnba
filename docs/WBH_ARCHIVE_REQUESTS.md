@@ -42,7 +42,7 @@ nothing.
 
 ## B. Archive and contact findings
 
-### Connecticut Sun — archive obtained
+### Connecticut Sun — archive obtained, yield limited by the documents themselves
 - Notes page: `sun.wnba.com/notes`, which links per season to public Dropbox folders.
 - The 2024 folder link is published on that page. A plain request to it redirects to Dropbox's own
   zip endpoint for the shared folder and returns the whole archive: **47 PDFs**, one per game,
@@ -56,6 +56,13 @@ nothing.
   right that the layout spec now excludes.
 - Media relations page: `sun.wnba.com/mediarelations` (Senior Director of Brand Development and
   Communications, plus two public relations specialists).
+- **Yield so far: 2 team-games loaded, 38 held.** The archive is complete as a document set, but each
+  note carries eleven player pages, so any game in which a twelfth player logged minutes cannot reach
+  the 200-minute total. Those games reconcile exactly on points and fall about three minutes short -
+  the case the minutes check exists to catch. Fifteen snapshots across the season did not close it,
+  so this is a property of the club's format rather than of which documents we chose. If a request
+  is ever sent to the Sun, the useful ask is narrower than an archive: whether a twelfth player page
+  exists for the affected games.
 
 ### Seattle Storm — highest-value outstanding request
 - The league's own portal (`wnba.com/game-notes`) points to `seattlestormbasketball.com/mediacentral`
@@ -146,12 +153,12 @@ a folder-based archive (Sun), reference that directly so the ask is concrete.
 
 | Club | Contact | Request sent | Response | Archive obtained | Documents downloaded | Team-games unlocked | Two-sided unlocked | Ingest status |
 |---|---|---|---|---|---|---|---|---|
-| Connecticut Sun | n/a — public folder | n/a | n/a | **yes, 2026-09-18** | 47 (15 parsed) | see below | see below | **in progress** |
+| Connecticut Sun | n/a — public folder | n/a | n/a | **yes, 2026-09-18** | 47 available, 15 parsed | 2 loaded, 38 held | 1 | **partially ingested** |
 | Seattle Storm | media@stormbasketball.com | no | — | no | 0 | 0 | 0 | blocked on archive |
 | Dallas Wings | pflenke@dallaswings.com | no | — | no | 0 | 0 | 0 | blocked on archive |
 | Minnesota Lynx | acarlson@lynxbasketball.com | no | — | no | 0 | 0 | 0 | blocked on archive |
 | Los Angeles Sparks | jquinn@la-sparks.com | no | — | no | 0 | 0 | 0 | blocked on archive |
-| Washington Mystics | no club media email published | no | — | no | 1 CDN document | 0 | 0 | blocked on archive |
+| Washington Mystics | no club media email published | no | — | no | 1 CDN document, probed: no player game log | 0 | 0 | blocked on archive, and their format may not carry logs |
 | Phoenix Mercury | — | no | — | public, unusable | 1 | 0 | 0 | blocked on identity (names are images) |
 
 Emails are **drafted, not sent**: sending to a club is an outward-facing action and needs the owner's
