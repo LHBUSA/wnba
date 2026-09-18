@@ -92,6 +92,38 @@ export async function mount(root, ctx) {
       <div class="r-row"><span style="display:inline-flex;gap:6px;align-items:center">${teamLogo(g.home, 16)}${g.home?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.home?.score ?? ''}</span></div>
     </a>`;
   }
+  function setRailGames(games) {
+    const live = games.filter((g) => g.status?.state === 'in');
+    const upcoming = games.filter((g) => g.status?.state === 'pre').sort((a, b) => a.start_utc.localeCompare(b.start_utc));
+    const finals = games.filter((g) => g.status?.state === 'post').sort((a, b) => b.start_utc.localeCompare(a.start_utc));
+    state.rail = { live, upcoming: upcoming.slice(0, 10), finals: finals.slice(0, 24) };
+  }
+
+  function patchRailGame(game) {
+    if (!game?.game_id) return;
+    const all = [...(state.rail.live || []), ...(state.rail.upcoming || []), ...(state.rail.finals || [])]
+      .filter((g) => g.game_id !== game.game_id);
+    all.push(game);
+    setRailGames(all);
+  }
+
+  let lastRailRefreshAt = 0;
+  async function refreshRailLive() {
+    if (Date.now() - lastRailRefreshAt < 15000) return;
+    lastRailRefreshAt = Date.now();
+    const r = await api.today({ fresh: true });
+    if (!ctx.isCurrent() || !r.ok) return;
+    const fresh = [...(r.data?.slate?.games || []), ...(r.data?.last_results?.games || [])];
+    if (!fresh.length) return;
+    const byId = new Map(
+      [...(state.rail.live || []), ...(state.rail.upcoming || []), ...(state.rail.finals || [])]
+        .map((g) => [g.game_id, g])
+    );
+    for (const g of fresh) byId.set(g.game_id, g);
+    setRailGames([...byId.values()]);
+    renderRail();
+  }
+
   function renderRail() {
     const r = state.rail;
     render($rail, html`
@@ -133,6 +165,9 @@ export async function mount(root, ctx) {
       : null;
     state.data = d;
     state.meta = res.meta;
+    patchRailGame(d.game);
+    renderRail();
+    refreshRailLive();
     const s = d.game.status?.state;
     poller?.setInterval(s === 'in' ? 8000 : s === 'pre' ? 60000 : 0);
     if (s === 'post' && state.cursor === null) state.cursor = state.events.length - 1;
@@ -149,7 +184,10 @@ export async function mount(root, ctx) {
     const atEnd = idx >= state.events.length - 1;
     const last = evs.at(-1) || null;
     const scored = [...evs].reverse().find((e) => e.home_score !== null && e.away_score !== null);
-    const score = replay && !atEnd && scored ? { home: scored.home_score, away: scored.away_score } : { home: g.home?.score, away: g.away?.score };
+    const live = g.status?.state === 'in';
+    const score = scored && (live || (replay && !atEnd))
+      ? { home: scored.home_score, away: scored.away_score }
+      : { home: g.home?.score, away: g.away?.score };
     return {
       g,
       replay,
@@ -168,7 +206,7 @@ export async function mount(root, ctx) {
   }
 
   function linescoreAt(evs, g, atEnd) {
-    if (atEnd) return (g.home?.linescores || []).map((h, i) => ({ period: i + 1, home: h, away: g.away?.linescores?.[i] ?? null }));
+    if (atEnd && g.status?.state === 'post') return (g.home?.linescores || []).map((h, i) => ({ period: i + 1, home: h, away: g.away?.linescores?.[i] ?? null }));
     const out = [];
     let ph = 0;
     let pa = 0;
@@ -191,7 +229,12 @@ export async function mount(root, ctx) {
     const away = g.away;
     ctx.setMeta({ title: `${away?.abbr} @ ${home?.abbr} · WNBACast`, description: `WNBACast for ${away?.name} at ${home?.name}, ${fmtDateET(g.start_utc, { month: 'long', day: 'numeric', year: 'numeric' })}: real play-by-play, shots, runs and box score.` });
 
-    const periodLbl = v.replay && !v.atEnd && v.last ? `${periodName(v.last.period)} ${v.last.clock}` : st.label;
+    const liveEventClock = g.status?.state === 'in' && v.last?.period
+      ? [periodName(v.last.period), v.last.clock].filter(Boolean).join(' ')
+      : null;
+    const periodLbl = v.replay && !v.atEnd && v.last
+      ? `${periodName(v.last.period)} ${v.last.clock}`
+      : liveEventClock || st.label;
     const homeLost = g.status?.state === 'post' && v.atEnd && home.score < away.score;
     const awayLost = g.status?.state === 'post' && v.atEnd && away.score < home.score;
     const sem = state.meta?.semantics;
