@@ -9,7 +9,7 @@
 // Why: ESPN's FIBA feed publishes text such as "Caitlin Clark makes" while its structured fields say a made free throw
 // (type MadeFreeThrow, pointsAttempted 1, "+1 Point"). The old normalizers kept only the text.
 
-export const PBP_VERSION = 'pbe-pbp/1.0.1';
+export const PBP_VERSION = 'pbe-pbp/1.0.2';
 
 const int = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : null; };
 const str = (v) => (v === null || v === undefined ? null : String(v));
@@ -44,16 +44,21 @@ export function shotSubtype(typeText) {
 const FOUL_TYPE = (t) => { const m = String(t || '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().match(/^(.*?)\s*foul\b/); const k = m ? m[1].trim() : ''; return k || null; };
 const TURNOVER_TYPE = (t) => { const k = String(t || '').replace(/\n/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/\bturnover\b/, '').replace(/\s+/g, ' ').trim(); return k && k !== 'turnover' ? k : null; };
 
-function familyOf({ typeText, short, text, shooting, pointsAttempted, typeId }) {
+function familyOf({ typeText, short, text, shooting, scoring, scoreValue, pointsAttempted, typeId }) {
   const t = `${typeText || ''} ${short || ''} ${text || ''}`;
-  const shotLike = /\b(makes|misses)\b/i.test(text || '') || /\b(jump ?shot|jumper|jumpshot|layup|lay-up|dunk|hook|tip(?:-in)?|fade ?away|floater|floating|finger[- ]?roll|alley[- ]?oop|two point shot|three point shot|three pointer)\b/i.test(t);
+  const shotLike = /\b(makes|misses|made|missed)\b/i.test(t) || /\b(field ?goal|fg|2pt|3pt|jump ?shot|jumper|jumpshot|layup|lay-up|dunk|hook|tip(?:-in)?|fade ?away|floater|floating|finger[- ]?roll|alley[- ]?oop|two point shot|three point shot|three pointer)\b/i.test(t);
+  const scoringValue = pointsAttempted === 1 || pointsAttempted === 2 || pointsAttempted === 3
+    ? pointsAttempted
+    : scoreValue === 1 || scoreValue === 2 || scoreValue === 3
+      ? scoreValue
+      : null;
   if (typeId === '412' || typeId === '402' || /^end (period|game)|^end of|halftime/i.test(short || '') || /^end (period|game)$/i.test(typeText || '')) return 'period';
   if (/jump ?ball/i.test(t)) return 'jumpball';
   if (/timeout/i.test(t)) return 'timeout';
   if (/substitution/i.test(t)) return 'substitution';
   if (/review|challenge/i.test(t)) return 'review';
-  if (/free ?throw/i.test(t) || (shooting === true && pointsAttempted === 1)) return 'free_throw';
-  if (shooting === true || shotLike) return 'shot';
+  if (/free ?throw/i.test(t) || (shooting === true && pointsAttempted === 1) || (scoring === true && scoringValue === 1)) return 'free_throw';
+  if (shooting === true || shotLike || (scoring === true && (scoringValue === 2 || scoringValue === 3))) return 'shot';
   if (/turnover/i.test(t) || /^traveling$/i.test(typeText || '')) return 'turnover';
   if (/rebound/i.test(t)) return 'rebound';
   if (/^steal\b/i.test(typeText || '') || /^steal$/i.test(short || '')) return 'steal';
@@ -79,7 +84,7 @@ export function semanticPlay(raw, { athleteName = () => null, teamName = () => n
   const pointsAttempted = int(raw.pointsAttempted);
   const scoreValue = int(raw.scoreValue);
   const parts = (raw.participants || []).map((x) => str(x.athlete?.id)).filter(Boolean);
-  const family = familyOf({ typeText, short, text, shooting: shootingFlag, pointsAttempted, typeId });
+  const family = familyOf({ typeText, short, text, shooting: shootingFlag, scoring: scoringFlag, scoreValue, pointsAttempted, typeId });
   const person = (id, fallbackName = null) => (id || fallbackName ? { id: id || null, name: (id && athleteName(id)) || fallbackName || null } : null);
   const teamId = str(raw.team?.id);
   const team = teamId ? { id: teamId, name: teamName(teamId) || null } : null;
@@ -106,8 +111,14 @@ export function semanticPlay(raw, { athleteName = () => null, teamName = () => n
   }
 
   const shooting = family === 'shot' || family === 'free_throw';
-  const outcomeWord = text.match(/\b(makes|misses)\b/i)?.[1]?.toLowerCase() || null;
-  const textOutcome = outcomeWord === 'makes' ? true : outcomeWord === 'misses' ? false : null;
+  const outcomeWord = text.match(/\b(makes|misses|made|missed)\b/i)?.[1]?.toLowerCase()
+    || String(short || '').match(/\b(made|missed)\b/i)?.[1]?.toLowerCase()
+    || null;
+  const textOutcome = outcomeWord === 'makes' || outcomeWord === 'made'
+    ? true
+    : outcomeWord === 'misses' || outcomeWord === 'missed'
+      ? false
+      : null;
   // During live games ESPN can transiently omit or lag the scoring/shooting flags while its own event text
   // already says "makes" or "misses". Outcome text is direct provider evidence, so use it to reconcile the
   // event instead of turning a made basket into a miss until the structured flag catches up.
