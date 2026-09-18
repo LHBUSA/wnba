@@ -69,6 +69,25 @@ test('WNBACast interactive court carries real play metadata and an accessible la
   assert.match(svg, /data-shot-text="[^"]+"/);
   assert.match(svg, /data-shot-score="\d+–\d+"/);
   assert.match(svg, /Interactive half-court shot chart/);
+
+  const photoPath = `/media/players/${made.athlete_id}/square.webp`;
+  const photoSvg = courtSvg([{ ...made, photo: { square: photoPath } }], {
+    home: s.game.home,
+    away: s.game.away,
+    highlightSeq: made.seq,
+    photoMode: true
+  });
+  assert.match(photoSvg, /class="shot-point has-photo is-latest"/);
+  assert.match(photoSvg, /class="shot-photo-marker made/);
+  assert.match(photoSvg, /<image href="\/media\/players\/[^"]+\/square\.webp"/);
+  assert.match(photoSvg, /class="shot-photo-ring"/);
+
+  const classicSvg = courtSvg([{ ...made, photo: { square: photoPath } }], {
+    home: s.game.home,
+    away: s.game.away,
+    photoMode: false
+  });
+  assert.doesNotMatch(classicSvg, /<image href=/, 'classic mode never renders player photos');
 });
 
 
