@@ -124,15 +124,22 @@ export async function mount(root, ctx) {
     renderRail();
   }
 
+  let railPositioned = false;
   function renderRail() {
     const r = state.rail;
+    const previousLeft = $rail.scrollLeft;
     render($rail, html`
       ${r.live?.length ? html`<span class="cast-rail-group">LIVE</span>${r.live.map(railItem)}` : ''}
       ${r.upcoming?.length ? html`<span class="cast-rail-group">NEXT</span>${r.upcoming.map(railItem)}` : ''}
       ${r.finals?.length ? html`<span class="cast-rail-group">REPLAY</span>${r.finals.map(railItem)}` : ''}
     `);
     const cur = $rail.querySelector('[aria-current="true"]');
-    if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
+    if (!railPositioned && cur) {
+      $rail.scrollLeft = Math.max(0, cur.offsetLeft - (($rail.clientWidth - cur.clientWidth) / 2));
+      railPositioned = true;
+    } else {
+      $rail.scrollLeft = previousLeft;
+    }
   }
 
   let gameArticles = null;
