@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------ court + charts */
 .court { width: 100%; height: auto; display: block; max-height: 520px; overflow: visible; }
 .court.full-court {
-  width: min(100%, 620px);
+  width: min(100%, 720px);
   max-height: none;
   aspect-ratio: 50 / 94;
   margin-inline: auto;
@@ -93,7 +93,13 @@
 .shot-chart-head { align-items: flex-start; gap: 12px; }
 .shot-chart-head > div:first-child { display: grid; gap: 3px; }
 .shot-chart-hint { font-size: 11px; }
-.shot-chart-controls { display: grid; gap: 6px; justify-items: end; }
+.shot-chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
 .shot-result-row .pill { min-width: 54px; }
 .shot-marker-row .pill { min-width: 78px; }
 .shot-chart-legend { row-gap: 7px; }
@@ -174,7 +180,7 @@
 }
 
 .cast-intel-grid {
-  grid-template-columns: minmax(390px, .9fr) minmax(500px, 1.1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
 }
 .pbe-flow-card { overflow: hidden; }
@@ -353,7 +359,7 @@
 
 @media (max-width: 1120px) {
   .cast-intel-grid { grid-template-columns: minmax(0, 1fr); }
-  .court.full-court { width: min(100%, 560px); }
+  .court.full-court { width: min(100%, 660px); }
 }
 @media (max-width: 700px) {
   .flow-facts { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -439,6 +445,24 @@
 }
 .cast-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--s4); align-items: start; }
 @media (max-width: 1000px) { .cast-grid { grid-template-columns: minmax(0, 1fr); } }
+.cast-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+.cast-stack-secondary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+.cast-stack > .card,
+.cast-stack-secondary > .card {
+  width: 100%;
+  min-width: 0;
+}
+.cast-stack .pbp {
+  max-height: 520px;
+}
 .pbp { position: relative; max-height: 560px; overflow-y: auto; overscroll-behavior: contain; }
 .pbp-row .pbp-name { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--line); }
 .pbp-row .pbp-name:hover { color: var(--gold); }
