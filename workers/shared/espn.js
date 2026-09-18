@@ -1,4 +1,4 @@
-import { semanticPlays, resolversFromSummary } from './pbp.js';
+import { semanticPlays, resolversFromSummary, providerBool } from './pbp.js';
 // ESPN -> PropBetEdge WNBA normalization.
 //
 // Every shape here was observed in a real WNBA canary (docs/WNBA_SOURCE_MATRIX.md).
@@ -179,7 +179,28 @@ export function normalizeCoordinate(c) {
 
 function withSemantics(play, s) {
   if (!s) return play;
-  return { ...play, text: s.description, text_raw: play.text, description_source: s.description_source, family: s.family, subtype: s.subtype, shot_value: s.shot_value, free_throw: s.free_throw, assist: s.assist, stolen_by: s.stolen_by, blocked_by: s.blocked_by, rebound: s.rebound, turnover_type: s.turnover_type, foul_type: s.foul_type, score_before: s.score_before, primary: s.primary };
+  return {
+    ...play,
+    pbp_version: s.pbp_version,
+    text: s.description,
+    text_raw: play.text,
+    description_source: s.description_source,
+    family: s.family,
+    subtype: s.subtype,
+    shot_value: s.shot_value,
+    free_throw: s.free_throw,
+    assist: s.assist,
+    stolen_by: s.stolen_by,
+    blocked_by: s.blocked_by,
+    rebound: s.rebound,
+    turnover_type: s.turnover_type,
+    foul_type: s.foul_type,
+    score_before: s.score_before,
+    primary: s.primary,
+    made: s.made,
+    scoring: s.scoring,
+    shooting: s.shooting
+  };
 }
 
 export function normalizePlay(p, athletes = {}) {
@@ -187,7 +208,10 @@ export function normalizePlay(p, athletes = {}) {
   const clock = str(p.clock?.displayValue);
   const clockS = parseClock(clock);
   const participants = (p.participants || []).map((x) => str(x.athlete?.id)).filter(Boolean);
-  const coordinate = p.shootingPlay ? normalizeCoordinate(p.coordinate) : null;
+  const shootingFlag = providerBool(p.shootingPlay);
+  const scoringFlag = providerBool(p.scoringPlay);
+  const shotEvidence = /\b(makes|misses)\b/i.test(String(p.text || '')) || /\b(jump ?shot|jumper|jumpshot|layup|lay-up|dunk|hook|tip(?:-in)?|fade ?away|floater|floating|finger[- ]?roll|alley[- ]?oop|two point shot|three point shot|three pointer|free ?throw)\b/i.test(`${p.type?.text || ''} ${p.shortDescription || ''} ${p.text || ''}`);
+  const coordinate = (shootingFlag === true || shotEvidence) ? normalizeCoordinate(p.coordinate) : null;
   return {
     id: str(p.id),
     seq: toInt(p.sequenceNumber),
@@ -205,11 +229,11 @@ export function normalizePlay(p, athletes = {}) {
     primary_athlete: participants[0] ? athletes[participants[0]] || { id: participants[0], name: null } : null,
     home_score: toInt(p.homeScore),
     away_score: toInt(p.awayScore),
-    scoring: Boolean(p.scoringPlay),
-    points: toInt(p.scoreValue) ?? 0,
-    shooting: Boolean(p.shootingPlay),
+    scoring: scoringFlag === true,
+    points: scoringFlag === true ? (toInt(p.scoreValue) ?? 0) : 0,
+    shooting: shootingFlag === true,
     points_attempted: toInt(p.pointsAttempted),
-    made: p.shootingPlay ? Boolean(p.scoringPlay) : null,
+    made: shootingFlag === true ? scoringFlag === true : null,
     coordinate
   };
 }
