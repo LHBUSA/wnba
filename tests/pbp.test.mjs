@@ -113,6 +113,7 @@ test('live WNBACast reconciles provider make/miss text with lagging or string bo
   assert.equal(madeLag.shooting, true);
   assert.equal(madeLag.made, true);
   assert.equal(madeLag.scoring, true);
+  assert.equal(madeLag.points, 2, 'a reconciled made basket keeps its actual point value');
   assert.ok(madeLag.coordinate, 'a valid published shot coordinate survives a lagging shooting flag');
   assert.match(madeLag.text, /makes/i);
 
