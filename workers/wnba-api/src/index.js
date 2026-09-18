@@ -19,7 +19,10 @@ import {
   normalizeAthleteStats,
   normalizeLeaders,
   normalizeTransactions,
-  normalizeScoreboardEvent
+  normalizeScoreboardEvent,
+  mergeCorePlays,
+  livePbpIntegrity,
+  betterLivePbp
 } from '../../shared/espn.js';
 import { deriveGame, shotChart, possessions } from '../../shared/derive.js';
 import { etCompact, addDays, isCompactDate, gameEtDate, daysBetween } from '../../shared/time.js';
@@ -364,12 +367,81 @@ async function loadSummary(env, ctx, id) {
     const s = archived.summary;
     const names = new Map((s.box?.players || []).filter((r) => r.athlete_id).map((r) => [String(r.athlete_id), r.name]));
     const teams = new Map([s.game?.home, s.game?.away].filter(Boolean).map((t) => [String(t.team_id), t.name]));
-    return { summary: { ...s, plays: upgradeNormalizedPlays(s.plays, { names, teams }) }, fetchedAt: archived.archived_at, cache: 'archive', error: null, archived: true };
+    return {
+      summary: { ...s, plays: upgradeNormalizedPlays(s.plays, { names, teams }) },
+      fetchedAt: archived.archived_at,
+      cache: 'archive',
+      error: null,
+      archived: true,
+      pbpSource: 'archive',
+      pbpIntegrity: null
+    };
   }
-  const probe = await cachedJson({ url: `${ESPN.site}/summary?event=${id}`, ttlS: TTL.summaryLive, ctx, validate: (b) => b?.header?.id });
+
+  const probe = await cachedJson({
+    url: `${ESPN.site}/summary?event=${id}`,
+    ttlS: TTL.summaryLive,
+    ctx,
+    validate: (b) => b?.header?.id
+  });
   if (!probe.body) return { summary: null, fetchedAt: null, cache: probe.cache, error: probe.error };
-  const summary = normalizeSummary(probe.body);
-  return { summary, fetchedAt: probe.fetchedAt, cache: probe.cache, error: probe.error, archived: false };
+
+  const primary = normalizeSummary(probe.body);
+  const primaryIntegrity = livePbpIntegrity(primary);
+
+  // Site summary remains the normal source. During a live game, fail over only when its play stream
+  // contradicts the source-published score/box by a material amount. ESPN Core is an independent
+  // representation of the same event ids and has been healthy from Cloudflare egress in canaries.
+  if (primary.game?.status?.state === 'in' && !primaryIntegrity.healthy) {
+    const coreUrl = `${ESPN.core}/events/${id}/competitions/${id}/plays?limit=1000`;
+    const core = await cachedJson({
+      url: coreUrl,
+      ttlS: 4,
+      ctx,
+      validate: (b) => Array.isArray(b?.items)
+    });
+
+    if (core.body?.items?.length) {
+      const mergedRaw = {
+        ...probe.body,
+        plays: mergeCorePlays(probe.body?.plays || [], core.body.items)
+      };
+      const candidate = normalizeSummary(mergedRaw);
+      const decision = betterLivePbp(candidate, primary);
+      if (decision.use_candidate) {
+        return {
+          summary: candidate,
+          fetchedAt: core.fetchedAt || probe.fetchedAt,
+          cache: core.cache || probe.cache,
+          error: core.error || probe.error,
+          archived: false,
+          pbpSource: 'espn_core_failover',
+          pbpIntegrity: decision.candidate,
+          pbpPrimaryIntegrity: decision.baseline
+        };
+      }
+    }
+
+    return {
+      summary: primary,
+      fetchedAt: probe.fetchedAt,
+      cache: probe.cache,
+      error: probe.error || core?.error || null,
+      archived: false,
+      pbpSource: 'espn_site_degraded',
+      pbpIntegrity: primaryIntegrity
+    };
+  }
+
+  return {
+    summary: primary,
+    fetchedAt: probe.fetchedAt,
+    cache: probe.cache,
+    error: probe.error,
+    archived: false,
+    pbpSource: 'espn_site',
+    pbpIntegrity: primaryIntegrity
+  };
 }
 
 function gameSemantics(g, archived) {
@@ -391,7 +463,12 @@ function gameMeta(path, L) {
     cache: L.cache,
     semantics: gameSemantics(g, L.archived),
     season: g?.season || null,
-    degraded: L.error ? [`source_error:${L.error}`] : []
+    degraded: [
+      ...(L.error ? [`source_error:${L.error}`] : []),
+      ...(L.pbpSource === 'espn_site_degraded' ? [`pbp_integrity:${L.pbpIntegrity?.reason || 'UNKNOWN'}`] : [])
+    ],
+    pbpSource: L.pbpSource || null,
+    pbpIntegrity: L.pbpIntegrity || null
   });
 }
 
@@ -432,7 +509,9 @@ async function gameLive({ env, ctx, url, params, path }) {
       injuries: s.injuries,
       pickcenter: s.pickcenter,
       market: await marketForGame(env, s.game),
-      pbe_model: PBE_MODEL
+      pbe_model: PBE_MODEL,
+      pbp_source: L.pbpSource || null,
+      pbp_integrity: L.pbpIntegrity || null
     },
     gameMeta(path, L),
     { maxAge: cacheFor(s.game) }
