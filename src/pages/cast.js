@@ -56,6 +56,7 @@ export async function mount(root, ctx) {
   };
   let poller = null;
   let playTimer = null;
+  let railPositioned = false;
   const stopTicker = startFreshTicker(root);
 
   render(root, html`<div id="rail" class="cast-rail">${skeleton(60)}</div><div id="stage">${skeleton(160)}${skeleton(420)}</div>`);
@@ -124,7 +125,6 @@ export async function mount(root, ctx) {
     renderRail();
   }
 
-  let railPositioned = false;
   function renderRail() {
     const r = state.rail;
     const previousLeft = $rail.scrollLeft;
