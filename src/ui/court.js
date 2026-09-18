@@ -86,6 +86,7 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
       const data = [
         ['data-shot-seq', s.seq],
         ['data-shot-player', s.player || ''],
+        ['data-shot-player-href', s.athlete_id ? `/players/${s.athlete_id}` : ''],
         ['data-shot-team', team],
         ['data-shot-result', result],
         ['data-shot-type', shotType],
