@@ -27,7 +27,7 @@ Deploy only from a pushed `main` commit: `cd workers/<name> && npx wrangler depl
 
 ### `wnba-api` routes (all `GET`, envelope `{ ok, data, meta }`)
 
-`/health` · `/v1/sources` (live canary from CF egress) · `/v1/today` · `/v1/season` · `/v1/schedule?date=|from&to|season` · `/v1/games/:id` · `/v1/games/:id/live?since=` · `/v1/games/:id/events` · `/v1/games/:id/boxscore` · `/v1/games/:id/shots` · `/v1/matchups/:id` · `/v1/standings` · `/v1/teams` · `/v1/teams/:id` · `/v1/teams/:id/roster` · `/v1/players` · `/v1/players/:id` · `/v1/players/:id/gamelog` · `/v1/injuries` · `/v1/transactions` · `/v1/stats/players` · `/v1/stats/teams` · `/v1/odds[?event=]` · `/v1/props` · `/v1/track-record` · `/v1/account`
+`/health` · `/v1/sources` (live canary from CF egress) · `/v1/today` · `/v1/season` · `/v1/schedule?date=|from&to|season` · `/v1/games/:id` · `/v1/games/:id/live?since=` · `/v1/games/:id/events` · `/v1/games/:id/boxscore` · `/v1/games/:id/shots` · `/v1/matchups/:id` · `/v1/standings` · `/v1/teams` · `/v1/teams/:id` · `/v1/teams/:id/roster` · `/v1/players` · `/v1/players/:id` · `/v1/players/:id/gamelog` · `/v1/injuries` · `/v1/transactions` · `/v1/stats/winba` · `/v1/stats/players` · `/v1/stats/teams` · `/v1/odds[?event=]` · `/v1/props` · `/v1/track-record` · `/v1/account`
 
 `meta`: `source`, `fetched_at`, `source_updated_at`, `age_s`, `stale_after_s`, `freshness` (CURRENT / CACHED / STALE / UNAVAILABLE / ERROR / NOT_CONFIGURED), `cache`, `semantics` (e.g. `TODAY_SLATE`, `NEXT_SLATE_NOT_TODAY`, `LIVE_SOURCE`, `FINAL_PERSISTED_ARCHIVE`, `LAST_VERIFIED_MARKET`, `CURRENT_SEASON`, `PRIOR_SEASON_FINAL`), `season`, `degraded[]`.
 
@@ -38,6 +38,7 @@ Deploy only from a pushed `main` commit: `cd workers/<name> && npx wrangler depl
 | live | every minute | live event deltas (Supabase), archive of newly final games |
 | availability | :00/:10/… | KV `avail:v1:snapshot`, `avail:v1:changes` (before → after), Supabase availability tables |
 | backfill | :00/:10/… | 12 completed games per run → KV `game:v1:final:<id>` (+ `archive:v1:index`) |
+| winba | :00/:10/… after backfill | If the archive signature changed, rebuild season WinBA Score from immutable regular-season finals → KV `winba:v1:latest`; otherwise skip |
 | schedule | :05/:35 | `wnba_games` |
 | reference | :15 | teams, players, rosters, standings snapshot, KV `ref:v1:athletes` |
 | odds | 08:00/13:00/18:00 ET (slot-locked) | KV `odds:v1:latest`, `props:v1:latest`, `odds:v1:hist:<event>`, `odds:v1:status`; `wnba_odds_snapshots`, `wnba_odds_runs` |
@@ -54,7 +55,7 @@ The entitlement migration that adds `wnba` to `pbe_sport_entitlements` lives wit
 
 ## Frontend
 
-Vite + vanilla ES modules; one path router (`src/lib/router.js`) with one module per surface; every page returns an unmount that stops its single poller. Data only through `src/data/api.js`. WNBACast imports `workers/shared/derive.js` — the same code the Worker runs. `npm run check` (guards + tests + build) is the Vercel build command.
+Vite + vanilla ES modules; one path router (`src/lib/router.js`) with one module per surface; every page returns an unmount that stops its single poller. Data only through `src/data/api.js`. WinBA Score is derived in `workers/shared/winba.js`; `wnba-ingest` materializes the archive-derived season snapshot and `wnba-api` joins that one canonical row into stats, player, roster and WNBACast responses. WNBACast imports `workers/shared/derive.js` — the same code the Worker runs. `npm run check` (guards + tests + build) is the Vercel build command.
 
 ## Rollback
 
