@@ -73,6 +73,7 @@ const api = {
   injuries: async () => ok({ items: [], changes: [], authority: 'ESPN.', change_ledger: 'none' }),
   standings: async () => ok({ groups: [], is_current: true, label: '2026' }),
   players: async () => ok({ players: [player.player], teams: 1, photo_coverage: { approved: 1 } }),
+  statsWinba: async () => ok({ version: 'winba/1.0.0', season: 2026, generated_at: ago(1), games_used: 40, qualified_count: 1, provisional_count: 0, formula: { interpretation: 'Transparent winning-impact index.' }, rows: [] }),
   statsPlayers: async () => ok({ rows: [], season: { year: 2026 }, is_current: true }),
   statsTeams: async () => ok({ rows: [], pace_method: 'm' }),
   today: async () => ok({ slate: { kind: 'NEXT', date: '20260917', games: [game], summary: { live: 0 } }, today_et: '20260913' })
