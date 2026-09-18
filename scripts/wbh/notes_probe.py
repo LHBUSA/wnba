@@ -29,7 +29,8 @@ except ImportError:  # pragma: no cover
 UA = "PropBetEdge-History/1.0 (support@proptechusa.ai; official team game notes)"
 
 DATE_HEADERS = {"DATE", "Date", "DATES"}
-MADE_ATT_HEADERS = {"FGM-A", "FG-A", "FGM", "FG", "3PM-A", "3FGM-A", "FTM-A"}
+MADE_ATT_HEADERS = {"FGM-A", "FG-A", "FGM", "FG", "3PM-A", "3FGM-A", "FTM-A",
+                    "FG-FGA", "3P-3PA", "FT-FTA", "FGA"}
 POINT_HEADERS = {"PTS", "Pts", "PTS."}
 
 

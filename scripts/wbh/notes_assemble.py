@@ -228,6 +228,7 @@ def assemble(artifacts, teams, games, roster, persons_by_name=None, allow_league
         problems = list(block["holds"])
 
         # orientation cross-check: unanimous disagreement means the canonical game is inverted
+        implied_overtime = None
         conflicts = [r for r in block["rows"] if r.get("orientation_conflict")]
         if conflicts and len(conflicts) == len(block["rows"]):
             problems.append({"reason": f"every row says this club was {'home' if side == 'away' else 'away'}; "
@@ -249,10 +250,23 @@ def assemble(artifacts, teams, games, roster, persons_by_name=None, allow_league
         if any(s is None for s in secs):
             problems.append({"reason": "a participating player has no minutes"})
         else:
-            expected = SECONDS_PER_REGULATION + SECONDS_PER_OVERTIME * int(game.get("ot") or 0)
-            if abs(sum(secs) - expected) > MINUTE_TOLERANCE_SECONDS:
-                problems.append({"reason": f"minutes total {sum(secs)/60:.1f} vs expected {expected/60:.1f} "
-                                           f"(canonical overtime periods: {game.get('ot')})"})
+            # Canonical overtime_periods was never populated for 2024 - it is 0 on every row because
+            # that is the column default, not because every game ended in regulation. Testing against
+            # it would therefore reject any real overtime game. The total must still match an exact
+            # expectation: regulation, or regulation plus whole overtime periods, within the same
+            # tolerance. Any implied overtime is reported rather than written to the game.
+            total = sum(secs)
+            periods = None
+            for k in range(0, 4):
+                if abs(total - (SECONDS_PER_REGULATION + SECONDS_PER_OVERTIME * k)) <= MINUTE_TOLERANCE_SECONDS:
+                    periods = k
+                    break
+            if periods is None:
+                problems.append({"reason": f"minutes total {total/60:.1f} matches neither regulation "
+                                           f"({SECONDS_PER_REGULATION/60:.0f}) nor any whole number of "
+                                           f"overtime periods"})
+            elif periods and game.get("ot") not in (None, periods):
+                implied_overtime = periods
 
         entry = {
             "game_id": game_id, "date": game["date"], "team_edition_id": team_edition_id, "side": side,
@@ -262,6 +276,7 @@ def assemble(artifacts, teams, games, roster, persons_by_name=None, allow_league
             "points_sum": None if any(p is None for p in pts) else sum(pts),
             "minutes_sum": None if any(s is None for s in secs) else round(sum(secs) / 60, 1),
             "rows": block["rows"], "problems": problems, "notes": entry_notes,
+            "minutes_implied_overtime_periods": implied_overtime,
             "status": "ok" if not problems else "held",
         }
         (out["team_games"] if not problems else out["held"]).append(entry)

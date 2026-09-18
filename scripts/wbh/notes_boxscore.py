@@ -88,6 +88,27 @@ LAYOUTS = {
         "date_pattern": r"^\d{2}/\d{2}/\d{2}$",
         "minutes": "mmss",
     },
+    # Connecticut Sun 2024 game notes: one player per page, integer minutes, combined made-attempted
+    # columns written FG-FGA, and a season/career HIGHS panel to the right of the table which is
+    # declared as a column so its contents are consumed and discarded rather than drifting into PTS.
+    "sun_2024": {
+        "family": "E",
+        "player_heading": r"^#(?P<number>\d+)\s+(?P<name>[A-Z][A-Z .'’\-]+?)(?:\s*\|.*)?$",
+        "required_headers": ["DATE", "OPP", "MIN", "FG-FGA", "PTS"],
+        "columns": {
+            "DATE": "date", "OPP": "opponent", "MIN": "minutes_int",
+            "FG-FGA": "fg", "3P-3PA": "fg3", "FT-FTA": "ft",
+            "OR": "oreb", "DR": "dreb", "TOT": "reb", "AST": "ast", "STL": "stl", "BK": "blk",
+            "TO": "tov", "PF": "pf", "PTS": "pts",
+        },
+        "date_pattern": r"^\d{1,2}\.\d{1,2}$",
+        "minutes": "int",
+        # a season/career HIGHS panel sits to the right of this table, including dates that look like
+        # scores. The table is declared to end at PTS so none of it can drift into a stat column.
+        "table_ends_after": "PTS",
+        # this layout writes non-participation as a zero-minute line with dashes for every stat
+        "zero_minutes_is_non_participation": True,
+    },
 }
 
 DNP_PATTERN = re.compile(r"\bD\s*NP\b|\bDNP\b|did not play", re.I)
@@ -278,7 +299,12 @@ def extract_player_rows(page, spec, season_year):
     header_row, cols = find_header(rows, spec)
     if not cols:
         return None
-    # the table ends just past the last header; anything further right belongs to a side panel
+    # the table ends just past its last column; anything further right belongs to a side panel
+    if spec.get("table_ends_after"):
+        last = next((c for c in cols if c[0] == spec["table_ends_after"]), None)
+        if last is None:
+            return None
+        cols = [c for c in cols if c[2] <= last[2]]
     table_right = max(c[3] for c in cols) + TABLE_RIGHT_MARGIN
     bounds = column_bounds(cols, table_right)
 
@@ -377,6 +403,14 @@ def extract_player_rows(page, spec, season_year):
             # only populated by layouts that actually print it; unknown stays unknown
             "plus_minus": parse_int(one(cells, "plus_minus")),
         })
+        # Some layouts write non-participation as a zero-minute line rather than a DNP note.
+        if (spec.get("zero_minutes_is_non_participation") and rec.get("seconds_played") == 0
+                and rec.get("points") is None):
+            rec.update({"status": "nonparticipation", "note": raw_text,
+                        "did_not_play": None, "started": None, "seconds_played": None})
+            out_rows.append(rec)
+            continue
+
         # An early-season document prints every date on the schedule, including games not yet played,
         # as a row of dashes. That is the source saying nothing, not a player appearing and scoring
         # nothing, so it produces no stat row at all.
