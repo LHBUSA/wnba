@@ -81,7 +81,20 @@ export function leadTracker(plays) {
     if (sign !== 0) leader = sign;
     if (margin > maxHome.margin) maxHome = { margin, seq: p.seq, at: `${p.period_label} ${p.clock}` };
     if (-margin > maxAway.margin) maxAway = { margin: -margin, seq: p.seq, at: `${p.period_label} ${p.clock}` };
-    if (margin !== prevMargin && p.elapsed_s !== null) timeline.push([p.elapsed_s, margin]);
+    if (margin !== prevMargin && p.elapsed_s !== null) {
+      timeline.push([p.elapsed_s, margin, {
+        seq: p.seq,
+        period: p.period,
+        period_label: p.period_label,
+        clock: p.clock,
+        home_score: p.home_score,
+        away_score: p.away_score,
+        text: p.text || '',
+        team_id: p.team_id || null,
+        scoring: Boolean(p.scoring),
+        lead_state: margin > 0 ? 'home' : margin < 0 ? 'away' : 'tied'
+      }]);
+    }
     prevMargin = margin;
   }
 
@@ -91,7 +104,7 @@ export function leadTracker(plays) {
   const currentMargin = rows.at(-1).home_score - rows.at(-1).away_score;
 
   return {
-    method: 'Score margin after every play carrying a score in the ESPN event stream. Margin = home − away.',
+    method: 'Score margin after every play carrying a score in the ESPN event stream. Margin = home − away. Timeline points retain the source score, period, clock and play text for interactive inspection.',
     lead_changes: leadChanges,
     ties,
     current_margin: currentMargin,
