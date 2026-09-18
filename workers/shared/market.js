@@ -1,14 +1,60 @@
 // Market layer. Four concepts stay separate everywhere they appear:
 //   1. sportsbook price        — what one book offers (source: The Odds API)
 //   2. market consensus        — no-vig benchmark across books (PropBetEdge arithmetic on market prices)
-//   3. PBE fair value          — a PropBetEdge MODEL output (none published for WNBA yet)
-//   4. PBE model gap           — model vs price (none, because 3 does not exist)
+//   3. PBE fair value          — a PropBetEdge MARKET MODEL output (none published for WNBA yet)
+//   4. PBE model gap           — market model vs price (none, because 3 does not exist)
 // Consensus is never labelled or rendered as a model.
+//
+// There are TWO different PropBetEdge models, and conflating them is the failure this structure
+// exists to prevent:
+//   * the GAME PREDICTION model (pbe-wnba-model-v1) picks game winners and is live on PBE Picks.
+//   * the MARKET FAIR-VALUE model would price a sportsbook line. It does not exist yet.
+// The old single `pbe_model: NOT_PUBLISHED` field said the second thing while reading like the
+// first, which became misleading the moment game predictions went live.
 
-export const PBE_MODEL = Object.freeze({
-  status: 'NOT_PUBLISHED',
-  note: 'No validated PropBetEdge WNBA model is published. Fair value and model gap are unavailable by design, not missing data.'
-});
+export const GAME_PREDICTION_MODEL_ID = 'pbe-wnba-model-v1';
+
+/** Market-side state only.
+ *
+ * This layer normalizes sportsbook prices and knows nothing about whether game predictions are
+ * published, so it does not say. A layer that cannot know a fact must not assert it: emitting a
+ * default here is how the old single field ended up claiming the live picks model was unpublished.
+ */
+export function marketSurfaces({ marketPricing = false } = {}) {
+  const fairValuePublished = false; // no validated WNBA market model exists yet
+  return Object.freeze({
+    market_fair_value_model: Object.freeze({
+      status: fairValuePublished ? 'published' : 'not_published',
+      note: 'No validated PropBetEdge WNBA market model is published. Sportsbook fair value is unavailable by design, not missing data. This says nothing about the game prediction model.'
+    }),
+    market_edge: Object.freeze({
+      status: fairValuePublished && marketPricing ? 'available' : 'unavailable',
+      reason: !fairValuePublished
+        ? 'market_fair_value_model_not_validated'
+        : (!marketPricing ? 'no_market_pricing' : null),
+      note: 'Model gap needs both a validated market model and current sportsbook pricing.'
+    })
+  });
+}
+
+/** All three surfaces, for routes that know the publish flag from env. */
+export function modelSurfaces({ gamePredictionsPublished = false, marketPricing = false } = {}) {
+  return Object.freeze({
+    game_prediction_model: Object.freeze({
+      status: gamePredictionsPublished ? 'published' : 'not_published',
+      model_id: GAME_PREDICTION_MODEL_ID,
+      surface: 'PBE Picks',
+      note: gamePredictionsPublished
+        ? 'PBE game predictions are live. This is a different model from the market fair-value model below.'
+        : 'Game predictions are not currently published to subscribers.'
+    }),
+    ...marketSurfaces({ marketPricing })
+  });
+}
+
+/** Copy for any surface that has to explain the split in one line. */
+export const MARKET_MODEL_COPY =
+  'PBE game predictions are live. Sportsbook fair-value and model-gap comparisons remain unavailable until the separate market model is validated.';
 
 export function americanToDecimal(a) {
   const n = Number(a);
@@ -140,7 +186,7 @@ export function normalizeOddsEvent(ev, tIdx) {
       best: { over: best(atTotal, 'over'), under: best(atTotal, 'under') },
       consensus: consensus(atTotal, 'over')
     },
-    pbe_model: PBE_MODEL
+    ...marketSurfaces({ marketPricing: true })
   };
 }
 
@@ -182,7 +228,7 @@ export function normalizeProps(eventOdds, rosterIdx) {
       best: { over: bestOver, under: bestUnder },
       consensus: nvs.length >= 2 ? { books: nvs.length, over_prob: round(p, 4), over_fair_american: probToAmerican(p), under_fair_american: probToAmerican(1 - p) } : null,
       consensus_note: nvs.length >= 2 ? null : 'Fewer than two books with both sides — no consensus computed.',
-      pbe_model: PBE_MODEL
+      ...marketSurfaces({ marketPricing: true })
     });
   }
   return out.sort((a, b) => a.market.localeCompare(b.market) || String(a.player).localeCompare(String(b.player)) || (a.point ?? 0) - (b.point ?? 0));

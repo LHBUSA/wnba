@@ -8,7 +8,7 @@ import { leadTracker, foulContext, shotChart, scoringRuns, shotZone, possessions
 import { courtSvg, fullCourtPoint } from '../src/ui/court.js';
 import { marginChart } from '../src/ui/charts.js';
 import { approvedPlayerPhoto, approvedPlayerPhotoCount } from '../src/data/player-photo-map.js';
-import { americanToDecimal, probToAmerican, normalizeOddsEvent, normalizeProps, teamIndex, normalizeName, PBE_MODEL } from '../workers/shared/market.js';
+import { americanToDecimal, probToAmerican, normalizeOddsEvent, normalizeProps, teamIndex, normalizeName, modelSurfaces, MARKET_MODEL_COPY } from '../workers/shared/market.js';
 import { etCompact, addDays } from '../workers/shared/time.js';
 
 const raw = JSON.parse(fs.readFileSync(new URL('./fixtures/espn-summary-401857189.json', import.meta.url), 'utf8'));
@@ -281,8 +281,8 @@ test('market math: consensus is a benchmark, PBE model is not published', () => 
   assert.equal(n.moneyline.best.home.price, -180);
   assert.equal(n.moneyline.best.away.price, 170);
   assert.equal(n.moneyline.consensus.books, 2);
-  assert.equal(n.pbe_model.status, 'NOT_PUBLISHED');
-  assert.equal(PBE_MODEL.status, 'NOT_PUBLISHED');
+  assert.equal(n.market_fair_value_model.status, 'not_published');
+  assert.equal(n.market_edge.status, 'unavailable');
 });
 
 test('props join players by exact roster name only', () => {

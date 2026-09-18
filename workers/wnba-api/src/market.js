@@ -1,6 +1,8 @@
 // Market context attached to games. Reads ONLY the snapshots written by the
 // scheduled wnba-ingest run (08/13/18 ET). A page view never calls The Odds API.
 
+import { marketSurfaces } from '../../shared/market.js';
+
 const MEMO_MS = 30000;
 let memo = { at: 0, latest: null, props: null };
 
@@ -15,7 +17,11 @@ export async function marketSnapshots(env) {
 const ageS = (iso) => (iso ? Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000)) : null);
 const pick = (b) => (b ? { price: b.price, book: b.book, point: b.point ?? null } : null);
 
-/** Compact, labelled market block for one Odds API event (normalized by ingest). */
+/** Compact, labelled market block for one Odds API event (normalized by ingest).
+ *
+ * Carries the market-side model state only. The game prediction model's state is attached by the
+ * route from env, because the two models are independent and must never be inferred from each other.
+ */
 export function compactMarket(ev, capturedAt, propsGame, propsCapturedAt) {
   if (!ev) return null;
   const age = ageS(capturedAt);
@@ -47,7 +53,7 @@ export function compactMarket(ev, capturedAt, propsGame, propsCapturedAt) {
     props: propsGame
       ? { available: propsGame.props.length > 0, count: propsGame.props.length, players: new Set(propsGame.props.map((p) => p.player)).size, captured_at: propsCapturedAt }
       : { available: false, count: 0, players: 0, captured_at: null, note: 'Props are captured only for games tipping within 36 hours.' },
-    pbe_model: 'NOT_PUBLISHED'
+    ...marketSurfaces({ marketPricing: true })
   };
 }
 

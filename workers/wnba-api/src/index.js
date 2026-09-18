@@ -27,8 +27,13 @@ import {
 import { deriveGame, shotChart, possessions } from '../../shared/derive.js';
 import { etCompact, addDays, isCompactDate, gameEtDate, daysBetween } from '../../shared/time.js';
 import { photoFor, photoCoverage } from './photos.js';
-import { PBE_MODEL } from '../../shared/market.js';
+import { modelSurfaces } from '../../shared/market.js';
 import { winbaForPlayer, WINBA_VERSION } from '../../shared/winba.js';
+
+// Game predictions and the market fair-value model are different models with different states.
+// Every market payload states both, plus whether a model-vs-price edge can exist at all.
+const surfaces = (env, market) =>
+  modelSurfaces({ gamePredictionsPublished: env.PBE_PUBLISH === 'true', marketPricing: Boolean(market) });
 import { upgradeNormalizedPlays } from '../../shared/pbp.js';
 import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './market.js';
 import { requestLink, verifyPage, verifyConsume, logout, privateJson, credentialedPreflight } from './auth.js';
@@ -530,7 +535,7 @@ async function game({ env, ctx, params, path }) {
   const market = await marketForGame(env, L.summary.game);
   const history = market ? await marketHistory(env, market.odds_event_id) : [];
   return ok(
-    { game: L.summary.game, linescore: d.linescore, leaders: L.summary.leaders, injuries: L.summary.injuries, season_series: L.summary.season_series, pickcenter: L.summary.pickcenter, market, market_history: history, pbe_model: PBE_MODEL, event_count: L.summary.plays.length },
+    { game: L.summary.game, linescore: d.linescore, leaders: L.summary.leaders, injuries: L.summary.injuries, season_series: L.summary.season_series, pickcenter: L.summary.pickcenter, market, market_history: history, ...surfaces(env, market), event_count: L.summary.plays.length },
     gameMeta(path, L),
     { maxAge: cacheFor(L.summary.game) }
   );
@@ -544,6 +549,7 @@ async function gameLive({ env, ctx, url, params, path }) {
   const s = L.summary;
   const d = deriveGame(s);
   const events = since > 0 ? s.plays.filter((p) => (p.seq ?? 0) > since) : s.plays;
+  const liveMarket = await marketForGame(env, s.game);
   return ok(
     {
       game: s.game,
@@ -557,8 +563,8 @@ async function gameLive({ env, ctx, url, params, path }) {
       leaders: s.leaders,
       injuries: s.injuries,
       pickcenter: s.pickcenter,
-      market: await marketForGame(env, s.game),
-      pbe_model: PBE_MODEL,
+      market: liveMarket,
+      ...surfaces(env, liveMarket),
       pbp_source: L.pbpSource || null,
       pbp_integrity: L.pbpIntegrity || null
     },
@@ -665,7 +671,7 @@ async function matchup({ env, ctx, params, path }) {
       market: mk ? { ...mk, captured_at: odds.captured_at, semantics: 'LAST_VERIFIED_MARKET' } : null,
       market_summary: await marketForGame(env, g),
       market_history: mk ? await marketHistory(env, mk.odds_event_id) : [],
-      pbe_model: PBE_MODEL
+      ...surfaces(env, mk)
     },
     base(path, { fetchedAt: L.fetchedAt, freshness: FRESHNESS.CURRENT, staleAfterS: TTL.schedule, cache: L.cache, semantics: 'MATCHUP_RESEARCH', season: g.season, degraded: [stand, leaders, teamStats, inj, ...scheds.map((s) => s.r)].flatMap(degradedFrom) }),
     { maxAge: 60 }
@@ -961,12 +967,12 @@ async function odds({ env, url, path }) {
   const snap = await env.WNBA_KV.get('odds:v1:latest', 'json');
   const status = await env.WNBA_KV.get('odds:v1:status', 'json');
   const gameEventId = url.searchParams.get('event');
-  if (!snap) return ok({ events: [], ingest: status, pbe_model: PBE_MODEL }, base(path, { source: SOURCES.odds_api, freshness: FRESHNESS.UNAVAILABLE, semantics: 'NO_SNAPSHOT_YET' }), { maxAge: 30 });
+  if (!snap) return ok({ events: [], ingest: status, ...surfaces(env, null) }, base(path, { source: SOURCES.odds_api, freshness: FRESHNESS.UNAVAILABLE, semantics: 'NO_SNAPSHOT_YET' }), { maxAge: 30 });
   let history = null;
   if (gameEventId && /^[a-f0-9]{32}$/.test(gameEventId)) history = (await env.WNBA_KV.get(`odds:v1:hist:${gameEventId}`, 'json')) || [];
   const age = (Date.now() - Date.parse(snap.captured_at)) / 1000;
   return ok(
-    { captured_at: snap.captured_at, schedule: snap.schedule, events: snap.events, history, ingest: status, pbe_model: PBE_MODEL, credits: snap.credits || null },
+    { captured_at: snap.captured_at, schedule: snap.schedule, events: snap.events, history, ingest: status, ...surfaces(env, snap.events?.length ? {} : null), credits: snap.credits || null },
     base(path, { source: SOURCES.odds_api, fetchedAt: snap.captured_at, freshness: age > 12 * 3600 ? FRESHNESS.STALE : FRESHNESS.CACHED, staleAfterS: 12 * 3600, cache: 'snapshot', semantics: 'LAST_VERIFIED_MARKET' }),
     { maxAge: 30 }
   );
@@ -975,11 +981,11 @@ async function odds({ env, url, path }) {
 async function props({ env, path }) {
   if (!env.WNBA_KV) return fail('not_configured', 'Market snapshot store not bound', base(path, { source: SOURCES.odds_api, freshness: FRESHNESS.NOT_CONFIGURED }), 503);
   const snap = await env.WNBA_KV.get('props:v1:latest', 'json');
-  if (!snap) return ok({ games: [], pbe_model: PBE_MODEL }, base(path, { source: SOURCES.odds_api, freshness: FRESHNESS.UNAVAILABLE, semantics: 'NO_SNAPSHOT_YET' }), { maxAge: 30 });
+  if (!snap) return ok({ games: [], ...surfaces(env, null) }, base(path, { source: SOURCES.odds_api, freshness: FRESHNESS.UNAVAILABLE, semantics: 'NO_SNAPSHOT_YET' }), { maxAge: 30 });
   const games = (snap.games || []).map((g) => ({ ...g, props: g.props.map((p) => ({ ...p, photo: photoFor(p.athlete_id) })) }));
   const age = (Date.now() - Date.parse(snap.captured_at)) / 1000;
   return ok(
-    { captured_at: snap.captured_at, markets: snap.markets, games, pbe_model: PBE_MODEL },
+    { captured_at: snap.captured_at, markets: snap.markets, games, ...surfaces(env, games.length ? {} : null) },
     base(path, { source: SOURCES.odds_api, fetchedAt: snap.captured_at, freshness: age > 12 * 3600 ? FRESHNESS.STALE : FRESHNESS.CACHED, staleAfterS: 12 * 3600, cache: 'snapshot', semantics: 'LAST_VERIFIED_MARKET' }),
     { maxAge: 30 }
   );

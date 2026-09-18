@@ -654,7 +654,7 @@ export async function mount(root, ctx) {
     return html`${d.market ? html`<div style="margin-bottom:16px"><span class="card-title">PropBetEdge stored snapshot${d.market.semantics === 'LAST_PRE_TIP_SNAPSHOT' ? ' · last pre-tip capture' : ''}</span><div style="margin-top:10px">${marketStrip(d.market, g)}</div></div>` : html`<p class="note" style="margin-bottom:12px">No PropBetEdge market capture for this game (captures began September 11, 2026; they run at 8:00, 1:00 and 6:00 ET).</p>`}${pc.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Line (external)</th><th>Spread</th><th>Total</th><th>${g.away?.abbr} ML</th><th>${g.home?.abbr} ML</th></tr></thead><tbody>
       ${pc.map((o) => html`<tr><td>${o.provider} via ESPN</td><td>${o.details || '—'}</td><td>${o.over_under ?? '—'}</td><td>${american(o.away_moneyline)}</td><td>${american(o.home_moneyline)}</td></tr>`)}
       </tbody></table></div><p class="note" style="margin-top:8px">A single sportsbook's line relayed by ESPN. It is not a PropBetEdge price, consensus or model.</p>` : html`<p class="note">No line published for this game in the source record.</p>`}
-      <div class="callout" style="margin-top:14px">PropBetEdge fair value: <b>not published</b>. No validated WNBA model exists yet, so there is no model line or edge here — by design.</div>
+      <div class="callout" style="margin-top:14px">PBE game predictions are <b>live</b>. Sportsbook fair-value and model-gap comparisons remain <b>unavailable</b> until the separate market model is validated.</div>
       <p style="margin-top:12px"><a class="sec-link" href="/props">Open the best-line board →</a></p>`;
   }
 
