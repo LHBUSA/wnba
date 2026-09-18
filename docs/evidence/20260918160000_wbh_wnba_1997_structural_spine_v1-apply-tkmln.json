@@ -1,0 +1,16 @@
+{
+  "ref": "tkmlnhmylqnttmnsnief",
+  "migration": "20260918160000_wbh_wnba_1997_structural_spine_v1.sql",
+  "reviewed_blob": "d96b1fff08552c31ee3883645f88e0815579b9f6",
+  "applied_at_utc": "2026-09-18T13:46:46.3462492Z",
+  "verification": {
+    "editions": 2,
+    "edition_1997": "1997 1997-06-21..1997-08-30 teams=8 completeness=absent",
+    "clubs_1997": 8,
+    "games_1997": 0,
+    "franchises": 16,
+    "lineage_events": 10,
+    "utah_franchise": "fr_las_vegas_aces",
+    "games_2024_regular": 240
+  }
+}
