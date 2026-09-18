@@ -491,6 +491,17 @@
   cursor: pointer;
 }
 .pbp-toggle:hover { border-color: rgba(240,179,35,.32); color: var(--gold-bright); }
+.pbp-range {
+  border: 1px solid rgba(240,179,35,.3);
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: rgba(240,179,35,.07);
+  color: var(--gold-bright);
+  font: 800 10.5px/1 var(--f-data);
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.pbp-range:hover { background: rgba(240,179,35,.12); border-color: rgba(240,179,35,.48); }
 .pbp-card.is-collapsed .card-head { border-bottom: 1px solid var(--line-3); }
 .pbp-collapsed-summary {
   width: 100%;
