@@ -12,7 +12,7 @@ const ARC_R = 22.146;
 const CORNER_X = 3;
 const ARC_JOIN_Y = RIM.y + Math.sqrt(ARC_R ** 2 - (RIM.x - CORNER_X) ** 2);
 
-export function courtSvg(shots = [], { home, away, highlightSeq = null, animateSeq = null, cls = '' } = {}) {
+export function courtSvg(shots = [], { home, away, highlightSeq = null, animateSeq = null, photoMode = false, cls = '' } = {}) {
   const grain = Array.from({ length: 10 }, (_, i) => {
     const x = 5 * (i + 1);
     return `<line x1="${x}" y1="${BASE_Y}" x2="${x}" y2="${HALF_Y}" class="c-grain"/>`;
@@ -32,7 +32,7 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
     <rect x="0" y="${BASE_Y}" width="50" height="${HALF_Y - BASE_Y}" class="c-edge"/>`;
   const marks = shots
     .filter((s) => Number.isFinite(s.x) && Number.isFinite(s.y) && s.y <= HALF_Y)
-    .map((s) => {
+    .map((s, index) => {
       const side = s.team_id === home?.team_id ? 'h' : s.team_id === away?.team_id ? 'a' : 'n';
       const latest = highlightSeq !== null && s.seq === highlightSeq;
       const entering = animateSeq !== null && s.seq === animateSeq;
@@ -54,15 +54,26 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
         ['data-shot-text', s.text || ''],
         ['data-shot-value', s.value ?? '']
       ].map(([k, v]) => `${k}="${escapeXml(v)}"`).join(' ');
-      const pointClass = ['shot-point', latest ? 'is-latest' : '', entering ? 'entering' : ''].filter(Boolean).join(' ');
+      const hasPhoto = photoMode && Boolean(s.photo?.square);
+      const pointClass = ['shot-point', hasPhoto ? 'has-photo' : '', latest ? 'is-latest' : '', entering ? 'entering' : ''].filter(Boolean).join(' ');
       const markerClass = `shot ${s.made ? 'made' : 'miss'} ${side}`;
-      const marker = s.made
+      const classicMarker = s.made
         ? `<circle cx="${s.x}" cy="${s.y}" r="0.85" class="${markerClass}"/>`
         : `<g class="${markerClass}"><line x1="${s.x - 0.6}" y1="${s.y - 0.6}" x2="${s.x + 0.6}" y2="${s.y + 0.6}"/><line x1="${s.x - 0.6}" y1="${s.y + 0.6}" x2="${s.x + 0.6}" y2="${s.y - 0.6}"/></g>`;
+      const clipId = `shot-photo-${String(s.seq ?? index).replace(/[^a-z0-9_-]/gi, '')}-${index}`;
+      const photoMarker = hasPhoto ? `
+        <defs><clipPath id="${clipId}"><circle cx="${s.x}" cy="${s.y}" r="1.24"/></clipPath></defs>
+        <g class="shot-photo-marker ${s.made ? 'made' : 'miss'} ${side}" aria-hidden="true">
+          <circle cx="${s.x}" cy="${s.y}" r="1.42" class="shot-photo-halo"/>
+          <image href="${escapeXml(s.photo.square)}" x="${s.x - 1.24}" y="${s.y - 1.24}" width="2.48" height="2.48"
+            preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})" class="shot-photo"/>
+          <circle cx="${s.x}" cy="${s.y}" r="1.27" class="shot-photo-ring"/>
+          ${s.made ? '<circle cx="' + s.x + '" cy="' + s.y + '" r="1.48" class="shot-photo-result"/>' : '<path d="M' + (s.x - 1.0) + ' ' + (s.y - 1.0) + ' L' + (s.x + 1.0) + ' ' + (s.y + 1.0) + ' M' + (s.x - 1.0) + ' ' + (s.y + 1.0) + ' L' + (s.x + 1.0) + ' ' + (s.y - 1.0) + '" class="shot-photo-result"/>'}
+        </g>` : classicMarker;
       return `<g class="${pointClass}" role="button" tabindex="0" aria-label="${escapeXml(aria)}" ${data} data-shot-point>
-        <circle cx="${s.x}" cy="${s.y}" r="1.9" class="shot-latest-ring" aria-hidden="true"/>
-        ${marker}
-        <circle cx="${s.x}" cy="${s.y}" r="2.35" class="shot-hit" aria-hidden="true"/>
+        <circle cx="${s.x}" cy="${s.y}" r="${hasPhoto ? 2.1 : 1.9}" class="shot-latest-ring" aria-hidden="true"/>
+        ${photoMarker}
+        <circle cx="${s.x}" cy="${s.y}" r="${hasPhoto ? 2.55 : 2.35}" class="shot-hit" aria-hidden="true"/>
       </g>`;
     })
     .join('');
