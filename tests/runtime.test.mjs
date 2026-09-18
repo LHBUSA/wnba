@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { normalizeSummary, normalizeCoordinate, elapsedSeconds, parseClock, WNBA_RULES, mergeCorePlays, livePbpIntegrity, betterLivePbp } from '../workers/shared/espn.js';
 import { leadTracker, foulContext, shotChart, scoringRuns, shotZone, possessions } from '../workers/shared/derive.js';
 import { courtSvg, fullCourtPoint } from '../src/ui/court.js';
+import { marginChart } from '../src/ui/charts.js';
 import { approvedPlayerPhoto, approvedPlayerPhotoCount } from '../src/data/player-photo-map.js';
 import { americanToDecimal, probToAmerican, normalizeOddsEvent, normalizeProps, teamIndex, normalizeName, PBE_MODEL } from '../workers/shared/market.js';
 import { etCompact, addDays } from '../workers/shared/time.js';
@@ -136,7 +137,8 @@ test('WNBACast interactive court carries real play metadata and an accessible la
     highlightSeq: made.seq,
     photoMode: true
   });
-  assert.match(photoSvg, /class="shot-point has-photo is-latest"/);
+  assert.match(photoSvg, /<a href="\/players\/[^"]+" class="shot-point has-photo is-latest"/);
+  assert.match(photoSvg, /data-shot-link/);
   assert.match(photoSvg, /class="shot-photo-marker made/);
   assert.match(photoSvg, /<image href="\/media\/players\/[^"]+\/square\.webp"/);
   assert.match(photoSvg, /class="shot-photo-ring"/);
@@ -203,6 +205,34 @@ test('lead changes and largest leads reproduce ESPN box totals', () => {
   assert.equal(lead.lead_changes, Number(boxTeam('DAL', 'leadChanges')));
   assert.equal(lead.largest_lead.home.margin, Number(boxTeam('DAL', 'largestLead')));
   assert.equal(lead.largest_lead.away.margin, Number(boxTeam('CON', 'largestLead')));
+  const point = lead.margin_timeline.find((p) => p[2]?.text && Number.isFinite(p[2]?.home_score));
+  assert.ok(point, 'margin timeline keeps source play facts');
+  assert.ok(point[2].period_label);
+  assert.ok(point[2].clock);
+  assert.ok(['lead_change', 'tie', 'score_change'].includes(point[2].transition));
+});
+
+test('PBECast margin chart exposes interactive source-backed hover points', () => {
+  const points = [
+    [42, 2, { seq: 10, period: 1, period_label: 'Q1', clock: '9:18', home_score: 2, away_score: 0, text: 'Home Player makes layup.', transition: 'score_change' }],
+    [85, 0, { seq: 11, period: 1, period_label: 'Q1', clock: '8:35', home_score: 2, away_score: 2, text: 'Away Player makes jumper.', transition: 'tie' }],
+    [121, -3, { seq: 12, period: 1, period_label: 'Q1', clock: '7:59', home_score: 2, away_score: 5, text: 'Away Player makes 3-point jumper.', transition: 'lead_change' }]
+  ];
+  const svg = marginChart(points, {
+    home: { abbr: 'DAL' },
+    away: { abbr: 'CON' },
+    periods: 4,
+    height: 246
+  });
+  assert.match(svg, /data-flow-point/);
+  assert.match(svg, /data-flow-seq="12"/);
+  assert.match(svg, /data-flow-score="CON 5 · DAL 2"/);
+  assert.match(svg, /data-flow-leader="CON \+3"/);
+  assert.match(svg, /data-flow-transition="lead_change"/);
+  assert.match(svg, /data-flow-text="Away Player makes 3-point jumper\."/);
+  assert.match(svg, /class="ch-event-dot lead-change"/);
+  assert.match(svg, /class="ch-event-dot tie"/);
+  assert.match(svg, /Interactive score margin over game time/);
 });
 
 test('team fouls reconcile with box fouls (offensive fouls counted separately)', () => {
