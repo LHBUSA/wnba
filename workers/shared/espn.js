@@ -177,6 +177,136 @@ export function normalizeCoordinate(c) {
   return { x, y };
 }
 
+
+const refId = (v) => {
+  if (!v) return null;
+  if (v.id !== undefined && v.id !== null) return String(v.id);
+  const ref = String(v.$ref || v.href || '');
+  const m = ref.match(/\/(\d+)(?:\?|$)/);
+  return m ? m[1] : null;
+};
+
+const present = (v) => v !== undefined && v !== null;
+
+/**
+ * ESPN Core exposes the same play ids/sequence numbers as site summary, but it can remain healthy
+ * when the live site-summary play envelope is partially zeroed. Overlay only fields Core actually
+ * publishes and preserve richer site fields (names/type text/coordinates) when Core omits them.
+ */
+export function mergeCorePlays(sitePlays = [], coreItems = []) {
+  if (!Array.isArray(sitePlays) || !Array.isArray(coreItems) || !coreItems.length) return sitePlays || [];
+  const byId = new Map();
+  const bySeq = new Map();
+  for (const p of sitePlays) {
+    if (p?.id !== undefined && p?.id !== null) byId.set(String(p.id), p);
+    if (p?.sequenceNumber !== undefined && p?.sequenceNumber !== null) bySeq.set(String(p.sequenceNumber), p);
+  }
+  const merged = new Map();
+  for (const p of sitePlays) {
+    const key = p?.id !== undefined && p?.id !== null ? `id:${p.id}` : `seq:${p?.sequenceNumber}`;
+    merged.set(key, p);
+  }
+  for (const core of coreItems) {
+    const id = core?.id !== undefined && core?.id !== null ? String(core.id) : null;
+    const seq = core?.sequenceNumber !== undefined && core?.sequenceNumber !== null ? String(core.sequenceNumber) : null;
+    const site = (id && byId.get(id)) || (seq && bySeq.get(seq)) || {};
+    const teamId = refId(core?.team);
+    const participants = Array.isArray(core?.participants)
+      ? core.participants.map((x) => {
+          const athleteId = refId(x?.athlete);
+          return athleteId ? { ...x, athlete: { ...(x.athlete || {}), id: athleteId } } : x;
+        })
+      : null;
+    const type = core?.type && typeof core.type === 'object' && (present(core.type.id) || present(core.type.text))
+      ? { ...(site.type || {}), ...core.type }
+      : site.type;
+    const period = core?.period && typeof core.period === 'object' && (present(core.period.number) || present(core.period.displayValue))
+      ? { ...(site.period || {}), ...core.period }
+      : site.period;
+    const clock = core?.clock && typeof core.clock === 'object' && (present(core.clock.displayValue) || present(core.clock.value))
+      ? { ...(site.clock || {}), ...core.clock }
+      : site.clock;
+    const out = {
+      ...site,
+      ...(id ? { id } : {}),
+      ...(present(core?.sequenceNumber) ? { sequenceNumber: core.sequenceNumber } : {}),
+      ...(present(core?.text) ? { text: core.text } : {}),
+      ...(present(core?.shortDescription) ? { shortDescription: core.shortDescription } : {}),
+      ...(present(core?.scoringPlay) ? { scoringPlay: core.scoringPlay } : {}),
+      ...(present(core?.shootingPlay) ? { shootingPlay: core.shootingPlay } : {}),
+      ...(present(core?.scoreValue) ? { scoreValue: core.scoreValue } : {}),
+      ...(present(core?.pointsAttempted) ? { pointsAttempted: core.pointsAttempted } : {}),
+      ...(present(core?.homeScore) ? { homeScore: core.homeScore } : {}),
+      ...(present(core?.awayScore) ? { awayScore: core.awayScore } : {}),
+      ...(present(core?.wallclock) ? { wallclock: core.wallclock } : {}),
+      ...(core?.coordinate && present(core.coordinate.x) && present(core.coordinate.y) ? { coordinate: core.coordinate } : {}),
+      ...(type ? { type } : {}),
+      ...(period ? { period } : {}),
+      ...(clock ? { clock } : {}),
+      ...(teamId ? { team: { ...(site.team || {}), id: teamId } } : {}),
+      ...(participants?.length ? { participants } : {})
+    };
+    const key = id ? `id:${id}` : `seq:${seq}`;
+    merged.set(key, out);
+  }
+  return [...merged.values()].sort((a, b) => (toInt(a?.sequenceNumber) ?? 0) - (toInt(b?.sequenceNumber) ?? 0));
+}
+
+/**
+ * Live PBP integrity is judged against source-published scoreboard/box totals, not a synthetic game model.
+ * A small lag is tolerated. Large made-shot or score deficits indicate an unusable live play envelope.
+ */
+export function livePbpIntegrity(summary) {
+  const plays = Array.isArray(summary?.plays) ? summary.plays : [];
+  const players = Array.isArray(summary?.box?.players) ? summary.box.players : [];
+  const homeId = String(summary?.game?.home?.team_id || '');
+  const awayId = String(summary?.game?.away?.team_id || '');
+  const sumTeam = (teamId, key) => players
+    .filter((p) => String(p.team_id || '') === teamId)
+    .reduce((n, p) => n + (Number.isFinite(Number(p[key])) ? Number(p[key]) : 0), 0);
+  const boxFgm = sumTeam(homeId, 'fgm') + sumTeam(awayId, 'fgm');
+  const boxFtm = sumTeam(homeId, 'ftm') + sumTeam(awayId, 'ftm');
+  const madeFg = plays.filter((p) => p?.family === 'shot' && p?.made === true).length;
+  const madeFt = plays.filter((p) => p?.family === 'free_throw' && p?.made === true).length;
+  const maxHome = plays.reduce((m, p) => Math.max(m, Number(p?.home_score) || 0), 0);
+  const maxAway = plays.reduce((m, p) => Math.max(m, Number(p?.away_score) || 0), 0);
+  const gameHome = Number(summary?.game?.home?.score) || 0;
+  const gameAway = Number(summary?.game?.away?.score) || 0;
+  const boxPoints = players.reduce((n, p) => n + (Number.isFinite(Number(p?.pts)) ? Number(p.pts) : 0), 0);
+  const referenceTotal = Math.max(gameHome + gameAway, boxPoints);
+  const playScoreTotal = maxHome + maxAway;
+  const fgDeficit = Math.max(0, boxFgm - madeFg);
+  const ftDeficit = Math.max(0, boxFtm - madeFt);
+  const scoreDeficit = Math.max(0, referenceTotal - playScoreTotal);
+  const impossibleZero = referenceTotal >= 10 && playScoreTotal === 0 && plays.length >= 20;
+  const madeDeficitBad = boxFgm >= 4 && fgDeficit >= Math.max(3, Math.ceil(boxFgm * 0.25));
+  const scoreDeficitBad = referenceTotal >= 20 && scoreDeficit >= Math.max(8, Math.ceil(referenceTotal * 0.2));
+  const healthy = !(impossibleZero || madeDeficitBad || scoreDeficitBad);
+  return {
+    healthy,
+    plays: plays.length,
+    made_field_goals: madeFg,
+    made_free_throws: madeFt,
+    box_field_goals_made: boxFgm,
+    box_free_throws_made: boxFtm,
+    play_score: { home: maxHome, away: maxAway, total: playScoreTotal },
+    reference_score_total: referenceTotal,
+    deficits: { field_goals: fgDeficit, free_throws: ftDeficit, score: scoreDeficit },
+    reason: impossibleZero ? 'PLAY_SCORE_STUCK_ZERO' : madeDeficitBad ? 'MADE_FIELD_GOALS_MISSING' : scoreDeficitBad ? 'PLAY_SCORE_LAGS_GAME' : null
+  };
+}
+
+export function betterLivePbp(candidate, baseline) {
+  const a = livePbpIntegrity(candidate);
+  const b = livePbpIntegrity(baseline);
+  const penalty = (x) => x.deficits.field_goals * 4 + x.deficits.free_throws * 2 + x.deficits.score;
+  return {
+    use_candidate: (a.healthy && !b.healthy) || penalty(a) + 2 < penalty(b),
+    candidate: a,
+    baseline: b
+  };
+}
+
 function withSemantics(play, s, raw = null) {
   if (!s) return play;
   const recoveredCoordinate = s.shooting ? (play.coordinate || normalizeCoordinate(raw?.coordinate)) : play.coordinate;
