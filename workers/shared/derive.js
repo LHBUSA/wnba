@@ -159,13 +159,18 @@ export function shotChart(plays) {
       seq: s.seq,
       team_id: s.team_id,
       athlete_id: s.athlete_ids[0] || null,
+      player: s.primary?.name || s.primary_athlete?.name || null,
       made: s.made,
       value: s.points_attempted,
+      points: s.points,
+      type: s.type || null,
       x: s.coordinate.x,
       y: s.coordinate.y,
       zone: shotZone(s.coordinate, s.points_attempted),
       period: s.period,
       clock: s.clock,
+      home_score: s.home_score,
+      away_score: s.away_score,
       text: s.text
     })),
     zones: Object.values(zones)
