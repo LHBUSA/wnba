@@ -20,9 +20,10 @@ import { normalizeOddsEvent, normalizeProps, teamIndex, normalizeName } from '..
 import { upsert, insert, supabaseConfigured } from '../../shared/supabase.js';
 import { etCompact, addDays, etHour } from '../../shared/time.js';
 import { pbeTask } from './pbe-runner.js';
+import { buildWinbaSnapshot } from '../../shared/winba.js';
 
 const SERVICE = 'wnba-ingest';
-const VERSION = '1.0.2';
+const VERSION = '1.0.3';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
 const PROPS_WINDOW_H = 36;
@@ -33,7 +34,7 @@ export default {
     const d = new Date(event.scheduledTime);
     const minute = d.getUTCMinutes();
     const tasks = ['live', 'pbe'];
-    if (minute % 10 === 0) tasks.push('availability', 'backfill');
+    if (minute % 10 === 0) tasks.push('availability', 'backfill', 'winba');
     // Lock-policy evidence: while a covered game tips within 75 minutes, read the injury feed every 2 minutes.
     else if (minute % 2 === 0 && env.WNBA_KV && Date.parse((await env.WNBA_KV.get('pbe:v1:near_tip_until')) || 0) > Date.now()) tasks.push('availability');
     if (minute % 30 === 5) tasks.push('schedule');
@@ -51,7 +52,7 @@ export default {
       const status = env.WNBA_KV ? await env.WNBA_KV.get('ingest:v1:status', 'json') : null;
       return j({ ok: true, service: SERVICE, version: VERSION, status });
     }
-    const m = url.pathname.match(/^\/run\/(live|availability|backfill|schedule|reference|odds|pbe)$/);
+    const m = url.pathname.match(/^\/run\/(live|availability|backfill|winba|schedule|reference|odds|pbe)$/);
     if (m && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       const result = await runTasks(env, ctx, [m[1]], 'manual');
@@ -84,7 +85,7 @@ async function runTasks(env, ctx, tasks, trigger) {
 }
 
 // pbe: PBE WNBA runner (pbe-runner.js). PBE_MODE off | dry_run | armed; it decides per game whether anything is due.
-const TASKS = { live, availability, backfill, schedule, reference, odds, pbe: (env) => pbeTask(env) };
+const TASKS = { live, availability, backfill, winba, schedule, reference, odds, pbe: (env) => pbeTask(env) };
 
 // ---------------------------------------------------------------- rows
 
@@ -237,6 +238,47 @@ async function backfill(env) {
   let done = 0;
   for (const g of todo) if (await archiveGame(env, g.game_id)) done += 1;
   return { finals: finals.length, archived_total: idx.size + done, archived_now: done, remaining: finals.length - idx.size - done };
+}
+
+async function winba(env, { force = false } = {}) {
+  if (!env.WNBA_KV) return { skipped: 'no_kv' };
+  const ids = (await env.WNBA_KV.get('archive:v1:index', 'json')) || [];
+  if (!Array.isArray(ids) || !ids.length) return { skipped: 'no_archives' };
+
+  const signature = `${ids.length}:${ids.at(-1) || ''}`;
+  const existing = await env.WNBA_KV.get('winba:v1:latest', 'json');
+  if (!force && existing?.archive_signature === signature) {
+    return {
+      skipped: 'unchanged_archive',
+      season: existing.season,
+      players: existing.rows?.length || 0,
+      qualified: existing.qualified_count || 0,
+      games_used: existing.games_used || 0
+    };
+  }
+
+  const docs = await Promise.all(ids.slice(-500).map((id) => env.WNBA_KV.get(`game:v1:final:${id}`, 'json')));
+  const seasons = docs
+    .map((d) => Number(d?.summary?.game?.season?.type) === 2 ? Number(d?.summary?.game?.season?.year) : null)
+    .filter(Number.isFinite);
+  if (!seasons.length) return { skipped: 'no_regular_season_archives' };
+  const season = Math.max(...seasons);
+  const snapshot = buildWinbaSnapshot(docs.filter(Boolean), { season });
+  const stored = {
+    ...snapshot,
+    archive_index_count: ids.length,
+    archive_signature: signature
+  };
+  await env.WNBA_KV.put('winba:v1:latest', JSON.stringify(stored));
+  return {
+    season,
+    players: snapshot.rows.length,
+    qualified: snapshot.qualified_count,
+    provisional: snapshot.provisional_count,
+    games_used: snapshot.games_used,
+    archive_index_count: ids.length,
+    generated_at: snapshot.generated_at
+  };
 }
 
 async function seasonSchedule() {
