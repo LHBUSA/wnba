@@ -1,4 +1,4 @@
-// Play-by-play semantics (pbe-pbp/1.0.0) on real provider payloads:
+// Play-by-play semantics (pbe-pbp/1.0.1) on real provider payloads:
 //   tests/fixtures/international/espn-summary-401917260-final.json — USA 97–79 France, FIBA Women's World Cup final
 //   tests/fixtures/espn-summary-401857189.json                     — a WNBA regular-season game
 // The rule under test: a user understands what happened on the court from the text alone, and nothing is stated that
@@ -99,6 +99,34 @@ test('truthful fallbacks when the source says less: never a bare "makes"/"misses
   assert.equal(describePlay({ family: 'shot', primary: { name: 'Player A' }, made: true, points: 2, subtype: null, type_raw: null }, 'Player A makes').text, 'Player A scores 2 points.');
 });
 
+test('live WNBACast reconciles provider make/miss text with lagging or string boolean flags', () => {
+  const madeSource = WNBA.plays.find((p) => p.text === 'Alanna Smith makes layup (Awak Kuier assists)');
+  const missSource = WNBA.plays.find((p) => p.text === 'Paige Bueckers misses 27-foot three point pullup jump shot');
+  assert.ok(madeSource && missSource);
+
+  // Live ESPN events can arrive before their booleans settle. Direct provider text still says what happened.
+  const madeLag = normalizeSummary({
+    ...WNBA,
+    plays: [{ ...madeSource, scoringPlay: 'false', shootingPlay: 'false' }]
+  }).plays[0];
+  assert.equal(madeLag.family, 'shot');
+  assert.equal(madeLag.shooting, true);
+  assert.equal(madeLag.made, true);
+  assert.equal(madeLag.scoring, true);
+  assert.ok(madeLag.coordinate, 'a valid published shot coordinate survives a lagging shooting flag');
+  assert.match(madeLag.text, /makes/i);
+
+  // String "false" must never become truthy just because JavaScript Boolean("false") is true.
+  const miss = normalizeSummary({
+    ...WNBA,
+    plays: [{ ...missSource, scoringPlay: 'false', shootingPlay: 'true' }]
+  }).plays[0];
+  assert.equal(miss.shooting, true);
+  assert.equal(miss.made, false);
+  assert.equal(miss.scoring, false);
+  assert.match(miss.text, /misses/i);
+});
+
 test('names keep their Unicode as the identity source publishes them (no stripping, no invented diacritics)', () => {
   const body = { ...FINAL, boxscore: { players: FINAL.boxscore.players.map((t) => ({ ...t, statistics: t.statistics.map((s) => ({ ...s, athletes: s.athletes.map((a) => (a.athlete.id === '5220147' ? { ...a, athlete: { ...a.athlete, displayName: 'Marième Badiane' } } : a)) })) })) } };
   const plays = semanticPlays(body.plays, resolversFromSummary(body));
@@ -145,10 +173,10 @@ test('feed UI: compact filters and period selector, restrained emphasis, linked 
   assert.ok(first > 0);
 });
 
-test('stored finals and archives upgrade: plays normalized before pbe-pbp/1.0.0 get the same semantics from their own fields', async () => {
+test('stored finals and archives upgrade: plays normalized before the current PBP version get the same semantics from their own fields', async () => {
   const { upgradeNormalizedPlays } = await import('../workers/shared/pbp.js');
   // Shape of a wnba-api archive written before this version: normalized fields, old text, no semantics.
-  const old = normalizeSummary(WNBA).plays.map(({ family, subtype, shot_value, free_throw, assist, stolen_by, blocked_by, rebound, turnover_type, foul_type, score_before, primary, description_source, text_raw, ...p }) => ({ ...p, text: text_raw }));
+  const old = normalizeSummary(WNBA).plays.map(({ pbp_version, family, subtype, shot_value, free_throw, assist, stolen_by, blocked_by, rebound, turnover_type, foul_type, score_before, primary, description_source, text_raw, ...p }) => ({ ...p, text: text_raw }));
   assert.ok(!old[0].family);
   const box = normalizeSummary(WNBA).box;
   const up = upgradeNormalizedPlays(old, { names: new Map(box.players.map((r) => [String(r.athlete_id), r.name])) });
