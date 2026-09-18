@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { normalizeSummary, normalizeCoordinate, elapsedSeconds, parseClock, WNBA_RULES, mergeCorePlays, livePbpIntegrity, betterLivePbp } from '../workers/shared/espn.js';
 import { leadTracker, foulContext, shotChart, scoringRuns, shotZone, possessions } from '../workers/shared/derive.js';
+import { courtSvg } from '../src/ui/court.js';
 import { americanToDecimal, probToAmerican, normalizeOddsEvent, normalizeProps, teamIndex, normalizeName, PBE_MODEL } from '../workers/shared/market.js';
 import { etCompact, addDays } from '../workers/shared/time.js';
 
@@ -44,6 +45,30 @@ test('shot chart plots exactly the published field-goal attempts (FGA reconciles
   assert.equal(chart.total_fga, fga);
   assert.equal(chart.plotted + chart.unplotted, chart.total_fga);
   assert.ok(chart.shots.every((x) => Number.isFinite(x.x) && Number.isFinite(x.y)));
+});
+
+
+test('WNBACast interactive court carries real play metadata and an accessible latest-shot target', () => {
+  const chart = shotChart(s.plays);
+  const made = chart.shots.find((x) => x.made && x.player && Number.isFinite(x.home_score) && Number.isFinite(x.away_score));
+  assert.ok(made, 'fixture has a made shot with player and score metadata');
+  assert.ok(made.type, 'shot payload carries the source shot type');
+  assert.ok(made.text, 'shot payload carries the canonical play text');
+
+  const svg = courtSvg([made], {
+    home: s.game.home,
+    away: s.game.away,
+    highlightSeq: made.seq,
+    animateSeq: made.seq
+  });
+  assert.match(svg, /data-shot-point/);
+  assert.match(svg, /role="button" tabindex="0"/);
+  assert.match(svg, /class="shot-point is-latest entering"/);
+  assert.match(svg, new RegExp(`data-shot-seq="${made.seq}"`));
+  assert.match(svg, /data-shot-player="[^"]+"/);
+  assert.match(svg, /data-shot-text="[^"]+"/);
+  assert.match(svg, /data-shot-score="\d+–\d+"/);
+  assert.match(svg, /Interactive half-court shot chart/);
 });
 
 
