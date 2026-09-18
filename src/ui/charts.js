@@ -28,7 +28,14 @@ export function marginChart(points, { home, away, cursorS = null, width = 720, h
   }
   const tick = Math.ceil(maxAbs / 10) * 5 || 5;
   const cursor = cursorS !== null ? `<line x1="${x(cursorS)}" y1="${pad.t}" x2="${x(cursorS)}" y2="${pad.t + H}" class="ch-cursor"/>` : '';
-  return `<svg class="chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Score margin over game time">
+  const endX = x(Math.max(last[0], cursorS ?? last[0]));
+  const endClass = last[1] > 0 ? 'home' : last[1] < 0 ? 'away' : 'tied';
+  const endLabel = last[1] > 0
+    ? `${home?.abbr || 'HOME'} +${last[1]}`
+    : last[1] < 0
+      ? `${away?.abbr || 'AWAY'} +${Math.abs(last[1])}`
+      : 'TIED';
+  return `<svg class="chart margin-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Score margin over game time; current margin ${endLabel}">
     <rect x="${pad.l}" y="${pad.t}" width="${W}" height="${H / 2}" class="ch-home-zone"/>
     <rect x="${pad.l}" y="${pad.t + H / 2}" width="${W}" height="${H / 2}" class="ch-away-zone"/>
     ${qs.join('')}
@@ -39,6 +46,8 @@ export function marginChart(points, { home, away, cursorS = null, width = 720, h
     <text x="${pad.l + 6}" y="${pad.t + H - 4}" class="ch-lbl away">${away?.abbr || 'AWAY'} leads</text>
     <path d="${d}" class="ch-line"/>
     ${cursor}
+    <circle cx="${endX}" cy="${y(last[1])}" r="3.6" class="ch-end-dot ${endClass}"/>
+    <text x="${width - pad.r}" y="${Math.max(pad.t + 12, y(last[1]) - 8)}" class="ch-end-label ${endClass}" text-anchor="end">${endLabel}</text>
   </svg>`;
 }
 
