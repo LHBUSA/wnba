@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { normalizeSummary, normalizeCoordinate, elapsedSeconds, parseClock, WNBA_RULES, mergeCorePlays, livePbpIntegrity, betterLivePbp } from '../workers/shared/espn.js';
 import { leadTracker, foulContext, shotChart, scoringRuns, shotZone, possessions } from '../workers/shared/derive.js';
 import { courtSvg } from '../src/ui/court.js';
+import { approvedPlayerPhoto, approvedPlayerPhotoCount } from '../src/data/player-photo-map.js';
 import { americanToDecimal, probToAmerican, normalizeOddsEvent, normalizeProps, teamIndex, normalizeName, PBE_MODEL } from '../workers/shared/market.js';
 import { etCompact, addDays } from '../workers/shared/time.js';
 
@@ -47,6 +48,17 @@ test('shot chart plots exactly the published field-goal attempts (FGA reconciles
   assert.ok(chart.shots.every((x) => Number.isFinite(x.x) && Number.isFinite(x.y)));
 });
 
+
+test('WNBACast client photo allowlist stays identical to the approved photo ledger', () => {
+  const manifest = JSON.parse(fs.readFileSync(new URL('../data/player-photos.json', import.meta.url), 'utf8'));
+  const approved = (manifest.players || []).filter((p) => p.status === 'approved' && p.image && p.espn_athlete_id);
+  assert.equal(approvedPlayerPhotoCount, approved.length);
+  for (const p of approved) {
+    assert.equal(approvedPlayerPhoto(p.espn_athlete_id)?.square, `/media/players/${p.espn_athlete_id}/square.webp`);
+  }
+  const rejected = (manifest.players || []).find((p) => p.espn_athlete_id && p.status !== 'approved');
+  if (rejected) assert.equal(approvedPlayerPhoto(rejected.espn_athlete_id), null);
+});
 
 test('WNBACast interactive court carries real play metadata and an accessible latest-shot target', () => {
   const chart = shotChart(s.plays);
