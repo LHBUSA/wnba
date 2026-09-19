@@ -850,7 +850,16 @@
 .p-name { font: 800 clamp(38px, 6vw, 68px)/.92 var(--f-display); text-transform: uppercase; letter-spacing: .005em; }
 .p-facts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; color: var(--dim); font: 500 13px/1.4 var(--f-data); }
 .p-facts b { color: var(--paper); font-weight: 600; }
-@media (max-width: 720px) { .p-hero { grid-template-columns: minmax(0, 1fr); } .p-photo { max-width: 340px; width: 100%; aspect-ratio: 4 / 5; } }
+.career-card { overflow: hidden; }
+.career-card .card-head { align-items: flex-end; }
+.career-tiles { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.career-tiles .tile b { font-size: clamp(21px, 2.2vw, 30px); }
+.career-rate-line { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline; margin:14px 0 10px; color:var(--meta); font:500 12px/1.4 var(--f-data); }
+.career-rate-line b { color:var(--paper); text-transform:uppercase; letter-spacing:.08em; font-size:10px; }
+.career-season-wrap { margin:14px 0 10px; overflow-x:auto; border:1px solid var(--line-3); border-radius:var(--r2); }
+.career-season-table { min-width:720px; }
+.career-season-table td:first-child { font-weight:700; color:var(--paper); }
+@media (max-width: 720px) { .p-hero { grid-template-columns: minmax(0, 1fr); } .p-photo { max-width: 340px; width: 100%; aspect-ratio: 4 / 5; } .career-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 
 /* ------------------------------------------------------------ players grid */
 .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--s3); }
