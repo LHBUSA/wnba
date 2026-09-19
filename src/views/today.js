@@ -323,7 +323,7 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
     </section>
 
     ${priced.length ? html`<section class="section">
-      <div class="sec-head"><h2 class="sec-title bc">Market board</h2><span class="note">The Odds API · best price across books · captured ${fmtDateTimeET(d.market.captured_at)} · never refreshed by page views</span></div>
+      <div class="sec-head"><h2 class="sec-title bc">Market board</h2><span class="note">PropSports Market Feed · best price across books · captured ${fmtDateTimeET(d.market.captured_at)} · never refreshed by page views</span></div>
       <div class="card"><div class="tbl-wrap"><table class="tbl">
         <thead><tr><th>Game</th><th>Spread (home)</th><th>Total</th><th>Away ML</th><th>Home ML</th><th>Books</th><th>Props</th></tr></thead>
         <tbody>${priced.map((g) => html`<tr>
