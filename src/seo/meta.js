@@ -4,6 +4,7 @@
 // Titles describe what is actually on the page; descriptions only state numbers present in the data.
 
 import { SITE, DEFAULT_DESCRIPTION, DEFAULT_IMAGE, DESKS, abs, canonicalPath } from './site.js';
+import { careerMetaLine } from '../lib/player-career.js';
 
 const BRAND = 'PropBetEdge';
 export const INDEX_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
@@ -105,10 +106,12 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       if (!p) return m({ title: `WNBA Player | ${BRAND}`, robots: NOINDEX_ROBOTS });
       const s = regularSeasonLine(data);
       const stats = s ? ` ${s.year} regular season: ${one(s.pts)} points, ${one(s.reb)} rebounds and ${one(s.ast)} assists per game in ${s.games} games.` : '';
+      const career = careerMetaLine(data?.career);
+      const winba = data?.winba?.score !== null && data?.winba?.score !== undefined ? ` WinBA: ${one(data.winba.score)}.` : '';
       const img = data.photo ? shareImage(`/og/players/${p.athlete_id}.png`, `${p.name}${p.team ? `, ${p.team.name}` : ''} — PropBetEdge WNBA player card`) : DEFAULT_IMAGE;
       return m({
-        title: `${p.name} WNBA Stats, Game Log, Injuries & News | ${BRAND}`,
-        description: clip(`${p.name}${p.team ? ` (${p.team.name}${p.position_name ? `, ${p.position_name}` : ''})` : ''}: season and recent stats, full game log, injury status and PropBetEdge WNBA news.${stats}`, 300),
+        title: `${p.name} WNBA Career Stats, Game Log, WinBA & News | ${BRAND}`,
+        description: clip(`${p.name}${p.team ? ` (${p.team.name}${p.position_name ? `, ${p.position_name}` : ''})` : ''}: career totals, season and recent stats, full game log, WinBA, injury status and PropBetEdge WNBA news.${career}${stats}${winba}`, 300),
         image: img,
         type: 'profile'
       });
@@ -119,7 +122,7 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       const st = data.standing;
       const rec = st ? ` ${st.wins}-${st.losses}${st.seed ? `, No. ${st.seed} seed in the ${st.conference_name || 'conference'}` : ''}.` : '';
       return m({
-        title: `${t.name} Roster, Schedule, Stats, Injuries & News | ${BRAND}`,
+        title: `${t.name} Roster, Player Stats, Schedule, Injuries & News | ${BRAND}`,
         description: clip(`${t.name}: current roster, schedule and results, observed rotation, season profile, injuries and PropBetEdge newsroom coverage.${rec}`, 300),
         image: shareImage(`/og/teams/${t.team_id}.png`, `${t.name} — PropBetEdge WNBA team card`)
       });
