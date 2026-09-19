@@ -2,7 +2,7 @@
 import { html } from '../lib/dom.js';
 import { gameCard, empty, errorState, gameState } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
-import { articleCard } from '../ui/articles.js';
+import { articleCard, articleRow } from '../ui/articles.js';
 import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, fmtTimeET, american, bookName } from '../lib/format.js';
 import logoManifest from '../../data/team-logos.json' with { type: 'json' };
 import { buildTicker } from '../lib/ticker.js';
@@ -183,6 +183,95 @@ function renderHeroMeta(meta, live) {
   </div>`;
 }
 
+function renderEditorialFront(leadStory, secondaryStories) {
+  return html`<section class="editorial-front" aria-label="Top WNBA stories">
+    <div class="sec-head sports-front-head">
+      <div><span class="eyebrow">Top stories</span><h2 class="sec-title bc">Around the WNBA</h2></div>
+      <a class="sec-link" href="/news">All news →</a>
+    </div>
+    <div class="editorial-grid">
+      <div class="editorial-lead">
+        ${leadStory
+          ? articleCard(leadStory, { lead: true, eager: true })
+          : html`<div class="card card-pad sports-story-empty"><span class="eyebrow">PBE Newsroom</span><h2 class="sec-title bc">The league desk is current.</h2><p class="note">The next sourced WNBA story will lead this page when it clears the newsroom gate.</p><a class="btn gold" href="/news">Open newsroom</a></div>`}
+      </div>
+      <aside class="editorial-rail" aria-label="Latest WNBA stories">
+        <div class="editorial-rail-head"><span class="eyebrow">Latest</span><span class="note">Fresh from the PBE newsroom</span></div>
+        ${secondaryStories.length
+          ? html`<div class="srows editorial-rail-stories">${secondaryStories.map((c) => articleRow(c))}</div>`
+          : html`<p class="note editorial-rail-empty">No additional stories have cleared the newsroom gate yet.</p>`}
+        <a class="editorial-rail-more" href="/news">Open the newsroom →</a>
+      </aside>
+    </div>
+  </section>`;
+}
+
+function gameStripLabel(hero) {
+  if (hero.mode === 'FINAL') return 'Latest final';
+  if (hero.mode === 'DELAYED') return 'Schedule watch';
+  if (hero.mode === 'BETWEEN') return 'Next up';
+  if (hero.mode === 'OFFDAY') return 'Next WNBA game';
+  if (hero.mode === 'PREGAME') return 'Tonight';
+  return 'Game center';
+}
+
+function renderGameStrip(hero) {
+  const g = hero.primary;
+  if (!g) return '';
+  const st = gameState(g);
+  const showScore = g.status?.state === 'in' || g.status?.state === 'post';
+  const m = g.market;
+  return html`<section class="sports-game-strip" aria-label="${gameStripLabel(hero)}">
+    <div class="sports-game-strip-label">
+      <span class="eyebrow">${gameStripLabel(hero)}</span>
+      <b>${st.label}</b>
+      <small>${fmtDateET(g.start_utc, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTimeET(g.start_utc)}</small>
+    </div>
+    <div class="sports-game-strip-matchup">
+      <a href="/teams/${g.away?.team_id || ''}" class="sports-game-strip-team">
+        ${teamLogo(g.away, 42)}
+        <span><small>Away</small><b>${teamName(g.away)}</b><em>${g.away?.record || teamAbbr(g.away)}</em></span>
+        ${showScore ? html`<strong>${g.away?.score ?? '—'}</strong>` : ''}
+      </a>
+      <span class="sports-game-strip-at">${showScore ? '—' : '@'}</span>
+      <a href="/teams/${g.home?.team_id || ''}" class="sports-game-strip-team">
+        ${teamLogo(g.home, 42)}
+        <span><small>Home</small><b>${teamName(g.home)}</b><em>${g.home?.record || teamAbbr(g.home)}</em></span>
+        ${showScore ? html`<strong>${g.home?.score ?? '—'}</strong>` : ''}
+      </a>
+    </div>
+    <div class="sports-game-strip-market">
+      ${m ? html`
+        <span><small>Spread</small><b>${teamAbbr(g.home)} ${signed(m.spread?.home_line)}</b></span>
+        <span><small>Total</small><b>${m.total?.line ?? '—'}</b></span>
+      ` : html`<span><small>Market</small><b>Not published</b></span>`}
+    </div>
+    <div class="sports-game-strip-actions">
+      <a class="pill on" href="/cast/${g.game_id}">${g.status?.state === 'post' ? 'Replay' : 'WNBACast'}</a>
+      <a class="pill" href="/matchups/${g.game_id}">Matchup</a>
+    </div>
+  </section>`;
+}
+
+function renderLiveFront(hero, meta) {
+  const g = hero.primary;
+  return html`<section class="sports-live-hero is-live" aria-label="Live WNBA game">
+    <div class="sports-game-head">
+      <div>
+        <span class="kicker lh-kicker"><i class="lh-kicker-dot is-live"></i>Live now</span>
+        <h1>${g ? `${teamName(g.away)} at ${teamName(g.home)}` : 'WNBA live desk'}</h1>
+      </div>
+      <a class="sports-game-all" href="/cast">Full scoreboard →</a>
+    </div>
+    <p class="sports-game-status">${heroEyebrow(hero)} · ${g ? gameState(g).label : 'Live feed'}</p>
+    ${renderHeroMatchup(hero)}
+    ${renderHeroMarket(hero)}
+    ${renderHeroSelectors(hero)}
+    ${renderHeroActions(hero)}
+    ${renderHeroMeta(meta, true)}
+  </section>`;
+}
+
 export function todayView({ today, arts, injuries, standings, intl = null }) {
   if (!today?.ok) return { body: errorState(today, 'The WNBA slate'), live: false };
   const d = today.data;
@@ -193,7 +282,9 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   const priced = games.filter((g) => g.market);
   const stories = arts.ok ? arts.data.items : [];
   const leadStory = stories.find((c) => c.kind === 'preview' && c.has_market) || stories.find((c) => c.kind === 'injury') || stories[0];
-  const moreStories = stories.filter((c) => c.id !== leadStory?.id).slice(0, 5);
+  const secondaryStories = stories.filter((c) => c.id !== leadStory?.id).slice(0, 3);
+  const heroStoryIds = new Set([leadStory?.id, ...secondaryStories.map((c) => c.id)].filter(Boolean));
+  const moreStories = stories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
   const changes = (injuries.ok ? injuries.data.changes : []) || [];
   const lastResults = d.last_results?.games || [];
   const seeds = standings.ok ? standings.data.groups.map((g) => ({ name: g.name, top: g.entries.slice(0, 4) })) : [];
@@ -211,32 +302,9 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   return { live: live || intlLive, body: html`
     ${tickerRail(ticker, { freshness: today.meta?.served_at ? `Updated ${relTime(today.meta.served_at)}` : null })}
 
-    <section class="sports-front" aria-label="WNBA front page">
-      <div class="sports-front-story">
-        <div class="sec-head sports-front-head">
-          <div><span class="eyebrow">Top story</span><h2 class="sec-title bc">Around the WNBA</h2></div>
-          <a class="sec-link" href="/news">All news →</a>
-        </div>
-        ${leadStory
-          ? articleCard(leadStory, { lead: true, eager: true })
-          : html`<div class="card card-pad sports-story-empty"><span class="eyebrow">PBE Newsroom</span><h2 class="sec-title bc">The league desk is current.</h2><p class="note">The next sourced WNBA story will lead this page when it clears the newsroom gate.</p><a class="btn gold" href="/news">Open newsroom</a></div>`}
-      </div>
-
-      <aside class="sports-game-center ${live ? 'is-live' : ''}">
-        <div class="sports-game-head">
-          <div><span class="kicker lh-kicker"><i class="lh-kicker-dot ${live ? 'is-live' : ''}"></i>${live ? 'Live now' : 'Game center'}</span>
-          <h2>${hero.primary ? `${teamName(hero.primary.away)} at ${teamName(hero.primary.home)}` : 'WNBA league desk'}</h2></div>
-          <a class="sports-game-all" href="/cast">Full scoreboard →</a>
-        </div>
-        <p class="sports-game-status">${heroEyebrow(hero)} · ${hero.primary ? gameState(hero.primary).label : 'No game published'}</p>
-        ${renderHeroMatchup(hero)}
-        ${renderHeroMarket(hero)}
-        ${hero.mode === 'BETWEEN' && hero.previous ? html`<a class="lh-earlier" href="/cast/${hero.previous.game_id}"><span>Earlier</span><b>${teamAbbr(hero.previous.away)} ${hero.previous.away?.score ?? '—'} · ${teamAbbr(hero.previous.home)} ${hero.previous.home?.score ?? '—'}</b><small>Final</small></a>` : ''}
-        ${renderHeroSelectors(hero)}
-        ${renderHeroActions(hero)}
-        ${renderHeroMeta(today.meta, live)}
-      </aside>
-    </section>
+    ${live
+      ? html`${renderLiveFront(hero, today.meta)}${renderEditorialFront(leadStory, secondaryStories)}`
+      : html`${renderEditorialFront(leadStory, secondaryStories)}${renderGameStrip(hero)}`}
 
     <nav class="card sports-team-rail" aria-label="WNBA teams">
       ${logoManifest.teams.map((t) => html`<a href="/teams/${t.team_id}" title="${t.name}" style="flex:none;padding:6px;border-radius:10px">${teamLogo({ team_id: t.team_id, name: t.name }, 40)}</a>`)}
