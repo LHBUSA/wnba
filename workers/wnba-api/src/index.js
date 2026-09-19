@@ -38,7 +38,7 @@ import { upgradeNormalizedPlays } from '../../shared/pbp.js';
 import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './market.js';
 import { requestLink, verifyPage, verifyConsume, logout, privateJson, credentialedPreflight } from './auth.js';
 import { resolveAccount } from './account.js';
-import { pbeStatus, pbeCoverage, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
+import { pbeStatus, pbeCoverage, pbeFreeSample, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 
 const SERVICE = 'wnba-api';
 const VERSION = '1.0.2';
@@ -121,6 +121,7 @@ const ROUTES = [
   ['/v1/auth/verify', ({ request, env }) => verifyPage(request, env)],
   ['/v1/pbe/status', pbeStatus],
   ['/v1/pbe/coverage', pbeCoverage],
+  ['/v1/pbe/free-sample', pbeFreeSample],
   ['/v1/pbe/picks', pbePicks],
   ['/v1/pbe/games/:id', pbeGame],
   ['/v1/pbe/teams/:id', pbeTeam]
