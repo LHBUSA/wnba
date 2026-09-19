@@ -8,14 +8,7 @@ const BAND_ORDER = ['EXTREME', 'HEAVY', 'ELEVATED', 'NORMAL', 'LIGHT'];
 const fmt = (v, suffix = '') => v === null || v === undefined ? '—' : `${v}${suffix}`;
 
 function customMeta() {
-  const base = routeMeta('pro', { path: '/player-load' });
-  return {
-    ...base,
-    path: '/player-load',
-    url: 'https://wnba.propbetedge.ai/player-load',
-    title: 'WNBA Player Load Intelligence: Workload, Rest & Rotation Pressure | PropBetEdge',
-    description: 'WNBA Pro Player Load Intelligence: a 0–100 workload and schedule-pressure index built from recent minutes, game density, turnaround, overtime and rotation context.'
-  };
+  return routeMeta('player-load', { path: '/player-load' });
 }
 
 function loadingView() {
