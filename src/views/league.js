@@ -140,135 +140,39 @@ export function playersView({ res }, state = { q: '', team: '', pos: '' }) {
 
 // ------------------------------------------------------------ stats
 
-export const PCOLS = [['avgPoints', 'PPG'], ['avgRebounds', 'RPG'], ['avgAssists', 'APG'], ['avgThreePointFieldGoalsMade', '3PM'], ['fieldGoalPct', 'FG%'], ['threePointFieldGoalPct', '3P%'], ['freeThrowPct', 'FT%'], ['avgSteals', 'STL'], ['avgBlocks', 'BLK'], ['avgMinutes', 'MIN'], ['gamesPlayed', 'GP']];
+export const PCOLS = [['avgPoints', 'PPG'], ['avgRebounds', 'RPG'], ['avgAssists', 'APG'], ['winbaScore', 'WINBA'], ['avgThreePointFieldGoalsMade', '3PM'], ['fieldGoalPct', 'FG%'], ['threePointFieldGoalPct', '3P%'], ['freeThrowPct', 'FT%'], ['avgSteals', 'STL'], ['avgBlocks', 'BLK'], ['avgMinutes', 'MIN'], ['gamesPlayed', 'GP']];
 export const TCOLS = [['avgPoints', 'PTS'], ['opp_avgPoints', 'OPP'], ['possessions_per_game', 'PACE*'], ['fieldGoalPct', 'FG%'], ['threePointFieldGoalPct', '3P%'], ['avgThreePointFieldGoalsAttempted', '3PA'], ['avgRebounds', 'REB'], ['avgAssists', 'AST'], ['avgTurnovers', 'TOV']];
 
 export const statsHead = () => pageHead({ eyebrow: 'Season stats', title: 'Stats' });
 export const loadStats = async (api) => { const [winba, pl, tm, teams] = await Promise.all([api.statsWinba(), api.statsPlayers(), api.statsTeams(), api.teams()]); return { winba, pl, tm, teams }; };
 
-const th = (cols, active) => cols.map(([k, l]) => html`<th><button type="button" data-sort="${k}" ${active === k ? html`aria-sort="descending"` : ''}>${l}</button></th>`);
+const th = (cols, active) => cols.map(([k, l]) => html`<th><button type="button" data-sort="${k}" ${k === 'winbaScore' ? html`title="PropBetEdge WinBA Score"` : ''} ${active === k ? html`aria-sort="descending"` : ''}>${l}</button></th>`);
 
 export function statsBody({ winba, pl, tm, teams }, state) {
   const tIdx = teamIndex(teams);
-  if (state.tab === 'winba') {
-    if (!winba?.ok) return errorState(winba, 'WinBA Score');
-    const rows = winba.data.rows || [];
-    if (!rows.length) return empty('WinBA is building', 'The season archive has not produced a WinBA snapshot yet. No substitute ranking is shown.');
-    const qualified = rows.filter((r) => r.qualified);
-    const provisional = rows.filter((r) => !r.qualified);
-    const top = qualified.slice(0, 3);
-    return html`
-      <section class="winba-intro">
-        <div class="winba-intro-copy">
-          <span class="eyebrow">PropBetEdge original metric</span>
-          <h2>WinBA Score</h2>
-          <p class="winba-thesis">Who is producing, who is actually on the floor, and how much of that production is showing up in winning basketball?</p>
-          <p class="winba-lead">WinBA turns those three ideas into one transparent 0–100 season index. It combines a player's box production relative to the league, the team's results in games that player actually appeared in, the share of the player's production recorded in wins, and how much of a 40-minute game the player typically carries.</p>
-          <div class="winba-purpose">
-            <div>
-              <span>WHY IT EXISTS</span>
-              <b>Counting stats tell only part of the story.</b>
-              <p>Points, rebounds and assists show production. Team record shows results. Minutes show responsibility. WinBA brings all three into one comparable number without hiding the ingredients.</p>
-            </div>
-            <div>
-              <span>HOW TO READ IT</span>
-              <b>Higher means a stronger production + role + winning profile.</b>
-              <p>A WinBA score is an index, not a probability. An 82 does not mean an 82% chance to win. Use the score, league rank and four components together.</p>
-            </div>
-          </div>
-        </div>
-        <div class="winba-formula" aria-label="WinBA Score formula">
-          <span><b>45%</b><strong>Production</strong><small>Box Impact per 36, ranked against qualified WNBA players</small></span>
-          <span><b>25%</b><strong>Win rate</strong><small>Team win percentage only in games the player appeared in</small></span>
-          <span><b>20%</b><strong>Winning output</strong><small>Share of the player's total Box Impact that was produced in wins</small></span>
-          <span><b>10%</b><strong>Court share</strong><small>Average minutes divided by a 40-minute regulation game</small></span>
-        </div>
-      </section>
-
-      ${top[0] ? html`<section class="winba-proof" aria-label="How the current WinBA leader earns the top score">
-        <div class="winba-proof-score">
-          <span>LIVE EXAMPLE · CURRENT #1</span>
-          <strong>${num(top[0].score)}</strong>
-          <em>WINBA</em>
-        </div>
-        <div class="winba-proof-copy">
-          <h3>Why ${top[0].name} is leading right now</h3>
-          <p>The score is inspectable: <b>${num(top[0].components.production_percentile)}%</b> production percentile, <b>${num(top[0].components.win_rate)}%</b> win rate in appearances, <b>${num(top[0].components.winning_output_share)}%</b> of Box Impact produced in wins, and <b>${num(top[0].components.court_share)}%</b> court share.</p>
-          <small>${top[0].sample.games} qualifying appearances · ${num(top[0].averages.min)} minutes per game · ${top[0].sample.wins}-${top[0].sample.losses} in games played</small>
-        </div>
-      </section>` : ''}
-
-      <section class="winba-reading-grid" aria-label="What WinBA measures and what it does not">
-        <div>
-          <span>WHAT IT REWARDS</span>
-          <h3>Production that survives context.</h3>
-          <p>WinBA gives the largest weight to individual production, then adds whether that production is occurring in wins and whether the player is carrying meaningful floor time.</p>
-        </div>
-        <div>
-          <span>WHAT MAKES IT DIFFERENT</span>
-          <h3>It is appearance-aware.</h3>
-          <p>A player is judged only from games she actually played. DNPs and zero-minute rows do not become fake losses or fake production, and small samples stay Provisional.</p>
-        </div>
-        <div>
-          <span>WHAT IT IS NOT</span>
-          <h3>Not a prediction. Not causal wins added.</h3>
-          <p>WinBA does not use sportsbook odds, injury labels or subjective grades. It describes the relationship between real box production, playing time and team wins in completed regular-season games.</p>
-        </div>
-      </section>
-
-      <div class="winba-equation">
-        <span>BOX IMPACT</span>
-        <b>PTS + 1.2 × REB + 1.5 × AST</b>
-        <p>That production is normalized per 36 minutes before the league percentile is calculated, so raw playing time alone does not decide the production component.</p>
-      </div>
-
-      <div class="winba-podium">
-        ${top.map((r) => {
-          const t = tIdx.get(r.team_id);
-          return html`<a class="winba-podium-card rank-${r.rank}" href="/players/${r.athlete_id}" style="--tc:${safeColor(t?.color, 'var(--gold)')}">
-            <span class="winba-rank">#${r.rank}</span>
-            ${avatar({ name: r.name, photo: r.photo }, { teamColor: t?.color })}
-            <div><strong>${r.name}</strong><small>${t?.abbr || ''} · ${r.sample.wins}-${r.sample.losses}</small></div>
-            <b class="winba-score">${num(r.score)}<em>WINBA</em></b>
-          </a>`;
-        })}
-      </div>
-      <section class="card winba-table-card">
-        <div class="card-head"><span class="card-title">WinBA leaderboard</span><span class="note">${qualified.length} qualified · ${provisional.length} provisional</span></div>
-        <div class="tbl-wrap"><table class="tbl winba-table"><thead><tr>
-          <th>Rank</th><th>Player</th><th>WinBA</th><th>Prod %ile</th><th>Win %</th><th>Winning output</th><th>Court share</th><th>W-L</th><th>MIN/G</th><th>PTS</th><th>REB</th><th>AST</th>
-        </tr></thead><tbody>
-          ${rows.map((r) => {
-            const t = tIdx.get(r.team_id);
-            return html`<tr class="${r.qualified ? '' : 'winba-provisional'}">
-              <td class="mono">${r.rank ? `#${r.rank}` : 'PROV'}</td>
-              <td><a class="pname" href="/players/${r.athlete_id}">${avatar({ name: r.name, photo: r.photo }, { size: 'sm', teamColor: t?.color })}${r.name}<span class="note">${t?.abbr || ''}</span></a></td>
-              <td class="hi winba-score-cell">${num(r.score)}</td>
-              <td>${num(r.components.production_percentile)}%</td>
-              <td>${num(r.components.win_rate)}%</td>
-              <td>${num(r.components.winning_output_share)}%</td>
-              <td>${num(r.components.court_share)}%</td>
-              <td>${r.sample.wins}-${r.sample.losses}</td>
-              <td>${num(r.averages.min)}</td><td>${num(r.averages.pts)}</td><td>${num(r.averages.reb)}</td><td>${num(r.averages.ast)}</td>
-            </tr>`;
-          })}
-        </tbody></table></div>
-        <div class="card-body winba-method">
-          <p><b>Qualification:</b> 10 appearances or 250 minutes. Players below that sample are still scored so you can inspect them, but they are labelled Provisional and do not receive an official league rank or move the qualified production benchmark.</p>
-          <p><b>Update cycle:</b> WinBA is rebuilt from PropBetEdge's archived completed regular-season box scores when new final-game data enters the archive. DNP and zero-minute rows are excluded.</p>
-          <p><b>Interpretation:</b> Compare the overall score with the component columns. Two players can reach similar WinBA scores in different ways — one through elite per-minute production, another through a larger role and stronger results in her appearances.</p>
-          <p class="note">${winba.data.formula?.interpretation || ''} Snapshot uses ${winba.data.games_used || 0} archived regular-season finals · generated ${relTime(winba.data.generated_at)}.</p>
-          ${sourceLine(winba.meta, { label: 'PropBetEdge WinBA Score · derived from archived ESPN WNBA box scores' })}
-        </div>
-      </section>`;
-  }
   if (state.tab === 'players') {
     if (!pl?.ok) return errorState(pl, 'Player stats');
-    const rows = [...pl.data.rows].sort((a, b) => ((b[state.sort] ?? -1) - (a[state.sort] ?? -1)));
+    const winbaByPlayer = new Map((winba?.ok ? winba.data.rows || [] : []).map((r) => [String(r.athlete_id), r]));
+    const rows = pl.data.rows
+      .map((r) => {
+        const w = winbaByPlayer.get(String(r.athlete_id));
+        return {
+          ...r,
+          winbaScore: w?.score ?? null,
+          winbaRank: w?.rank ?? null,
+          winbaQualified: w?.qualified ?? null,
+        };
+      })
+      .sort((a, b) => ((b[state.sort] ?? -1) - (a[state.sort] ?? -1)));
+
     return html`<section class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Player</th>${th(PCOLS, state.sort)}</tr></thead><tbody>
-      ${rows.map((r, i) => html`<tr><td class="faint">${i + 1}</td><td><a class="pname" href="/players/${r.athlete_id}">${avatar({ name: r.name, photo: r.photo }, { size: 'sm', teamColor: tIdx.get(r.team_id)?.color })}${r.name}<span class="note">${r.team || ''}</span></a></td>${PCOLS.map(([k]) => html`<td class="${k === state.sort ? 'hi' : ''}">${num(r[k], k === 'gamesPlayed' ? 0 : 1)}</td>`)}</tr>`)}
-    </tbody></table></div><div class="card-body"><p class="note">ESPN’s season leaders list includes qualified players only (${rows.length} this season). Players below the qualification threshold — including some recent acquisitions — appear on their player and team pages instead.</p>${sourceLine(pl.meta)}</div></section>`;
+      ${rows.map((r, i) => html`<tr><td class="faint">${i + 1}</td><td><a class="pname" href="/players/${r.athlete_id}">${avatar({ name: r.name, photo: r.photo }, { size: 'sm', teamColor: tIdx.get(r.team_id)?.color })}${r.name}<span class="note">${r.team || ''}</span></a></td>${PCOLS.map(([k]) => {
+        if (k === 'winbaScore') return html`<td class="${k === state.sort ? 'hi' : ''}" title="${r.winbaScore == null ? 'WinBA unavailable' : r.winbaQualified ? `WinBA league rank #${r.winbaRank || '—'}` : 'WinBA provisional'}">${r.winbaScore == null ? '—' : num(r.winbaScore, 1)}</td>`;
+        return html`<td class="${k === state.sort ? 'hi' : ''}">${num(r[k], k === 'gamesPlayed' ? 0 : 1)}</td>`;
+      })}</tr>`)}
+    </tbody></table></div><div class="card-body"><p class="note">ESPN’s season leaders list includes qualified players only (${rows.length} this season). WINBA is PropBetEdge’s season winning-impact score and appears here as another player stat; provisional or unavailable scores do not replace source stats.</p>${sourceLine(pl.meta)}</div></section>`;
   }
+
   if (!tm?.ok) return errorState(tm, 'Team stats');
   const rows = [...tm.data.rows].sort((a, b) => ((b[state.tsort] ?? -1) - (a[state.tsort] ?? -1)));
   return html`<section class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Team</th>${th(TCOLS, state.tsort)}</tr></thead><tbody>
@@ -276,11 +180,11 @@ export function statsBody({ winba, pl, tm, teams }, state) {
   </tbody></table></div><div class="card-body"><p class="note">*PACE: ${tm.data.pace_method} OPP = points allowed per game.</p>${sourceLine(tm.meta)}</div></section>`;
 }
 
-export function statsView(data, state = { tab: 'winba', sort: 'avgPoints', tsort: 'avgPoints' }) {
+export function statsView(data, state = { tab: 'players', sort: 'avgPoints', tsort: 'avgPoints' }) {
   const { pl } = data;
   return html`
-    ${pageHead({ eyebrow: pl?.ok && pl.data.is_current ? `${pl.data.season?.year || ''} season to date` : 'Season stats', title: 'Stats', sub: 'Source-grounded WNBA statistics plus WinBA Score, PropBetEdge’s transparent winning-impact index.' })}
-    <div class="tabs" role="tablist"><button type="button" role="tab" data-tab="winba" aria-selected="${state.tab === 'winba'}">WinBA Score</button><button type="button" role="tab" data-tab="players" aria-selected="${state.tab === 'players'}">Player leaders</button><button type="button" role="tab" data-tab="teams" aria-selected="${state.tab === 'teams'}">Team profiles</button></div>
+    ${pageHead({ eyebrow: pl?.ok && pl.data.is_current ? `${pl.data.season?.year || ''} season to date` : 'Season stats', title: 'Stats', sub: 'WNBA player leaders and team profiles.' })}
+    <div class="tabs" role="tablist"><button type="button" role="tab" data-tab="players" aria-selected="${state.tab === 'players'}">Player leaders</button><button type="button" role="tab" data-tab="teams" aria-selected="${state.tab === 'teams'}">Team profiles</button></div>
     <div data-body>${statsBody(data, state)}</div>
   `;
 }
