@@ -23,7 +23,8 @@ import { pbeTask } from './pbe-runner.js';
 import { buildWinbaSnapshot } from '../../shared/winba.js';
 
 const SERVICE = 'wnba-ingest';
-const VERSION = '1.0.3';
+const VERSION = '1.0.4';
+const PBE_RELEASE = 'pbe-lock-grade-recovery-2026-09-19';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
 const PROPS_WINDOW_H = 36;
@@ -46,7 +47,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === '/health') {
-      return j({ ok: true, service: SERVICE, version: VERSION, runtime: 'cloudflare-workers', scheduler: 'cloudflare-cron', kv: Boolean(env.WNBA_KV), supabase: supabaseConfigured(env), odds_key: Boolean(env.ODDS_API_KEY), odds_hours_et: ODDS_HOURS_ET });
+      return j({ ok: true, service: SERVICE, version: VERSION, runtime: 'cloudflare-workers', scheduler: 'cloudflare-cron', pbe_release: PBE_RELEASE, pbe_mode: env.PBE_MODE || 'off', kv: Boolean(env.WNBA_KV), supabase: supabaseConfigured(env), odds_key: Boolean(env.ODDS_API_KEY), odds_hours_et: ODDS_HOURS_ET });
     }
     if (url.pathname === '/status') {
       const status = env.WNBA_KV ? await env.WNBA_KV.get('ingest:v1:status', 'json') : null;
