@@ -165,6 +165,20 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: `WNBA Players: Rosters, Stats & Profiles | ${BRAND}`, description: 'Every current WNBA roster player with team and position, linking to season stats, game logs, injury status and news. Photos only where license and identity are verified.', image: pageShareImage('players', 'WNBA Players: Rosters, Stats & Profiles — PropBetEdge WNBA') });
     case 'pbe-picks':
       return m({ title: `PBE Picks: WNBA Model Win Probabilities & PBE Edge | ${BRAND}`, description: 'PBE WNBA model calls: an independent win probability for every covered game, the de-vigged sportsbook consensus beside it, PBE Edge, confidence and the model reasoning. Locked 15 minutes before tip.', image: pageShareImage('pbe-picks', 'PBE Picks: WNBA Model Win Probabilities & PBE Edge — PropBetEdge WNBA') });
+    case 'history':
+      return m({ title: `WNBA History: Eras, Championships, Franchises & Records | ${BRAND}`, description: 'WNBA history from 1997 to today: eras, milestones, championships, franchise lineage and the PropBetEdge historical intelligence archive.', image: pageShareImage('history', 'WNBA History — eras, championships, franchises and records') });
+    case 'player-load':
+      return m({ title: `WNBA Player Load Intelligence: Workload, Rest & Rotation Pressure | ${BRAND}`, description: 'WNBA Pro Player Load Intelligence: a 0–100 workload and schedule-pressure index built from recent minutes, game density, turnaround, overtime and rotation context.', image: pageShareImage('player-load', 'WNBA Player Load Intelligence — PropBetEdge') });
+    case 'daily-brief':
+      return m({ title: `Free WNBA Daily Brief: Slate, PBE Coverage & Availability | ${BRAND}`, description: 'A free WNBA intelligence brief with the current slate, PBE coverage window, sourced availability movement and the public PBE track record.', image: pageShareImage('brief', 'Free WNBA Daily Brief — PropBetEdge') });
+    case 'edge-timeline':
+      return m({ title: `PBE Edge Timeline: How WNBA Model Calls Move | ${BRAND}`, description: 'WNBA Pro PBE Edge Timeline shows how model probability, market disagreement, confidence and calls changed from first read to lock.', image: pageShareImage('edge-timeline', 'PBE Edge Timeline — PropBetEdge WNBA Pro') });
+    case 'rotation-impact':
+      return m({ title: `WNBA Rotation Impact: Availability, Workload & Opportunity Pressure | ${BRAND}`, description: 'WNBA Pro Rotation Impact combines Player Load, sourced availability and recent baseline minutes into a team-by-team rotation pressure desk.', image: pageShareImage('rotation-impact', 'WNBA Rotation Impact — PropBetEdge WNBA Pro') });
+    case 'scenario-lab':
+      return m({ title: `PBE Scenario Lab: WNBA Game Paths & Counter-Drivers | ${BRAND}`, description: 'WNBA Pro Scenario Lab breaks each current PBE call into its base case, supporting drivers, counter-drivers and market disagreement without inventing simulated probabilities.', image: pageShareImage('scenario-lab', 'PBE Scenario Lab — PropBetEdge WNBA Pro') });
+    case 'watchlist':
+      return m({ title: `WNBA Pro Watchlist & Live Alerts | ${BRAND}`, description: 'Save WNBA teams and surface current PBE, Player Load and sourced availability signals in one WNBA Pro live alert board.', image: pageShareImage('watchlist', 'WNBA Pro Watchlist & Live Alerts — PropBetEdge') });
     case 'pbe-model':
       return m({ title: `How the PBE WNBA Model Works | ${BRAND}`, description: 'How PBE WNBA model v1 turns pregame team data into a win probability: features, walk-forward validation, calibration, the market benchmark, lock policy and known limits.', image: pageShareImage('pbe-model', 'How the PBE WNBA Model Works — PropBetEdge WNBA') });
     case 'track-record':
