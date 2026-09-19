@@ -71,7 +71,7 @@ export function playerView({ id, res, news, props, arts, intl }) {
         <div><small>Court share</small><b>${num(w.components.court_share)}%</b><span>${num(w.averages.min)} average minutes</span></div>
       </div>
       <div class="winba-player-method">
-        <p><b>WinBA Score</b> combines 45% production percentile, 25% player win rate, 20% winning-output share and 10% court share. Box Impact = PTS + 1.2×REB + 1.5×AST.</p>
+        <p><b>Why this score:</b> WinBA asks whether this player's production, role and actual game results line up with winning basketball. The score combines 45% production percentile, 25% win rate in appearances, 20% winning-output share and 10% court share. Box Impact = PTS + 1.2×REB + 1.5×AST. It is an index, not a win probability or causal wins-added estimate.</p>
         <a class="sec-link" href="/stats">Full WinBA leaderboard →</a>
       </div>
     </section>` : ''}
