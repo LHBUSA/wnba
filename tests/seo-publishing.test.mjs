@@ -44,6 +44,8 @@ const player = {
   photo: { portrait: '/media/players/4281929/portrait.webp', square: '/media/players/4281929/square.webp', width: 600, height: 750, attribution: 'Photo: Danazar / CC BY-SA 4.0 via Wikimedia Commons (cropped)', license: 'CC BY-SA 4.0', license_url: 'https://creativecommons.org/licenses/by-sa/4.0', source_page: 'https://commons.wikimedia.org/wiki/File:x.jpg', identity: 'high', verified_at: '2026-09-11T17:55:15Z' },
   gamelog: { seasons: [{ name: '2026 Regular Season', games: [{ game_id: '401', date: '2026-06-23T23:00Z', opponent: { team_id: '8', abbr: 'MIN' }, at_vs: '@', result: 'L', score: '70-80', min: 30, pts: 12, reb: 4, ast: 2 }, { game_id: '400', date: '2026-06-20T23:00Z', opponent: { team_id: '3', abbr: 'DAL' }, at_vs: 'vs', result: 'W', score: '90-80', min: 28, pts: 9, reb: 2, ast: 1 }] }, { name: '2025 Regular Season', games: [{ min: 30, pts: 30, reb: 10, ast: 5 }] }] },
   recent: { method: 'Simple averages.', season: { games: 99, pts: 99, reb: 99, ast: 99, min: 99 }, last10: null, last5: null, minutes_trend: [] },
+  career: { categories: [{ name: 'general', names: ['gamesPlayed', 'minutes', 'points', 'rebounds', 'assists', 'steals', 'blocks'], totals: [100, 3000, 1800, 700, 400, 120, 80], seasons: [{ season: 2026, season_label: '2026 Regular Season', team_id: '9', team: 'NY', stats: [40, 1200, 760, 280, 180, 50, 30] }, { season: 2025, season_label: '2025 Regular Season', team_id: '3', team: 'DAL', stats: [60, 1800, 1040, 420, 220, 70, 50] }] }] },
+  winba: { score: 81.2, qualified: true, rank: 4, sample: { games: 40 } },
   availability: [{ status: 'Out', body_part: 'Concussion', source_updated_at: ago(60) }]
 };
 const team = {
@@ -100,6 +102,8 @@ test('article HTML carries the story without JavaScript: headline, deck, copy, d
   assert.ok(doc.includes(`Updated <time datetime="${satouArticle.revised_at}">`));
   assert.ok(doc.includes('href="https://www.cbssports.com/wnba/news/x"'), 'publisher evidence link');
   for (const href of ['/players/4281929', '/teams/9', '/teams/8', '/matchups/401857196', '/cast/401857196', '/injuries', '/editorial-policy', '/corrections']) assert.ok(doc.includes(`href="${href}"`), href);
+  assert.match(doc, /<p><a class="entity-link" href="\/players\/4281929">Satou Sabally<\/a> as Out/);
+  assert.match(doc, /<a class="entity-link" href="\/teams\/9">New York Liberty<\/a>/);
   assert.ok(doc.includes('src="/media/news/players/4281929/wide-1280.webp"') || doc.includes('/media/news/players/4281929/wide-1280.webp 1280w'), 'approved story photo is served');
   assert.ok(doc.includes('data-ssr-path="/news/satou-sabally-out-for-the-season-per-espns-injury-feed-dfe9a7"'));
   assert.doesNotMatch(doc, /PropBetEdge model:\s*not published/i);
@@ -173,8 +177,8 @@ test('player, team and matchup pages have unique, descriptive metadata and the r
   const tm = await page('/teams/9');
   const mu = await page('/matchups/401857190');
   for (const p of [pl, tm, mu]) assert.equal(p.status, 200);
-  assert.match(pl.doc, /<title>Satou Sabally WNBA Stats, Game Log, Injuries &amp; News \| PropBetEdge<\/title>/);
-  assert.match(tm.doc, /<title>New York Liberty Roster, Schedule, Stats, Injuries &amp; News \| PropBetEdge<\/title>/);
+  assert.match(pl.doc, /<title>Satou Sabally WNBA Career Stats, Game Log, WinBA &amp; News \| PropBetEdge<\/title>/);
+  assert.match(tm.doc, /<title>New York Liberty Roster, Player Stats, Schedule, Injuries &amp; News \| PropBetEdge<\/title>/);
   assert.match(mu.doc, /<title>Connecticut Sun vs Atlanta Dream WNBA Matchup, Injuries &amp; Analysis \| PropBetEdge<\/title>/);
   // Player description uses the year-labelled regular season from the game log, never year-less recent.season.
   assert.match(pl.doc, /2026 regular season: 10\.5 points, 3\.0 rebounds and 1\.5 assists per game in 2 games\./);
@@ -185,7 +189,11 @@ test('player, team and matchup pages have unique, descriptive metadata and the r
   assert.equal(person.name, 'Satou Sabally');
   assert.equal(person.birthDate, '1998-04-25');
   assert.equal(person.memberOf.url, `${SITE}/teams/9`);
+  assert.match(person.description, /Career totals: 100 games, 1,800 points, 700 rebounds, 400 assists\./);
   assert.match(pl.doc, /<h1 class="p-name"[^>]*>Satou Sabally<\/h1>/);
+  assert.match(pl.doc, /Career totals/);
+  assert.match(pl.doc, /1,800 PTS/);
+  assert.match(pl.doc, /2026[\s\S]*href="\/teams\/9"[\s\S]*19\.0/);
   const st = ldOf(tm.doc)['@graph'].find((x) => x['@type'] === 'SportsTeam');
   assert.equal(st.sport, 'Basketball');
   assert.equal(st.athlete[0].url, `${SITE}/players/4281929`);
