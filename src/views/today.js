@@ -211,43 +211,38 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   return { live: live || intlLive, body: html`
     ${tickerRail(ticker, { freshness: today.meta?.served_at ? `Updated ${relTime(today.meta.served_at)}` : null })}
 
-    <section class="hero2 live-command live-command-${hero.mode.toLowerCase()}">
-      <div class="hero2-in">
-        <div class="lh-main">
-          <span class="kicker lh-kicker"><i class="lh-kicker-dot ${live ? 'is-live' : ''}"></i>${heroEyebrow(hero)}</span>
-          <h1 class="lh-title">${heroTitle(hero)}</h1>
-          <p class="lead lh-lead">${heroSubcopy(hero)}</p>
-          ${renderHeroMatchup(hero)}
-          ${renderHeroMarket(hero)}
-          ${hero.mode === 'BETWEEN' && hero.previous ? html`<a class="lh-earlier" href="/cast/${hero.previous.game_id}"><span>Earlier</span><b>${teamAbbr(hero.previous.away)} ${hero.previous.away?.score ?? '—'} · ${teamAbbr(hero.previous.home)} ${hero.previous.home?.score ?? '—'}</b><small>Final</small></a>` : ''}
-          ${renderHeroSelectors(hero)}
-          ${renderHeroActions(hero)}
-          ${renderHeroMeta(today.meta, live)}
+    <section class="sports-front" aria-label="WNBA front page">
+      <div class="sports-front-story">
+        <div class="sec-head sports-front-head">
+          <div><span class="eyebrow">Top story</span><h2 class="sec-title bc">Around the WNBA</h2></div>
+          <a class="sec-link" href="/news">All news →</a>
         </div>
-        ${renderHeroIntel({ hero, leadStory, changes, d })}
+        ${leadStory
+          ? articleCard(leadStory, { lead: true, eager: true })
+          : html`<div class="card card-pad sports-story-empty"><span class="eyebrow">PBE Newsroom</span><h2 class="sec-title bc">The league desk is current.</h2><p class="note">The next sourced WNBA story will lead this page when it clears the newsroom gate.</p><a class="btn gold" href="/news">Open newsroom</a></div>`}
       </div>
+
+      <aside class="sports-game-center ${live ? 'is-live' : ''}">
+        <div class="sports-game-head">
+          <div><span class="kicker lh-kicker"><i class="lh-kicker-dot ${live ? 'is-live' : ''}"></i>${live ? 'Live now' : 'Game center'}</span>
+          <h2>${hero.primary ? `${teamName(hero.primary.away)} at ${teamName(hero.primary.home)}` : 'WNBA league desk'}</h2></div>
+          <a class="sports-game-all" href="/cast">Full scoreboard →</a>
+        </div>
+        <p class="sports-game-status">${heroEyebrow(hero)} · ${hero.primary ? gameState(hero.primary).label : 'No game published'}</p>
+        ${renderHeroMatchup(hero)}
+        ${renderHeroMarket(hero)}
+        ${hero.mode === 'BETWEEN' && hero.previous ? html`<a class="lh-earlier" href="/cast/${hero.previous.game_id}"><span>Earlier</span><b>${teamAbbr(hero.previous.away)} ${hero.previous.away?.score ?? '—'} · ${teamAbbr(hero.previous.home)} ${hero.previous.home?.score ?? '—'}</b><small>Final</small></a>` : ''}
+        ${renderHeroSelectors(hero)}
+        ${renderHeroActions(hero)}
+        ${renderHeroMeta(today.meta, live)}
+      </aside>
     </section>
 
-    <nav class="card" style="margin-top:14px;padding:10px 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none" aria-label="Teams">
+    <nav class="card sports-team-rail" aria-label="WNBA teams">
       ${logoManifest.teams.map((t) => html`<a href="/teams/${t.team_id}" title="${t.name}" style="flex:none;padding:6px;border-radius:10px">${teamLogo({ team_id: t.team_id, name: t.name }, 40)}</a>`)}
     </nav>
 
-    <section class="card card-pad" style="margin-top:14px;border-color:var(--gold-line);background:linear-gradient(110deg,rgba(212,175,55,.08),rgba(255,122,47,.035) 55%,transparent)">
-      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px">
-        <div style="flex:1 1 560px;min-width:0">
-          <span class="eyebrow">WNBA Pro · $9.99/month or just $3.99/week</span>
-          <h2 class="sec-title bc" style="margin-top:7px">Get the full WNBA research desk.</h2>
-          <p class="note" style="margin-top:8px;max-width:74ch"><b>PBE Picks is our self-learning algorithm</b>, built to learn from graded results, adapt as new games are played, and compare its probabilities against the market — designed to give you an edge without hiding the track record. WNBA Pro also includes model reasoning, WNBACast, Best Line, matchup research and availability context.</p>
-          <div class="pill-row" style="margin-top:12px">
-            <span class="pill">Self-learning PBE Picks</span><span class="pill">Model reasoning</span><span class="pill">Live track record</span><span class="pill">Best Line + Matchups</span>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <div style="text-align:right"><b style="display:block;font:700 25px/1 var(--f-editorial)">$3.99</b><span class="note">per week · or $9.99/month</span></div>
-          <a class="btn-pro" href="/pro">Get WNBA Pro</a>
-        </div>
-      </div>
-    </section>
+
 
     <section class="section">
       <div class="sec-head"><h2 class="sec-title bc">${slate.kind === 'TODAY' ? `Today · ${fmtCompactDate(d.today_et)}` : slate.kind === 'NEXT' ? `Next slate · ${fmtCompactDate(slate.date)}` : 'Upcoming'}</h2><a class="sec-link" href="/cast">All games in WNBACast →</a></div>
@@ -269,6 +264,23 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
         </tr>`)}</tbody></table></div>
         <div class="card-body"><p class="note">Sportsbook prices and the market’s no-vig consensus are shown separately on the <a class="gold" href="/props">best line board</a>, with source, book count and capture time kept visible.</p></div></div>
     </section>` : ''}
+
+    <section class="card card-pad sports-pro-strip" style="border-color:var(--gold-line);background:linear-gradient(110deg,rgba(212,175,55,.08),rgba(255,122,47,.035) 55%,transparent)">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px">
+        <div style="flex:1 1 560px;min-width:0">
+          <span class="eyebrow">WNBA Pro · $9.99/month or just $3.99/week</span>
+          <h2 class="sec-title bc" style="margin-top:7px">Get the full WNBA research desk.</h2>
+          <p class="note" style="margin-top:8px;max-width:74ch"><b>PBE Picks is our self-learning algorithm</b>, built to learn from graded results, adapt as new games are played, and compare its probabilities against the market — designed to give you an edge without hiding the track record. WNBA Pro also includes model reasoning, WNBACast, Best Line, matchup research and availability context.</p>
+          <div class="pill-row" style="margin-top:12px">
+            <span class="pill">Self-learning PBE Picks</span><span class="pill">Model reasoning</span><span class="pill">Live track record</span><span class="pill">Best Line + Matchups</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="text-align:right"><b style="display:block;font:700 25px/1 var(--f-editorial)">$3.99</b><span class="note">per week · or $9.99/month</span></div>
+          <a class="btn-pro" href="/pro">Get WNBA Pro</a>
+        </div>
+      </div>
+    </section>
 
     <div class="section split">
       <div>
