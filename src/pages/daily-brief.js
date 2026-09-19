@@ -5,14 +5,7 @@ import { routeMeta } from '../seo/meta.js';
 import { dailyBriefView } from '../views/daily-brief.js';
 
 function meta() {
-  const base = routeMeta('pro', { path: '/brief' });
-  return {
-    ...base,
-    path: '/brief',
-    url: 'https://wnba.propbetedge.ai/brief',
-    title: 'Free WNBA Daily Brief: Slate, PBE Coverage & Availability | PropBetEdge',
-    description: 'A free WNBA intelligence brief with the current slate, PBE coverage window, sourced availability movement and the public PBE track record.'
-  };
+  return routeMeta('daily-brief', { path: '/brief' });
 }
 
 export async function mount(root, ctx) {
