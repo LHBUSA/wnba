@@ -157,6 +157,99 @@ export async function trackRecordPublic({ env }) {
   return json({ ok: true, data: { ledger_status: 'CONNECTED', contract: CONTRACT, record: trackRecordAggregate(official.rows), starts: 'The live record starts at 0-0 with the first official locked pick. Backtests are never counted here.' } }, 60);
 }
 
+// ------------------------------------------------------------------ public sampler
+
+function sampleTeam(id, team = {}) {
+  return {
+    team_id: String(id || ''),
+    name: team?.name || team?.display_name || team?.displayName || null,
+    short_name: team?.short_name || team?.shortDisplayName || null,
+    abbr: team?.abbr || team?.abbreviation || null,
+    logo: team?.logo || team?.logo_url || team?.logos?.[0]?.href || null
+  };
+}
+
+/**
+ * Tiny first-party top-of-funnel contract. It exposes at most two current
+ * official game calls after PBE_PUBLISH is live. It never returns reasoning,
+ * feature vectors, hashes, full market ladders, historical rows or more than
+ * two selections. WNBA Pro remains the full board.
+ */
+export async function pbeFreeSample({ env }) {
+  const generated_at = new Date().toISOString();
+  const empty = (published, reason = null) => json({
+    ok: true,
+    data: {
+      contract: 'pbe-free-sample-v1',
+      sport: 'WNBA',
+      generated_at,
+      published,
+      reason,
+      count: 0,
+      picks: [],
+      full_product_url: 'https://wnba.propbetedge.ai/pbe-picks'
+    }
+  }, 30);
+
+  if (env.PBE_PUBLISH !== 'true') return empty(false, 'model_not_published');
+  if (!env.WNBA_KV) return empty(true, 'ledger_unavailable');
+
+  const index = await env.WNBA_KV.get(KV('official', 'index'), 'json');
+  const now = Date.now();
+  const ids = (index?.games || [])
+    .filter((x) => Date.parse(x.scheduled_tip_utc) > now - 3 * 3600e3)
+    .sort((a, b) => Date.parse(a.scheduled_tip_utc) - Date.parse(b.scheduled_tip_utc))
+    .map((x) => x.game_id);
+
+  const picks = [];
+  for (const id of ids) {
+    if (picks.length >= 2) break;
+    const { doc, lock, grade } = await loadCall(env, 'official', id);
+    if (!doc) continue;
+    const item = callItem(doc, lock, grade, 'official');
+    if (item.call !== 'PICK' || !['PRE_LOCK', 'LOCKED'].includes(item.phase) || !item.pick_team_id) continue;
+
+    const game = item.game || {};
+    const side = item.market?.pick_side;
+    const quote = side && item.market?.available ? item.market?.[side] : null;
+    const pickIsHome = String(item.pick_team_id) === String(game.home_team_id);
+    const pickTeam = pickIsHome ? sampleTeam(game.home_team_id, game.home) : sampleTeam(game.away_team_id, game.away);
+    const opponent = pickIsHome ? sampleTeam(game.away_team_id, game.away) : sampleTeam(game.home_team_id, game.home);
+
+    picks.push({
+      phase: item.phase,
+      game_id: String(game.game_id || id),
+      scheduled_tip_utc: game.scheduled_tip_utc || null,
+      home: sampleTeam(game.home_team_id, game.home),
+      away: sampleTeam(game.away_team_id, game.away),
+      pick_team: pickTeam,
+      opponent,
+      model_probability: item.pick_probability,
+      confidence: item.confidence,
+      odds: quote?.consensus_moneyline ?? null,
+      market_probability: quote?.devig_probability ?? null,
+      edge_pts: item.market?.pbe_edge_pts ?? null,
+      market_captured_at: item.market?.captured_at ?? null,
+      market_current: item.market?.current === true,
+      locked_at: item.locked_at || null,
+      model_id: item.model?.model_id || null
+    });
+  }
+
+  return json({
+    ok: true,
+    data: {
+      contract: 'pbe-free-sample-v1',
+      sport: 'WNBA',
+      generated_at: index?.generated_at || generated_at,
+      published: true,
+      count: picks.length,
+      picks,
+      full_product_url: 'https://wnba.propbetedge.ai/pbe-picks'
+    }
+  }, 30);
+}
+
 // ------------------------------------------------------------------ protected
 
 export async function pbePicks({ request, env }) {
