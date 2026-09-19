@@ -108,3 +108,47 @@ export function careerRateLine(career) {
   ].filter(Boolean);
   return rates.join(' · ');
 }
+
+
+export function careerSeasonRows(career) {
+  const rows = new Map();
+
+  for (const cat of career?.categories || []) {
+    const names = cat.names || [];
+    for (const season of cat.seasons || []) {
+      const year = Number(season.season);
+      if (!Number.isFinite(year)) continue;
+      const key = `${year}:${season.team_id || season.team || ''}`;
+      const row = rows.get(key) || {
+        season: year,
+        season_label: season.season_label || String(year),
+        team_id: season.team_id || null,
+        team: season.team || null
+      };
+      names.forEach((name, i) => {
+        const value = n(season.stats?.[i]);
+        if (name && value !== null && row[name] === undefined) row[name] = value;
+      });
+      rows.set(key, row);
+    }
+  }
+
+  return [...rows.values()]
+    .map((r) => {
+      const games = pick(new Map(Object.entries(r)), ALIASES.games);
+      const points = pick(new Map(Object.entries(r)), ALIASES.points);
+      const rebounds = pick(new Map(Object.entries(r)), ALIASES.rebounds);
+      const assists = pick(new Map(Object.entries(r)), ALIASES.assists);
+      return {
+        ...r,
+        games,
+        points,
+        rebounds,
+        assists,
+        ppg: games && points !== null ? points / games : null,
+        rpg: games && rebounds !== null ? rebounds / games : null,
+        apg: games && assists !== null ? assists / games : null
+      };
+    })
+    .sort((a, b) => b.season - a.season || String(a.team || '').localeCompare(String(b.team || '')));
+}
