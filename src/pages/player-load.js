@@ -41,8 +41,9 @@ function loadingView() {
 export async function mount(root, ctx) {
   ctx.setMeta(customMeta());
   render(root, loadingView());
-  const res = await api.playerLoad();
+  const [res, winba] = await Promise.all([api.playerLoad(), api.statsWinba()]);
   if (!ctx.isCurrent()) return;
+  const winbaByPlayer = new Map((winba?.ok ? winba.data.rows || [] : []).map((r) => [String(r.athlete_id), r]));
 
   if (!res.ok && (res.status === 401 || res.status === 403 || res.error?.code === 'wnba_pro_required')) {
     render(root, playerLoadPublicView());
@@ -96,7 +97,7 @@ export async function mount(root, ctx) {
 
         <div class="pl-band-key">${BAND_ORDER.map((b) => html`<span class="pl-band pl-${b.toLowerCase()}">${b}</span>`)}</div>
 
-        ${rows.length ? html`<div class="pl-grid">${rows.map((p) => card(p))}</div>` : html`<div class="empty"><h3>No players match those filters</h3><p>Clear a team, band or search filter.</p></div>`}
+        ${rows.length ? html`<div class="pl-grid">${rows.map((p) => card(p, winbaByPlayer))}</div>` : html`<div class="empty"><h3>No players match those filters</h3><p>Clear a team, band or search filter.</p></div>`}
 
         <footer class="pl-method-note">
           <b>Methodology integrity</b>
@@ -113,8 +114,9 @@ export async function mount(root, ctx) {
   draw();
 }
 
-function card(p) {
+function card(p, winbaByPlayer) {
   const m = p.metrics || {};
+  const w = winbaByPlayer?.get(String(p.athlete_id)) || null;
   const availability = p.availability?.status ? html`<span class="pl-context">Availability: <b>${p.availability.status}</b></span>` : '';
   return html`<article class="pl-card pl-card-${String(p.band || 'LIGHT').toLowerCase()}">
     <div class="pl-card-head">
@@ -128,6 +130,7 @@ function card(p) {
       <div><span>Games / 5d</span><b>${fmt(m.games_5d)}</b></div>
       <div><span>Turnaround</span><b>${fmt(m.turnaround_hours, 'h')}</b></div>
       <div><span>Rotation 12+</span><b>${fmt(m.recent_rotation_depth_12plus)}</b></div>
+      <div><span>WinBA</span><b>${w ? fmt(w.score) : '—'}</b></div>
     </div>
     ${p.signals?.length ? html`<div class="pl-signals">${p.signals.slice(0, 4).map((s) => html`<span>${s}</span>`)}</div>` : html`<div class="pl-signals"><span>No elevated workload driver beyond the score inputs.</span></div>`}
     ${availability}
