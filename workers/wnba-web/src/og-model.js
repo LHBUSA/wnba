@@ -35,7 +35,14 @@ const PAGE_CARDS = Object.freeze({
   'editorial-policy': ['Trust', 'Editorial Policy', 'How PropBetEdge WNBA verifies, attributes and publishes source-grounded coverage.'],
   corrections: ['Trust', 'Corrections & Revisions', 'How PropBetEdge WNBA preserves publication history and handles corrections.'],
   methodology: ['Trust', 'WNBA Methodology', 'How form, rotations, pace, markets and newsroom decisions are calculated and disclosed.'],
-  international: ['Global basketball', 'International Women’s Basketball', 'World Cup, Olympics and FIBA competition intelligence with WNBA player connections.']
+  international: ['Global basketball', 'International Women’s Basketball', 'World Cup, Olympics and FIBA competition intelligence with WNBA player connections.'],
+  history: ['Historical intelligence', 'WNBA History', 'Eras, championships, franchise lineage, milestones and the PropBetEdge historical archive.'],
+  'player-load': ['WNBA Pro · Player intelligence', 'Player Load', 'Workload, rest, recent minutes, schedule density and rotation pressure in one player-level research surface.'],
+  brief: ['Free intelligence', 'WNBA Daily Brief', 'Today’s slate, PBE coverage, sourced availability changes and the public model track record.'],
+  'edge-timeline': ['WNBA Pro · Model movement', 'PBE Edge Timeline', 'Follow model, market, confidence and call movement from first read through lock.'],
+  'rotation-impact': ['WNBA Pro · Rotation research', 'Rotation Impact', 'Player Load, availability and recent minutes combined into a team-by-team opportunity pressure desk.'],
+  'scenario-lab': ['WNBA Pro · Game paths', 'PBE Scenario Lab', 'Base case, supporting drivers, counter-drivers and model-market disagreement for current calls.'],
+  watchlist: ['WNBA Pro · Alerts', 'Watchlist & Live Alerts', 'Organize teams and surface current PBE, Player Load and availability signals in one live board.']
 });
 
 function pageModel(key) {
