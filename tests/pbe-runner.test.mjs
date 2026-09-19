@@ -154,8 +154,8 @@ test('lock-policy evidence: checkpoints due at T-60/T-30/T-15/T-0, feed diff, ne
 // ------------------------------------------------------------------ armed mode (official ledger) against a fake PostgREST
 
 /** Minimal PostgREST stand-in. `lockFail(row)` may return { status, code, message } to refuse a lock insert. */
-function fakeSupabase({ lockFail = () => null, existingLocks = [] } = {}) {
-  const db = { observations: [], locks: [...existingLocks], calls: [] };
+function fakeSupabase({ lockFail = () => null, existingLocks = [], existingGrades = [] } = {}) {
+  const db = { observations: [], locks: [...existingLocks], grades: [...existingGrades], calls: [] };
   const reply = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
   const fetchImpl = async (u, init = {}) => {
     const url = new URL(u);
@@ -163,8 +163,16 @@ function fakeSupabase({ lockFail = () => null, existingLocks = [] } = {}) {
     const table = url.pathname.split('/').pop();
     db.calls.push(`${init.method || 'GET'} ${table}`);
     if ((init.method || 'GET') === 'GET') {
-      const gid = (url.searchParams.get('game_id') || '').replace('eq.', '');
-      return reply(db.locks.filter((l) => l.game_id === gid));
+      if (table === 'wnba_pbe_locked_predictions') {
+        const gid = (url.searchParams.get('game_id') || '').replace('eq.', '');
+        return reply(db.locks.filter((l) => l.game_id === gid));
+      }
+      if (table === 'wnba_pbe_grade_revisions') {
+        const pid = (url.searchParams.get('prediction_id') || '').replace('eq.', '');
+        const rev = Number((url.searchParams.get('revision') || '').replace('eq.', ''));
+        return reply(db.grades.filter((g) => g.prediction_id === pid && (!Number.isFinite(rev) || g.revision === rev)));
+      }
+      throw new Error(`unexpected GET table ${table}`);
     }
     const row = JSON.parse(init.body);
     if (table === 'wnba_pbe_prediction_observations') {
@@ -178,6 +186,14 @@ function fakeSupabase({ lockFail = () => null, existingLocks = [] } = {}) {
       if (db.locks.some((l) => l.game_id === row.game_id)) return reply({ code: '23505', message: 'duplicate key value violates unique constraint "wnba_pbe_lock_one_per_game"' }, 409);
       const stored = { ...row, prediction_id: `pred-${db.locks.length + 1}`, locked_at: '2026-01-01T00:00:00+00:00' };
       db.locks.push(stored);
+      return reply([stored], 201);
+    }
+    if (table === 'wnba_pbe_grade_revisions') {
+      if (db.grades.some((g) => g.prediction_id === row.prediction_id && g.revision === row.revision)) {
+        return reply({ code: '23505', message: 'duplicate key value violates unique constraint "wnba_pbe_grade_revision_unique"' }, 409);
+      }
+      const stored = { ...row, grade_id: `grade-${db.grades.length + 1}`, graded_at: '2026-01-01T03:00:00+00:00' };
+      db.grades.push(stored);
       return reply([stored], 201);
     }
     throw new Error(`unexpected table ${table}`);
@@ -242,4 +258,46 @@ test('armed: a lock the ledger already holds is mirrored from the ledger row, no
   const s2 = await pbeTask(env, { now: NOW + 60e3, minute: 1, eventsFor, fetchSummary: noSummaries });
   assert.equal(s2.locks, 0);
   assert.equal(supabase.db.calls.length, before);
+});
+
+
+test('armed: grade written to ledger but missing from KV is recovered idempotently on the next pass', async (t) => {
+  const supabase = fakeSupabase();
+  const { kv, env, events, eventsFor } = await armedSetup(t, supabase);
+  await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+
+  for (const id of ['G_A', 'G_B']) {
+    const g = events[2026].find((e) => e.id === id);
+    g.status.type.name = 'STATUS_FINAL';
+    g.competitions[0].competitors[0].score = id === 'G_A' ? '88' : '77';
+    g.competitions[0].competitors[1].score = id === 'G_A' ? '79' : '81';
+  }
+
+  const originalPut = kv.put.bind(kv);
+  let failOnce = true;
+  kv.put = async (key, value, opts) => {
+    if (failOnce && key === 'pbe:v1:official:grade:G_A') {
+      failOnce = false;
+      throw new Error('simulated KV mirror failure after grade insert');
+    }
+    return originalPut(key, value, opts);
+  };
+
+  await assert.rejects(
+    pbeTask(env, { now: NOW + 3 * 3600e3, minute: 2, eventsFor, fetchSummary: noSummaries }),
+    /pbe_armed_errors:G_A@grade:simulated KV mirror failure/
+  );
+  assert.equal(supabase.db.grades.filter((g) => g.prediction_id === supabase.db.locks.find((l) => l.game_id === 'G_A').prediction_id).length, 1, 'ledger got exactly one grade');
+  assert.ok(kv.map.has('pbe:v1:official:grade:G_B'), 'other final still grades in the same pass');
+  assert.ok(!kv.map.has('pbe:v1:official:grade:G_A'), 'the simulated mirror failure left A missing in KV');
+
+  kv.put = originalPut;
+  const s2 = await pbeTask(env, { now: NOW + 4 * 3600e3, minute: 3, eventsFor, fetchSummary: noSummaries });
+  assert.equal(s2.grades, 1, 'the missing KV grade is repaired');
+  assert.ok(s2.skipped.includes('already_graded_mirrored:G_A'));
+  const repaired = JSON.parse(kv.map.get('pbe:v1:official:grade:G_A'));
+  const ledgerGrade = supabase.db.grades.find((g) => g.prediction_id === supabase.db.locks.find((l) => l.game_id === 'G_A').prediction_id);
+  assert.equal(repaired.grade_id, ledgerGrade.grade_id);
+  assert.equal(repaired.result, ledgerGrade.result);
+  assert.equal(supabase.db.grades.filter((g) => g.prediction_id === ledgerGrade.prediction_id).length, 1, 'no duplicate grade inserted');
 });
