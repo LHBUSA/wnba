@@ -150,3 +150,96 @@ test('lock-policy evidence: checkpoints due at T-60/T-30/T-15/T-0, feed diff, ne
   assert.ok(!kv.map.has('pbe:v1:shadow:availchk:G_LATER'), 'a game 5h out records nothing');
   assert.equal(s.availability_checkpoints, 3);
 });
+
+// ------------------------------------------------------------------ armed mode (official ledger) against a fake PostgREST
+
+/** Minimal PostgREST stand-in. `lockFail(row)` may return { status, code, message } to refuse a lock insert. */
+function fakeSupabase({ lockFail = () => null, existingLocks = [] } = {}) {
+  const db = { observations: [], locks: [...existingLocks], calls: [] };
+  const reply = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  const fetchImpl = async (u, init = {}) => {
+    const url = new URL(u);
+    if (url.hostname !== 'ledger.test') throw new Error(`unexpected network call: ${u}`);
+    const table = url.pathname.split('/').pop();
+    db.calls.push(`${init.method || 'GET'} ${table}`);
+    if ((init.method || 'GET') === 'GET') {
+      const gid = (url.searchParams.get('game_id') || '').replace('eq.', '');
+      return reply(db.locks.filter((l) => l.game_id === gid));
+    }
+    const row = JSON.parse(init.body);
+    if (table === 'wnba_pbe_prediction_observations') {
+      const stored = { ...row, observation_id: `obs-${db.observations.length + 1}`, recorded_at: new Date().toISOString() };
+      db.observations.push(stored);
+      return reply([stored], 201);
+    }
+    if (table === 'wnba_pbe_locked_predictions') {
+      const refuse = lockFail(row);
+      if (refuse) return reply({ code: refuse.code, message: refuse.message }, refuse.status);
+      if (db.locks.some((l) => l.game_id === row.game_id)) return reply({ code: '23505', message: 'duplicate key value violates unique constraint "wnba_pbe_lock_one_per_game"' }, 409);
+      const stored = { ...row, prediction_id: `pred-${db.locks.length + 1}`, locked_at: '2026-01-01T00:00:00+00:00' };
+      db.locks.push(stored);
+      return reply([stored], 201);
+    }
+    throw new Error(`unexpected table ${table}`);
+  };
+  return { db, fetchImpl };
+}
+
+/** Two games sharing one tip time (the normal WNBA slate shape), both inside the lock window. */
+async function armedSetup(t, supabase) {
+  const base = await setup();
+  const tip = new Date(NOW + 14 * 60e3).toISOString();
+  base.events[2026] = [...eventsFromRows(2026), scheduled('G_A', tip), scheduled('G_B', tip, '9', '17')];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = supabase.fetchImpl;
+  t.after(() => { globalThis.fetch = realFetch; });
+  const env = { WNBA_KV: base.kv, PBE_MODE: 'armed', PBE_ARMED_BY: 'test approval', PBE_SUPABASE_URL: 'https://ledger.test', PBE_SUPABASE_SERVICE_ROLE_KEY: 'k' };
+  return { ...base, env };
+}
+
+test('armed: two games at one tip time both lock, each from its own recorded observation', async (t) => {
+  const supabase = fakeSupabase();
+  const { kv, env, eventsFor } = await armedSetup(t, supabase);
+  const s = await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+  assert.equal(s.locks, 2);
+  assert.deepEqual(s.errors, []);
+  for (const id of ['G_A', 'G_B']) {
+    const lock = JSON.parse(kv.map.get(`pbe:v1:official:lock:${id}`));
+    const row = supabase.db.locks.find((l) => l.game_id === id);
+    assert.equal(lock.prediction_id, row.prediction_id);
+    assert.equal(supabase.db.observations.find((o) => o.observation_id === row.source_observation_id).game_id, id);
+  }
+  assert.deepEqual(JSON.parse(kv.map.get('pbe:v1:official:index')).locked_history, ['G_A', 'G_B']);
+});
+
+test('armed: one refused lock never takes the other game at that tip time down with it, and the error is kept', async (t) => {
+  const supabase = fakeSupabase({ lockFail: (row) => row.game_id === 'G_A' ? { status: 400, code: 'P0001', message: 'wnba_pbe: lock for game G_A does not match its source observation' } : null });
+  const { kv, env, eventsFor } = await armedSetup(t, supabase);
+  await assert.rejects(pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries }), /pbe_armed_errors:G_A@lock:.*does not match its source observation/);
+  assert.ok(!kv.map.has('pbe:v1:official:lock:G_A'), 'a refused lock is never mirrored');
+  assert.ok(kv.map.has('pbe:v1:official:lock:G_B'), 'the second game still locks in the same pass');
+  const index = JSON.parse(kv.map.get('pbe:v1:official:index'));
+  assert.deepEqual(index.locked_history, ['G_B']);
+  assert.equal(index.last_errors.errors[0].game_id, 'G_A');
+  assert.equal(index.last_errors.errors[0].stage, 'lock');
+  assert.equal(index.last_summary.locks, 1);
+});
+
+test('armed: a lock the ledger already holds is mirrored from the ledger row, not skipped and not rebuilt', async (t) => {
+  const ledgerRow = { game_id: 'G_A', contract: 'game_winner_v1', prediction_id: 'pred-first', locked_at: '2026-09-01T00:00:00+00:00', generated_at: '2026-08-31T23:59:00+00:00', call: 'PICK', no_call_reason: null, p_home: 0.61, selected_team_id: '20', selected_side: 'home', win_probability: 0.61, confidence: 'medium', feature_vector: { order: ['f'], values: [1] }, feature_hash: 'a'.repeat(64), reasoning: { home: { supporting: [], opposing: [], adjustments: [] }, away: { supporting: [], opposing: [], adjustments: [] } }, market_at_lock: null, pbe_edge_at_lock: null };
+  const supabase = fakeSupabase({ existingLocks: [ledgerRow] });
+  const { kv, env, eventsFor } = await armedSetup(t, supabase);
+  const s = await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+  assert.ok(s.skipped.includes('already_locked_mirrored:G_A'));
+  const lock = JSON.parse(kv.map.get('pbe:v1:official:lock:G_A'));
+  assert.equal(lock.prediction_id, 'pred-first');
+  assert.equal(lock.p_home, 0.61, 'the frozen ledger value, not the newer document');
+  assert.equal(lock.win_probability, 0.61);
+  assert.equal(lock.mirrored_from_ledger, true);
+  assert.ok(kv.map.has('pbe:v1:official:lock:G_B'));
+  // next minute: nothing is re-attempted for either game
+  const before = supabase.db.calls.length;
+  const s2 = await pbeTask(env, { now: NOW + 60e3, minute: 1, eventsFor, fetchSummary: noSummaries });
+  assert.equal(s2.locks, 0);
+  assert.equal(supabase.db.calls.length, before);
+});

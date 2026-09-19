@@ -106,6 +106,36 @@ async function sbInsert(env, table, row) {
   return JSON.parse(text)[0];
 }
 
+async function sbSelect(env, path) {
+  const res = await fetch(`${env.PBE_SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: env.PBE_SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.PBE_SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }, signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`supabase_select_${res.status}:${(await res.text()).slice(0, 200)}`);
+  return res.json();
+}
+
+/** KV mirror of a lock the database already holds. Every frozen value comes from the ledger row, never from a newer document. */
+export function lockDocFromLedgerRow(row, doc, ledger) {
+  return {
+    ...lockDoc(doc, { now: Date.parse(row.locked_at), ledger }),
+    locked_at: row.locked_at,
+    prediction_id: row.prediction_id,
+    source_generated_at: row.generated_at,
+    call: row.call,
+    no_call_reason: row.no_call_reason,
+    p_home: row.p_home,
+    selected_team_id: row.selected_team_id,
+    selected_side: row.selected_side,
+    win_probability: row.win_probability,
+    confidence: row.confidence,
+    feature_order: row.feature_vector?.order ?? doc.feature_order,
+    feature_vector: row.feature_vector?.values ?? doc.feature_vector,
+    feature_hash: row.feature_hash,
+    reasoning: row.reasoning,
+    market_at_lock: row.market_at_lock || { available: false, reason: 'no_market_at_lock', pbe_edge: null },
+    pbe_edge_at_lock: row.pbe_edge_at_lock,
+    mirrored_from_ledger: true
+  };
+}
+
 function lockRowFromObservation(obs, doc) {
   return {
     contract: CONTRACT,
@@ -232,7 +262,7 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
     if (phase === 'lock_due' || !hasPred || scoringDue(g.start_utc, minute, now)) due.push({ g, phase });
   }
 
-  const summary = { mode, ledger, run_id: runId, upcoming: upcoming.length, scored: 0, observations: 0, locks: 0, grades: 0, rows: null, skipped: [] };
+  const summary = { mode, ledger, run_id: runId, upcoming: upcoming.length, scored: 0, observations: 0, locks: 0, grades: 0, rows: null, skipped: [], errors: [] };
 
   if (due.length) {
     const prior = await maintainRows(env, year - 1, { beforeEtDate: todayEt, fetchSummary, events: await loadEvents(year - 1, 86400) });
@@ -244,6 +274,7 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
       const leagueRows = [...prior.rows, ...current.rows];
       const latest = await env.WNBA_KV.get('odds:v1:latest', 'json');
       for (const { g, phase } of due) {
+       let stage = 'score';
        try {
         const asOf = new Date(now).toISOString();
         const marketEvent = findMarketEvent(latest, g);
@@ -256,6 +287,7 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
         const obsDue = observationDue(doc, last, now);
         let observation = null;
         if (obsDue.due || phase === 'lock_due') {
+          stage = 'observation';
           const row = observationRow(doc);
           if (mode === 'armed') {
             observation = await sbInsert(env, 'wnba_pbe_prediction_observations', row);
@@ -271,16 +303,22 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
         }
 
         if (phase === 'lock_due') {
-          const lock = lockDoc(doc, { now, ledger });
+          stage = 'lock';
+          let lock = lockDoc(doc, { now, ledger });
           if (mode === 'armed') {
             try {
               const inserted = await sbInsert(env, 'wnba_pbe_locked_predictions', lockRowFromObservation(observation, doc));
               lock.prediction_id = inserted.prediction_id;
               lock.locked_at = inserted.locked_at;
             } catch (e) {
-              if (e.code !== '23505') throw e; // someone already locked this game: the database kept the first
-              summary.skipped.push(`already_locked:${g.event_id}`);
-              continue;
+              if (e.code !== '23505') throw e;
+              // The database already holds this game's lock and kept the first. Mirror THAT row: a lock that
+              // exists in the ledger but not in KV would otherwise be invisible and re-attempted every minute.
+              stage = 'lock_mirror';
+              const [existing] = await sbSelect(env, `wnba_pbe_locked_predictions?game_id=eq.${encodeURIComponent(g.event_id)}&contract=eq.${CONTRACT}&select=*&limit=1`);
+              if (!existing) throw e;
+              lock = lockDocFromLedgerRow(existing, doc, ledger);
+              summary.skipped.push(`already_locked_mirrored:${g.event_id}`);
             }
           }
           await env.WNBA_KV.put(K(ledger, 'lock', g.event_id), JSON.stringify(lock));
@@ -288,9 +326,12 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
           summary.locks += 1;
         }
        } catch (e) {
-        // One game's failure never blocks the others; an armed-ledger write failure is surfaced, not swallowed.
-        if (mode === 'armed') throw e;
-        summary.skipped.push(`error:${g.event_id}:${String(e.message || e).slice(0, 80)}`);
+        // One game's failure never blocks the others, in either mode: a throw here used to abort every later
+        // game in the same minute, so one bad lock took its whole tip-time slot down with it. An armed-ledger
+        // failure is still surfaced, not swallowed: it is recorded on the index and re-thrown after the pass.
+        const message = String(e.message || e).slice(0, 300);
+        if (mode === 'armed') summary.errors.push({ game_id: g.event_id, stage, phase, error: message });
+        else summary.skipped.push(`error:${g.event_id}:${message.slice(0, 80)}`);
        }
       }
     }
@@ -338,6 +379,13 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
   }
   index.games = games.sort((a, b) => Date.parse(a.scheduled_tip_utc) - Date.parse(b.scheduled_tip_utc));
   index.last_summary = summary;
+  // Armed failures stay readable after the minute that produced them (the task status is overwritten every pass).
+  if (summary.errors.length) index.last_errors = { at: index.generated_at, run_id: runId, errors: summary.errors };
   await env.WNBA_KV.put(indexKey, JSON.stringify(index));
+  if (summary.errors.length) {
+    const err = new Error(`pbe_armed_errors:${summary.errors.map((x) => `${x.game_id}@${x.stage}:${x.error}`).join(' || ').slice(0, 900)}`);
+    err.summary = summary;
+    throw err;
+  }
   return summary;
 }
