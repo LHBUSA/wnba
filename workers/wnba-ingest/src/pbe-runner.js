@@ -337,28 +337,62 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
     }
   }
 
-  // grading: locked games whose tip is > 2h ago and not graded yet
+  // grading: locked games whose tip is > 2h ago and not graded yet.
+  // The official ledger is authoritative. If the DB write succeeded but the KV mirror did not, the next pass
+  // must read back revision 1 and repair KV instead of retrying forever on the unique constraint.
   for (const id of index.locked_history) {
     if (await env.WNBA_KV.get(K(ledger, 'grade', id))) continue;
-    const lock = await env.WNBA_KV.get(K(ledger, 'lock', id), 'json');
-    if (!lock || lock.call !== 'PICK' || now < Date.parse(lock.game.scheduled_tip_utc) + 2 * 3600e3) continue;
-    const e = events.find((x) => String(x.id) === id) || null;
-    const c = e?.competitions?.[0];
-    const status = e?.status?.type?.name || null;
-    const h = c?.competitors?.find((x) => x.homeAway === 'home');
-    const a = c?.competitors?.find((x) => x.homeAway === 'away');
-    if (status !== 'STATUS_FINAL' || !h || !a) continue;
-    const reference = { provider: 'espn', event_id: id, status, url: `${ESPN.site}/scoreboard?dates=${year}`, captured_at: new Date(now).toISOString() };
-    const grade = gradeFromFinal(lock, { status, home_score: Number(h.score), away_score: Number(a.score), reference });
-    if (!grade) continue;
-    let stored = { ...grade, revision: 1, graded_at: new Date(now).toISOString(), ledger };
-    if (mode === 'armed') {
-      if (!lock.prediction_id) continue;
-      const row = await sbInsert(env, 'wnba_pbe_grade_revisions', { prediction_id: lock.prediction_id, revision: 1, result: grade.result, home_score: grade.home_score, away_score: grade.away_score, winner_team_id: grade.winner_team_id, result_reference: reference, graded_by: runId });
-      stored = { ...stored, grade_id: row.grade_id, graded_at: row.graded_at };
+    try {
+      const lock = await env.WNBA_KV.get(K(ledger, 'lock', id), 'json');
+      if (!lock || lock.call !== 'PICK' || now < Date.parse(lock.game.scheduled_tip_utc) + 2 * 3600e3) continue;
+      const e = events.find((x) => String(x.id) === id) || null;
+      const c = e?.competitions?.[0];
+      const status = e?.status?.type?.name || null;
+      const h = c?.competitors?.find((x) => x.homeAway === 'home');
+      const a = c?.competitors?.find((x) => x.homeAway === 'away');
+      if (status !== 'STATUS_FINAL' || !h || !a) continue;
+      const reference = { provider: 'espn', event_id: id, status, url: `${ESPN.site}/scoreboard?dates=${year}`, captured_at: new Date(now).toISOString() };
+      const grade = gradeFromFinal(lock, { status, home_score: Number(h.score), away_score: Number(a.score), reference });
+      if (!grade) continue;
+      let stored = { ...grade, revision: 1, graded_at: new Date(now).toISOString(), ledger };
+
+      if (mode === 'armed') {
+        let predictionId = lock.prediction_id || null;
+        if (!predictionId) {
+          const [ledgerLock] = await sbSelect(env, `wnba_pbe_locked_predictions?game_id=eq.${encodeURIComponent(id)}&contract=eq.${CONTRACT}&select=prediction_id&limit=1`);
+          predictionId = ledgerLock?.prediction_id || null;
+          if (!predictionId) throw new Error(`grade_missing_prediction_id:${id}`);
+          lock.prediction_id = predictionId;
+          lock.mirrored_from_ledger = true;
+          await env.WNBA_KV.put(K(ledger, 'lock', id), JSON.stringify(lock));
+          summary.skipped.push(`lock_prediction_id_recovered:${id}`);
+        }
+
+        let row;
+        try {
+          row = await sbInsert(env, 'wnba_pbe_grade_revisions', { prediction_id: predictionId, revision: 1, result: grade.result, home_score: grade.home_score, away_score: grade.away_score, winner_team_id: grade.winner_team_id, result_reference: reference, graded_by: runId });
+        } catch (e) {
+          if (e.code !== '23505') throw e;
+          const [existing] = await sbSelect(env, `wnba_pbe_grade_revisions?prediction_id=eq.${encodeURIComponent(predictionId)}&revision=eq.1&select=*&limit=1`);
+          if (!existing) throw e;
+          const same = existing.result === grade.result
+            && Number(existing.home_score) === grade.home_score
+            && Number(existing.away_score) === grade.away_score
+            && String(existing.winner_team_id || '') === String(grade.winner_team_id || '');
+          if (!same) throw new Error(`grade_revision_1_conflict:${id}`);
+          row = existing;
+          summary.skipped.push(`already_graded_mirrored:${id}`);
+        }
+        stored = { ...stored, grade_id: row.grade_id, graded_at: row.graded_at };
+      }
+
+      await env.WNBA_KV.put(K(ledger, 'grade', id), JSON.stringify(stored));
+      summary.grades += 1;
+    } catch (e) {
+      const message = String(e.message || e).slice(0, 300);
+      if (mode === 'armed') summary.errors.push({ game_id: id, stage: 'grade', phase: 'postgame', error: message });
+      else summary.skipped.push(`grade_error:${id}:${message.slice(0, 80)}`);
     }
-    await env.WNBA_KV.put(K(ledger, 'grade', id), JSON.stringify(stored));
-    summary.grades += 1;
   }
 
   // Lock-policy evidence: injury-feed checkpoints around every covered tip, and faster feed polling near tips.
