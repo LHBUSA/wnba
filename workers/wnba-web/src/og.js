@@ -84,6 +84,7 @@ function scoreboardLayout(model) {
     text({ fontFamily: 'Barlow Condensed', fontSize: photo ? 76 : 116, color: win ? GOLD : MUTED }, String(t.score ?? '')));
   return h({ width: 1200, height: 630, position: 'relative', backgroundColor: INK },
     ...background(model),
+    model.mark ? { type: 'img', props: { src: model.mark, width: 380, height: 380, style: { position: 'absolute', right: 70, top: 135, width: 380, height: 380, objectFit: 'contain', opacity: 0.96 } } } : null,
     h({ position: 'absolute', left: 56, top: 52 }, brand()),
     h({ position: 'absolute', left: 56, top: 150, flexDirection: 'column' },
       text({ fontFamily: 'Barlow Condensed', fontSize: 30, color: ORANGE, letterSpacing: 2, textTransform: 'uppercase' }, model.kicker),
@@ -124,7 +125,7 @@ const b64 = (buf) => {
 };
 
 /**
- * Serve /og/{news|players|teams|matchups}/:id.png.
+ * Serve entity, page and international share cards under /og/:kind/:id.png.
  * @param {{ api, fetchAsset: (path:string)=>Promise<Response> }} deps
  */
 export async function ogResponse(kind, key, deps) {
@@ -139,7 +140,11 @@ export async function ogResponse(kind, key, deps) {
   }
   if (model.photoPath) {
     const r = await deps.fetchAsset(model.photoPath);
-    if (r.ok) model.photo = `data:image/jpeg;base64,${b64(await r.arrayBuffer())}`;
+    if (r.ok) model.photo = `${r.headers.get('content-type') || 'image/jpeg'};base64,${b64(await r.arrayBuffer())}`.replace(/^/, 'data:');
+  }
+  if (model.markPath) {
+    const r = await deps.fetchAsset(model.markPath);
+    if (r.ok) model.mark = `${r.headers.get('content-type') || (model.markPath.endsWith('.svg') ? 'image/svg+xml' : 'image/webp')};base64,${b64(await r.arrayBuffer())}`.replace(/^/, 'data:');
   }
   const png = await renderCard(model);
   return { png, fallback: model.fallback };
