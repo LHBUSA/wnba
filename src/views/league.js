@@ -159,18 +159,69 @@ export function statsBody({ winba, pl, tm, teams }, state) {
     const top = qualified.slice(0, 3);
     return html`
       <section class="winba-intro">
-        <div>
+        <div class="winba-intro-copy">
           <span class="eyebrow">PropBetEdge original metric</span>
           <h2>WinBA Score</h2>
-          <p>A 0–100 winning-impact index built from real WNBA box production, minutes played, and the results of games the player actually appeared in.</p>
+          <p class="winba-thesis">Who is producing, who is actually on the floor, and how much of that production is showing up in winning basketball?</p>
+          <p class="winba-lead">WinBA turns those three ideas into one transparent 0–100 season index. It combines a player's box production relative to the league, the team's results in games that player actually appeared in, the share of the player's production recorded in wins, and how much of a 40-minute game the player typically carries.</p>
+          <div class="winba-purpose">
+            <div>
+              <span>WHY IT EXISTS</span>
+              <b>Counting stats tell only part of the story.</b>
+              <p>Points, rebounds and assists show production. Team record shows results. Minutes show responsibility. WinBA brings all three into one comparable number without hiding the ingredients.</p>
+            </div>
+            <div>
+              <span>HOW TO READ IT</span>
+              <b>Higher means a stronger production + role + winning profile.</b>
+              <p>A WinBA score is an index, not a probability. An 82 does not mean an 82% chance to win. Use the score, league rank and four components together.</p>
+            </div>
+          </div>
         </div>
-        <div class="winba-formula">
-          <span><b>45%</b> Production</span>
-          <span><b>25%</b> Win rate</span>
-          <span><b>20%</b> Winning output</span>
-          <span><b>10%</b> Court share</span>
+        <div class="winba-formula" aria-label="WinBA Score formula">
+          <span><b>45%</b><strong>Production</strong><small>Box Impact per 36, ranked against qualified WNBA players</small></span>
+          <span><b>25%</b><strong>Win rate</strong><small>Team win percentage only in games the player appeared in</small></span>
+          <span><b>20%</b><strong>Winning output</strong><small>Share of the player's total Box Impact that was produced in wins</small></span>
+          <span><b>10%</b><strong>Court share</strong><small>Average minutes divided by a 40-minute regulation game</small></span>
         </div>
       </section>
+
+      ${top[0] ? html`<section class="winba-proof" aria-label="How the current WinBA leader earns the top score">
+        <div class="winba-proof-score">
+          <span>LIVE EXAMPLE · CURRENT #1</span>
+          <strong>${num(top[0].score)}</strong>
+          <em>WINBA</em>
+        </div>
+        <div class="winba-proof-copy">
+          <h3>Why ${top[0].name} is leading right now</h3>
+          <p>The score is inspectable: <b>${num(top[0].components.production_percentile)}%</b> production percentile, <b>${num(top[0].components.win_rate)}%</b> win rate in appearances, <b>${num(top[0].components.winning_output_share)}%</b> of Box Impact produced in wins, and <b>${num(top[0].components.court_share)}%</b> court share.</p>
+          <small>${top[0].sample.games} qualifying appearances · ${num(top[0].averages.min)} minutes per game · ${top[0].sample.wins}-${top[0].sample.losses} in games played</small>
+        </div>
+      </section>` : ''}
+
+      <section class="winba-reading-grid" aria-label="What WinBA measures and what it does not">
+        <div>
+          <span>WHAT IT REWARDS</span>
+          <h3>Production that survives context.</h3>
+          <p>WinBA gives the largest weight to individual production, then adds whether that production is occurring in wins and whether the player is carrying meaningful floor time.</p>
+        </div>
+        <div>
+          <span>WHAT MAKES IT DIFFERENT</span>
+          <h3>It is appearance-aware.</h3>
+          <p>A player is judged only from games she actually played. DNPs and zero-minute rows do not become fake losses or fake production, and small samples stay Provisional.</p>
+        </div>
+        <div>
+          <span>WHAT IT IS NOT</span>
+          <h3>Not a prediction. Not causal wins added.</h3>
+          <p>WinBA does not use sportsbook odds, injury labels or subjective grades. It describes the relationship between real box production, playing time and team wins in completed regular-season games.</p>
+        </div>
+      </section>
+
+      <div class="winba-equation">
+        <span>BOX IMPACT</span>
+        <b>PTS + 1.2 × REB + 1.5 × AST</b>
+        <p>That production is normalized per 36 minutes before the league percentile is calculated, so raw playing time alone does not decide the production component.</p>
+      </div>
+
       <div class="winba-podium">
         ${top.map((r) => {
           const t = tIdx.get(r.team_id);
@@ -203,8 +254,9 @@ export function statsBody({ winba, pl, tm, teams }, state) {
           })}
         </tbody></table></div>
         <div class="card-body winba-method">
-          <p><b>Box Impact:</b> PTS + 1.2×REB + 1.5×AST. Production is Box Impact per 36 ranked against the league. Win rate counts only games the player appeared in. Winning output is the share of that player’s Box Impact recorded in wins. Court share is average minutes divided by a 40-minute regulation game.</p>
-          <p><b>Qualification:</b> 10 appearances or 250 minutes. Players below that sample are scored but labelled Provisional and receive no official rank.</p>
+          <p><b>Qualification:</b> 10 appearances or 250 minutes. Players below that sample are still scored so you can inspect them, but they are labelled Provisional and do not receive an official league rank or move the qualified production benchmark.</p>
+          <p><b>Update cycle:</b> WinBA is rebuilt from PropBetEdge's archived completed regular-season box scores when new final-game data enters the archive. DNP and zero-minute rows are excluded.</p>
+          <p><b>Interpretation:</b> Compare the overall score with the component columns. Two players can reach similar WinBA scores in different ways — one through elite per-minute production, another through a larger role and stronger results in her appearances.</p>
           <p class="note">${winba.data.formula?.interpretation || ''} Snapshot uses ${winba.data.games_used || 0} archived regular-season finals · generated ${relTime(winba.data.generated_at)}.</p>
           ${sourceLine(winba.meta, { label: 'PropBetEdge WinBA Score · derived from archived ESPN WNBA box scores' })}
         </div>
