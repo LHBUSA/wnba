@@ -281,10 +281,15 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   const games = slate.games;
   const priced = games.filter((g) => g.market);
   const stories = arts.ok ? arts.data.items : [];
-  const leadStory = stories.find((c) => c.kind === 'preview' && c.has_market) || stories.find((c) => c.kind === 'injury') || stories[0];
-  const secondaryStories = stories.filter((c) => c.id !== leadStory?.id).slice(0, 3);
+  // The newsroom endpoint is newest-first, but keep the homepage contract explicit:
+  // the hero is always the freshest editorial origin, never pinned by story kind.
+  const freshStories = [...stories].sort((a, b) =>
+    String(b.first_published_at || b.published_at || '').localeCompare(String(a.first_published_at || a.published_at || ''))
+  );
+  const leadStory = freshStories[0];
+  const secondaryStories = freshStories.filter((c) => c.id !== leadStory?.id).slice(0, 3);
   const heroStoryIds = new Set([leadStory?.id, ...secondaryStories.map((c) => c.id)].filter(Boolean));
-  const moreStories = stories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
+  const moreStories = freshStories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
   const changes = (injuries.ok ? injuries.data.changes : []) || [];
   const lastResults = d.last_results?.games || [];
   const seeds = standings.ok ? standings.data.groups.map((g) => ({ name: g.name, top: g.entries.slice(0, 4) })) : [];
