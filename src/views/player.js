@@ -6,8 +6,10 @@ import { sparkline } from '../ui/charts.js';
 import { teamLogo } from '../ui/logo.js';
 import { articleMini } from '../ui/articles.js';
 import { internationalCareerModule } from './international.js';
+import { careerSummary, careerRateLine } from '../lib/player-career.js';
 
 const MARKET_LABEL = { player_points: 'Points', player_rebounds: 'Rebounds', player_assists: 'Assists', player_threes: '3PM' };
+const whole = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : '—';
 
 export async function loadPlayer(api, id) {
   const [res, news, props, arts, intl] = await Promise.all([api.player(id), api.news({ player: id, limit: 6, lane: 'external' }), api.props(), api.articles({ player: id, limit: 6 }), api.intlForWnba ? api.intlForWnba(id) : Promise.resolve(null)]);
@@ -24,6 +26,8 @@ export function playerView({ id, res, news, props, arts, intl }) {
   const games = season?.games || [];
   const r = d.recent;
   const w = d.winba;
+  const career = careerSummary(d.career);
+  const careerRates = careerRateLine(d.career);
   const inj = d.availability?.[0];
   const myProps = (props?.ok ? props.data.games || [] : []).flatMap((g) => (g.props || []).filter((x) => x.athlete_id === id).map((x) => ({ ...x, game: g })));
 
@@ -52,6 +56,7 @@ export function playerView({ id, res, news, props, arts, intl }) {
         ${inj?.short_comment ? html`<blockquote class="callout" style="margin:12px 0 0">${inj.short_comment}<div class="note" style="margin-top:6px">ESPN injury note${inj.source_return_date ? ` · ESPN lists an expected return of ${fmtDateET(inj.source_return_date + 'T16:00:00Z', { month: 'short', day: 'numeric' })} (source-reported, not a PropBetEdge estimate)` : ''}</div></blockquote>` : ''}
         <div class="tiles" style="margin-top:18px">
           ${[['Season', r?.season], ['Last 10', r?.last10], ['Last 5', r?.last5]].map(([lbl, w]) => html`<div class="tile"><small>${lbl}${w ? ` · ${w.games} g` : ''}</small><b>${w ? num(w.pts) : '—'}</b><span>${w ? `${num(w.reb)} reb · ${num(w.ast)} ast · ${num(w.min)} min` : 'no games'}</span></div>`)}
+          ${career.available ? html`<div class="tile"><small>Career${career.games !== null ? ` · ${whole(career.games)} g` : ''}</small><b>${career.points !== null ? `${whole(career.points)} PTS` : careerRates || '—'}</b><span>${[career.rebounds !== null ? `${whole(career.rebounds)} reb` : null, career.assists !== null ? `${whole(career.assists)} ast` : null].filter(Boolean).join(' · ') || careerRates}</span></div>` : ''}
           ${w ? html`<div class="tile"><small>WinBA</small><b>${num(w.score)}</b><span>${w.qualified ? `#${w.rank || '—'} league rank` : 'provisional'} · ${w.sample.games} g</span></div>` : ''}
           <div class="tile"><small>Minutes trend</small><b style="height:30px">${raw(sparkline((r?.minutes_trend || []).map((x) => x.min), { width: 110, height: 30 }))}</b><span>last ${r?.minutes_trend?.length || 0} games</span></div>
         </div>
@@ -59,7 +64,30 @@ export function playerView({ id, res, news, props, arts, intl }) {
       </div>
     </section>
 
-        <div class="section split">
+    ${career.available ? html`<section class="card section career-card" aria-labelledby="career-totals-title">
+      <div class="card-head">
+        <div><span class="eyebrow">WNBA career</span><h2 class="card-title" id="career-totals-title">Career totals</h2></div>
+        <span class="note">${career.firstSeason && career.lastSeason ? `${career.firstSeason}–${career.lastSeason}` : 'regular season'}${career.seasons ? ` · ${career.seasons} season${career.seasons === 1 ? '' : 's'}` : ''}</span>
+      </div>
+      <div class="card-body">
+        <div class="tiles career-tiles">
+          ${[
+            ['Games', career.games],
+            ['Starts', career.starts],
+            ['Points', career.points],
+            ['Rebounds', career.rebounds],
+            ['Assists', career.assists],
+            ['Steals', career.steals],
+            ['Blocks', career.blocks],
+            ['Minutes', career.minutes],
+          ].filter(([, value]) => value !== null).map(([label, value]) => html`<div class="tile"><small>${label}</small><b>${whole(value)}</b></div>`)}
+        </div>
+        ${careerRates ? html`<p class="career-rate-line"><b>Career per game</b><span>${careerRates}</span></p>` : ''}
+        <p class="note">Career totals come from the player’s sourced WNBA career-stat record. Current-season form and WinBA remain separate measures above.</p>
+      </div>
+    </section>` : ''}
+
+    <div class="section split">
       <section class="card">
         <div class="card-head"><span class="card-title">Game log · ${season?.name || ''}</span><span class="note">${games.length} games</span></div>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Opp</th><th>Result</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>3PT</th><th>TO</th><th></th></tr></thead><tbody>
