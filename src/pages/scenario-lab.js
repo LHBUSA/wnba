@@ -13,8 +13,7 @@ const pts = (x) => Number.isFinite(x) ? `${x > 0 ? '+' : x < 0 ? '−' : ''}${Ma
 const sumImpact = (rows = []) => rows.reduce((n, r) => n + (Number(r.impact_pts) || 0), 0);
 
 function meta() {
-  const base = routeMeta('pro', { path: FEATURE.href });
-  return { ...base, path: FEATURE.href, url: `https://wnba.propbetedge.ai${FEATURE.href}`, title: 'PBE Scenario Lab: WNBA Game Paths & Counter-Drivers | PropBetEdge', description: 'WNBA Pro Scenario Lab breaks each current PBE call into its base case, supporting drivers, counter-drivers and market disagreement without inventing simulated probabilities.' };
+  return routeMeta('scenario-lab', { path: FEATURE.href });
 }
 
 function sideTeam(item, id) {
