@@ -58,15 +58,16 @@ export function matchupsListView({ res }) {
 }
 
 export async function loadMatchup(api, gameId) {
-  const [res, arts] = await Promise.all([api.matchup(gameId), api.articles({ game: gameId, limit: 6 })]);
-  return { res, arts };
+  const [res, arts, winba] = await Promise.all([api.matchup(gameId), api.articles({ game: gameId, limit: 6 }), api.statsWinba()]);
+  return { res, arts, winba };
 }
 
-export function matchupView({ res, arts }) {
+export function matchupView({ res, arts, winba }) {
   if (!res?.ok) return errorState(res, 'This matchup');
   const d = res.data;
   const g = d.game;
   const [A, H] = d.teams; // away, home
+  const winbaByPlayer = new Map((winba?.ok ? winba.data.rows || [] : []).map((r) => [String(r.athlete_id), r]));
 
   const stat = (t, k) => t.season_stats?.[k] ?? null;
   const cmp = (label, k, { d: dp = 1, higher = true, fmt } = {}) => {
@@ -89,8 +90,11 @@ export function matchupView({ res, arts }) {
       ${t.schedule_context.previous_game ? html`<p class="note" style="margin-top:10px">Previous game: ${fmtDateET(t.schedule_context.previous_game.date, { weekday: 'short', month: 'short', day: 'numeric' })} vs ${t.schedule_context.previous_game.opponent}${t.schedule_context.previous_game.venue?.city ? ` in ${t.schedule_context.previous_game.venue.city}` : ''}. ${t.schedule_context.method}</p>` : ''}
 
       <div style="margin-top:16px"><span class="card-title">Observed rotation · last ${t.rotation.sample} games</span>
-        <div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>Player</th><th>Role</th><th>GS</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>
-          ${t.rotation.rows.filter((r) => r.appearances > 0).slice(0, 11).map((r) => html`<tr><td><a class="pname" href="/players/${r.athlete_id}">${avatar({ name: r.name, photo: r.photo }, { size: 'sm', teamColor: t.team.color })}${r.name}</a></td><td class="l">${r.role}</td><td>${r.starts}/${r.games}</td><td>${num(r.min)}</td><td>${num(r.pts)}</td><td>${num(r.reb)}</td><td>${num(r.ast)}</td></tr>`)}
+        <div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>Player</th><th>Role</th><th>GS</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th title="PropBetEdge WinBA Score">WINBA</th></tr></thead><tbody>
+          ${t.rotation.rows.filter((r) => r.appearances > 0).slice(0, 11).map((r) => {
+            const w = winbaByPlayer.get(String(r.athlete_id));
+            return html`<tr><td><a class="pname" href="/players/${r.athlete_id}">${avatar({ name: r.name, photo: r.photo }, { size: 'sm', teamColor: t.team.color })}${r.name}</a></td><td class="l">${r.role}</td><td>${r.starts}/${r.games}</td><td>${num(r.min)}</td><td>${num(r.pts)}</td><td>${num(r.reb)}</td><td>${num(r.ast)}</td><td>${w ? num(w.score) : '—'}</td></tr>`;
+          })}
         </tbody></table></div>
         <p class="note" style="margin-top:6px">${t.rotation.method}</p>
       </div>
