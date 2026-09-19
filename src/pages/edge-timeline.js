@@ -13,8 +13,7 @@ const pc = (x) => Number.isFinite(x) ? `${(x * 100).toFixed(1)}%` : '—';
 const pts = (x) => Number.isFinite(x) ? `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(1)} pts` : '—';
 
 function meta() {
-  const base = routeMeta('pro', { path: FEATURE.href });
-  return { ...base, path: FEATURE.href, url: `https://wnba.propbetedge.ai${FEATURE.href}`, title: 'PBE Edge Timeline: How WNBA Model Calls Move | PropBetEdge', description: 'WNBA Pro PBE Edge Timeline shows how model probability, market disagreement, confidence and calls changed from first read to lock.' };
+  return routeMeta('edge-timeline', { path: FEATURE.href });
 }
 
 function gameLabel(item) {
