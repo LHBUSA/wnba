@@ -30,8 +30,9 @@ export async function mount(root, ctx) {
     return;
   }
 
-  const [load, injuries, teams] = await Promise.all([api.playerLoad(), api.injuries(), api.teams()]);
+  const [load, injuries, teams, winba] = await Promise.all([api.playerLoad(), api.injuries(), api.teams(), api.statsWinba()]);
   if (!ctx.isCurrent()) return;
+  const winbaByPlayer = new Map((winba?.ok ? winba.data.rows || [] : []).map((r) => [String(r.athlete_id), r]));
   if (!load.ok) return render(root, proUnavailableView(FEATURE, load.error?.message));
 
   const players = load.data?.players || [];
@@ -82,7 +83,7 @@ export async function mount(root, ctx) {
 
       <div class="pi-selector"><label>Team<select data-team><option value="">All teams</option>${rows.map((r) => html`<option value="${r.team.team_id}" ${teamFilter === String(r.team.team_id) ? 'selected' : ''}>${r.team.name || r.team.short_name || r.team.abbr || r.team.team_id}</option>`)}</select></label><div class="pi-selector-links"><a href="/player-load">Player Load →</a><a href="/injuries">Availability →</a></div></div>
 
-      <div class="ri-grid">${shown.map((r) => teamCard(r))}</div>
+      <div class="ri-grid">${shown.map((r) => teamCard(r, winbaByPlayer))}</div>
       <section class="pi-explain"><h2>How to use Rotation Impact</h2><p>Start with teams carrying unavailable players or multiple Elevated+ Player Load scores. Then look at the highest recent baseline-minute players who remain active-like. Those names are workload-coverage candidates, not projected minute gains. Availability is sourced context; Player Load remains a separate deterministic metric.</p></section>
     </section>`);
     root.querySelector('[data-team]')?.addEventListener('change', (e) => { teamFilter = e.target.value; draw(); });
@@ -90,7 +91,7 @@ export async function mount(root, ctx) {
   draw();
 }
 
-function teamCard(r) {
+function teamCard(r, winbaByPlayer) {
   const t = r.team || {};
   const highest = r.players.slice(0, 3);
   const impacted = r.injuries.slice(0, 4);
@@ -98,8 +99,14 @@ function teamCard(r) {
     <header><a href="/teams/${t.team_id}">${teamLogo(t, 42)}<span><b>${t.name || t.short_name || t.abbr || t.team_id}</b><small>Team intelligence →</small></span></a><div><strong>${r.unavailable}</strong><span>unavailable</span><strong>${r.heavy}</strong><span>heavy+</span></div></header>
     <div class="ri-columns">
       <section><h3>Pressure points</h3>${impacted.length ? impacted.map((x) => html`<a class="ri-player" href="${x.athlete_id ? `/players/${x.athlete_id}` : '/injuries'}"><span>${x.name || x.athlete_name || 'Player'}</span><b>${x.status || 'listed'}</b></a>`) : html`<p>No current injury-feed listings for this team.</p>`}</section>
-      <section><h3>Highest Player Load</h3>${highest.length ? highest.map((p) => html`<a class="ri-player" href="/players/${p.athlete_id}"><span>${p.name}</span><b>${p.score} · ${p.band}</b></a>`) : html`<p>No Player Load values are available for this team yet.</p>`}</section>
+      <section><h3>Highest Player Load</h3>${highest.length ? highest.map((p) => {
+        const w = winbaByPlayer.get(String(p.athlete_id));
+        return html`<a class="ri-player" href="/players/${p.athlete_id}"><span>${p.name}</span><b>${p.score} · ${p.band}${w ? ` · WinBA ${w.score}` : ''}</b></a>`;
+      }) : html`<p>No Player Load values are available for this team yet.</p>`}</section>
     </div>
-    <div class="ri-coverage"><h3>Workload coverage candidates</h3><p>Highest recent 10-game baseline minutes among current active-like players.</p><div>${r.coverage.length ? r.coverage.map((p) => html`<a href="/players/${p.athlete_id}"><b>${p.name}</b><span>${p.metrics?.baseline_minutes_last10 ?? '—'} min baseline · Load ${p.score}</span></a>`) : html`<span>No eligible coverage candidates in the current snapshot.</span>`}</div></div>
+    <div class="ri-coverage"><h3>Workload coverage candidates</h3><p>Highest recent 10-game baseline minutes among current active-like players.</p><div>${r.coverage.length ? r.coverage.map((p) => {
+      const w = winbaByPlayer.get(String(p.athlete_id));
+      return html`<a href="/players/${p.athlete_id}"><b>${p.name}</b><span>${p.metrics?.baseline_minutes_last10 ?? '—'} min baseline · Load ${p.score}${w ? ` · WinBA ${w.score}` : ''}</span></a>`;
+    }) : html`<span>No eligible coverage candidates in the current snapshot.</span>`}</div></div>
   </article>`;
 }
