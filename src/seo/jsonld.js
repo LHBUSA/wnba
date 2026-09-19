@@ -5,6 +5,7 @@
 import { SITE, SITE_NAME, NEWSROOM_NAME, PUBLICATION_NAME, IDS, LOGO, LANG, DESKS, TRUST_PAGES, abs } from './site.js';
 import { deskOf, articleShareImage } from './meta.js';
 import { careerMetaLine } from '../lib/player-career.js';
+import { logoEntry } from '../ui/logo.js';
 
 const clean = (o) => {
   if (Array.isArray(o)) { const a = o.map(clean).filter((x) => x !== undefined); return a.length ? a : undefined; }
@@ -66,6 +67,7 @@ const webPage = (meta, type = 'WebPage', extra = {}) => ({
   inLanguage: LANG,
   isPartOf: { '@id': IDS.website },
   breadcrumb: { '@id': `${meta.url}#breadcrumb` },
+  primaryImageOfPage: meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
   ...extra
 });
 
@@ -118,7 +120,10 @@ export function person(d, meta) {
     givenName: p.first_name,
     familyName: p.last_name,
     url,
-    image: d.photo?.portrait ? { '@type': 'ImageObject', url: abs(d.photo.portrait), width: d.photo.width, height: d.photo.height, creditText: d.photo.attribution, license: d.photo.license_url, acquireLicensePage: d.photo.source_page } : undefined,
+    image: [
+      meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
+      d.photo?.portrait ? { '@type': 'ImageObject', url: abs(d.photo.portrait), width: d.photo.width, height: d.photo.height, creditText: d.photo.attribution, license: d.photo.license_url, acquireLicensePage: d.photo.source_page } : undefined
+    ],
     birthDate: p.dob ? String(p.dob).slice(0, 10) : undefined,
     jobTitle: 'Professional basketball player',
     affiliation: p.team ? teamRef({ id: p.team.team_id, name: p.team.name }) : undefined,
@@ -132,12 +137,15 @@ export function person(d, meta) {
 export function sportsTeam(d, meta) {
   const t = d.team;
   const url = `${SITE}/teams/${t.team_id}`;
+  const mark = logoEntry(t);
   return {
     '@type': 'SportsTeam',
     '@id': `${url}#team`,
     name: t.name,
     alternateName: t.short_name && t.short_name !== t.name ? t.short_name : undefined,
     url,
+    image: meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
+    logo: mark?.files?.['320'] ? { '@type': 'ImageObject', url: abs(mark.files['320']), width: 320, height: 320, caption: `${t.name} logo` } : undefined,
     sport: 'Basketball',
     memberOf: LEAGUE,
     coach: d.coach?.[0] ? { '@type': 'Person', name: d.coach[0] } : undefined,
@@ -263,6 +271,7 @@ export function pageGraph(route, meta, data = {}) {
       const roster = (data.competitions || []).flatMap((c) => c.roster || []);
       g.push(webPage(meta, 'WebPage', { mainEntity: { '@id': `${meta.url}#team` } }), {
         '@type': 'SportsTeam', '@id': `${meta.url}#team`, name: `${t.name} women’s national basketball team`, url: meta.url, sport: 'Basketball',
+        image: meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
         memberOf: { '@type': 'SportsOrganization', name: 'FIBA' },
         athlete: [...new Map(roster.map((p) => [p.player_id, p])).values()].map((p) => ({ '@type': 'Person', '@id': `${SITE}/international/players/${String(p.player_id).replace(/^p-/, '')}#person`, name: p.name }))
       });
@@ -278,7 +287,10 @@ export function pageGraph(route, meta, data = {}) {
         nationality: p.team.name ? { '@type': 'Country', name: p.team.name } : undefined,
         memberOf: [{ '@type': 'SportsTeam', '@id': `${SITE}/international/teams/${p.team.slug}#team`, name: `${p.team.name} women’s national basketball team`, url: `${SITE}/international/teams/${p.team.slug}` }, ...(p.wnba?.wnba_team ? [teamRef({ id: p.wnba.wnba_team.team_id, name: p.wnba.wnba_team.name })] : [])],
         sameAs: p.wnba ? [`${SITE}/players/${p.wnba.wnba_player_id}`] : undefined,
-        image: p.wnba?.photo?.portrait ? abs(p.wnba.photo.portrait) : undefined
+        image: [
+          meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
+          p.wnba?.photo?.portrait ? { '@type': 'ImageObject', url: abs(p.wnba.photo.portrait) } : undefined
+        ]
       });
       break;
     }
