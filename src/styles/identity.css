@@ -152,6 +152,8 @@ body::after {
 .art-head .deck { font: 400 clamp(17px, 2vw, 21px)/1.45 var(--f-editorial); color: var(--paper-2); margin-top: 14px; max-width: 60ch; }
 .art-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 18px; font: 500 12px/1.4 var(--f-data); color: var(--faint); }
 .art-body p { font: 400 19px/1.72 var(--f-editorial); color: var(--paper-2); margin: 0 0 1.05em; }
+.art-body .entity-link { color:var(--paper); text-decoration:underline; text-decoration-color:rgba(240,179,35,.45); text-decoration-thickness:1px; text-underline-offset:3px; }
+.art-body .entity-link:hover { color:var(--gold-bright); text-decoration-color:currentColor; }
 .art-body h2 { font: 700 13px/1 var(--f-data); letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin: 1.6em 0 .8em; }
 .bettor-box { border-radius: 16px; padding: 18px 20px; border: 1px solid rgba(185, 156, 255, .28); background: linear-gradient(180deg, rgba(185, 156, 255, .09), rgba(185, 156, 255, .03)); margin: 22px 0; }
 .bettor-box h2 { color: var(--market) !important; margin-top: 0 !important; }
