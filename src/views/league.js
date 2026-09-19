@@ -144,25 +144,21 @@ export const PCOLS = [['avgPoints', 'PPG'], ['avgRebounds', 'RPG'], ['avgAssists
 export const TCOLS = [['avgPoints', 'PTS'], ['opp_avgPoints', 'OPP'], ['possessions_per_game', 'PACE*'], ['fieldGoalPct', 'FG%'], ['threePointFieldGoalPct', '3P%'], ['avgThreePointFieldGoalsAttempted', '3PA'], ['avgRebounds', 'REB'], ['avgAssists', 'AST'], ['avgTurnovers', 'TOV']];
 
 export const statsHead = () => pageHead({ eyebrow: 'Season stats', title: 'Stats' });
-export const loadStats = async (api) => { const [winba, pl, tm, teams] = await Promise.all([api.statsWinba(), api.statsPlayers(), api.statsTeams(), api.teams()]); return { winba, pl, tm, teams }; };
+export const loadStats = async (api) => { const [pl, tm, teams] = await Promise.all([api.statsPlayers(), api.statsTeams(), api.teams()]); return { pl, tm, teams }; };
 
 const th = (cols, active) => cols.map(([k, l]) => html`<th><button type="button" data-sort="${k}" ${k === 'winbaScore' ? html`title="PropBetEdge WinBA Score"` : ''} ${active === k ? html`aria-sort="descending"` : ''}>${l}</button></th>`);
 
-export function statsBody({ winba, pl, tm, teams }, state) {
+export function statsBody({ pl, tm, teams }, state) {
   const tIdx = teamIndex(teams);
   if (state.tab === 'players') {
     if (!pl?.ok) return errorState(pl, 'Player stats');
-    const winbaByPlayer = new Map((winba?.ok ? winba.data.rows || [] : []).map((r) => [String(r.athlete_id), r]));
     const rows = pl.data.rows
-      .map((r) => {
-        const w = winbaByPlayer.get(String(r.athlete_id));
-        return {
-          ...r,
-          winbaScore: w?.score ?? null,
-          winbaRank: w?.rank ?? null,
-          winbaQualified: w?.qualified ?? null,
-        };
-      })
+      .map((r) => ({
+        ...r,
+        winbaScore: r.winba?.score ?? null,
+        winbaRank: r.winba?.rank ?? null,
+        winbaQualified: r.winba?.qualified ?? null,
+      }))
       .sort((a, b) => ((b[state.sort] ?? -1) - (a[state.sort] ?? -1)));
 
     return html`<section class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Player</th>${th(PCOLS, state.sort)}</tr></thead><tbody>
