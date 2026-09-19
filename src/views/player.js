@@ -6,7 +6,7 @@ import { sparkline } from '../ui/charts.js';
 import { teamLogo } from '../ui/logo.js';
 import { articleMini } from '../ui/articles.js';
 import { internationalCareerModule } from './international.js';
-import { careerSummary, careerRateLine } from '../lib/player-career.js';
+import { careerSummary, careerRateLine, careerSeasonRows } from '../lib/player-career.js';
 
 const MARKET_LABEL = { player_points: 'Points', player_rebounds: 'Rebounds', player_assists: 'Assists', player_threes: '3PM' };
 const whole = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : '—';
@@ -28,6 +28,7 @@ export function playerView({ id, res, news, props, arts, intl }) {
   const w = d.winba;
   const career = careerSummary(d.career);
   const careerRates = careerRateLine(d.career);
+  const careerSeasons = careerSeasonRows(d.career);
   const inj = d.availability?.[0];
   const myProps = (props?.ok ? props.data.games || [] : []).flatMap((g) => (g.props || []).filter((x) => x.athlete_id === id).map((x) => ({ ...x, game: g })));
 
@@ -83,6 +84,9 @@ export function playerView({ id, res, news, props, arts, intl }) {
           ].filter(([, value]) => value !== null).map(([label, value]) => html`<div class="tile"><small>${label}</small><b>${whole(value)}</b></div>`)}
         </div>
         ${careerRates ? html`<p class="career-rate-line"><b>Career per game</b><span>${careerRates}</span></p>` : ''}
+        ${careerSeasons.length ? html`<div class="career-season-wrap"><table class="tbl career-season-table"><thead><tr><th>Season</th><th>Team</th><th>GP</th><th>PPG</th><th>RPG</th><th>APG</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>
+          ${careerSeasons.map((cs) => html`<tr><td class="mono">${cs.season}</td><td class="l">${cs.team_id ? html`<a href="/teams/${cs.team_id}">${String(cs.team || 'Team').toUpperCase()}</a>` : (cs.team || '—')}</td><td>${cs.games !== null ? whole(cs.games) : '—'}</td><td class="hi">${cs.ppg !== null ? num(cs.ppg) : '—'}</td><td>${cs.rpg !== null ? num(cs.rpg) : '—'}</td><td>${cs.apg !== null ? num(cs.apg) : '—'}</td><td>${cs.points !== null ? whole(cs.points) : '—'}</td><td>${cs.rebounds !== null ? whole(cs.rebounds) : '—'}</td><td>${cs.assists !== null ? whole(cs.assists) : '—'}</td></tr>`)}
+        </tbody></table></div>` : ''}
         <p class="note">Career totals come from the player’s sourced WNBA career-stat record. Current-season form and WinBA remain separate measures above.</p>
       </div>
     </section>` : ''}
