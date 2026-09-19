@@ -332,7 +332,8 @@ test('share cards state only page facts: no odds, a labelled season line, approv
   assert.equal(article.photoPath, '/media/news/players/4281929/og.jpg');
   assert.equal(article.kicker, 'Injury Desk');
   const pl = await cardModel('players', '4281929', api);
-  assert.equal(pl.detail, '2026 season · 10.5 PTS · 3.0 REB · 1.5 AST · 2 GP');
+  assert.equal(pl.detail, '100 GP · 1,800 PTS · 700 REB · 400 AST');
+  assert.equal(pl.footer, '2026 · 10.5 PPG · 3.0 RPG · 1.5 APG · WinBA 81.2 · wnba.propbetedge.ai');
   const noPhoto = await cardModel('players', '4281929', { ...api, player: async () => ok({ ...player, photo: null }) });
   assert.equal(noPhoto, null, 'no approved photo → no player card (the default share image is used)');
   const mu = await cardModel('matchups', '401857190', api);
