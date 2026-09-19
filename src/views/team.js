@@ -23,7 +23,8 @@ export function teamView({ id, res, arts, wire }) {
   const recent = d.schedule.filter((g) => g.status?.state === 'post').slice(-10).reverse();
   const res10 = recent.map((g) => { const us = g.home?.team_id === id ? g.home : g.away; const them = g.home?.team_id === id ? g.away : g.home; return { g, us, them, w: us?.score > them?.score }; });
   const players = d.roster.map((a) => ({ ...a, team: t }));
-  const rot = (d.rotation?.rows || []).filter((r) => r.appearances > 0);
+  const winbaByPlayer = new Map((d.roster || []).map((p) => [String(p.athlete_id), p.winba || null]));
+  const rot = (d.rotation?.rows || []).filter((r) => r.appearances > 0).map((r) => ({ ...r, winba: winbaByPlayer.get(String(r.athlete_id)) || null }));
   const s = d.season_stats || {};
   const st = d.standing;
 
@@ -59,8 +60,8 @@ export function teamView({ id, res, arts, wire }) {
         </section>` : ''}
         <section class="section">
           <div class="sec-head"><h2 class="sec-title bc">Roster highlights · observed rotation</h2><span class="note">last ${d.rotation?.sample || 0} games</span></div>
-          <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Player</th><th>Role</th><th>GS</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>
-            ${rot.map((r) => html`<tr><td><a class="pname" href="/players/${r.athlete_id}">${avatar({ name: r.name, photo: r.photo }, { size: 'sm', teamColor: t.color })}${r.name}</a></td><td class="l">${r.role}</td><td>${r.starts}/${r.games}</td><td>${num(r.min)}</td><td class="hi">${num(r.pts)}</td><td>${num(r.reb)}</td><td>${num(r.ast)}</td></tr>`)}
+          <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Player</th><th>Role</th><th>GS</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th title="PropBetEdge WinBA Score">WINBA</th></tr></thead><tbody>
+            ${rot.map((r) => html`<tr><td><a class="pname" href="/players/${r.athlete_id}">${avatar({ name: r.name, photo: r.photo }, { size: 'sm', teamColor: t.color })}${r.name}</a></td><td class="l">${r.role}</td><td>${r.starts}/${r.games}</td><td>${num(r.min)}</td><td class="hi">${num(r.pts)}</td><td>${num(r.reb)}</td><td>${num(r.ast)}</td><td>${r.winba ? num(r.winba.score) : '—'}</td></tr>`)}
           </tbody></table></div><div class="card-body"><p class="note">${d.rotation?.method || ''}</p></div></div>
         </section>
         <section class="section">
