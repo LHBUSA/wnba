@@ -11,19 +11,19 @@
     },
     {
       "source": "/history",
-      "destination": "/app-shell.html"
+      "destination": "/history.html"
     },
     {
       "source": "/brief",
-      "destination": "/app-shell.html"
+      "destination": "/brief.html"
     },
     {
       "source": "/player-load",
-      "destination": "/app-shell.html"
+      "destination": "/player-load.html"
     },
     {
       "source": "/edge-timeline",
-      "destination": "/app-shell.html"
+      "destination": "/edge-timeline.html"
     },
     {
       "source": "/rotation-impact",
@@ -31,11 +31,11 @@
     },
     {
       "source": "/scenario-lab",
-      "destination": "/app-shell.html"
+      "destination": "/scenario-lab.html"
     },
     {
       "source": "/watchlist",
-      "destination": "/app-shell.html"
+      "destination": "/watchlist.html"
     },
     {
       "source": "/",
