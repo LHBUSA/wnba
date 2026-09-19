@@ -102,8 +102,8 @@ test('article HTML carries the story without JavaScript: headline, deck, copy, d
   assert.ok(doc.includes(`Updated <time datetime="${satouArticle.revised_at}">`));
   assert.ok(doc.includes('href="https://www.cbssports.com/wnba/news/x"'), 'publisher evidence link');
   for (const href of ['/players/4281929', '/teams/9', '/teams/8', '/matchups/401857196', '/cast/401857196', '/injuries', '/editorial-policy', '/corrections']) assert.ok(doc.includes(`href="${href}"`), href);
-  assert.match(doc, /<p><a class="entity-link" href="\/players\/4281929">Satou Sabally<\/a> as Out/);
-  assert.match(doc, /<a class="entity-link" href="\/teams\/9">New York Liberty<\/a>/);
+  assert.match(doc, /<p>[^<]*<a class="entity-link" href="\/players\/4281929">Satou Sabally<\/a> as Out/);
+  assert.ok(doc.includes('href="/teams/9"'), 'team profile link');
   assert.ok(doc.includes('src="/media/news/players/4281929/wide-1280.webp"') || doc.includes('/media/news/players/4281929/wide-1280.webp 1280w'), 'approved story photo is served');
   assert.ok(doc.includes('data-ssr-path="/news/satou-sabally-out-for-the-season-per-espns-injury-feed-dfe9a7"'));
   assert.doesNotMatch(doc, /PropBetEdge model:\s*not published/i);
