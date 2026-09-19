@@ -1,6 +1,6 @@
 // Trust & publisher pages: /about, /editorial-policy, /corrections, /methodology, plus the static source
 // registry shown on /sources. Static, crawlable, concise. Shared by the SPA and the publishing Worker.
-import { html } from '../lib/dom.js';
+import { html, raw } from '../lib/dom.js';
 import { pageHead, badge } from '../ui/components.js';
 
 const nav = (here) => html`<nav class="pill-row" aria-label="Trust pages" style="margin:4px 0 20px">
@@ -26,7 +26,7 @@ export const SOURCE_REGISTRY = [
 export function sourcesRegistryView() {
   return html`<section class="card" style="margin-bottom:16px">
     <div class="card-head"><span class="card-title">Where the data comes from</span><a class="sec-link" href="/methodology">Methodology →</a></div>
-    <div class="card-body">${SOURCE_REGISTRY.map(([name, body]) => html`<p><b>${name}.</b> ${body}</p>`)}</div>
+    <div class="card-body">${SOURCE_REGISTRY.map(([name, body]) => html`<p><b>${name === 'PropSports.PropTechUSA.ai Market Feed' ? raw('<a href="https://propsports.proptechusa.ai/" target="_blank" rel="noopener noreferrer">PropSports.PropTechUSA.ai Market Feed</a>') : name}.</b> ${body}</p>`)}</div>
   </section>`;
 }
 
