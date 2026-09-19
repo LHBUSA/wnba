@@ -11,8 +11,7 @@ const activeLike = (s) => !severe(s);
 const loadRank = { EXTREME: 5, HEAVY: 4, ELEVATED: 3, NORMAL: 2, LIGHT: 1 };
 
 function meta() {
-  const base = routeMeta('pro', { path: FEATURE.href });
-  return { ...base, path: FEATURE.href, url: `https://wnba.propbetedge.ai${FEATURE.href}`, title: 'WNBA Rotation Impact: Availability, Workload & Opportunity Pressure | PropBetEdge', description: 'WNBA Pro Rotation Impact combines Player Load, sourced availability and recent baseline minutes into a team-by-team rotation pressure desk.' };
+  return routeMeta('rotation-impact', { path: FEATURE.href });
 }
 
 export async function mount(root, ctx) {
