@@ -178,7 +178,15 @@ test('player, team and matchup pages have unique, descriptive metadata and the r
   const mu = await page('/matchups/401857190');
   for (const p of [pl, tm, mu]) assert.equal(p.status, 200);
   assert.match(pl.doc, /<title>Satou Sabally WNBA Career Stats, Game Log, WinBA &amp; News \| PropBetEdge<\/title>/);
+  assert.match(pl.doc, /property="og:type" content="profile"/);
+  assert.match(pl.doc, /property="og:image" content="https:\/\/wnba\.propbetedge\.ai\/og\/players\/4281929\.png"/);
+  assert.match(pl.doc, /property="og:image:type" content="image\/png"/);
+  assert.match(pl.doc, /property="profile:first_name" content="Satou"/);
+  assert.match(pl.doc, /property="profile:last_name" content="Sabally"/);
+  assert.match(pl.doc, /name="twitter:card" content="summary_large_image"/);
   assert.match(tm.doc, /<title>New York Liberty Roster, Player Stats, Schedule, Injuries &amp; News \| PropBetEdge<\/title>/);
+  assert.match(tm.doc, /property="og:image" content="https:\/\/wnba\.propbetedge\.ai\/og\/teams\/9\.png"/);
+  assert.match(tm.doc, /property="og:image:type" content="image\/png"/);
   assert.match(mu.doc, /<title>Connecticut Sun vs Atlanta Dream WNBA Matchup, Injuries &amp; Analysis \| PropBetEdge<\/title>/);
   // Player description uses the year-labelled regular season from the game log, never year-less recent.season.
   assert.match(pl.doc, /2026 regular season: 10\.5 points, 3\.0 rebounds and 1\.5 assists per game in 2 games\./);
@@ -197,6 +205,8 @@ test('player, team and matchup pages have unique, descriptive metadata and the r
   const st = ldOf(tm.doc)['@graph'].find((x) => x['@type'] === 'SportsTeam');
   assert.equal(st.sport, 'Basketball');
   assert.equal(st.athlete[0].url, `${SITE}/players/4281929`);
+  assert.equal(st.image.url, `${SITE}/og/teams/9.png`);
+  assert.match(st.logo.url, /\/media\/teams\/9\/320\.webp$/);
   const ev = ldOf(mu.doc)['@graph'].find((x) => x['@type'] === 'SportsEvent');
   assert.equal(ev.startDate, game.start_utc);
   assert.equal(ev.eventStatus, 'https://schema.org/EventScheduled');
@@ -335,7 +345,14 @@ test('share cards state only page facts: no odds, a labelled season line, approv
   assert.equal(pl.detail, '100 GP · 1,800 PTS · 700 REB · 400 AST');
   assert.equal(pl.footer, '2026 · 10.5 PPG · 3.0 RPG · 1.5 APG · WinBA 81.2 · wnba.propbetedge.ai');
   const noPhoto = await cardModel('players', '4281929', { ...api, player: async () => ok({ ...player, photo: null }) });
-  assert.equal(noPhoto, null, 'no approved photo → no player card (the default share image is used)');
+  assert.equal(noPhoto.title, 'Satou Sabally');
+  assert.equal(noPhoto.photoPath, null, 'no verified player photo is never fabricated');
+  assert.ok(noPhoto.markPath || noPhoto.colors, 'photo-less players still get a unique branded entity card');
+  const tmCard = await cardModel('teams', '9', api);
+  assert.equal(tmCard.title, 'New York Liberty');
+  assert.ok(tmCard.markPath, 'team share card carries the team mark');
+  const pageCard = await cardModel('pages', 'players', api);
+  assert.equal(pageCard.title, 'WNBA Players');
   const mu = await cardModel('matchups', '401857190', api);
   assert.equal(mu.title, 'Sun at Dream');
   const text = JSON.stringify([article, pl, mu]);
