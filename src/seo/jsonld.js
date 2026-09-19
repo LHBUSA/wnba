@@ -4,6 +4,7 @@
 
 import { SITE, SITE_NAME, NEWSROOM_NAME, PUBLICATION_NAME, IDS, LOGO, LANG, DESKS, TRUST_PAGES, abs } from './site.js';
 import { deskOf, articleShareImage } from './meta.js';
+import { careerMetaLine } from '../lib/player-career.js';
 
 const clean = (o) => {
   if (Array.isArray(o)) { const a = o.map(clean).filter((x) => x !== undefined); return a.length ? a : undefined; }
@@ -123,6 +124,7 @@ export function person(d, meta) {
     affiliation: p.team ? teamRef({ id: p.team.team_id, name: p.team.name }) : undefined,
     memberOf: p.team ? teamRef({ id: p.team.team_id, name: p.team.name }) : undefined,
     alumniOf: p.college ? { '@type': 'CollegeOrUniversity', name: p.college } : undefined,
+    description: careerMetaLine(d.career)?.trim() || undefined,
     mainEntityOfPage: { '@id': meta.url }
   };
 }
@@ -182,7 +184,8 @@ export function pageGraph(route, meta, data = {}) {
     case 'article': {
       const a = data.article;
       crumbs.push(['News', '/news'], [DESKS[deskOf(a.kind)] || 'Newsroom', `/news/c/${deskOf(a.kind)}`], [a.headline, meta.path]);
-      g.push(webPage(meta, 'WebPage', { primaryImageOfPage: { '@id': undefined, url: meta.image.url }, datePublished: a.first_published_at, dateModified: a.revised_at || undefined }), newsArticle(a, meta));
+      const refs = (a.entities || []).filter((e) => e?.type === 'player' || e?.type === 'team').map(refOf).filter(Boolean);
+      g.push(webPage(meta, 'WebPage', { primaryImageOfPage: { '@id': undefined, url: meta.image.url }, datePublished: a.first_published_at, dateModified: a.revised_at || undefined, about: refs }), newsArticle(a, meta));
       break;
     }
     case 'news':
@@ -202,7 +205,7 @@ export function pageGraph(route, meta, data = {}) {
     }
     case 'team': {
       crumbs.push(['Teams', '/teams'], [data.team?.name, meta.path]);
-      g.push(webPage(meta, 'WebPage', { mainEntity: { '@id': `${SITE}/teams/${data.team.team_id}#team` } }), sportsTeam(data, meta));
+      g.push(webPage(meta, 'ProfilePage', { mainEntity: { '@id': `${SITE}/teams/${data.team.team_id}#team` } }), sportsTeam(data, meta));
       break;
     }
     case 'matchups': {
