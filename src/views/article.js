@@ -13,6 +13,66 @@ import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
 import { intelligenceOf } from '../lib/intelligence.js';
 import { gameHighlights } from '../ui/video.js';
 
+const entityHref = (e) => e?.type === 'player' ? `/players/${e.id}` : e?.type === 'team' ? `/teams/${e.id}` : null;
+const entityKey = (e) => `${e?.type || ''}:${e?.id || ''}`;
+const boundary = (ch) => !ch || !/[A-Za-z0-9]/.test(ch);
+const nameVariants = (name) => {
+  const n = String(name || '').trim();
+  if (!n) return [];
+  return [...new Set([n, n.replaceAll("'", '’'), n.replaceAll('’', "'")])];
+};
+
+/** Link the first in-body mention of every known player/team entity to its canonical profile. */
+export function linkArticleEntities(text, entities, seen = new Set()) {
+  const src = String(text || '');
+  const lower = src.toLocaleLowerCase('en-US');
+  const matches = [];
+
+  for (const e of entities || []) {
+    const href = entityHref(e);
+    const key = entityKey(e);
+    if (!href || seen.has(key) || !e?.name) continue;
+    let best = null;
+    for (const variant of nameVariants(e.name)) {
+      const needle = variant.toLocaleLowerCase('en-US');
+      let from = 0;
+      while (from < lower.length) {
+        const i = lower.indexOf(needle, from);
+        if (i < 0) break;
+        const end = i + needle.length;
+        if (boundary(src[i - 1]) && boundary(src[end])) {
+          const candidate = { start: i, end, e, href, key };
+          if (!best || candidate.start < best.start) best = candidate;
+          break;
+        }
+        from = i + 1;
+      }
+    }
+    if (best) matches.push(best);
+  }
+
+  matches.sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
+  const chosen = [];
+  let cursor = -1;
+  for (const m of matches) {
+    if (m.start < cursor) continue;
+    chosen.push(m);
+    cursor = m.end;
+  }
+  if (!chosen.length) return html`${src}`;
+
+  const parts = [];
+  let at = 0;
+  for (const m of chosen) {
+    parts.push(src.slice(at, m.start));
+    parts.push(html`<a class="entity-link" href="${m.href}">${src.slice(m.start, m.end)}</a>`);
+    seen.add(m.key);
+    at = m.end;
+  }
+  parts.push(src.slice(at));
+  return html`${parts}`;
+}
+
 export const loadArticle = async (api, slug) => api.article(slug);
 
 // Where a reader goes next from each desk: ordinary crawlable links into the rest of the product.
@@ -95,6 +155,8 @@ export function articleView({ article: a, related = [] }) {
   const photoOf = (p) => (a.media?.subjects || []).find((s) => s.player_id === String(p.id));
   const { published, revised, observed } = storyClock(a);
   const gameLinks = games.length ? games : mw.game_id ? [{ id: mw.game_id, name: ng ? `${ng.away?.abbr || ''} @ ${ng.home?.abbr || ''}` : 'This game', start_utc: ng?.start_utc }] : [];
+  const linkedEntities = [...players, ...teams];
+  const linkedSeen = new Set();
 
   return html`
     <article class="story">
@@ -120,8 +182,8 @@ export function articleView({ article: a, related = [] }) {
       <div class="story-layout">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${p}</p>`)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)
-            : a.body.map((p) => html`<p>${p}</p>`)}${a.sections?.length > 1 ? '' : gameHighlights(a)}
+            ? a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)
+            : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">
           ${players.length ? html`<section><h2 class="aside-title">In this story</h2>
