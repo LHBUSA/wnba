@@ -53,6 +53,7 @@ const DESK_DESCRIPTIONS = {
 
 /** A share-image object for a path on this domain. */
 export const shareImage = (path, alt, { width = 1200, height = 630 } = {}) => ({ url: abs(path), width, height, alt });
+export const pageShareImage = (key, alt) => shareImage(`/og/pages/${key}.png`, alt);
 
 export function articleShareImage(a) {
   if (!a?.slug) return DEFAULT_IMAGE;
@@ -71,18 +72,18 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
   const m = (x) => ({ ...base, ...x, url: `${SITE}${(x.path ?? base.path) === '/' ? '/' : x.path ?? base.path}` });
   switch (route) {
     case 'today':
-      return m({ title: 'PropBetEdge WNBA — WNBA News, Injuries, Odds & Live Game Intelligence', description: 'Independent WNBA intelligence: today’s slate with stored sportsbook lines, WNBACast live games, sourced injuries, standings and an original PropBetEdge WNBA newsroom.' });
+      return m({ title: 'PropBetEdge WNBA — WNBA News, Injuries, Odds & Live Game Intelligence', description: 'Independent WNBA intelligence: today’s slate with stored sportsbook lines, WNBACast live games, sourced injuries, standings and an original PropBetEdge WNBA newsroom.', image: pageShareImage('home', 'PropBetEdge WNBA — live WNBA intelligence') });
     case 'news':
-      return m({ title: `WNBA News Today, Injuries, Transactions & Analysis | ${BRAND}`, description: 'The PropBetEdge WNBA newsroom: original, source-grounded WNBA news briefs, injury and roster-move stories, game previews, recaps and market analysis, updated every 10 minutes.' });
+      return m({ title: `WNBA News Today, Injuries, Transactions & Analysis | ${BRAND}`, description: 'The PropBetEdge WNBA newsroom: original, source-grounded WNBA news briefs, injury and roster-move stories, game previews, recaps and market analysis, updated every 10 minutes.', image: pageShareImage('news', 'PropBetEdge WNBA Newsroom') });
     case 'news-team': {
       const t = data?.team;
       if (!t) return m({ title: `WNBA Team News | ${BRAND}`, robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
-      return m({ title: `${t.name} News: Injuries, Roster Moves & Official Announcements | ${BRAND}`, description: clip(`${t.name} news from the PropBetEdge WNBA newsroom: injury and roster-move stories, the team’s official announcements and beat coverage, attributed and checked against PropBetEdge’s WNBA records.`, 300), robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
+      return m({ title: `${t.name} News: Injuries, Roster Moves & Official Announcements | ${BRAND}`, description: clip(`${t.name} news from the PropBetEdge WNBA newsroom: injury and roster-move stories, the team’s official announcements and beat coverage, attributed and checked against PropBetEdge’s WNBA records.`, 300), image: shareImage(`/og/teams/${t.team_id}.png`, `${t.name} — PropBetEdge WNBA team card`), robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
     }
     case 'news-cat': {
       const k = params.kind;
       if (!DESK_TITLES[k]) return notFound(base.path);
-      return m({ title: `${DESK_TITLES[k]} | ${BRAND}`, description: DESK_DESCRIPTIONS[k], robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
+      return m({ title: `${DESK_TITLES[k]} | ${BRAND}`, description: DESK_DESCRIPTIONS[k], image: pageShareImage(`news-${k}`, `${DESK_TITLES[k]} — PropBetEdge WNBA`), robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
     }
     case 'article': {
       const a = data;
@@ -108,12 +109,13 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       const stats = s ? ` ${s.year} regular season: ${one(s.pts)} points, ${one(s.reb)} rebounds and ${one(s.ast)} assists per game in ${s.games} games.` : '';
       const career = careerMetaLine(data?.career);
       const winba = data?.winba?.score !== null && data?.winba?.score !== undefined ? ` WinBA: ${one(data.winba.score)}.` : '';
-      const img = data.photo ? shareImage(`/og/players/${p.athlete_id}.png`, `${p.name}${p.team ? `, ${p.team.name}` : ''} — PropBetEdge WNBA player card`) : DEFAULT_IMAGE;
+      const img = shareImage(`/og/players/${p.athlete_id}.png`, `${p.name}${p.team ? `, ${p.team.name}` : ''} — PropBetEdge WNBA player card`);
       return m({
         title: `${p.name} WNBA Career Stats, Game Log, WinBA & News | ${BRAND}`,
         description: clip(`${p.name}${p.team ? ` (${p.team.name}${p.position_name ? `, ${p.position_name}` : ''})` : ''}: career totals, season and recent stats, full game log, WinBA, injury status and PropBetEdge WNBA news.${career}${stats}${winba}`, 300),
         image: img,
-        type: 'profile'
+        type: 'profile',
+        profile: { firstName: p.first_name || null, lastName: p.last_name || null, username: String(p.athlete_id) }
       });
     }
     case 'team': {
@@ -128,7 +130,7 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       });
     }
     case 'matchups': {
-      if (!params.gameId) return m({ title: `WNBA Matchups: Upcoming Games, Form & Availability | ${BRAND}`, description: 'Every upcoming WNBA game with a research card: team form, rest, observed rotations, injuries and the stored sportsbook market.' });
+      if (!params.gameId) return m({ title: `WNBA Matchups: Upcoming Games, Form & Availability | ${BRAND}`, description: 'Every upcoming WNBA game with a research card: team form, rest, observed rotations, injuries and the stored sportsbook market.', image: pageShareImage('matchups', 'WNBA matchups — PropBetEdge') });
       const g = data?.game;
       if (!g) return m({ title: `WNBA Matchup | ${BRAND}`, robots: NOINDEX_ROBOTS });
       const when = dayET(g.start_utc);
@@ -140,7 +142,7 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
     }
     case 'cast': {
       const g = data?.game;
-      if (!params.gameId) return m({ title: `WNBACast: Live WNBA Scores & Play-by-Play | ${BRAND}`, description: 'WNBACast follows every WNBA game live: scoreboard, play-by-play, published shot locations and replay of completed games from the persisted event stream.' });
+      if (!params.gameId) return m({ title: `WNBACast: Live WNBA Scores & Play-by-Play | ${BRAND}`, description: 'WNBACast follows every WNBA game live: scoreboard, play-by-play, published shot locations and replay of completed games from the persisted event stream.', image: pageShareImage('cast', 'WNBACast — live WNBA scores and play-by-play') });
       if (!g) return m({ title: `WNBACast | ${BRAND}`, robots: NOINDEX_ROBOTS });
       const final = g.status?.state === 'post';
       return m({
@@ -150,39 +152,39 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       });
     }
     case 'injuries':
-      return m({ title: `WNBA Injuries Today & Player Availability | ${BRAND}`, description: 'Every WNBA player on the injury feed with status, reported detail, source update time and capture time, grouped by team. No invented return dates.' });
+      return m({ title: `WNBA Injuries Today & Player Availability | ${BRAND}`, description: 'Every WNBA player on the injury feed with status, reported detail, source update time and capture time, grouped by team. No invented return dates.', image: pageShareImage('injuries', 'WNBA Injuries Today & Player Availability — PropBetEdge WNBA') });
     case 'props':
-      return m({ title: `WNBA Player Props & Best Sportsbook Lines | ${BRAND}`, description: 'The WNBA best-line board: the best sportsbook price and the no-vig market consensus for every game and captured player prop, with book and capture time.' });
+      return m({ title: `WNBA Player Props & Best Sportsbook Lines | ${BRAND}`, description: 'The WNBA best-line board: the best sportsbook price and the no-vig market consensus for every game and captured player prop, with book and capture time.', image: pageShareImage('props', 'WNBA Player Props & Best Sportsbook Lines — PropBetEdge WNBA') });
     case 'standings':
-      return m({ title: `WNBA Standings & Playoff Race | ${BRAND}`, description: 'Current WNBA standings by conference: seeds, games back, last 10, streaks, home and road records, point differential and clinch marks.' });
+      return m({ title: `WNBA Standings & Playoff Race | ${BRAND}`, description: 'Current WNBA standings by conference: seeds, games back, last 10, streaks, home and road records, point differential and clinch marks.', image: pageShareImage('standings', 'WNBA Standings & Playoff Race — PropBetEdge WNBA') });
     case 'stats':
-      return m({ title: `WNBA Stats Leaders & Team Profiles | ${BRAND}`, description: 'WNBA season stat leaders and team profiles, including estimated pace, straight from current-season source data with the sample shown.' });
+      return m({ title: `WNBA Stats Leaders & Team Profiles | ${BRAND}`, description: 'WNBA season stat leaders and team profiles, including estimated pace, straight from current-season source data with the sample shown.', image: pageShareImage('stats', 'WNBA Stats Leaders & Team Profiles — PropBetEdge WNBA') });
     case 'teams':
-      return m({ title: `WNBA Teams: Records, Rosters & Schedules | ${BRAND}`, description: 'All WNBA teams with current record and seed, linking to each team’s roster, schedule, observed rotation, injuries and news.' });
+      return m({ title: `WNBA Teams: Records, Rosters & Schedules | ${BRAND}`, description: 'All WNBA teams with current record and seed, linking to each team’s roster, schedule, observed rotation, injuries and news.', image: pageShareImage('teams', 'WNBA Teams: Records, Rosters & Schedules — PropBetEdge WNBA') });
     case 'players':
-      return m({ title: `WNBA Players: Rosters, Stats & Profiles | ${BRAND}`, description: 'Every current WNBA roster player with team and position, linking to season stats, game logs, injury status and news. Photos only where license and identity are verified.' });
+      return m({ title: `WNBA Players: Rosters, Stats & Profiles | ${BRAND}`, description: 'Every current WNBA roster player with team and position, linking to season stats, game logs, injury status and news. Photos only where license and identity are verified.', image: pageShareImage('players', 'WNBA Players: Rosters, Stats & Profiles — PropBetEdge WNBA') });
     case 'pbe-picks':
-      return m({ title: `PBE Picks: WNBA Model Win Probabilities & PBE Edge | ${BRAND}`, description: 'PBE WNBA model calls: an independent win probability for every covered game, the de-vigged sportsbook consensus beside it, PBE Edge, confidence and the model reasoning. Locked 15 minutes before tip.' });
+      return m({ title: `PBE Picks: WNBA Model Win Probabilities & PBE Edge | ${BRAND}`, description: 'PBE WNBA model calls: an independent win probability for every covered game, the de-vigged sportsbook consensus beside it, PBE Edge, confidence and the model reasoning. Locked 15 minutes before tip.', image: pageShareImage('pbe-picks', 'PBE Picks: WNBA Model Win Probabilities & PBE Edge — PropBetEdge WNBA') });
     case 'pbe-model':
-      return m({ title: `How the PBE WNBA Model Works | ${BRAND}`, description: 'How PBE WNBA model v1 turns pregame team data into a win probability: features, walk-forward validation, calibration, the market benchmark, lock policy and known limits.' });
+      return m({ title: `How the PBE WNBA Model Works | ${BRAND}`, description: 'How PBE WNBA model v1 turns pregame team data into a win probability: features, walk-forward validation, calibration, the market benchmark, lock policy and known limits.', image: pageShareImage('pbe-model', 'How the PBE WNBA Model Works — PropBetEdge WNBA') });
     case 'track-record':
-      return m({ title: `PBE WNBA Live Track Record | ${BRAND}`, description: 'Every official PBE WNBA locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.' });
+      return m({ title: `PBE WNBA Live Track Record | ${BRAND}`, description: 'Every official PBE WNBA locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.', image: pageShareImage('track-record', 'PBE WNBA Live Track Record — PropBetEdge WNBA') });
     case 'pro':
-      return m({ title: `PropBetEdge WNBA Pro | ${BRAND}`, description: 'PropBetEdge WNBA Pro membership: the full WNBA research desk. $9.99 a month or $3.99 a week, cancel anytime.' });
+      return m({ title: `PropBetEdge WNBA Pro | ${BRAND}`, description: 'PropBetEdge WNBA Pro membership: the full WNBA research desk. $9.99 a month or $3.99 a week, cancel anytime.', image: pageShareImage('pro', 'PropBetEdge WNBA Pro — PropBetEdge WNBA') });
     case 'sources':
-      return m({ title: `WNBA Data Sources & Live Source Status | ${BRAND}`, description: 'The sources behind PropBetEdge WNBA — ESPN public data, The Odds API, the source wire and Wikimedia Commons — with live source status and freshness.' });
+      return m({ title: `WNBA Data Sources & Live Source Status | ${BRAND}`, description: 'The sources behind PropBetEdge WNBA — ESPN public data, The Odds API, the source wire and Wikimedia Commons — with live source status and freshness.', image: pageShareImage('sources', 'WNBA Data Sources & Live Source Status — PropBetEdge WNBA') });
     case 'about':
-      return m({ title: `About the PropBetEdge WNBA Newsroom | ${BRAND}`, description: 'Who publishes PropBetEdge WNBA, how the automated newsroom works, and how it keeps publisher reporting, structured records and market data separate.' });
+      return m({ title: `About the PropBetEdge WNBA Newsroom | ${BRAND}`, description: 'Who publishes PropBetEdge WNBA, how the automated newsroom works, and how it keeps publisher reporting, structured records and market data separate.', image: pageShareImage('about', 'About the PropBetEdge WNBA Newsroom — PropBetEdge WNBA') });
     case 'editorial-policy':
-      return m({ title: `Editorial Policy | ${BRAND} WNBA`, description: 'The PropBetEdge WNBA editorial policy: deterministic generation from cited records, the publication gate, source attribution, headlines, images and what is never published.' });
+      return m({ title: `Editorial Policy | ${BRAND} WNBA`, description: 'The PropBetEdge WNBA editorial policy: deterministic generation from cited records, the publication gate, source attribution, headlines, images and what is never published.', image: pageShareImage('editorial-policy', 'Editorial Policy — PropBetEdge WNBA') });
     case 'corrections':
-      return m({ title: `Corrections & Revisions Policy | ${BRAND} WNBA`, description: 'How PropBetEdge WNBA corrects and revises stories: original publication time is immutable, revisions carry an Updated time, and a new material event is a new story.' });
+      return m({ title: `Corrections & Revisions Policy | ${BRAND} WNBA`, description: 'How PropBetEdge WNBA corrects and revises stories: original publication time is immutable, revisions carry an Updated time, and a new material event is a new story.', image: pageShareImage('corrections', 'Corrections & Revisions Policy — PropBetEdge WNBA') });
     case 'methodology':
-      return m({ title: `Methodology: How PropBetEdge WNBA Builds Its Data | ${BRAND}`, description: 'How PropBetEdge WNBA computes rotations, form, rest, pace, market snapshots and no-vig consensus, and how the newsroom decides what is a new story.' });
+      return m({ title: `Methodology: How PropBetEdge WNBA Builds Its Data | ${BRAND}`, description: 'How PropBetEdge WNBA computes rotations, form, rest, pace, market snapshots and no-vig consensus, and how the newsroom decides what is a new story.', image: pageShareImage('methodology', 'Methodology: How PropBetEdge WNBA Builds Its Data — PropBetEdge WNBA') });
     case 'story':
       return m({ title: `PropBetEdge WNBA Desk Note | ${BRAND}`, robots: NOINDEX_ROBOTS });
     case 'international':
-      return m({ title: `International Women’s Basketball: World Cup, Olympics & FIBA | ${BRAND}`, description: 'National-team women’s basketball — FIBA World Cup, Olympics, qualifiers and continental championships — with live scores, box scores, standings and links to the WNBA players involved.' });
+      return m({ title: `International Women’s Basketball: World Cup, Olympics & FIBA | ${BRAND}`, description: 'National-team women’s basketball — FIBA World Cup, Olympics, qualifiers and continental championships — with live scores, box scores, standings and links to the WNBA players involved.', image: pageShareImage('international', 'International Women’s Basketball: World Cup, Olympics & FIBA — PropBetEdge WNBA') });
     case 'intl-competition': {
       const c = data?.competition;
       if (!c) return m({ title: `International Competition | ${BRAND}`, robots: NOINDEX_ROBOTS });
@@ -195,6 +197,7 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
         // Registry-only competitions have no data yet: the title must not promise scores or stats.
         title: c.coverage === 'full' ? `${c.name} ${SUFFIX[sec] || SUFFIX['']} | ${BRAND}` : `${c.name} | ${BRAND}`,
         description: clip(`${c.name}${c.host ? `, ${c.host.city}` : ''}, ${when}: ${n ? `${n.games} games, ${n.teams} teams, ${n.wnba_mapped} WNBA players. ` : ''}Live scores, box scores, bracket, group standings, tournament leaders and the WNBA players at the tournament.`, 300),
+        image: shareImage(`/og/intl-comps/${c.slug}--${sec || 'overview'}.png`, `${c.name}${sec ? ` — ${SUFFIX[sec] || sec}` : ''} — PropBetEdge`),
         robots: c.coverage === 'full' ? INDEX_ROBOTS : NOINDEX_ROBOTS
       });
     }
@@ -219,7 +222,8 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({
         path: `/international/teams/${t.slug}`,
         title: `${noun}: Roster, Schedule & Results | ${BRAND}`,
-        description: clip(`${noun}${c0 ? ` at the ${c0.competition.name}: ${c0.record.wins}-${c0.record.losses}, ${one(c0.averages.pts)} points per game` : ''}. Roster and player stats, results, box scores${data.wnba_players?.length ? ` and ${data.wnba_players.length} WNBA players` : ''}.`, 300)
+        description: clip(`${noun}${c0 ? ` at the ${c0.competition.name}: ${c0.record.wins}-${c0.record.losses}, ${one(c0.averages.pts)} points per game` : ''}. Roster and player stats, results, box scores${data.wnba_players?.length ? ` and ${data.wnba_players.length} WNBA players` : ''}.`, 300),
+        image: shareImage(`/og/intl-teams/${t.slug}.png`, `${noun} — PropBetEdge international team card`)
       });
     }
     case 'intl-player': {
@@ -233,7 +237,9 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
         path: `/international/players/${pid}-${slug}`,
         title: p.wnba ? `${p.name} International Basketball Stats & WNBA Profile | ${BRAND}` : `${p.name} (${p.team.name}) International Stats & Game Log | ${BRAND}`,
         description: clip(`${p.name}, ${p.team.name}${c0 ? ` at the ${c0.competition.name}: ${one(c0.averages.pts)} points, ${one(c0.averages.reb)} rebounds and ${one(c0.averages.ast)} assists per game in ${c0.games} games` : ''}.${p.wnba ? ` WNBA: ${p.wnba.wnba_team?.name || 'profile'}.` : ''} Game log, highs and box scores.`, 300),
+        image: shareImage(`/og/intl-players/${pid}.png`, `${p.name}, ${p.team.name} — PropBetEdge international player card`),
         type: 'profile',
+        profile: { firstName: p.name?.split(' ')?.[0] || null, lastName: p.name?.split(' ')?.slice(1).join(' ') || null, username: pid },
         // A single appearance with no WNBA connection is too thin to index.
         robots: games >= 2 || p.wnba ? INDEX_ROBOTS : NOINDEX_ROBOTS
       });
