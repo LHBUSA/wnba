@@ -12,7 +12,7 @@ import { DESKS } from '../../../src/seo/site.js';
 import { etCompact, addDays } from '../../shared/time.js';
 
 export const SERVICE = 'wnba-web';
-export const VERSION = '1.0.1';
+export const VERSION = '1.1.0';
 const SITE = 'https://wnba.propbetedge.ai';
 
 const SECURITY_HEADERS = {
@@ -111,7 +111,7 @@ async function feeds(env, url) {
 }
 
 async function og(request, env, url, ctx) {
-  const m = url.pathname.match(/^\/og\/(news|players|teams|matchups|intl-games)\/([a-z0-9-]{1,140})\.png$/);
+  const m = url.pathname.match(/^\/og\/(news|players|teams|matchups|pages|intl-games|intl-comps|intl-teams|intl-players)\/([a-z0-9-]{1,180})\.png$/);
   if (!m) return respond('not found', 404, { 'content-type': 'text/plain' });
   const cache = caches.default;
   const cacheKey = new Request(`https://wnba-web.internal${url.pathname}${url.search}`);
