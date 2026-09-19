@@ -13,8 +13,7 @@ const severe = (s) => /out|doubtful|suspended|inactive/i.test(String(s || ''));
 const edge = (x) => Number.isFinite(x) ? `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(1)} pts` : '—';
 
 function meta() {
-  const base = routeMeta('pro', { path: FEATURE.href });
-  return { ...base, path: FEATURE.href, url: `https://wnba.propbetedge.ai${FEATURE.href}`, title: 'WNBA Pro Watchlist & Live Alerts | PropBetEdge', description: 'Save WNBA teams and surface current PBE, Player Load and sourced availability signals in one WNBA Pro live alert board.' };
+  return routeMeta('watchlist', { path: FEATURE.href });
 }
 
 export async function mount(root, ctx) {
