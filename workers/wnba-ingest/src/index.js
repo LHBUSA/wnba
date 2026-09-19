@@ -35,12 +35,15 @@ export default {
     const d = new Date(event.scheduledTime);
     const minute = d.getUTCMinutes();
     const tasks = ['live', 'pbe'];
-    if (minute % 10 === 0) tasks.push('availability', 'backfill', 'winba');
+    if (minute % 10 === 0) tasks.push('availability', 'backfill');
     // Lock-policy evidence: while a covered game tips within 75 minutes, read the injury feed every 2 minutes.
     else if (minute % 2 === 0 && env.WNBA_KV && Date.parse((await env.WNBA_KV.get('pbe:v1:near_tip_until')) || 0) > Date.now()) tasks.push('availability');
     if (minute % 30 === 5) tasks.push('schedule');
     if (minute === 15) tasks.push('reference');
     if (minute <= 1 && ODDS_HOURS_ET.includes(etHour(d))) tasks.push('odds');
+    // Cheap every-minute signature check; the expensive WinBA rebuild still runs
+    // only when a newly archived final changes archive:v1:index.
+    tasks.push('winba');
     ctx.waitUntil(runTasks(env, ctx, tasks, 'cron'));
   },
 
