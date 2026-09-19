@@ -23,7 +23,7 @@ No Vercel Functions (`api/` is forbidden by `scripts/guard-truth.mjs`). No GitHu
 | `wnba-ingest` | Cron `* * * * *` + `POST /run/<task>` (bearer) | `WNBA_KV`, secrets `ODDS_API_KEY`, `ADMIN_TOKEN`, optional `SUPABASE_*` | `workers/wnba-ingest` |
 | `wnba-news` | Cron `*/10 * * * *` + `POST /run` (bearer) | `NEWS_KV` (= `WNBA_NEWS_KV`), service `API`→`wnba-api`, secret `ADMIN_TOKEN`, optional `SUPABASE_*` | `workers/wnba-news` |
 
-Deploy only from a pushed `main` commit: `cd workers/<name> && npx wrangler deploy`. Admin token: `C:\projects\wnba\.admin-token` (gitignored, never printed).
+Deploy Cloudflare Workers only from a pushed `main` commit with local Wrangler. GitHub Actions must not deploy or schedule Cloudflare Workers in this repo. Standard path: `cd workers/<name> && npx wrangler deploy`. For `wnba-ingest`, use `pwsh -NoProfile -File scripts/deploy-wnba-ingest.ps1` so the PBE tests, Wrangler deploy, and production canary run as one fail-closed release. Admin token: `C:\projects\wnba\.admin-token` (gitignored, never printed).
 
 ### `wnba-api` routes (all `GET`, envelope `{ ok, data, meta }`)
 
