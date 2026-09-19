@@ -177,6 +177,11 @@ export function articleView({ article: a, related = [] }) {
           ${revised ? html`<span>Updated <time datetime="${revised}">${fmtDateTimeET(revised)}</time></span>` : ''}
           ${observed ? html`<span>Source data as of ${fmtDateTimeET(observed)}</span>` : ''}
         </div>
+        ${players.length || teams.length ? html`<nav class="story-entity-rail" aria-label="Players and teams in this story">
+          <span>In this story</span>
+          ${players.map((p) => html`<a href="/players/${p.id}">${p.name}</a>`)}
+          ${teams.map((t) => html`<a href="/teams/${t.id}">${t.name}</a>`)}
+        </nav>` : ''}
       </header>
 
       <div class="story-layout">
