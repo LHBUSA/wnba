@@ -7,6 +7,7 @@ import { bindingApi } from './api.js';
 import { composeDocument } from './render.js';
 import { intlHomeView } from '../../../src/views/international.js';
 import { playerLoadPublicView } from '../../../src/views/player-load.js';
+import { historyView } from '../../../src/views/history.js';
 import { pbePicksPublicView } from '../../../src/views/pbe-picks-public.js';
 import { dailyBriefView } from '../../../src/views/daily-brief.js';
 import { proFeaturePublicView } from '../../../src/views/pro-intelligence.js';
@@ -68,9 +69,8 @@ async function pbePicksLanding(request) {
 }
 
 async function playerLoadLanding(request) {
-  const seed = routeMeta('pro', { path: '/player-load' });
-  const meta = { ...seed, path: '/player-load', url: `${SITE}/player-load`, title: 'WNBA Player Load Intelligence: Workload, Rest & Rotation Pressure | PropBetEdge', description: 'WNBA Pro Player Load Intelligence: a 0–100 workload and schedule-pressure index built from recent minutes, game density, turnaround, overtime and rotation context.' };
-  const page = { status: 200, route: 'player-load', meta, main: String(playerLoadPublicView()), graph: null };
+  const meta = routeMeta('player-load', { path: '/player-load' });
+  const page = { status: 200, route: 'player-load', meta, main: String(playerLoadPublicView()), graph: pageGraph('player-load', meta, {}) };
   const shell = await loadShell(publicHost(request));
   return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 player-load-public' });
 }
@@ -78,19 +78,24 @@ async function playerLoadLanding(request) {
 async function dailyBriefLanding(request, env) {
   const api = bindingApi(env, { timeoutMs: 12000 });
   const [today, coverage, track, injuries, teams] = await Promise.all([api.today(), api.pbeCoverage(), api.trackRecord(), api.injuries(), api.teams()]);
-  const seed = routeMeta('pro', { path: '/brief' });
-  const meta = { ...seed, path: '/brief', url: `${SITE}/brief`, title: 'Free WNBA Daily Brief: Slate, PBE Coverage & Availability | PropBetEdge', description: 'A free WNBA intelligence brief with the current slate, PBE coverage window, sourced availability movement and the public PBE track record.' };
-  const page = { status: 200, route: 'daily-brief', meta, main: String(dailyBriefView({ today, coverage, track, injuries, teams, generatedAt: new Date().toISOString() })), graph: null };
+  const meta = routeMeta('daily-brief', { path: '/brief' });
+  const page = { status: 200, route: 'daily-brief', meta, main: String(dailyBriefView({ today, coverage, track, injuries, teams, generatedAt: new Date().toISOString() })), graph: pageGraph('daily-brief', meta, {}) };
   const shell = await loadShell(publicHost(request));
   return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.0.0 daily-brief' });
 }
 
 async function premiumLanding(request, feature) {
-  const seed = routeMeta('pro', { path: feature.href });
-  const meta = { ...seed, path: feature.href, url: `${SITE}${feature.href}`, title: `${feature.name} | WNBA Pro | PropBetEdge`, description: feature.short };
-  const page = { status: 200, route: feature.routeId, meta, main: String(proFeaturePublicView(feature)), graph: null };
+  const meta = routeMeta(feature.routeId, { path: feature.href });
+  const page = { status: 200, route: feature.routeId, meta, main: String(proFeaturePublicView(feature)), graph: pageGraph(feature.routeId, meta, {}) };
   const shell = await loadShell(publicHost(request));
   return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': `wnba-web/1.0.0 ${feature.routeId}-public` });
+}
+
+async function historyLanding(request) {
+  const meta = routeMeta('history', { path: '/history' });
+  const page = { status: 200, route: 'history', meta, main: String(historyView()), graph: pageGraph('history', meta, {}) };
+  const shell = await loadShell(publicHost(request));
+  return respond(composeDocument(shell, page), 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': HTML_CACHE, 'x-pbe-render': 'wnba-web/1.1.0 history' });
 }
 
 async function historicalCompetition(request, slug, section) {
@@ -119,6 +124,9 @@ async function sitemapWithArchives(request, env, ctx) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/history') {
+      try { return await historyLanding(request); } catch (e) { console.error('history landing failed', e?.stack || e); }
+    }
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/pbe-picks') {
       try { return await pbePicksLanding(request); } catch (e) { console.error('pbe picks landing failed', e?.stack || e); }
     }
