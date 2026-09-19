@@ -52,31 +52,14 @@ export function playerView({ id, res, news, props, arts, intl }) {
         ${inj?.short_comment ? html`<blockquote class="callout" style="margin:12px 0 0">${inj.short_comment}<div class="note" style="margin-top:6px">ESPN injury note${inj.source_return_date ? ` · ESPN lists an expected return of ${fmtDateET(inj.source_return_date + 'T16:00:00Z', { month: 'short', day: 'numeric' })} (source-reported, not a PropBetEdge estimate)` : ''}</div></blockquote>` : ''}
         <div class="tiles" style="margin-top:18px">
           ${[['Season', r?.season], ['Last 10', r?.last10], ['Last 5', r?.last5]].map(([lbl, w]) => html`<div class="tile"><small>${lbl}${w ? ` · ${w.games} g` : ''}</small><b>${w ? num(w.pts) : '—'}</b><span>${w ? `${num(w.reb)} reb · ${num(w.ast)} ast · ${num(w.min)} min` : 'no games'}</span></div>`)}
+          ${w ? html`<div class="tile"><small>WinBA</small><b>${num(w.score)}</b><span>${w.qualified ? `#${w.rank || '—'} league rank` : 'provisional'} · ${w.sample.games} g</span></div>` : ''}
           <div class="tile"><small>Minutes trend</small><b style="height:30px">${raw(sparkline((r?.minutes_trend || []).map((x) => x.min), { width: 110, height: 30 }))}</b><span>last ${r?.minutes_trend?.length || 0} games</span></div>
         </div>
         <p class="note" style="margin-top:8px">${r?.method || ''}</p>
       </div>
     </section>
 
-    ${w ? html`<section class="winba-player-card section">
-      <div class="winba-player-score">
-        <span class="eyebrow">PropBetEdge original metric</span>
-        <div><strong>${num(w.score)}</strong><span>WINBA</span></div>
-        <small>${w.qualified ? `#${w.rank} qualified league rank` : 'Provisional · sample below qualification'} · ${w.sample.games} appearances · ${w.sample.wins}-${w.sample.losses}</small>
-      </div>
-      <div class="winba-player-components">
-        <div><small>Production</small><b>${num(w.components.production_percentile)}%</b><span>league percentile · Box Impact/36</span></div>
-        <div><small>Win rate</small><b>${num(w.components.win_rate)}%</b><span>games appeared · wins only</span></div>
-        <div><small>Winning output</small><b>${num(w.components.winning_output_share)}%</b><span>Box Impact produced in wins</span></div>
-        <div><small>Court share</small><b>${num(w.components.court_share)}%</b><span>${num(w.averages.min)} average minutes</span></div>
-      </div>
-      <div class="winba-player-method">
-        <p><b>Why this score:</b> WinBA asks whether this player's production, role and actual game results line up with winning basketball. The score combines 45% production percentile, 25% win rate in appearances, 20% winning-output share and 10% court share. Box Impact = PTS + 1.2×REB + 1.5×AST. It is an index, not a win probability or causal wins-added estimate.</p>
-        <a class="sec-link" href="/stats">Full WinBA leaderboard →</a>
-      </div>
-    </section>` : ''}
-
-    <div class="section split">
+        <div class="section split">
       <section class="card">
         <div class="card-head"><span class="card-title">Game log · ${season?.name || ''}</span><span class="note">${games.length} games</span></div>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Opp</th><th>Result</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>3PT</th><th>TO</th><th></th></tr></thead><tbody>
