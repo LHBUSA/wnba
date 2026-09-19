@@ -57,7 +57,8 @@ jobs:
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "CLOUDFLARE_API_TOKEN is not available to this repository; skipping Worker publish."
+            echo "::error::CLOUDFLARE_API_TOKEN is not available to this repository; refusing to report a successful production deploy."
+            exit 1
           fi
 
       - name: Deploy wnba-ingest
