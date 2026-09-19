@@ -1,0 +1,70 @@
+name: Test and deploy WNBA ingest Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/wnba-ingest/**'
+      - 'workers/shared/**'
+      - 'model/pbe-wnba-model-v1/**'
+      - 'tests/pbe-runner.test.mjs'
+      - 'tests/pbe-runtime.test.mjs'
+      - '.github/workflows/deploy-wnba-ingest.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-wnba-ingest-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run PBE runner and runtime tests
+        run: node --test tests/pbe-runner.test.mjs tests/pbe-runtime.test.mjs
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Cloudflare deploy token
+        id: cloudflare
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "CLOUDFLARE_API_TOKEN is not available to this repository; skipping Worker publish."
+          fi
+
+      - name: Deploy wnba-ingest
+        if: steps.cloudflare.outputs.available == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: fd3a233edadd0a60916413c1199f71ee
+          workingDirectory: workers/wnba-ingest
+          command: deploy
