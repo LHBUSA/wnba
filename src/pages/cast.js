@@ -17,6 +17,7 @@ import { scoringRuns, leadTracker, foulContext, playerProgression, shotChart } f
 import { fmtDateET, fmtTimeET, fmtDateTimeET, relTime, american, num } from '../lib/format.js';
 import { etCompact, addDays } from '../../workers/shared/time.js';
 import { pbpEmphasis } from '../ui/pbp.js';
+import { groupRailGames, patchRailGame, mergeSlate, createRailRefresher, RAIL_REFRESH_MS } from '../lib/cast-rail.js';
 
 export const title = (p) => (p.gameId ? 'WNBACast' : 'WNBACast — live WNBA games & replays');
 export const description = () => 'WNBACast: live WNBA scoreboard, real play-by-play, published shot locations, scoring runs, box scores and full replays of completed games.';
@@ -67,11 +68,8 @@ export async function mount(root, ctx) {
   const today = etCompact();
   const sched = await api.schedule({ from: addDays(today, -21), to: addDays(today, 10) });
   if (!ctx.isCurrent()) return () => {};
-  const games = sched.ok ? sched.data.games : [];
-  const live = games.filter((g) => g.status?.state === 'in');
-  const upcoming = games.filter((g) => g.status?.state === 'pre').sort((a, b) => a.start_utc.localeCompare(b.start_utc));
-  const finals = games.filter((g) => g.status?.state === 'post').sort((a, b) => b.start_utc.localeCompare(a.start_utc));
-  state.rail = { live, upcoming: upcoming.slice(0, 10), finals: finals.slice(0, 24) };
+  state.rail = groupRailGames(sched.ok ? sched.data.games : []);
+  const { live, upcoming, finals } = state.rail;
 
   if (!state.gameId) {
     const pick = live[0] || upcoming.find((g) => etCompact(new Date(g.start_utc)) === today) || finals[0] || upcoming[0];
@@ -93,50 +91,24 @@ export async function mount(root, ctx) {
       <div class="r-row"><span style="display:inline-flex;gap:6px;align-items:center">${teamLogo(g.home, 16)}${g.home?.abbr}</span><span>${g.status?.state === 'pre' ? '' : g.home?.score ?? ''}</span></div>
     </a>`;
   }
-  function setRailGames(games) {
-    const live = games.filter((g) => g.status?.state === 'in');
-    const upcoming = games.filter((g) => g.status?.state === 'pre').sort((a, b) => a.start_utc.localeCompare(b.start_utc));
-    const finals = games.filter((g) => g.status?.state === 'post').sort((a, b) => b.start_utc.localeCompare(a.start_utc));
-    state.rail = { live, upcoming: upcoming.slice(0, 10), finals: finals.slice(0, 24) };
-  }
-
-  const RAIL_GROUPS = ['live', 'upcoming', 'finals'];
-  const phaseRank = (s) => s === 'pre' ? 0 : s === 'in' ? 1 : s === 'post' ? 2 : -1;
-
-  function patchRailGame(game, { allowForwardTransition = false } = {}) {
-    if (!game?.game_id) return;
-    for (const group of RAIL_GROUPS) {
-      const idx = (state.rail[group] || []).findIndex((g) => g.game_id === game.game_id);
-      if (idx < 0) continue;
-      const prev = state.rail[group][idx];
-      const advanced = phaseRank(game.status?.state) > phaseRank(prev.status?.state);
-      if (allowForwardTransition && advanced) {
-        const all = RAIL_GROUPS.flatMap((k) => state.rail[k] || [])
-          .filter((g) => g.game_id !== game.game_id);
-        all.push(game);
-        setRailGames(all);
-        return;
-      }
-      const next = [...state.rail[group]];
-      next[idx] = game;
-      state.rail = { ...state.rail, [group]: next };
-      return;
-    }
-    const all = RAIL_GROUPS.flatMap((k) => state.rail[k] || []);
-    all.push(game);
-    setRailGames(all);
-  }
-
-  let lastRailRefreshAt = Date.now();
+  // Every other card on the rail is fed by /v1/today. The first call fetches
+  // immediately (first selected-game paint); after that it is throttled to 15s.
+  const nextSlate = createRailRefresher({ fetchToday: () => api.today({ fresh: true }) });
   async function refreshRailLive() {
-    if (Date.now() - lastRailRefreshAt < 15000) return;
-    lastRailRefreshAt = Date.now();
-    const r = await api.today({ fresh: true });
-    if (!ctx.isCurrent() || !r.ok) return;
-    const fresh = [...(r.data?.slate?.games || []), ...(r.data?.last_results?.games || [])];
-    if (!fresh.length) return;
-    for (const g of fresh) patchRailGame(g, { allowForwardTransition: true });
+    const fresh = await nextSlate();
+    if (!ctx.isCurrent() || !fresh) return;
+    const own = state.data?.game;
+    state.rail = mergeSlate(state.rail, fresh, { keep: own?.game_id === state.gameId ? own : null });
     renderRail();
+    setPollInterval();
+  }
+
+  // A finished or upcoming selected game must not freeze the rail while other
+  // games are live: keep ticking at the rail cadence until none are.
+  function setPollInterval() {
+    const s = state.data?.game?.status?.state;
+    const othersLive = (state.rail.live || []).some((g) => g.game_id !== state.gameId);
+    poller?.setInterval(s === 'in' ? 8000 : othersLive ? RAIL_REFRESH_MS : s === 'pre' ? 60000 : 0);
   }
 
   function renderRail() {
@@ -203,6 +175,8 @@ export async function mount(root, ctx) {
   // ------------------------------------------------------------ data
   async function load() {
     const requestedGameId = state.gameId;
+    // A loaded final never changes: only the rail needs the tick.
+    if (state.data?.game?.game_id === requestedGameId && state.data.game.status?.state === 'post') return refreshRailLive();
     const since = state.data?.game?.status?.state === 'in' && state.events.length ? state.events.at(-1).seq : undefined;
     const res = await api.live(requestedGameId, since, { fresh: true });
     if (!ctx.isCurrent() || requestedGameId !== state.gameId) return;
@@ -228,11 +202,11 @@ export async function mount(root, ctx) {
       : null;
     state.data = d;
     state.meta = res.meta;
-    patchRailGame(d.game);
+    state.rail = patchRailGame(state.rail, d.game, { allowForwardTransition: true });
     renderRail();
     refreshRailLive();
     const s = d.game.status?.state;
-    poller?.setInterval(s === 'in' ? 8000 : s === 'pre' ? 60000 : 0);
+    setPollInterval();
     if (s === 'post' && state.cursor === null) state.cursor = state.events.length - 1;
     draw();
   }
