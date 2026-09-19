@@ -165,7 +165,7 @@ function sampleTeam(id, team = {}) {
     name: team?.name || team?.display_name || team?.displayName || null,
     short_name: team?.short_name || team?.shortDisplayName || null,
     abbr: team?.abbr || team?.abbreviation || null,
-    logo: team?.logo || team?.logo_url || team?.logos?.[0]?.href || null
+    logo: team?.logo || team?.logo_url || team?.logos?.[0]?.href || (id ? `https://wnba.propbetedge.ai/media/teams/${id}/128.webp` : null)
   };
 }
 
