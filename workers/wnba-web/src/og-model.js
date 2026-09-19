@@ -4,6 +4,7 @@
 import { DESKS } from '../../../src/seo/site.js';
 import { deskOf, regularSeasonLine } from '../../../src/seo/meta.js';
 import { teamColors } from '../../../src/ui/logo.js';
+import { careerSummary } from '../../../src/lib/player-career.js';
 
 const TZ = 'America/New_York';
 const day = (iso) => new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, month: 'short', day: 'numeric', year: 'numeric' });
@@ -49,14 +50,21 @@ export async function cardModel(kind, key, api) {
     if (!res?.ok || !res.data.photo) return null;
     const p = res.data.player;
     const s = regularSeasonLine(res.data);
+    const career = careerSummary(res.data.career);
     const photoPath = `/media/news/players/${p.athlete_id}/og.jpg`;
+    const whole = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : null;
+    const careerDetail = career.available
+      ? [career.games !== null ? `${whole(career.games)} GP` : null, career.points !== null ? `${whole(career.points)} PTS` : null, career.rebounds !== null ? `${whole(career.rebounds)} REB` : null, career.assists !== null ? `${whole(career.assists)} AST` : null].filter(Boolean).join(' · ')
+      : null;
+    const current = s ? `${s.year} · ${one(s.pts)} PPG · ${one(s.reb)} RPG · ${one(s.ast)} APG` : null;
+    const winba = res.data.winba?.score !== null && res.data.winba?.score !== undefined ? `WinBA ${one(res.data.winba.score)}` : null;
     return {
-      kicker: 'Player profile',
+      kicker: 'WNBA player profile',
       title: p.name,
       titleFont: 'display',
       sub: [p.team?.name, p.position_name].filter(Boolean).join(' · ') || null,
-      detail: s ? `${s.year} season · ${one(s.pts)} PTS · ${one(s.reb)} REB · ${one(s.ast)} AST · ${s.games} GP` : null,
-      footer: 'wnba.propbetedge.ai · stats, game log, injuries & news',
+      detail: careerDetail || current,
+      footer: [current, winba, 'wnba.propbetedge.ai'].filter(Boolean).join(' · '),
       photoPath,
       colors: [color(p.team?.color, '#2a241c'), color(p.team?.alt_color, '#3a2f22')],
       fallback: photoPath
