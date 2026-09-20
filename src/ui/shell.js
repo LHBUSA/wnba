@@ -3,7 +3,7 @@ import { NETWORK, CURRENT_SPORT } from './network.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-17.1';
+export const SHELL_REV = '2026-09-20.1';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -14,14 +14,14 @@ export const PRIMARY_NAV = [
   ['cast', '/cast', 'WNBACast'],
   ['props', '/props', 'Props'],
   ['matchups', '/matchups', 'Matchups'],
-  ['injuries', '/injuries', 'Injuries'],
-  ['news', '/news', 'News'],
-  ['international', '/international', 'International']
+  ['news', '/news', 'News']
 ];
 export const SECONDARY_NAV = [
   ['daily-brief', '/brief', 'Daily Brief · FREE'],
+  ['injuries', '/injuries', 'Injuries'],
   ['players', '/players', 'Players'],
   ['player-load', '/player-load', 'Player Load'],
+  ['international', '/international', 'International'],
   ['history', '/history', 'History'],
   ['standings', '/standings', 'Standings'],
   ['stats', '/stats', 'Stats'],
