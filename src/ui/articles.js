@@ -1,6 +1,6 @@
 // Article cards for the in-house WNBA newsroom (hub, home, team, player, game pages).
-// Each card leads with its story media (licensed photo, matchup or team composition) and keeps the
-// photo credit visible. The headline link is stretched over the card so credit links stay real links.
+// Each card leads with its story media (licensed photo, matchup or team composition).
+// Photo attribution stays on the full article page so cards remain editorially clean.
 // Market prices stay on dedicated market surfaces and inside the article's market section; they are
 // intentionally not injected into editorial story cards.
 import { html } from '../lib/dom.js';
@@ -71,7 +71,7 @@ export function articleCard(c, { lead = false, size = null, eager = false, timeL
   // by newsroom ranking, RSS, schema or the article's publication/revision history.
   const visibleTime = timeLabel || sameDayPreviewLabel(c) || relTime(storyTime(c));
   return html`<article class="scard scard--${sz}">
-    ${storyMedia(c.media, { slot, eager })}
+    ${storyMedia(c.media, { slot, eager, credit: false })}
     <div class="scard-body">
       <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${visibleTime}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
       <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
@@ -90,13 +90,6 @@ export function articleList(items, { empty = 'No PropBetEdge articles for this y
   return html`<div class="ngrid">${items.map((c) => articleCard(c, { size }))}</div>`;
 }
 
-function thumbCredit(m) {
-  const s = m?.layout === 'single' ? m.subjects?.[0] : m?.layout === 'matchup' ? m.subjects?.[1] : null;
-  if (!s) return '';
-  const cr = s.credit || {};
-  return html`<span class="srow-credit">${s.name} · Photo: ${cr.source_page ? html`<a href="${cr.source_page}" rel="noopener nofollow" target="_blank">${cr.author || 'Unknown author'}</a>` : cr.author || 'Unknown author'} · ${cr.license} (cropped)</span>`;
-}
-
 /** River row: square thumbnail of the pictured player (else team mark), desk, headline, time. */
 export function articleRow(c) {
   return html`<article class="srow">
@@ -104,7 +97,6 @@ export function articleRow(c) {
     <div class="srow-body">
       <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${relTime(storyTime(c))}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
       <h3 class="srow-h"><a href="/news/${c.slug}">${headlineText(c.headline)}</a></h3>
-      ${thumbCredit(c.media)}
     </div>
   </article>`;
 }
