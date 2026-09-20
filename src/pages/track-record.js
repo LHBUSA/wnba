@@ -10,6 +10,28 @@ export const title = () => 'Track record';
 export const description = () => 'Every official PBE WNBA locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.';
 
 const pc = (x) => (Number.isFinite(x) ? `${(x * 100).toFixed(1)}%` : '—');
+const TRACK_REFRESH_MS = 10_000;
+
+function normalizeTrackData(d) {
+  if (d?.record === undefined && Number.isInteger(d?.picks_recorded)) {
+    d.record = { official_locks: d.picks_recorded, picks: d.picks_recorded, no_calls: 0, graded: d.graded, pending: d.pending, voided: 0, wins: d.wins, losses: d.losses, hit_rate: null, brier: null, calibration: null, calibration_note: 'Calibration is shown from 50 graded picks.', sample_note: null };
+    d.starts = 'The live record starts at 0-0 with the first official locked pick. Backtests are never counted here.';
+  }
+  return d;
+}
+
+function trackSummary(d) {
+  const r = d?.record;
+  if (!r) return html`<div class="pbe-empty">The official ledger is ${d?.ledger_status === 'NOT_CONNECTED' ? 'not connected to this service yet' : 'temporarily unreachable'}. No record is shown rather than a guessed one.</div>`;
+  return html`<div class="tr-tiles">
+      <div class="tile"><small>Official locks</small><b>${r.official_locks}</b><span>${r.picks} picks · ${r.no_calls} no calls</span></div>
+      <div class="tile"><small>Record</small><b>${r.wins}-${r.losses}</b><span>${r.pending} pending${r.voided ? ` · ${r.voided} void` : ''}</span></div>
+      <div class="tile"><small>Hit rate</small><b>${pc(r.hit_rate)}</b><span>n = ${r.graded}</span></div>
+      <div class="tile"><small>Brier</small><b>${Number.isFinite(r.brier) ? r.brier.toFixed(3) : '—'}</b><span>lower is better · coin flip 0.250</span></div>
+    </div>
+    ${r.sample_note ? html`<p class="note" style="margin-top:10px">${r.sample_note}</p>` : ''}
+    ${r.calibration ? html`<section class="card section"><div class="card-head"><span class="card-title">Calibration</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Probability</th><th>Picks</th><th>Avg probability</th><th>Hit rate</th></tr></thead><tbody>${r.calibration.map((b) => html`<tr><td class="l">${pc(b.from)}–${pc(b.to)}</td><td>${b.n}</td><td>${pc(b.mean_probability)}</td><td>${pc(b.hit_rate)}</td></tr>`)}</tbody></table></div></section>` : html`<p class="note" style="margin-top:6px">${r.calibration_note}</p>`}`;
+}
 
 export async function mount(root, ctx) {
   const head = pageHead({ eyebrow: 'PBE Picks', title: 'Live track record', sub: 'Every official locked call, graded from the final score. Wins and losses stay on the board. The backtest lives on How the Model Works and is never counted here.', right: html`<div class="pbe-links"><a class="pill" href="/pbe-picks">PBE Picks</a><a class="pill" href="/pbe-picks/model">How the Model Works</a></div>` });
@@ -17,23 +39,8 @@ export async function mount(root, ctx) {
   const [res, acct] = await Promise.all([api.trackRecord(), api.account()]);
   if (!ctx.isCurrent()) return;
   if (!res.ok) return render(root, html`${head}${errorState(res, 'The track record')}`);
-  const d = res.data;
-  // Legacy wnba-api (before the PBE ledger deploy) answers the documented empty ledger: zero recorded picks.
-  if (d.record === undefined && Number.isInteger(d.picks_recorded)) {
-    d.record = { official_locks: d.picks_recorded, picks: d.picks_recorded, no_calls: 0, graded: d.graded, pending: d.pending, voided: 0, wins: d.wins, losses: d.losses, hit_rate: null, brier: null, calibration: null, calibration_note: 'Calibration is shown from 50 graded picks.', sample_note: null };
-    d.starts = 'The live record starts at 0-0 with the first official locked pick. Backtests are never counted here.';
-  }
+  const d = normalizeTrackData(res.data);
   const r = d.record;
-  const tiles = r
-    ? html`<div class="tr-tiles">
-        <div class="tile"><small>Official locks</small><b>${r.official_locks}</b><span>${r.picks} picks · ${r.no_calls} no calls</span></div>
-        <div class="tile"><small>Record</small><b>${r.wins}-${r.losses}</b><span>${r.pending} pending${r.voided ? ` · ${r.voided} void` : ''}</span></div>
-        <div class="tile"><small>Hit rate</small><b>${pc(r.hit_rate)}</b><span>n = ${r.graded}</span></div>
-        <div class="tile"><small>Brier</small><b>${Number.isFinite(r.brier) ? r.brier.toFixed(3) : '—'}</b><span>lower is better · coin flip 0.250</span></div>
-      </div>
-      ${r.sample_note ? html`<p class="note" style="margin-top:10px">${r.sample_note}</p>` : ''}
-      ${r.calibration ? html`<section class="card section"><div class="card-head"><span class="card-title">Calibration</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Probability</th><th>Picks</th><th>Avg probability</th><th>Hit rate</th></tr></thead><tbody>${r.calibration.map((b) => html`<tr><td class="l">${pc(b.from)}–${pc(b.to)}</td><td>${b.n}</td><td>${pc(b.mean_probability)}</td><td>${pc(b.hit_rate)}</td></tr>`)}</tbody></table></div></section>` : html`<p class="note" style="margin-top:6px">${r.calibration_note}</p>`}`
-    : html`<div class="pbe-empty">The official ledger is ${d.ledger_status === 'NOT_CONNECTED' ? 'not connected to this service yet' : 'temporarily unreachable'}. No record is shown rather than a guessed one.</div>`;
 
   let ledger = html`<section class="pbe-card pbe-teaser"><div class="pbe-head"><span class="pbe-eyebrow">Full call ledger</span><span class="pbe-lock">WNBA Pro</span></div><div class="pbe-teaser-body"><b>Every locked call, game by game</b><span>Original probability · opponent · market comparison · PBE Edge · locked time · result · model version</span></div><a class="btn gold pbe-cta" href="/pro?next=%2Ftrack-record">Unlock WNBA Pro</a></section>`;
   if (acct.ok && acct.data?.state === 'pro') {
@@ -44,15 +51,46 @@ export async function mount(root, ctx) {
   }
 
   render(root, html`${head}
-    <div class="section">${tiles}</div>
+    <div class="section" data-track-summary>${trackSummary(d)}</div>
     ${r && r.official_locks === 0 ? html`<div class="callout section">${d.starts}</div>` : ''}
-    <div class="section">${ledger}</div>
+    <div class="section" data-track-ledger>${ledger}</div>
     <section class="card card-pad section"><span class="eyebrow">Ledger rules</span><ul class="pro-list">
       <li>A call is official only once it is locked, 15 minutes before scheduled tip.</li>
       <li>After the lock, the pick, probability, inputs, reasoning and market comparison can never change. The database rejects edits and deletions.</li>
       <li>Grades come from the final score. A correction is added as a new revision; the original grade stays visible.</li>
       <li>Losing calls are never removed. Backtests are never counted.</li>
     </ul></section>`);
+
+  let refreshing = false;
+  const pro = acct.ok && acct.data?.state === 'pro';
+  const refresh = async () => {
+    if (refreshing || !ctx.isCurrent()) return;
+    refreshing = true;
+    try {
+      const [nextTrack, nextLedger] = await Promise.all([
+        api.trackRecord(),
+        pro ? api.trackRecordLedger() : Promise.resolve(null)
+      ]);
+      if (!ctx.isCurrent()) return;
+      if (nextTrack?.ok) {
+        const next = normalizeTrackData(nextTrack.data);
+        const host = root.querySelector('[data-track-summary]');
+        if (host) render(host, trackSummary(next));
+      }
+      if (pro && nextLedger?.ok) {
+        const host = root.querySelector('[data-track-ledger]');
+        if (host) render(host, nextLedger.data.availability === 'MODEL_IN_VALIDATION'
+          ? html`<p class="note">The per-game ledger fills from the first official lock.</p>`
+          : ledgerTable(nextLedger.data));
+      }
+    } catch (error) {
+      console.warn('[track-record] live refresh failed', error);
+    } finally {
+      refreshing = false;
+    }
+  };
+  const timer = setInterval(refresh, TRACK_REFRESH_MS);
+  return () => clearInterval(timer);
 }
 
 function ledgerTable(data) {
