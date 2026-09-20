@@ -13,7 +13,7 @@ const moreMenu = between(navBlock, 'id="nav-more-menu"', '</div>');
 const drawer = between(doc, 'class="drawer-panel"', '</div>\n    </div>');
 
 test('primary desktop nav keeps only the highest-frequency destinations', () => {
-  assert.deepEqual(PRIMARY_NAV.map(([, , l]) => l), ['Today', 'PBE Picks', 'WNBACast', 'Props', 'Matchups', 'Injuries', 'News', 'International']);
+  assert.deepEqual(PRIMARY_NAV.map(([, , l]) => l), ['Today', 'PBE Picks', 'WNBACast', 'Props', 'Matchups', 'News']);
   const order = [...navBlock.matchAll(/<a href="([^"]+)" data-nav="([^"]+)"/g)].map((m) => m[2]);
   assert.deepEqual(order.slice(0, PRIMARY_NAV.length), PRIMARY_NAV.map(([id]) => id));
   assert.ok(!NAV.some(([id, href]) => id === 'world-cup' || href === '/world-cup'), 'World Cup is not a top-level destination');
@@ -21,7 +21,7 @@ test('primary desktop nav keeps only the highest-frequency destinations', () => 
 });
 
 test('secondary destinations live inside one accessible More disclosure', () => {
-  assert.deepEqual(SECONDARY_NAV.map(([, , l]) => l), ['Daily Brief · FREE', 'Players', 'Player Load', 'History', 'Standings', 'Stats', 'Teams', 'Track Record']);
+  assert.deepEqual(SECONDARY_NAV.map(([, , l]) => l), ['Daily Brief · FREE', 'Injuries', 'Players', 'Player Load', 'International', 'History', 'Standings', 'Stats', 'Teams', 'Track Record']);
   assert.match(navBlock, /<button class="nav-more-btn" type="button" aria-expanded="false" aria-controls="nav-more-menu" data-more>/);
   assert.match(navBlock, /id="nav-more-menu" hidden>/, 'menu starts closed');
   for (const [id, href] of SECONDARY_NAV) assert.ok(moreMenu.includes(`<a href="${href}" data-nav="${id}">`), `${href} in More menu`);
