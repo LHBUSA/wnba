@@ -74,14 +74,10 @@ function intlBoard(v, { slot = 'card', compact = false } = {}) {
  * plus, when `credit` is set, its figcaption.
  */
 export function storyMedia(media, { slot = 'card', eager = false, credit = true, label = '' } = {}) {
-  // Matchup/preview stories are team-first editorial surfaces. Render current
-  // team identity there instead of recycling the same two player photos across
-  // every preview. Player-led stories (injury, performance, transaction, etc.)
-  // keep their approved subject photography.
-  const base = media || { layout: 'team', teams: [], subjects: [] };
-  const m = base.layout === 'matchup'
-    ? { ...base, layout: 'team_matchup', subjects: [], caption: null, og: null, resolved: 'team_composition' }
-    : base;
+  // Respect the newsroom resolver's media decision. Approved matchup photos
+  // are a first-class asset; team marks are the fallback only when the story
+  // cannot resolve one approved subject from each side.
+  const m = media || { layout: 'team', teams: [], subjects: [] };
   let inner;
   let cls = `sm sm--${slot}`;
   if ((m.layout === 'intl_game' || m.layout === 'intl_photo') && m.visual?.teams?.length === 2) {
