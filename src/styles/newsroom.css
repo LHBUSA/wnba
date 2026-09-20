@@ -39,6 +39,27 @@
 .sm-cap { color: var(--dim); }
 .sm--hero .sm-credit { font-size: 11.5px; margin-top: 8px; }
 
+/* Editorial card geometry: every normal card reserves the same credit lane.
+   Photo cards no longer grow taller than team-composition cards just because
+   attribution wraps, so image bottoms, kickers and headlines stay aligned. */
+.ngrid > .scard > .sm,
+.scard--feature > .sm {
+  display: grid;
+  grid-template-rows: auto minmax(32px, auto);
+  align-content: start;
+}
+.ngrid > .scard > .sm .sm-frame,
+.scard--feature > .sm .sm-frame {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+.ngrid > .scard > .sm .sm-credit,
+.scard--feature > .sm .sm-credit {
+  min-height: 32px;
+  margin-top: 6px;
+  align-content: start;
+}
+
 .sm-thumb { display: block; flex: none; border-radius: 10px; object-fit: cover; background: var(--ink-3); }
 .sm-thumb--team { display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tc) 45%, var(--ink-2)), var(--ink-2)); }
 .sm-thumb--team img { width: 62%; height: auto; }
