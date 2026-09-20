@@ -18,9 +18,9 @@
   --paper: #f5f1eb;
   --paper-2: #e3dccf;
   --dim: #b8b2a6;
-  --faint: #8d877c;
-  --meta: #a39d91;             /* small metadata/credits: ~7:1 on --ink vs 5.4:1 for --faint, still below --dim */
-  --subtle: #5a544b;
+  --faint: #9a9489;
+  --meta: #b0aa9f;             /* small metadata/credits: deliberately brighter for dense live-market scanning */
+  --subtle: #655f56;
 
   /* PropBetEdge gold */
   --gold: #d4af37;
