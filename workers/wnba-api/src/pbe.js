@@ -16,6 +16,7 @@
 import ARTIFACT from '../../../model/pbe-wnba-model-v1/artifact.json' with { type: 'json' };
 import MANIFEST from '../../../model/pbe-wnba-model-v1/manifest.json' with { type: 'json' };
 import RECEIPT from '../../../model/pbe-wnba-model-v1/validation_receipt.json' with { type: 'json' };
+import TEAM_LOGOS from '../../../data/team-logos.json' with { type: 'json' };
 import { resolveAccount } from './account.js';
 import { privateJson } from './auth.js';
 import { orientDoc, lockPhase, trackRecordAggregate, LOCK_POLICY, CONTRACT, ELIGIBILITY } from '../../shared/pbe-runtime.js';
@@ -267,19 +268,36 @@ export async function trackRecordPublic({ env }) {
 
 // ------------------------------------------------------------------ public sampler
 
+const TEAM_IDENTITY = new Map((TEAM_LOGOS || []).map((team) => [String(team.team_id), team]));
+
 function sampleTeam(id, team = {}) {
+  const local = TEAM_IDENTITY.get(String(id || '')) || {};
   return {
     team_id: String(id || ''),
-    name: team?.name || team?.display_name || team?.displayName || null,
-    short_name: team?.short_name || team?.shortDisplayName || null,
-    abbr: team?.abbr || team?.abbreviation || null,
+    name: team?.name || team?.display_name || team?.displayName || local.name || null,
+    short_name: team?.short_name || team?.shortDisplayName || local.name || null,
+    abbr: team?.abbr || team?.abbreviation || local.abbr || null,
     logo: team?.logo || team?.logo_url || team?.logos?.[0]?.href || (id ? `https://wnba.propbetedge.ai/media/teams/${id}/128.webp` : null)
   };
 }
 
+function etDay(value) {
+  const d = value instanceof Date ? value : new Date(value);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(d);
+  const get = (type) => parts.find((part) => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
 /**
- * Tiny first-party top-of-funnel contract. It exposes at most two current
- * official game calls after PBE_PUBLISH is live. It never returns reasoning,
+ * Tiny first-party top-of-funnel contract. It exposes the first two official
+ * locked game calls published for the current ET day after PBE_PUBLISH is live.
+ * Those two free identities stay fixed for the day instead of rotating as games tip.
+ * It never returns reasoning,
  * feature vectors, hashes, full market ladders, historical rows or more than
  * two selections. WNBA Pro remains the full board.
  */
@@ -304,11 +322,25 @@ export async function pbeFreeSample({ env }) {
 
   const index = await env.WNBA_KV.get(KV('official', 'index'), 'json');
   const now = Date.now();
-  const official = await officialLockWindow(env, { now, pastHours: 3, withGrades: false });
+  // Pull a wide enough durable window to cover the entire current ET day, then
+  // freeze the public sampler to the first two official locks of that day.
+  // This keeps a morning/early-afternoon free pick visible after tip instead of
+  // silently replacing it with later games and breaking the public record.
+  const official = await officialLockWindow(env, { now, pastHours: 30, withGrades: false });
   const byGame = new Map(official.map((entry) => [String(entry.lock.game_id), entry]));
-  const ids = mergeOfficialGames(index?.games, official)
-    .filter((x) => Date.parse(x.scheduled_tip_utc) > now - 3 * 3600e3)
-    .map((x) => String(x.game_id));
+  const today = etDay(now);
+  const dailyLocked = official
+    .filter((entry) => etDay(entry.lock.scheduled_tip_utc) === today && entry.lock.call === 'PICK' && entry.lock.selected_team_id)
+    .sort((a, b) => (
+      Date.parse(a.lock.locked_at || a.lock.scheduled_tip_utc)
+      - Date.parse(b.lock.locked_at || b.lock.scheduled_tip_utc)
+    ))
+    .slice(0, 2);
+  const ids = dailyLocked.length
+    ? dailyLocked.map((entry) => String(entry.lock.game_id))
+    : mergeOfficialGames(index?.games, official)
+      .filter((x) => Date.parse(x.scheduled_tip_utc) > now - 3 * 3600e3)
+      .map((x) => String(x.game_id));
 
   const picks = [];
   for (const id of ids) {
