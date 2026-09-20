@@ -149,6 +149,18 @@ test('WNBACast interactive court carries real play metadata and an accessible la
     photoMode: false
   });
   assert.doesNotMatch(classicSvg, /<image href=/, 'classic mode never renders player photos');
+
+  const clusteredSvg = courtSvg([
+    { ...made, photo: { square: photoPath } },
+    { ...made, seq: Number(made.seq) + 10000, made: false, photo: { square: photoPath } }
+  ], {
+    home: s.game.home,
+    away: s.game.away,
+    photoMode: true
+  });
+  assert.match(clusteredSvg, /is-clustered/, 'overlapping photo markers are visually deconflicted');
+  assert.match(clusteredSvg, /shot-cluster-tether/, 'clustered photos stay tethered to the exact published coordinate');
+  assert.match(clusteredSvg, /class="shot miss /, 'the exact make\/miss glyph remains at the published point beneath the offset photo');
 });
 
 
