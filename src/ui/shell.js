@@ -31,7 +31,7 @@ export const SECONDARY_NAV = [
 export const NAV = [...PRIMARY_NAV, ...SECONDARY_NAV];
 
 /** Route id → the nav group it lights up (sub-pages highlight their section). */
-export const NAV_GROUP = { 'pbe-model': 'pbe-picks', 'edge-timeline': 'pbe-picks', 'rotation-impact': 'pbe-picks', 'scenario-lab': 'pbe-picks', watchlist: 'pbe-picks', player: 'players', team: 'teams', story: 'news', article: 'news', 'news-cat': 'news', 'news-team': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' };
+export const NAV_GROUP = { 'pbe-model': 'pbe-picks', 'edge-timeline': 'pbe-picks', 'rotation-impact': 'pbe-picks', 'scenario-lab': 'pbe-picks', watchlist: 'pbe-picks', player: 'players', team: 'teams', story: 'news', article: 'news', 'news-archive': 'news', 'news-cat': 'news', 'news-team': 'news', 'intl-game': 'international', 'intl-team': 'international', 'intl-player': 'international', 'intl-competition': 'international', 'world-cup': 'international' };
 
 const ICON = {
   today: '<path d="M4 5h16v15H4zM4 9h16M9 3v4M15 3v4" />',
