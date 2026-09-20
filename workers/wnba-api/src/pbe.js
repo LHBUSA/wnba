@@ -277,6 +277,19 @@ function sampleTeam(id, team = {}) {
   };
 }
 
+function etDateOf(value) {
+  const ms = typeof value === 'number' ? value : Date.parse(value || '');
+  if (!Number.isFinite(ms)) return null;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date(ms));
+  const get = (type) => parts.find((part) => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
 /**
  * Tiny first-party top-of-funnel contract. It exposes at most two current
  * official game calls after PBE_PUBLISH is live. It never returns reasoning,
@@ -304,10 +317,11 @@ export async function pbeFreeSample({ env }) {
 
   const index = await env.WNBA_KV.get(KV('official', 'index'), 'json');
   const now = Date.now();
-  const official = await officialLockWindow(env, { now, pastHours: 3, withGrades: false });
+  const today = etDateOf(now);
+  const official = await officialLockWindow(env, { now, pastHours: 24, withGrades: true });
   const byGame = new Map(official.map((entry) => [String(entry.lock.game_id), entry]));
   const ids = mergeOfficialGames(index?.games, official)
-    .filter((x) => Date.parse(x.scheduled_tip_utc) > now - 3 * 3600e3)
+    .filter((x) => etDateOf(x.scheduled_tip_utc) === today)
     .map((x) => String(x.game_id));
 
   const picks = [];
@@ -341,7 +355,15 @@ export async function pbeFreeSample({ env }) {
       market_captured_at: item.market?.captured_at ?? null,
       market_current: item.market?.current === true,
       locked_at: item.locked_at || null,
-      model_id: item.model?.model_id || null
+      model_id: item.model?.model_id || null,
+      grade: item.grade ? {
+        result: item.grade.result ?? null,
+        revision: item.grade.revision ?? null,
+        home_score: item.grade.home_score ?? null,
+        away_score: item.grade.away_score ?? null,
+        winner_team_id: item.grade.winner_team_id ?? null,
+        graded_at: item.grade.graded_at ?? null
+      } : null
     });
   }
 
