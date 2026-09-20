@@ -23,6 +23,22 @@ const TIP_TIME = new Intl.DateTimeFormat('en-US', {
   timeZoneName: 'short'
 });
 
+const ARCHIVE_DAY = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric'
+});
+const ARCHIVE_MONTH = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  month: 'long',
+  year: 'numeric'
+});
+const articleAt = (c) => Date.parse(c?.first_published_at || c?.published_at || 0) || 0;
+const canonicalArchiveItems = (archive) => (archive?.data?.items || [])
+  .filter((c) => !['duplicate', 'superseded'].includes(c.archive_state))
+  .sort((a, b) => articleAt(b) - articleAt(a));
+
 export async function loadNews(api, kind = null, teamId = null) {
   const isFront = !kind && !teamId;
   const [arts, wire, teams, archive, previews, today] = await Promise.all([
@@ -38,28 +54,31 @@ export async function loadNews(api, kind = null, teamId = null) {
   return { kind, teamId, team, teams: teamList, teamsOk: Boolean(teams?.ok), arts, wire, archive, previews, today };
 }
 
-function archiveRail(archive, currentItems = []) {
+function archiveRail(archive) {
   if (!archive?.ok || !archive.data?.items?.length) return '';
-  const current = new Set((currentItems || []).map((c) => c.id));
-  const historical = archive.data.items
-    .filter((c) => !current.has(c.id))
-    .filter((c) => !['duplicate', 'superseded'].includes(c.archive_state))
-    .slice(0, 10);
+  const canonical = canonicalArchiveItems(archive);
+  const cutoff = Date.now() - 72 * 3600e3;
+  const older = canonical.filter((c) => articleAt(c) > 0 && articleAt(c) < cutoff);
+  const historical = (older.length ? older : canonical).slice(0, 8);
   if (!historical.length) return '';
   return html`<section class="desk section archive-record" aria-label="PropBetEdge WNBA published archive">
     <div class="archive-record-head">
       <div class="archive-record-copy">
         <span class="eyebrow">Published archive</span>
         <h2 class="sec-title bc">From the PropBetEdge record</h2>
-        <p class="desk-sub">Previously published newsroom work stays in the record even after it leaves the current-news rotation. Older coverage remains accessible instead of disappearing.</p>
+        <p class="desk-sub">Older PropBetEdge coverage stays browsable instead of disappearing when the live newsroom moves on.</p>
       </div>
-      <div class="archive-record-count" aria-label="${archive.data.total} published records, ${archive.data.historical} historical">
-        <b>${archive.data.historical}</b>
-        <span>historical</span>
-        <small>${archive.data.total} published</small>
+      <div class="archive-record-count" aria-label="${canonical.length} browsable published stories">
+        <b>${canonical.length}</b>
+        <span>stories</span>
+        <small>in the record</small>
       </div>
     </div>
     <div class="archive-record-grid">${historical.map(articleRow)}</div>
+    <div class="archive-record-foot">
+      <span>Showing older published coverage</span>
+      <a href="/news/archive">Browse the full archive →</a>
+    </div>
   </section>`;
 }
 
@@ -164,6 +183,48 @@ function gameDayRail(data) {
   </section>`;
 }
 
+
+export async function loadArchive(api) {
+  return api.articles({ limit: 500, archive: 1 }).catch(() => ({ ok: false }));
+}
+
+export function archiveView(archive) {
+  if (!archive?.ok) return {
+    error: true,
+    body: html`<header class="masthead"><span class="eyebrow">PropBetEdge · WNBA</span><h1 class="mast-title">News Archive</h1></header><div class="empty err"><h3>Archive temporarily unavailable</h3><p>The publication record could not be read. No partial archive is shown in its place.</p></div>`
+  };
+  const items = canonicalArchiveItems(archive);
+  const groups = [];
+  for (const item of items) {
+    const at = articleAt(item);
+    const key = at ? ARCHIVE_MONTH.format(new Date(at)) : 'Date unavailable';
+    let group = groups[groups.length - 1];
+    if (!group || group.key !== key) {
+      group = { key, items: [] };
+      groups.push(group);
+    }
+    group.items.push(item);
+  }
+  return {
+    error: false,
+    items,
+    body: html`
+      <header class="masthead archive-mast">
+        <div class="mast-row"><span class="eyebrow">Published record</span><a class="sec-link" href="/news">← Current newsroom</a></div>
+        <h1 class="mast-title">WNBA News Archive</h1>
+        <p class="mast-sub">Every canonical PropBetEdge newsroom story remains reachable here after it leaves the live-news rotation. Newest first, with duplicate and superseded URLs collapsed out of the browse view.</p>
+        <div class="archive-summary"><b>${items.length}</b><span>browsable stories</span><small>through ${items[0] ? ARCHIVE_DAY.format(new Date(articleAt(items[0]))) : 'today'}</small></div>
+      </header>
+      <div class="archive-page">
+        ${groups.map((g) => html`<section class="archive-month">
+          <div class="archive-month-head"><h2>${g.key}</h2><span>${g.items.length} stories</span></div>
+          <div class="archive-page-grid">${g.items.map(articleRow)}</div>
+        </section>`)}
+      </div>
+    `
+  };
+}
+
 export function newsView(data) {
   const effective = withDedicatedPreviews(data);
   const view = base.newsView(effective);
@@ -181,7 +242,7 @@ export function newsView(data) {
     }
   }
 
-  const archive = archiveRail(effective.archive, effective.arts?.data?.items || []);
+  const archive = archiveRail(effective.archive);
   if (archive) {
     const trust = '<section class="trust section">';
     body = body.includes(trust)
