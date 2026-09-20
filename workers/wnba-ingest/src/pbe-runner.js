@@ -266,6 +266,116 @@ async function recordCheckpoints(env, games, now, ledger = 'shadow') {
   return recorded;
 }
 
+// ------------------------------------------------------------------ postgame final resolution
+
+function assertFinalIdentity(lock, homeId, awayId, id) {
+  if (String(homeId || '') !== String(lock?.game?.home_team_id || '')
+    || String(awayId || '') !== String(lock?.game?.away_team_id || '')) {
+    throw new Error(`grade_final_identity_mismatch:${id}`);
+  }
+}
+
+function finalFromArchivedGame(archive, lock, id) {
+  const game = archive?.summary?.game;
+  if (!game || String(game.game_id || '') !== String(id)) return null;
+  if (game.status?.name !== 'STATUS_FINAL' || game.status?.completed !== true) return null;
+  if (!game.home || !game.away) return null;
+  assertFinalIdentity(lock, game.home.team_id, game.away.team_id, id);
+  const homeScore = Number(game.home.score);
+  const awayScore = Number(game.away.score);
+  if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) return null;
+  return {
+    status: 'STATUS_FINAL',
+    home_score: homeScore,
+    away_score: awayScore,
+    reference: {
+      provider: 'espn',
+      source: 'live_archive',
+      event_id: String(id),
+      url: `${ESPN.site}/summary?event=${encodeURIComponent(id)}`,
+      captured_at: archive.archived_at || null
+    }
+  };
+}
+
+function finalFromScoreboardEvent(event, lock, id, now) {
+  const c = event?.competitions?.[0];
+  const status = event?.status?.type?.name || c?.status?.type?.name || null;
+  if (status !== 'STATUS_FINAL') return null;
+  const home = c?.competitors?.find((x) => x.homeAway === 'home');
+  const away = c?.competitors?.find((x) => x.homeAway === 'away');
+  if (!home || !away) return null;
+  assertFinalIdentity(lock, home.id, away.id, id);
+  const homeScore = Number(typeof home.score === 'object' ? home.score?.value ?? home.score?.displayValue : home.score);
+  const awayScore = Number(typeof away.score === 'object' ? away.score?.value ?? away.score?.displayValue : away.score);
+  if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) return null;
+  return {
+    status: 'STATUS_FINAL',
+    home_score: homeScore,
+    away_score: awayScore,
+    reference: {
+      provider: 'espn',
+      source: 'season_scoreboard',
+      event_id: String(id),
+      status,
+      url: `${ESPN.site}/scoreboard`,
+      captured_at: new Date(now).toISOString()
+    }
+  };
+}
+
+function finalFromRawSummary(summary, lock, id, now) {
+  const header = summary?.header;
+  const c = header?.competitions?.[0];
+  if (!c || String(header?.id || c?.id || '') !== String(id)) return null;
+  const status = c?.status?.type?.name || null;
+  if (status !== 'STATUS_FINAL' || c?.status?.type?.completed !== true) return null;
+  const home = c?.competitors?.find((x) => x.homeAway === 'home');
+  const away = c?.competitors?.find((x) => x.homeAway === 'away');
+  if (!home || !away) return null;
+  assertFinalIdentity(lock, home.id, away.id, id);
+  const homeScore = Number(typeof home.score === 'object' ? home.score?.value ?? home.score?.displayValue : home.score);
+  const awayScore = Number(typeof away.score === 'object' ? away.score?.value ?? away.score?.displayValue : away.score);
+  if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) return null;
+  return {
+    status: 'STATUS_FINAL',
+    home_score: homeScore,
+    away_score: awayScore,
+    reference: {
+      provider: 'espn',
+      source: 'direct_summary_fallback',
+      event_id: String(id),
+      status,
+      url: `${ESPN.site}/summary?event=${encodeURIComponent(id)}`,
+      captured_at: new Date(now).toISOString()
+    }
+  };
+}
+
+async function resolveLockedFinal(env, { id, lock, events, now, minute, fetchSummary }) {
+  // The live lane runs before PBE every minute and archives a final from the
+  // per-day scoreboard + direct summary. Reuse that exact truth first so the
+  // website, PBE record and downstream Free Picks ledger cannot diverge.
+  const archive = await env.WNBA_KV.get(`game:v1:final:${id}`, 'json');
+  const archived = finalFromArchivedGame(archive, lock, id);
+  if (archived) return archived;
+
+  // Preserve the existing whole-season scoreboard path as a cheap second lane.
+  const event = events.find((x) => String(x.id) === String(id)) || null;
+  const scoreboard = finalFromScoreboardEvent(event, lock, id, now);
+  if (scoreboard) return scoreboard;
+
+  // If both cached lanes miss a completed game, probe the game itself every
+  // five minutes once it is plausibly late enough to be final. This is only a
+  // fallback and never grades a non-final summary.
+  const tip = Date.parse(lock?.game?.scheduled_tip_utc || 0);
+  if (!Number.isFinite(tip) || now < tip + 75 * 60e3 || minute % 5 !== 0) return null;
+  const raw = await (fetchSummary
+    ? fetchSummary(id)
+    : fetchJsonWithTimeout(`${ESPN.site}/summary?event=${encodeURIComponent(id)}`, { timeoutMs: 12000 }));
+  return finalFromRawSummary(raw, lock, id, now);
+}
+
 // ------------------------------------------------------------------ the task
 
 export function modeOf(env) {
@@ -399,23 +509,24 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
     }
   }
 
-  // grading: locked games whose tip is > 2h ago and not graded yet.
-  // The official ledger is authoritative. If the DB write succeeded but the KV mirror did not, the next pass
-  // must read back revision 1 and repair KV instead of retrying forever on the unique constraint.
+  // grading: every official lock follows the same final truth the live site sees.
+  // The live archive is authoritative for freshness; the season scoreboard and a
+  // direct game-summary probe are recovery lanes. A pick grades as soon as a
+  // source says STATUS_FINAL — no arbitrary two-hour delay.
+  //
+  // The official ledger remains authoritative. If the DB write succeeded but the
+  // KV mirror did not, the next pass reads back revision 1 and repairs KV instead
+  // of retrying forever on the unique constraint.
   for (const id of index.locked_history) {
     if (await env.WNBA_KV.get(K(ledger, 'grade', id))) continue;
     try {
       const lock = await env.WNBA_KV.get(K(ledger, 'lock', id), 'json');
-      if (!lock || lock.call !== 'PICK' || now < Date.parse(lock.game.scheduled_tip_utc) + 2 * 3600e3) continue;
-      const e = events.find((x) => String(x.id) === id) || null;
-      const c = e?.competitions?.[0];
-      const status = e?.status?.type?.name || null;
-      const h = c?.competitors?.find((x) => x.homeAway === 'home');
-      const a = c?.competitors?.find((x) => x.homeAway === 'away');
-      if (status !== 'STATUS_FINAL' || !h || !a) continue;
-      const reference = { provider: 'espn', event_id: id, status, url: `${ESPN.site}/scoreboard?dates=${year}`, captured_at: new Date(now).toISOString() };
-      const grade = gradeFromFinal(lock, { status, home_score: Number(h.score), away_score: Number(a.score), reference });
+      const tip = Date.parse(lock?.game?.scheduled_tip_utc || 0);
+      if (!lock || lock.call !== 'PICK' || !Number.isFinite(tip) || now < tip) continue;
+      const final = await resolveLockedFinal(env, { id, lock, events, now, minute, fetchSummary });
+      const grade = gradeFromFinal(lock, final);
       if (!grade) continue;
+      const reference = grade.result_reference;
       let stored = { ...grade, revision: 1, graded_at: new Date(now).toISOString(), ledger };
 
       if (mode === 'armed') {

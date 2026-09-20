@@ -26,7 +26,8 @@ const norm = (x) => String(x || '').toLowerCase();
 export async function mount(root, ctx) {
   const head = pageHead({ eyebrow: 'WNBA Pro · Flagship', title: 'PBE Picks', sub: SUB, right: LINKS });
   render(root, html`${head}${skeleton(420)}`);
-  const [acct, cov, status, track] = await Promise.all([api.account(), api.pbeCoverage(), api.pbeStatus(), api.trackRecord()]);
+  const [acct, cov, status, initialTrack] = await Promise.all([api.account(), api.pbeCoverage(), api.pbeStatus(), api.trackRecord()]);
+  let track = initialTrack;
   if (!ctx.isCurrent()) return;
 
   if (!(acct.ok && acct.data?.state === 'pro')) return render(root, html`${head}${teaserView(cov, acct)}`);
@@ -70,6 +71,24 @@ export async function mount(root, ctx) {
     root.querySelector('[data-team]')?.addEventListener('change', (e) => { state.team = e.target.value; draw(); });
   };
   draw();
+
+  let trackRefreshInFlight = false;
+  const timer = setInterval(async () => {
+    if (trackRefreshInFlight || !ctx.isCurrent()) return;
+    trackRefreshInFlight = true;
+    try {
+      const next = await api.trackRecord();
+      if (ctx.isCurrent() && next?.ok) {
+        track = next;
+        draw();
+      }
+    } catch (error) {
+      console.warn('[pbe-picks] track record refresh failed', error);
+    } finally {
+      trackRefreshInFlight = false;
+    }
+  }, 10_000);
+  return () => clearInterval(timer);
 }
 
 function commandCenter(all, status, track, generatedAt) {

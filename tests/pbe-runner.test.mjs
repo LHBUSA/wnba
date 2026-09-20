@@ -117,6 +117,70 @@ test('grading: after the final, the shadow lock is graded deterministically from
   assert.equal(again.grades, 0, 'never re-graded in place');
 });
 
+test('grading: live archive final grades immediately without waiting two hours', async () => {
+  const { kv, env, eventsFor } = await setup();
+  await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+  await kv.put('game:v1:final:G_LOCK', JSON.stringify({
+    archived_at: new Date(NOW + 110 * 60e3).toISOString(),
+    summary: {
+      game: {
+        game_id: 'G_LOCK',
+        status: { name: 'STATUS_FINAL', completed: true },
+        home: { team_id: '20', score: 88 },
+        away: { team_id: '18', score: 79 }
+      }
+    }
+  }));
+
+  const s = await pbeTask(env, {
+    now: NOW + 110 * 60e3,
+    minute: 50,
+    eventsFor,
+    fetchSummary: noSummaries
+  });
+
+  assert.equal(s.grades, 1, 'archived final grades before the old two-hour gate');
+  const grade = JSON.parse(kv.map.get('pbe:v1:shadow:grade:G_LOCK'));
+  assert.equal(grade.home_score, 88);
+  assert.equal(grade.away_score, 79);
+  assert.equal(grade.result_reference.source, 'live_archive');
+});
+
+test('grading: direct game summary recovers a final missing from the season scoreboard', async () => {
+  const { kv, env, events, eventsFor } = await setup();
+  await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+  events[2026] = events[2026].filter((e) => e.id !== 'G_LATER');
+
+  const fetchSummary = async (id) => {
+    assert.equal(id, 'G_LOCK');
+    return {
+      header: {
+        id: 'G_LOCK',
+        competitions: [{
+          id: 'G_LOCK',
+          status: { type: { name: 'STATUS_FINAL', completed: true } },
+          competitors: [
+            { id: '20', homeAway: 'home', score: '88' },
+            { id: '18', homeAway: 'away', score: '79' }
+          ]
+        }]
+      }
+    };
+  };
+
+  const s = await pbeTask(env, {
+    now: NOW + 110 * 60e3,
+    minute: 50,
+    eventsFor,
+    fetchSummary
+  });
+
+  assert.equal(s.grades, 1, 'direct summary fallback grades a missed season-feed final');
+  const grade = JSON.parse(kv.map.get('pbe:v1:shadow:grade:G_LOCK'));
+  assert.equal(grade.result_reference.source, 'direct_summary_fallback');
+  assert.equal(grade.winner_team_id, '20');
+});
+
 test('eligible finals use the training franchise rule (>= 10 regular-season finals)', () => {
   const ev = [...eventsFromRows(2026), { id: 'ALLSTAR', date: '2026-07-19T00:00:00Z', season: { year: 2026, type: 2 }, status: { type: { name: 'STATUS_FINAL' } }, competitions: [{ competitors: [{ id: '96', homeAway: 'home' }, { id: '97', homeAway: 'away' }] }] }];
   const finals = eligibleFinals(ev, 2026);

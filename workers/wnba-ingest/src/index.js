@@ -24,7 +24,7 @@ import { buildWinbaSnapshot } from '../../shared/winba.js';
 
 const SERVICE = 'wnba-ingest';
 const VERSION = '1.0.4';
-const PBE_RELEASE = 'pbe-lock-grade-recovery-2026-09-19';
+const PBE_RELEASE = 'pbe-live-final-sync-2026-09-20';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
 const PROPS_WINDOW_H = 36;
