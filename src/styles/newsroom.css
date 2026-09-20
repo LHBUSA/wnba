@@ -30,15 +30,25 @@
     opacity: 0;
   }
   .sm-half:has(img[src*="/media/news/players/2529205/"]) {
-    background:
-      url('/media/teams/8/320.webp') center / min(46%, 150px) auto no-repeat,
-      radial-gradient(circle at 50% 42%, color-mix(in srgb, #266092 48%, var(--ink-2)), var(--ink-2));
+    background: radial-gradient(circle at 50% 42%, color-mix(in srgb, #266092 48%, var(--ink-2)), var(--ink-2));
   }
   .sm-half:has(img[src*="/media/news/players/4433403/"]) {
-    background:
-      url('/media/teams/5/320.webp') center / min(46%, 150px) auto no-repeat,
-      radial-gradient(circle at 50% 42%, color-mix(in srgb, #002d62 48%, var(--ink-2)), var(--ink-2));
+    background: radial-gradient(circle at 50% 42%, color-mix(in srgb, #002d62 48%, var(--ink-2)), var(--ink-2));
   }
+  .sm-half:has(img[src*="/media/news/players/2529205/"])::before,
+  .sm-half:has(img[src*="/media/news/players/4433403/"])::before {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    color: rgba(245,241,235,.9);
+    font: 800 clamp(28px,5vw,54px)/1 var(--f-display);
+    letter-spacing: .12em;
+    text-shadow: 0 5px 20px rgba(0,0,0,.45);
+  }
+  .sm-half:has(img[src*="/media/news/players/2529205/"])::before { content: 'MIN'; }
+  .sm-half:has(img[src*="/media/news/players/4433403/"])::before { content: 'IND'; }
   .sm:has(img[src*="/media/news/players/2529205/"]) .sm-credit,
   .sm:has(img[src*="/media/news/players/4433403/"]) .sm-credit {
     display: none;
