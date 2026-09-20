@@ -7,7 +7,7 @@
 // Shared by the SPA page and the wnba-web publishing Worker.
 import { html } from '../lib/dom.js';
 import { errorState, badge, entityChips } from '../ui/components.js';
-import { articleCard, articleRow, KIND_LABEL, DESK } from '../ui/articles.js';
+import { articleCard, articleRow, headlineText, KIND_LABEL, DESK } from '../ui/articles.js';
 import { teamLogo } from '../ui/logo.js';
 import { storyMedia } from '../ui/story-media.js';
 import { VIDEO_ID } from '../ui/video.js';
