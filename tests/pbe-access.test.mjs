@@ -220,6 +220,84 @@ test('a locked call serves the frozen lock, and a tipped game without a lock sho
   assert.doesNotMatch(t.text, /p_home|pick_probability/);
 });
 
+test('official lock stays on the picks board after tip even when the mutable KV index drops the live game', async (t) => {
+  const { env, doc } = await seededEnv({
+    PBE_SUPABASE_URL: 'https://ledger.test',
+    PBE_SUPABASE_SERVICE_ROLE_KEY: 'service-key'
+  });
+
+  const now = Date.now();
+  const tip = new Date(now - 60e3).toISOString();
+  const lockedAt = new Date(now - 16 * 60e3).toISOString();
+  const generatedAt = new Date(now - 17 * 60e3).toISOString();
+  const selectedSide = String(doc.pick_team_id) === String(doc.game.home_team_id) ? 'home' : 'away';
+  const row = {
+    prediction_id: '11111111-1111-4111-8111-111111111111',
+    contract: 'game_winner_v1',
+    game_id: GAME_ID,
+    season: 2026,
+    season_type: 2,
+    scheduled_tip_utc: tip,
+    home_team_id: String(doc.game.home_team_id),
+    away_team_id: String(doc.game.away_team_id),
+    neutral_site: false,
+    call: 'PICK',
+    no_call_reason: null,
+    selected_team_id: String(doc.pick_team_id),
+    selected_side: selectedSide,
+    p_home: doc.p_home,
+    win_probability: doc.pick_probability,
+    confidence: doc.confidence,
+    feature_vector: { order: doc.feature_order, values: doc.feature_vector },
+    feature_hash: doc.feature_hash,
+    model_id: doc.model.model_id,
+    artifact_sha256: doc.model.artifact_sha256,
+    feature_spec_sha256: doc.model.feature_spec_sha256,
+    reasoning: doc.reasoning,
+    generated_at: generatedAt,
+    locked_at: lockedAt,
+    lock_policy: 'T-15m/v1',
+    market_at_lock: doc.market,
+    market_devig_probability: null,
+    pbe_edge_at_lock: doc.market?.pbe_edge ?? null
+  };
+
+  // Reproduce the production failure exactly: ESPN flips the game live, the
+  // mutable "current games" index no longer contains it, and the KV lock mirror
+  // is absent. The immutable official ledger still has the pre-tip lock.
+  await env.WNBA_KV.put('pbe:v1:official:index', JSON.stringify({
+    generated_at: new Date(now).toISOString(),
+    games: [],
+    locked_history: []
+  }));
+  await env.WNBA_KV.delete(`pbe:v1:official:pred:${GAME_ID}`);
+  await env.WNBA_KV.delete(`pbe:v1:official:lock:${GAME_ID}`);
+
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('/rest/v1/wnba_pbe_locked_predictions')) {
+      return new Response(JSON.stringify([row]), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (u.includes('/rest/v1/wnba_pbe_current_grades')) {
+      return new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    throw new Error(`unexpected network read: ${u}`);
+  };
+  t.after(() => { globalThis.fetch = realFetch; });
+
+  const picks = await call(pbePicks, '/v1/pbe/picks', env, { cookie: await sessionFor('pro@example.com') });
+  assert.equal(picks.status, 200);
+  assert.equal(picks.body.data.picks.length, 1);
+  const p = picks.body.data.picks[0];
+  assert.equal(p.game.game_id, GAME_ID);
+  assert.equal(p.phase, 'LOCKED');
+  assert.equal(p.call, 'PICK');
+  assert.equal(p.pick_team_id, row.selected_team_id);
+  assert.equal(p.pick_probability, row.win_probability);
+  assert.equal(p.locked_at, lockedAt);
+});
+
 // ------------------------------------------------------------------ sign-in
 
 function authEnv() {
