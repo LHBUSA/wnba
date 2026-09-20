@@ -268,7 +268,7 @@ export async function trackRecordPublic({ env }) {
 
 // ------------------------------------------------------------------ public sampler
 
-const TEAM_IDENTITY = new Map((TEAM_LOGOS || []).map((team) => [String(team.team_id), team]));
+const TEAM_IDENTITY = new Map((TEAM_LOGOS?.teams || []).map((team) => [String(team.team_id), team]));
 
 function sampleTeam(id, team = {}) {
   const local = TEAM_IDENTITY.get(String(id || '')) || {};
