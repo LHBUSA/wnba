@@ -103,10 +103,10 @@ body::after {
 .gc2-row.lost .sc, .gc2-row.lost .tn b { color: var(--faint); }
 .mkt-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .mkt-strip .mk { background: rgba(0, 0, 0, .28); border: 1px solid var(--line); border-radius: 9px; padding: 7px 8px; min-width: 0; }
-.mkt-strip .mk small { display: block; font: 600 10px/1 var(--f-data); letter-spacing: .14em; color: var(--faint); text-transform: uppercase; }
+.mkt-strip .mk small { display: block; font: 600 10px/1 var(--f-data); letter-spacing: .14em; color: var(--meta); text-transform: uppercase; }
 .mkt-strip .mk b { display: block; font: 700 13px/1.2 var(--f-data); margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mkt-strip .mk span { display: block; font: 500 10.5px/1.2 var(--f-data); color: var(--faint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mkt-note { font: 500 10.5px/1.4 var(--f-data); color: var(--faint); }
+.mkt-strip .mk span { display: block; font: 500 10.5px/1.2 var(--f-data); color: var(--meta); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mkt-note { font: 550 10.5px/1.4 var(--f-data); color: var(--meta); }
 .mkt-note b { color: var(--market); font-weight: 600; }
 .gc2-foot { display: flex; flex-wrap: wrap; gap: 6px; }
 .gc2-foot a { font: 700 11px/1 var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--dim); padding: 8px 11px; border: 1px solid var(--line-2); border-radius: 9px; }
