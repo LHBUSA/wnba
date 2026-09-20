@@ -19,7 +19,7 @@ import { buildDictionary } from '../workers/wnba-news/src/editorial.js';
 import { additiveCopy, intelligenceOf } from '../src/lib/intelligence.js';
 import { withheldBySourcePolicy } from '../workers/wnba-news/src/sources.js';
 import { articleView } from '../src/views/article.js';
-import { storyMedia } from '../src/ui/story-media.js';
+import { storyMedia, storyThumb } from '../src/ui/story-media.js';
 import { routeMeta } from '../src/seo/meta.js';
 
 const read = (p) => JSON.parse(fs.readFileSync(new URL(p, import.meta.url), 'utf8'));
@@ -303,6 +303,29 @@ test('15 · every standalone story resolves appropriate visual media — never b
   assert.deepEqual(visualFailures(league, m), []);
   assert.match(html(storyMedia(m, { slot: 'hero' })), /sm--brand[\s\S]*News Brief[\s\S]*PropBetEdge WNBA/);
   assert.deepEqual(visualFailures(league, { layout: 'team', subjects: [], teams: [] }), ['visual: story has no resolved hero (approved photo, team composition or story visual)']);
+});
+
+test('15a · approved matchup player photos outrank team-logo fallback on cards and thumbnails', () => {
+  const preview = {
+    kind: 'preview',
+    entities: [
+      { type: 'team', id: '8', name: 'Minnesota Lynx' },
+      { type: 'team', id: '5', name: 'Indiana Fever' },
+      { type: 'player', id: '2529205', name: 'Kayla McBride' },
+      { type: 'player', id: '4433403', name: 'Caitlin Clark' }
+    ],
+    matchup: { away_team_id: '8', home_team_id: '5' }
+  };
+  const m = newsroomMediaFrom(MANIFEST, preview);
+  assert.equal(m.layout, 'matchup');
+  assert.deepEqual(m.subjects.map((s) => s.player_id), ['2529205', '4433403']);
+  assert.equal(m.resolved, 'approved_subject_photos');
+  const card = html(storyMedia(m, { slot: 'card' }));
+  assert.match(card, /sm--duo/);
+  assert.match(card, /\/media\/news\/players\/2529205\//);
+  assert.match(card, /\/media\/news\/players\/4433403\//);
+  const thumb = html(storyThumb(m, 64));
+  assert.match(thumb, /\/media\/players\/4433403\/square\.webp/);
 });
 
 test('16 · provenance chronology: a version never goes live before it was generated', async () => {
