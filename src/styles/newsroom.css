@@ -251,6 +251,171 @@
 .recap-highlights .scard-video { background: rgba(212,175,55,.08); border-color: rgba(212,175,55,.55); }
 .recap-highlights .ngrid > .scard:has(.scard-video) { padding: 10px; margin: -10px; border-radius: 16px; background: linear-gradient(180deg, rgba(212,175,55,.055), rgba(212,175,55,.012)); box-shadow: inset 0 0 0 1px rgba(212,175,55,.12); }
 
+/* Video-first recap desk. Verified official highlights lead visually, but article links remain
+   first-class and the YouTube player is not requested until the reader presses Play. */
+.video-recap-stage {
+  display: grid;
+  grid-template-columns: minmax(0,1.6fr) minmax(300px,.78fr);
+  gap: 18px;
+  align-items: start;
+}
+.video-recap-side {
+  display: grid;
+  gap: 16px;
+}
+.video-recap-more {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+.vrecap {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(212,175,55,.18);
+  border-radius: 16px;
+  background:
+    radial-gradient(440px 160px at 85% 0%, rgba(212,175,55,.055), transparent 70%),
+    linear-gradient(180deg, rgba(24,20,15,.96), rgba(15,13,10,.98));
+  box-shadow: 0 16px 36px rgba(0,0,0,.18);
+}
+.vrecap-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #080807;
+}
+.vrecap-media > .sm,
+.vrecap-media > .sm .sm-frame {
+  width: 100%;
+  height: 100%;
+}
+.vrecap-media > .sm .sm-frame {
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.vrecap-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 46%, rgba(0,0,0,.48) 100%);
+}
+.vrecap-play {
+  position: absolute;
+  z-index: 3;
+  left: 14px;
+  bottom: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px 8px 8px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  background: rgba(10,10,9,.82);
+  color: var(--paper);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.36);
+}
+.vrecap-play:hover {
+  border-color: rgba(212,175,55,.48);
+  background: rgba(16,14,10,.92);
+}
+.vrecap-play-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e62429;
+  color: #fff;
+  font-size: 13px;
+  padding-left: 2px;
+  box-shadow: 0 6px 18px rgba(230,36,41,.28);
+}
+.vrecap-play-copy {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+.vrecap-play-copy b {
+  font: 750 11px/1 var(--f-ui);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.vrecap-play-copy small {
+  color: var(--meta);
+  font: 500 9.5px/1.15 var(--f-data);
+}
+.vrecap-copy { padding: 14px 15px 15px; }
+.vrecap--lead .vrecap-copy { padding: 17px 18px 18px; }
+.vrecap-kicker {
+  display: flex;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  color: var(--meta);
+  font: 650 10px/1.1 var(--f-data);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.vrecap-kicker span:first-child { color: var(--flame); }
+.vrecap-title {
+  margin-top: 8px;
+  color: var(--paper);
+  font: 650 18px/1.18 var(--f-editorial);
+  letter-spacing: -.008em;
+  text-wrap: balance;
+}
+.vrecap--lead .vrecap-title {
+  font-size: clamp(26px,2.7vw,38px);
+  line-height: 1.06;
+  max-width: 24ch;
+}
+.vrecap-title a:hover { color: var(--gold-bright); }
+.vrecap-deck {
+  margin-top: 10px;
+  max-width: 68ch;
+  color: var(--dim);
+  font: 400 15px/1.5 var(--f-editorial);
+}
+.vrecap-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 12px;
+  color: var(--faint);
+  font: 600 10.5px/1 var(--f-data);
+}
+.vrecap-actions a {
+  position: relative;
+  z-index: 2;
+  color: var(--gold);
+  font-family: var(--f-ui);
+  font-weight: 700;
+}
+.vrecap-actions a:hover { color: var(--gold-bright); }
+.recap-text-more {
+  margin-top: 20px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+.recap-text-more > .module-kicker { display: block; margin-bottom: 8px; }
+
+@media (max-width: 980px) {
+  .video-recap-stage { grid-template-columns: minmax(0,1fr); }
+  .video-recap-side { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 760px) {
+  .video-recap-more { grid-template-columns: minmax(0,1fr); gap: 14px; }
+}
+@media (max-width: 620px) {
+  .video-recap-side { grid-template-columns: minmax(0,1fr); }
+  .vrecap-play { left: 10px; bottom: 10px; }
+  .vrecap-play-icon { width: 30px; height: 30px; }
+  .vrecap--lead .vrecap-title { font-size: 24px; }
+}
+
 .wire-wrap { padding: 22px 24px; border: 1px dashed var(--line-2); border-radius: 16px; background: var(--ink-1); }
 .wire-wrap .sec-title { color: var(--dim); }
 .wire { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 0 28px; }
