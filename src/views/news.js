@@ -46,13 +46,20 @@ function archiveRail(archive, currentItems = []) {
     .filter((c) => !['duplicate', 'superseded'].includes(c.archive_state))
     .slice(0, 10);
   if (!historical.length) return '';
-  return html`<section class="desk section" aria-label="PropBetEdge WNBA published archive">
-    <div class="sec-head"><div>
-      <span class="eyebrow">Published archive</span>
-      <h2 class="sec-title bc">From the PropBetEdge record</h2>
-      <p class="desk-sub">Previously published newsroom work stays part of the historical record even when it is no longer promoted as current news. Dedupe changes prominence, not existence.</p>
-    </div><span class="note">${archive.data.total} published records · ${archive.data.historical} historical</span></div>
-    <div class="srows srows--grid">${historical.map(articleRow)}</div>
+  return html`<section class="desk section archive-record" aria-label="PropBetEdge WNBA published archive">
+    <div class="archive-record-head">
+      <div class="archive-record-copy">
+        <span class="eyebrow">Published archive</span>
+        <h2 class="sec-title bc">From the PropBetEdge record</h2>
+        <p class="desk-sub">Previously published newsroom work stays in the record even after it leaves the current-news rotation. Older coverage remains accessible instead of disappearing.</p>
+      </div>
+      <div class="archive-record-count" aria-label="${archive.data.total} published records, ${archive.data.historical} historical">
+        <b>${archive.data.historical}</b>
+        <span>historical</span>
+        <small>${archive.data.total} published</small>
+      </div>
+    </div>
+    <div class="archive-record-grid">${historical.map(articleRow)}</div>
   </section>`;
 }
 
