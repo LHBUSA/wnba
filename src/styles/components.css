@@ -144,7 +144,7 @@ a.chip:hover { border-color: var(--gold-line); color: var(--paper); }
 .team-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,.18) inset; }
 
 /* ------------------------------------------------------------ freshness / source line */
-.src { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font: 500 11.5px/1.4 var(--f-data); color: var(--faint); }
+.src { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font: 500 11.5px/1.4 var(--f-data); color: var(--meta); }
 .src b { color: var(--dim); font-weight: 600; }
 .fresh { display: inline-flex; align-items: center; gap: 6px; }
 .fresh::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
@@ -183,7 +183,7 @@ a.chip:hover { border-color: var(--gold-line); color: var(--paper); }
 .gcard { display: block; padding: var(--s3) var(--s4) var(--s4); position: relative; overflow: hidden; }
 .gcard::after { content: ''; position: absolute; inset: auto 0 0 0; height: 2px; background: linear-gradient(90deg, var(--away-c, var(--away)), var(--home-c, var(--home))); opacity: .55; }
 .gcard-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-.gcard-time { font: 600 11.5px/1 var(--f-data); color: var(--faint); letter-spacing: .06em; }
+.gcard-time { font: 600 11.5px/1 var(--f-data); color: var(--meta); letter-spacing: .06em; }
 .trow { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 5px 0; }
 .trow .tname { display: flex; flex-direction: column; min-width: 0; }
 .trow .tname b { font: 700 19px/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -194,7 +194,7 @@ a.chip:hover { border-color: var(--gold-line); color: var(--paper); }
 .gcard-foot a { font: 600 11.5px/1 var(--f-ui); color: var(--dim); padding: 7px 10px; border: 1px solid var(--line-2); border-radius: 8px; }
 .gcard-foot a:hover { color: var(--paper); border-color: var(--gold-line); }
 .gcard-foot a.primary { color: var(--flame); border-color: rgba(255,122,47,.35); }
-.gcard-line { margin-top: 10px; font: 500 11.5px/1.4 var(--f-data); color: var(--faint); }
+.gcard-line { margin-top: 10px; font: 500 11.5px/1.4 var(--f-data); color: var(--meta); }
 
 /* ------------------------------------------------------------ player identity */
 .avatar { position: relative; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; flex: none; background: radial-gradient(circle at 30% 20%, var(--ink-4), var(--ink-2)); border: 1px solid var(--line-2); display: grid; place-items: center; }
