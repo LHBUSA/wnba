@@ -160,7 +160,7 @@ export function articleView({ article: a, related = [] }) {
 
   return html`
     <article class="story">
-      <div class="story-hero">${storyMedia(a.media, { slot: 'hero', eager: true })}</div>
+      <div class="story-hero">${storyMedia(a.media, { slot: 'hero', eager: true, credit: true })}</div>
 
       ${a.quality_state === 'retired_from_index' && !a.external_coverage ? html`<aside class="coverage-note" role="note"><b>No longer listed in the newsroom.</b> ${a.quality_review?.reason ? `${a.quality_review.reason.charAt(0).toUpperCase()}${a.quality_review.reason.slice(1)}.` : ''} The record below is kept as published.</aside>` : ''}
       ${a.external_coverage ? html`<aside class="coverage-note" role="note"><b>Moved to external coverage.</b> This item was a note on another publisher’s feature rather than a newsroom event, so it is no longer listed in the PropBetEdge newsroom. ${a.external_coverage.source_url ? html`Read <a href="${a.external_coverage.source_url}" rel="noopener" target="_blank">${a.external_coverage.source_name || 'the original report'} ↗</a>. ` : ''}The record below is kept for transparency.</aside>` : ''}
