@@ -1,8 +1,15 @@
 // Pure media resolution helpers (no manifest import), shared by media.js and the tests.
 
+/** Approved/licensed, but visibly non-WNBA uniform assets that should not
+ * appear on the WNBA newsroom surface. Team compositions are used until a
+ * current-team licensed photo is promoted. */
+const TEAM_ART_ONLY_PLAYER_IDS = new Set(['2529205', '4433403']);
+
 /** An approved newsroom photo subject from the manifest's player map, or null. */
 export function subjectFrom(PLAYERS, pid) {
-  const e = pid !== null && pid !== undefined ? PLAYERS[String(pid)] : null;
+  const id = pid !== null && pid !== undefined ? String(pid) : null;
+  if (id && TEAM_ART_ONLY_PLAYER_IDS.has(id)) return null;
+  const e = id ? PLAYERS[id] : null;
   if (!e || !e.slots?.wide?.length) return null;
   return {
     player_id: String(pid),
