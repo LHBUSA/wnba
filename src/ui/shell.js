@@ -157,7 +157,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           </div>
         </div>
 
-        <p class="foot-note">PropBetEdge WNBA is independent and is not affiliated with, endorsed by or sponsored by the WNBA, its teams or players. Scores, play-by-play, rosters, standings and injury statuses are sourced from ESPN's public data; sportsbook prices from The Odds API; external news links open on the publisher's site. Player photos are Wikimedia Commons images used under their stated licenses with credit on each player page. For entertainment and research — bet responsibly. 21+.</p>
+        <p class="foot-note">PropBetEdge WNBA is independent and is not affiliated with, endorsed by or sponsored by the WNBA, its teams or players. Scores, play-by-play, rosters, standings, injury statuses and market snapshots are delivered through PropSports.PropTechUSA.ai; underlying source provenance is documented on the Sources page; external news links open on the publisher's site. Player photos are Wikimedia Commons images used under their stated licenses with credit on each player page. For entertainment and research — bet responsibly. 21+.</p>
       </div>
     </footer>
     <nav class="mnav" aria-label="Primary mobile" data-shell-rev="${SHELL_REV}">
