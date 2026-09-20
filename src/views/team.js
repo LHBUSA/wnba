@@ -46,7 +46,7 @@ export function teamView({ id, res, arts, wire }) {
 
     ${upcoming[0] ? html`<div class="pbe-slot" data-pbe-slot>${pbeTeaser(nextMatchup(upcoming[0], id))}</div>` : ''}
 
-    ${upcoming.length ? html`<section class="section"><div class="sec-head"><h2 class="sec-title bc">Next games · lines</h2><span class="note">stored snapshots · The Odds API</span></div><div class="slate-grid">${upcoming.map((g) => gameCard(g, { showDate: true }))}</div></section>` : ''}
+    ${upcoming.length ? html`<section class="section"><div class="sec-head"><h2 class="sec-title bc">Next games · lines</h2><span class="note">stored snapshots · PropSports.PropTechUSA.ai</span></div><div class="slate-grid">${upcoming.map((g) => gameCard(g, { showDate: true }))}</div></section>` : ''}
 
     <div class="section split">
       <div>
