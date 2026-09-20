@@ -39,7 +39,7 @@ ${rows.join('\n')}
 `;
 }
 
-export const STATIC_PATHS = ['/', '/news', '/injuries', '/standings', '/stats', '/props', '/matchups', '/players', '/teams', '/cast', '/track-record', '/international', ...TRUST_PAGES.map(([p]) => p)];
+export const STATIC_PATHS = ['/', '/news', '/news/archive', '/injuries', '/standings', '/stats', '/props', '/matchups', '/players', '/teams', '/cast', '/track-record', '/international', ...TRUST_PAGES.map(([p]) => p)];
 
 const COMBINING = new RegExp('[\u0300-\u036f]', 'g');
 export const intlPlayerPath = (p) => `/international/players/${String(p.player_id).replace(/^p-/, '')}-${String(p.name || '').normalize('NFKD').replace(COMBINING, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
