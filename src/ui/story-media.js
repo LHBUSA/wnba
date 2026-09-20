@@ -15,18 +15,6 @@ const SIZES = {
   small: '(max-width: 640px) 45vw, 240px'
 };
 
-// These approved/licensed photos are identity-correct but visibly belong to a
-// different basketball context (McBride/Fenerbahçe, Clark/Iowa). Newsroom
-// surfaces use current-team compositions until a current-team licensed asset
-// is promoted, avoiding mixed-league uniforms in the broadcast presentation.
-const TEAM_ART_ONLY_PLAYER_IDS = new Set(['2529205', '4433403']);
-
-function normalizeNewsroomUniformMedia(media) {
-  if (!media?.subjects?.some((s) => TEAM_ART_ONLY_PLAYER_IDS.has(String(s?.player_id || '')))) return media;
-  const teams = (media.teams || media.subjects.map((s) => s?.team_id)).filter(Boolean).map(String);
-  return { ...media, subjects: [], teams, caption: null, og: null, resolved: 'current_team_composition' };
-}
-
 const srcset = (files) => files.map((f) => `${f.src} ${f.w}w`).join(', ');
 
 function pick(files, want) {
@@ -86,7 +74,14 @@ function intlBoard(v, { slot = 'card', compact = false } = {}) {
  * plus, when `credit` is set, its figcaption.
  */
 export function storyMedia(media, { slot = 'card', eager = false, credit = true, label = '' } = {}) {
-  const m = normalizeNewsroomUniformMedia(media) || { layout: 'team', teams: [], subjects: [] };
+  // Matchup/preview stories are team-first editorial surfaces. Render current
+  // team identity there instead of recycling the same two player photos across
+  // every preview. Player-led stories (injury, performance, transaction, etc.)
+  // keep their approved subject photography.
+  const base = media || { layout: 'team', teams: [], subjects: [] };
+  const m = base.layout === 'matchup'
+    ? { ...base, layout: 'team_matchup', subjects: [], caption: null, og: null, resolved: 'team_composition' }
+    : base;
   let inner;
   let cls = `sm sm--${slot}`;
   if ((m.layout === 'intl_game' || m.layout === 'intl_photo') && m.visual?.teams?.length === 2) {
