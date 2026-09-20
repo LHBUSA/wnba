@@ -54,7 +54,7 @@ export function marketStrip(m, g) {
     <div class="mk"><small>Total</small><b>${m.total.line ?? '—'}</b><span>${m.total.over_best ? `O ${am(m.total.over_best.price)} ${bk(m.total.over_best.book)}` : '—'}</span></div>
     <div class="mk"><small>Moneyline</small><b>${a} ${am(m.moneyline.away_best?.price)}</b><span>${h} ${am(m.moneyline.home_best?.price)}</span></div>
   </div>
-  <div class="mkt-note">Best prices across <b>${m.books} books</b> · The Odds API · ${m.semantics === 'LAST_PRE_TIP_SNAPSHOT' ? 'last pre-tip capture' : 'captured'} ${relTime(m.captured_at)}${m.stale ? ' · STALE' : ''}${m.props?.available ? ` · props: ${m.props.players} players` : ''}</div>`;
+  <div class="mkt-note">Best prices across <b>${m.books} books</b> · <a href="https://propsports.proptechusa.ai" rel="noopener" target="_blank">propsports.proptechusa.ai</a> · ${m.semantics === 'LAST_PRE_TIP_SNAPSHOT' ? 'last pre-tip capture' : 'captured'} ${relTime(m.captured_at)}${m.stale ? ' · STALE' : ''}${m.props?.available ? ` · props: ${m.props.players} players` : ''}</div>`;
 }
 
 export function gameCard(g, { showDate = false, links = true } = {}) {
