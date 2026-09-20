@@ -184,7 +184,7 @@ function renderHeroMeta(meta, live) {
   const at = meta?.fetched_at || meta?.served_at || '';
   return html`<div class="lh-meta">
     <span class="lh-presence ${live ? 'is-live' : ''}"><i></i>${live ? 'LIVE' : 'CURRENT'}</span>
-    ${meta?.source?.name ? html`<span>Source <b>${meta.source.name}</b></span>` : ''}
+    <span>Source <b><a href="https://propsports.proptechusa.ai" rel="noopener" target="_blank">propsports.proptechusa.ai</a></b></span>
     ${at ? html`<span data-live-age="${at}">Updated ${relTime(at)}</span>` : html`<span>Update time unavailable</span>`}
     <span>${live ? '10s scoreboard refresh' : '30s desk refresh'}</span>
   </div>`;
