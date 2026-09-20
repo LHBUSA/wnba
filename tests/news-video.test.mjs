@@ -10,6 +10,7 @@ import {
 } from '../workers/wnba-news/src/video.js';
 import { gameHighlights, embedUrl } from '../src/ui/video.js';
 import { articleView } from '../src/views/article.js';
+import { newsView } from '../src/views/news.js';
 import { articleCard } from '../src/ui/articles.js';
 
 const FX = 'tests/fixtures/video/';
@@ -240,6 +241,38 @@ test('M. page load without a click requests nothing from YouTube; the CSP except
   const css = fs.readFileSync('src/styles/newsroom.css', 'utf8');
   assert.match(css, /\.gh-frame \{[^}]*aspect-ratio: 16 \/ 9/);
   assert.match(css, /\.gh-frame \{[^}]*max-width: 100%/);
+});
+
+test('N. the newsroom recap desk is video-first but poster-only until a reader clicks play', () => {
+  const now = Date.now();
+  const recap = {
+    id: 'video-recap-1',
+    slug: 'dream-beat-sky-video-recap',
+    kind: 'result',
+    category: 'Results',
+    headline: 'The Atlanta Dream beat the Chicago Sky, 106–81',
+    deck: 'Final-score recap with official game highlights.',
+    status: 'published',
+    published_at: new Date(now - 30 * 60e3).toISOString(),
+    first_published_at: new Date(now - 30 * 60e3).toISOString(),
+    entities: [{ type: 'game', id: '401999001', name: 'CHI @ ATL', start_utc: new Date(now - 2 * 3600e3).toISOString() }],
+    media: null,
+    video: { provider: 'youtube', video_id: 'VCl0Hf_yDYM', title: 'Chicago Sky vs Atlanta Dream | GAME HIGHLIGHTS', channel_name: 'WNBA', duration_s: 581 }
+  };
+  const out = String(newsView({
+    arts: { ok: true, data: { items: [recap], total: 1 }, meta: { last_run_at: new Date(now).toISOString() } },
+    wire: { ok: true, data: { items: [] } },
+    teams: [],
+    archive: { ok: false },
+    previews: { ok: false },
+    today: { ok: false }
+  }).body);
+  assert.match(out, /class="video-recap-stage"/);
+  assert.match(out, /data-gh-play="VCl0Hf_yDYM"/);
+  assert.match(out, /Watch highlights/);
+  assert.match(out, /href="\/news\/dream-beat-sky-video-recap">Read recap →<\/a>/);
+  assert.doesNotMatch(out, /<iframe/);
+  assert.doesNotMatch(out, /(src|srcset|poster)="[^"]*(youtube|ytimg|googlevideo)/i);
 });
 
 test('O. a story without a video renders exactly as before, with no empty media box; cards stay iframe-free', () => {
