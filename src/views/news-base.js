@@ -221,7 +221,7 @@ function marketWatch(items) {
       <span class="mw-line">${c.market.total !== null ? `O/U ${c.market.total}` : '—'}</span>
       <span class="mw-meta">${c.market.books} books · ${relTime(c.market.captured_at)}</span>
     </a>`)}</div>
-    <p class="note" style="margin-top:10px">Stored sportsbook prices and no-vig market consensus from The Odds API, with book count and capture time kept visible.</p>`;
+    <p class="note" style="margin-top:10px">Stored sportsbook prices and no-vig market consensus from PropSports.PropTechUSA.ai, with book count and capture time kept visible.</p>`;
 }
 
 function sourceWire(wire, { limit = 12, empty = 'Source wire unavailable.' } = {}) {
