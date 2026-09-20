@@ -518,6 +518,111 @@
 }
 .archive-record-grid .srow-credit { font-size: 9.5px; line-height: 1.35; }
 .archive-record-grid .scard-kicker { gap: 5px 8px; }
+.archive-record-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  color: var(--faint);
+  font: 550 10.5px/1.35 var(--f-data);
+}
+.archive-record-foot a {
+  color: var(--gold);
+  font: 750 11.5px/1 var(--f-ui);
+}
+.archive-record-foot a:hover { color: var(--gold-bright); }
+
+.archive-mast {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(24px,3.4vw,38px);
+  border: 1px solid rgba(212,175,55,.18);
+  border-radius: 20px;
+  background:
+    radial-gradient(700px 260px at 88% -10%, rgba(212,175,55,.12), transparent 65%),
+    linear-gradient(160deg, rgba(27,23,17,.96), rgba(14,12,10,.98));
+}
+.archive-mast .mast-title { margin-top: 14px; }
+.archive-mast .mast-sub { max-width: 76ch; }
+.archive-summary {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 2px 10px;
+  align-items: baseline;
+  margin-top: 22px;
+  padding: 12px 15px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px;
+  background: rgba(255,255,255,.018);
+}
+.archive-summary b {
+  grid-row: 1 / span 2;
+  color: var(--paper);
+  font: 800 34px/.9 var(--f-display);
+}
+.archive-summary span {
+  color: var(--gold);
+  font: 700 10px/1 var(--f-data);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.archive-summary small {
+  color: var(--faint);
+  font: 500 10px/1.2 var(--f-data);
+}
+.archive-page {
+  display: grid;
+  gap: 34px;
+  margin-top: 32px;
+}
+.archive-month {
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.archive-month:first-child { padding-top: 0; border-top: 0; }
+.archive-month-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.archive-month-head h2 {
+  color: var(--paper);
+  font: 800 22px/1 var(--f-display);
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.archive-month-head span {
+  color: var(--faint);
+  font: 600 10.5px/1 var(--f-data);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.archive-page-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px 18px;
+}
+.archive-page-grid .srow {
+  min-height: 88px;
+  grid-template-columns: 58px minmax(0,1fr);
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 12px;
+  background: rgba(255,255,255,.014);
+}
+.archive-page-grid .srow:first-child { padding-top: 13px; }
+.archive-page-grid .srow:hover {
+  border-color: rgba(212,175,55,.18);
+  background: rgba(255,255,255,.025);
+}
+.archive-page-grid .srow-h { font-size: 15.5px; }
+.archive-page-grid .srow-credit { font-size: 9.5px; }
 
 .newsroom-trust {
   max-width: none;
@@ -585,7 +690,8 @@
 }
 
 @media (max-width: 820px) {
-  .archive-record-grid { grid-template-columns: minmax(0,1fr); }
+  .archive-record-grid,
+  .archive-page-grid { grid-template-columns: minmax(0,1fr); }
   .newsroom-trust { grid-template-columns: minmax(0,1fr); gap: 18px; }
 }
 @media (max-width: 560px) {
@@ -603,8 +709,14 @@
   .archive-record-count b { font-size: 23px; }
   .archive-record-count span { margin-top: 0; }
   .archive-record-count small { margin: 0 0 0 auto; }
-  .archive-record-grid .srow { grid-template-columns: 48px minmax(0,1fr); padding: 11px; min-height: 82px; }
-  .archive-record-grid .srow-h { font-size: 14.5px; }
+  .archive-record-grid .srow,
+  .archive-page-grid .srow { grid-template-columns: 48px minmax(0,1fr); padding: 11px; min-height: 82px; }
+  .archive-record-grid .srow-h,
+  .archive-page-grid .srow-h { font-size: 14.5px; }
+  .archive-record-foot { align-items: flex-start; flex-direction: column; }
+  .archive-mast { padding: 21px 17px; border-radius: 16px; }
+  .archive-page { gap: 28px; margin-top: 24px; }
+  .archive-month-head h2 { font-size: 19px; }
   .newsroom-trust { padding: 18px 16px; border-radius: 14px; }
   .newsroom-trust-links { gap: 6px; }
   .newsroom-trust-links a { flex: 1 1 calc(50% - 6px); text-align: center; }
