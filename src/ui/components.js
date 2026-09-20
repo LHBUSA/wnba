@@ -83,7 +83,7 @@ export function gameCard(g, { showDate = false, links = true } = {}) {
 
 // ------------------------------------------------------------ freshness
 
-const SPORTS_DATA_SOURCE = 'PropSports.PropTechUSA.ai';
+const SPORTS_DATA_SOURCE = 'propsports.proptechusa.ai';
 const SPORTS_DATA_SOURCE_URL = 'https://propsports.proptechusa.ai';
 
 export function sourceLine(meta, { label } = {}) {
