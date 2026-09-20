@@ -144,8 +144,11 @@ a.chip:hover { border-color: var(--gold-line); color: var(--paper); }
 .team-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,.18) inset; }
 
 /* ------------------------------------------------------------ freshness / source line */
-.src { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font: 500 11.5px/1.4 var(--f-data); color: var(--meta); }
-.src b { color: var(--dim); font-weight: 600; }
+.src { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font: 550 11.5px/1.4 var(--f-data); color: color-mix(in srgb, var(--paper-2) 78%, var(--meta)); }
+.src b,
+.src a { color: var(--paper-2); font-weight: 650; }
+.src a { text-decoration: none; border-bottom: 1px dotted color-mix(in srgb, var(--paper-2) 38%, transparent); }
+.src a:hover { color: var(--gold-bright); border-bottom-color: var(--gold-bright); }
 .fresh { display: inline-flex; align-items: center; gap: 6px; }
 .fresh::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
 .fresh[data-state='CURRENT']::before, .fresh[data-state='CACHED']::before { background: var(--pos); }
