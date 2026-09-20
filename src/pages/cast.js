@@ -275,7 +275,7 @@ export async function mount(root, ctx) {
     const homeLost = g.status?.state === 'post' && v.atEnd && home.score < away.score;
     const awayLost = g.status?.state === 'post' && v.atEnd && away.score < home.score;
     const sem = state.meta?.semantics;
-    const semLabel = sem === 'LIVE_SOURCE' ? 'Live source · ESPN play-by-play' : sem === 'FINAL_PERSISTED_ARCHIVE' ? 'Replay · PropBetEdge archive of the published event stream' : sem === 'FINAL_PROVIDER_ARCHIVE' ? 'Replay · provider event stream (archive pending)' : sem === 'SCHEDULED' ? 'Pre-game' : sem;
+    const semLabel = sem === 'LIVE_SOURCE' ? 'Live feed · propsports.proptechusa.ai' : sem === 'FINAL_PERSISTED_ARCHIVE' ? 'Replay · PropBetEdge archive of the published event stream' : sem === 'FINAL_PROVIDER_ARCHIVE' ? 'Replay · provider event stream (archive pending)' : sem === 'SCHEDULED' ? 'Pre-game' : sem;
 
     render($stage, html`
       <section class="card card-pad" style="margin-bottom:16px;overflow:hidden;background:linear-gradient(115deg,rgba(240,179,35,.13),rgba(239,118,34,.05) 48%,rgba(18,17,14,.94));border-color:rgba(240,179,35,.28)" aria-labelledby="wnbacast-title">
@@ -293,11 +293,11 @@ export async function mount(root, ctx) {
         </div>
       </section>
 
-      <section class="card">
+      <section class="card cast-score-card">
         <div class="score-hdr">
           <div class="sh-team away ${awayLost ? 'lost' : ''}">
             ${teamLogo(away, 64)}
-            <div class="nm"><b>${away?.name}</b><small>${away?.abbr}${away?.record ? ` · ${away.record}` : ''}${away?.possession ? html` · <span class="poss">POSSESSION (ESPN)</span>` : ''}</small></div>
+            <div class="nm"><b>${away?.name}</b><small>${away?.abbr}${away?.record ? ` · ${away.record}` : ''}${away?.possession ? html` · <span class="poss">POSSESSION · PROPSPORTS</span>` : ''}</small></div>
             <span class="sc">${g.status?.state === 'pre' ? '' : v.score.away ?? ''}</span>
           </div>
           <div class="sh-mid">
@@ -307,7 +307,7 @@ export async function mount(root, ctx) {
           </div>
           <div class="sh-team home ${homeLost ? 'lost' : ''}">
             ${teamLogo(home, 64)}
-            <div class="nm"><b>${home?.name}</b><small>${home?.abbr}${home?.record ? ` · ${home.record}` : ''}${home?.possession ? html` · <span class="poss">POSSESSION (ESPN)</span>` : ''}</small></div>
+            <div class="nm"><b>${home?.name}</b><small>${home?.abbr}${home?.record ? ` · ${home.record}` : ''}${home?.possession ? html` · <span class="poss">POSSESSION · PROPSPORTS</span>` : ''}</small></div>
             <span class="sc">${g.status?.state === 'pre' ? '' : v.score.home ?? ''}</span>
           </div>
         </div>
@@ -345,7 +345,7 @@ export async function mount(root, ctx) {
         <span class="eyebrow">Availability for this game</span>
         ${(d.injuries || []).flatMap((t) => t.items.map((i) => ({ ...i, team_id: t.team_id }))).length
           ? html`<div style="margin-top:8px">${(d.injuries || []).flatMap((t) => t.items.map((i) => html`<div class="change-row">${avatar({ name: i.name })}<div><a href="/players/${i.athlete_id}"><b>${i.name}</b></a><div class="note">${[i.type, i.side].filter(Boolean).join(', ')}</div></div>${badge(/out/i.test(i.status || '') ? 'out' : 'dtd', i.status || '—')}</div>`))}</div>
-            <p class="note" style="margin-top:8px">Statuses from ESPN's injury feed.</p>`
+            <p class="note" style="margin-top:8px">Statuses via propsports.proptechusa.ai.</p>`
           : html`<p class="note" style="margin-top:8px">No players listed for either team in this game's source record.</p>`}
       </section>
     </div>`;
@@ -493,7 +493,7 @@ export async function mount(root, ctx) {
                 ${state.shotMarker === 'photos' && photoShotCount ? html`<span class="shot-photo-key">${photoShotCount} verified player photo${photoShotCount === 1 ? '' : 's'}</span>` : ''}
                 ${lastShotSeq !== null ? html`<span class="shot-latest-key"><i></i>Latest visible shot</span>` : ''}
               </div>
-              <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} ESPN publishes basket-relative shot coordinates; WNBACast preserves each location and rotates one attacking half onto the opposite basket for this vertical full-court view.</p>
+              <p class="note" style="margin-top:8px">${shots.length} visible · ${v.shots.plotted} of ${v.shots.total_fga} field-goal attempts carry a published location and are plotted. ${v.shots.unplotted ? `${v.shots.unplotted} without a location are counted, not placed.` : 'Free throws have no location and are not drawn.'} propsports.proptechusa.ai publishes normalized basket-relative shot coordinates; WNBACast preserves each exact location and rotates one attacking half onto the opposite basket for this vertical full-court view.</p>
             </div>
           </section>
 
@@ -599,7 +599,7 @@ export async function mount(root, ctx) {
         ${rows.map((r, i) => html`<tr class="${i === 5 && rows[4]?.starter && !r.starter ? 'sep' : ''}"><td><a class="pname" href="/players/${r.athlete_id}">${r.name}${r.starter ? html`<span class="note"> · S</span>` : ''}</a></td>
           ${r.dnp ? html`<td>${r.winba ? num(r.winba.score) : '—'}</td><td colspan="12" class="l note">DNP${r.dnp_reason ? ` — ${r.dnp_reason}` : ''}</td>` : html`<td class="winba-box-cell">${r.winba ? html`<b>${num(r.winba.score)}</b><small>${r.winba.rank ? `#${r.winba.rank}` : 'PROV'}</small>` : '—'}</td><td>${r.min ?? '—'}</td><td class="hi">${r.pts ?? '—'}</td><td>${r.reb ?? '—'}</td><td>${r.ast ?? '—'}</td><td>${r.fgm ?? '—'}-${r.fga ?? '—'}</td><td>${r.fg3m ?? '—'}-${r.fg3a ?? '—'}</td><td>${r.ftm ?? '—'}-${r.fta ?? '—'}</td><td>${r.stl ?? '—'}</td><td>${r.blk ?? '—'}</td><td>${r.tov ?? '—'}</td><td>${r.pf ?? '—'}</td><td>${r.plus_minus ?? '—'}</td>`}</tr>`)}
         </tbody></table></div></div>`;
-    })}<p class="note">Box score as published by ESPN. WinBA is PropBetEdge’s season winning-impact index and is not a game-grade or live projection.</p>`;
+    })}<p class="note">Box score via propsports.proptechusa.ai. WinBA is PropBetEdge’s season winning-impact index and is not a game-grade or live projection.</p>`;
   }
 
   function progression(d, g, v) {
@@ -626,8 +626,8 @@ export async function mount(root, ctx) {
   function marketTab(d, g) {
     const pc = d.pickcenter || [];
     return html`${d.market ? html`<div style="margin-bottom:16px"><span class="card-title">PropBetEdge stored snapshot${d.market.semantics === 'LAST_PRE_TIP_SNAPSHOT' ? ' · last pre-tip capture' : ''}</span><div style="margin-top:10px">${marketStrip(d.market, g)}</div></div>` : html`<p class="note" style="margin-bottom:12px">No PropBetEdge market capture for this game (captures began September 11, 2026; they run at 8:00, 1:00 and 6:00 ET).</p>`}${pc.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Line (external)</th><th>Spread</th><th>Total</th><th>${g.away?.abbr} ML</th><th>${g.home?.abbr} ML</th></tr></thead><tbody>
-      ${pc.map((o) => html`<tr><td>${o.provider} via ESPN</td><td>${o.details || '—'}</td><td>${o.over_under ?? '—'}</td><td>${american(o.away_moneyline)}</td><td>${american(o.home_moneyline)}</td></tr>`)}
-      </tbody></table></div><p class="note" style="margin-top:8px">A single sportsbook's line relayed by ESPN. It is not a PropBetEdge price, consensus or model.</p>` : html`<p class="note">No line published for this game in the source record.</p>`}
+      ${pc.map((o) => html`<tr><td>${o.provider} · PropSports feed</td><td>${o.details || '—'}</td><td>${o.over_under ?? '—'}</td><td>${american(o.away_moneyline)}</td><td>${american(o.home_moneyline)}</td></tr>`)}
+      </tbody></table></div><p class="note" style="margin-top:8px">A single sportsbook line exposed through propsports.proptechusa.ai. It is not a PropBetEdge price, consensus or model.</p>` : html`<p class="note">No line published for this game in the source record.</p>`}
       <div class="callout" style="margin-top:14px">PBE game predictions are <b>live</b>. Sportsbook fair-value and model-gap comparisons remain <b>unavailable</b> until the separate market model is validated.</div>
       <p style="margin-top:12px"><a class="sec-link" href="/props">Open the best-line board →</a></p>`;
   }
