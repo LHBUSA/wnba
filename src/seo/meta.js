@@ -75,6 +75,13 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: 'PropBetEdge WNBA — WNBA News, Injuries, Odds & Live Game Intelligence', description: 'Independent WNBA intelligence: today’s slate with stored sportsbook lines, WNBACast live games, sourced injuries, standings and an original PropBetEdge WNBA newsroom.', image: pageShareImage('home', 'PropBetEdge WNBA — live WNBA intelligence') });
     case 'news':
       return m({ title: `WNBA News Today, Injuries, Transactions & Analysis | ${BRAND}`, description: 'The PropBetEdge WNBA newsroom: original, source-grounded WNBA news briefs, injury and roster-move stories, game previews, recaps and market analysis, updated every 10 minutes.', image: pageShareImage('news', 'PropBetEdge WNBA Newsroom') });
+    case 'news-archive':
+      return m({
+        title: `WNBA News Archive: Past Stories & Published Record | ${BRAND}`,
+        description: 'Browse the canonical PropBetEdge WNBA newsroom archive: past injury reports, roster moves, game previews, results, player performances, team trends and league coverage, newest first.',
+        image: pageShareImage('news', 'PropBetEdge WNBA News Archive'),
+        robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS
+      });
     case 'news-team': {
       const t = data?.team;
       if (!t) return m({ title: `WNBA Team News | ${BRAND}`, robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });
