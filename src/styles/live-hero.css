@@ -24,7 +24,57 @@
 .lh-state { display: inline-flex; align-items: center; justify-content: center; min-height: 27px; padding: 6px 9px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(255,255,255,.035); color: var(--paper-2); font: 800 10px/1 var(--f-data); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .lh-state.is-live { border-color: color-mix(in srgb, var(--live) 45%, transparent); background: var(--live-soft); color: var(--paper); }
 
-.lh-market { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+.lh-feed-label,
+.lh-market-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--f-data);
+  text-transform: uppercase;
+  letter-spacing: .09em;
+}
+.lh-feed-label {
+  margin-top: 14px;
+  padding: 0 2px 8px;
+  color: var(--paper-2);
+}
+.lh-feed-label span,
+.lh-market-label span {
+  font-size: 10px;
+  font-weight: 800;
+}
+.lh-feed-label small,
+.lh-market-label small {
+  font-size: 9.5px;
+  font-weight: 650;
+  color: var(--meta);
+  letter-spacing: .04em;
+}
+.lh-feed-label span::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--live);
+  box-shadow: 0 0 0 3px var(--live-soft);
+  vertical-align: 1px;
+}
+.lh-market-block {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-2);
+}
+.lh-market-block.is-live-context {
+  border-top-color: color-mix(in srgb, var(--market) 28%, var(--line-2));
+}
+.lh-market-label {
+  padding: 0 2px 2px;
+  color: var(--market);
+}
+.lh-market { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 8px; }
 .lh-market > div { min-width: 0; padding: 10px 11px; border: 1px solid var(--line); border-radius: 11px; background: rgba(0,0,0,.18); }
 .lh-market span, .lh-market small { display: block; font: 600 9.5px/1.25 var(--f-data); color: var(--meta); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lh-market b { display: block; margin: 5px 0 3px; font: 750 14px/1.15 var(--f-data); color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -74,6 +124,8 @@
   .lh-game-state > b { display: none; }
   .lh-team { grid-template-columns: auto minmax(0, 1fr) auto; }
   .lh-market { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lh-feed-label,
+  .lh-market-label { align-items: flex-start; flex-direction: column; gap: 4px; }
   .lh-intel { padding: 15px; }
 }
 
