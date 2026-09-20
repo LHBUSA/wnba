@@ -79,10 +79,23 @@ export function newsroomMediaFrom(PLAYERS, a) {
     const g = a.context?.game || a.context?.next_game || null;
     const away = String(a.matchup?.away_team_id ?? g?.away?.team_id ?? teamIds[0] ?? '');
     const home = String(a.matchup?.home_team_id ?? g?.home?.team_id ?? teamIds[1] ?? '');
+    const pick = (tid) => ents
+      .filter((e) => e.type === 'player')
+      .map((e) => subject(e.id))
+      .find((s) => s && s.team_id === tid) || null;
+    const A = away ? pick(away) : null;
+    const H = home ? pick(home) : null;
+    if (A && H) {
+      return {
+        layout: 'matchup',
+        subjects: [A, H],
+        teams: [away, home],
+        caption: `Pictured: ${A.name} (${A.team_abbr}) and ${H.name} (${H.team_abbr})`,
+        og: H.og,
+        resolved: 'approved_subject_photos'
+      };
+    }
     const teams = idsOf([away, home]);
-    // Generic game previews/market stories are about the matchup, not one
-    // repeated pair of rotation players. Keep them on current team marks.
-    // Subject photos stay available for genuinely player-led desks.
     return teams.length ? { layout: 'team_matchup', subjects: [], teams, caption: null, og: null, resolved: 'team_composition' } : brand();
   }
   const teams = idsOf([a.lead_team_id, ...teamIds]).slice(0, 1);
