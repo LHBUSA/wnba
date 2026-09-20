@@ -391,10 +391,17 @@ async function articleRoute(env, slugOrId) {
   return j({ ok: true, data: { article: { ...a, media: mediaFor(a), video }, related }, meta: { service: SERVICE, version: VERSION, generator: a.generator, served_at: new Date().toISOString() } }, 200, 60);
 }
 
-/** Cards carry only whether a verified highlight exists (no player, no third-party request on list pages). */
+/** Cards carry only the verified playback identity needed for a poster-first inline player.
+ * No YouTube request happens on list pages; the browser still waits for an explicit play click. */
 function cardVideo(decision) {
   const v = servedVideo(decision);
-  return v ? { title: v.title, channel_name: v.channel_name } : null;
+  return v ? {
+    provider: v.provider,
+    video_id: v.video_id,
+    title: v.title,
+    channel_name: v.channel_name,
+    duration_s: v.duration_s ?? null
+  } : null;
 }
 
 /** Audit: every story's video decision with its reason and match evidence. */
