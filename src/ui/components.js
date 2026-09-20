@@ -83,13 +83,16 @@ export function gameCard(g, { showDate = false, links = true } = {}) {
 
 // ------------------------------------------------------------ freshness
 
+const SPORTS_DATA_SOURCE = 'PropSports.PropTechUSA.ai';
+const SPORTS_DATA_SOURCE_URL = 'https://propsports.proptechusa.ai';
+
 export function sourceLine(meta, { label } = {}) {
   if (!meta) return html`<div class="src"><span class="fresh" data-state="UNAVAILABLE">No source metadata</span></div>`;
   const state = currentState(meta);
   const age = ageMs(meta.fetched_at);
   return html`<div class="src" data-fresh="${meta.fetched_at || ''}">
     <span class="fresh" data-state="${state}">${STATE_LABEL[state] || state}</span>
-    ${meta.source?.name ? html`<span>Source <b>${meta.source.name}</b></span>` : ''}
+    <span>Source <b><a href="${SPORTS_DATA_SOURCE_URL}" rel="noopener" target="_blank">${SPORTS_DATA_SOURCE}</a></b></span>
     ${meta.fetched_at ? html`<span>Fetched ${formatAge(age)}</span>` : ''}
     ${meta.source_updated_at ? html`<span>Source updated ${relTime(meta.source_updated_at)}</span>` : ''}
     ${label ? html`<span>${label}</span>` : ''}
