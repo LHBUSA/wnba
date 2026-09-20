@@ -125,7 +125,7 @@ export function storyThumb(media, size = 72) {
     const [w, l] = media.visual.teams;
     return html`<span class="sm-thumb sm-thumb--intl" style="width:${size}px;height:${size}px" role="img" aria-label="${`${w.name} ${w.score}, ${l.name} ${l.score}`}">${flagSrc(w.flag) ? html`<img src="${flagSrc(w.flag)}" alt="" width="30" height="20" loading="lazy" decoding="async" />` : ''}<b>${w.score}–${l.score}</b>${flagSrc(l.flag) ? html`<img src="${flagSrc(l.flag)}" alt="" width="30" height="20" loading="lazy" decoding="async" />` : ''}</span>`;
   }
-  const s = media?.layout === 'single' || media?.layout === 'intl_photo' ? media.subjects?.[0] : media?.layout === 'matchup' ? media.subjects?.[1] : null;
+  const s = media?.layout === 'single' || media?.layout === 'intl_photo' ? media.subjects?.[0] : null;
   if (s?.square) return html`<img class="sm-thumb" src="${s.square}" width="${size}" height="${size}" alt="${s.name}" loading="lazy" decoding="async" />`;
   if (!(media?.teams || []).length) return html`<span class="sm-thumb sm-thumb--brand" style="width:${size}px;height:${size}px" role="img" aria-label="${media?.visual?.desk || 'PropBetEdge WNBA'}"><b>PBE</b></span>`;
   const e = logoEntry((media?.teams || [])[0]);
