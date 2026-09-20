@@ -9,6 +9,8 @@ import { html } from '../lib/dom.js';
 import { errorState, badge, entityChips } from '../ui/components.js';
 import { articleCard, articleRow, KIND_LABEL, DESK } from '../ui/articles.js';
 import { teamLogo } from '../ui/logo.js';
+import { storyMedia } from '../ui/story-media.js';
+import { VIDEO_ID } from '../ui/video.js';
 import { relTime, fmtDateTimeET } from '../lib/format.js';
 import { storyPublishedAt } from '../lib/news-ranking.js';
 
@@ -153,6 +155,49 @@ export function recapHighlightItems(items, { now = Date.now(), limit = 6, maxAge
     .sort((a, b) => b.eventAt - a.eventAt)
     .slice(0, limit)
     .map(({ c }) => c);
+}
+const videoDuration = (seconds) => Number.isFinite(Number(seconds)) && Number(seconds) > 0
+  ? `${Math.floor(Number(seconds) / 60)}:${String(Math.round(Number(seconds)) % 60).padStart(2, '0')}`
+  : null;
+const hasPlayableCardVideo = (c) => c?.video?.provider === 'youtube' && VIDEO_ID.test(c.video.video_id || '');
+
+function highlightVideoCard(c, { lead = false } = {}) {
+  const v = c.video;
+  const href = `/news/${c.slug}`;
+  const len = videoDuration(v.duration_s);
+  return html`<article class="vrecap ${lead ? 'vrecap--lead' : ''}">
+    <div class="vrecap-media" data-gh-frame>
+      ${storyMedia(c.media, { slot: lead ? 'lead' : 'card', eager: lead, credit: false })}
+      <button class="vrecap-play" type="button" data-gh-play="${v.video_id}" data-gh-title="${v.title}" aria-label="${`Play highlights: ${v.title}. Loads the official YouTube player.`}">
+        <span class="vrecap-play-icon" aria-hidden="true">▶</span>
+        <span class="vrecap-play-copy"><b>Watch highlights</b><small>${v.channel_name || 'Official video'}${len ? ` · ${len}` : ''}</small></span>
+      </button>
+    </div>
+    <div class="vrecap-copy">
+      <div class="vrecap-kicker"><span>${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span>${relTime(storyPublishedAt(c))}</span></div>
+      <h3 class="vrecap-title"><a href="${href}">${headlineText(c.headline)}</a></h3>
+      ${lead && c.deck ? html`<p class="vrecap-deck">${headlineText(c.deck)}</p>` : ''}
+      <div class="vrecap-actions"><a href="${href}">Read recap →</a><span>Official highlights</span></div>
+    </div>
+  </article>`;
+}
+
+function recapHighlightsView(recaps) {
+  const videos = recaps.filter(hasPlayableCardVideo);
+  const textOnly = recaps.filter((c) => !hasPlayableCardVideo(c));
+  if (!videos.length) return html`<div class="ngrid">${recaps.map((c) => articleCard(c))}</div>`;
+
+  const lead = videos[0];
+  const side = videos.slice(1, 3);
+  const more = videos.slice(3, 6);
+  return html`
+    <div class="video-recap-stage">
+      ${highlightVideoCard(lead, { lead: true })}
+      ${side.length ? html`<div class="video-recap-side">${side.map((c) => highlightVideoCard(c))}</div>` : ''}
+    </div>
+    ${more.length ? html`<div class="video-recap-more">${more.map((c) => highlightVideoCard(c))}</div>` : ''}
+    ${textOnly.length ? html`<div class="recap-text-more"><span class="module-kicker">More final-score coverage</span><div class="srows srows--grid">${textOnly.map(articleRow)}</div></div>` : ''}
+  `;
 }
 
 export async function loadNews(api, kind = null, teamId = null) {
@@ -309,7 +354,7 @@ export function newsView({ kind = null, teamId = null, team = null, teams = [], 
 
       ${recaps.length ? html`<section class="desk section recap-highlights" data-recap-count="${recaps.length}">
         <div class="sec-head"><div><span class="eyebrow">Finals · Video</span><h2 class="sec-title bc">Recaps &amp; Highlights</h2><p class="desk-sub">Completed games from the last 48 hours — final-score recaps first, with official game highlights surfaced whenever the verified video feed has them.</p></div><a class="sec-link" href="/news/c/performance">All recaps →</a></div>
-        <div class="ngrid">${recaps.map((c) => articleCard(c))}</div>
+        ${recapHighlightsView(recaps)}
       </section>` : ''}
 
       <section class="front-band section">
