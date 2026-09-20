@@ -18,25 +18,23 @@
 .sm-vs { position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 800 13px/1 var(--f-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: var(--gold); padding: 7px 9px; border-radius: 999px; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); }
 .sm--lead .sm-vs, .sm--hero .sm-vs { font-size: 16px; padding: 9px 12px; }
 
-/* First-paint guard for the two identity-correct but mixed-league uniform
-   assets retired from newsroom use. The client resolver replaces them with
-   team compositions after hydration; this CSS prevents even the SSR frame
-   from flashing the Fenerbahçe/Iowa jerseys beforehand. */
+/* First-paint guard for the current McBride/Clark matchup preview only.
+   Their licensed photos remain valid for player-led stories; we just avoid
+   recycling the same mixed-uniform duo on generic matchup previews while the
+   SSR worker catches up to the team-first matchup media policy. */
 @supports selector(:has(*)) {
-  .sm-half:has(img[src*="/media/news/players/2529205/"]) .sm-img,
-  .sm-half:has(img[src*="/media/news/players/4433403/"]) .sm-img,
-  .sm:has(> .sm-frame > img[src*="/media/news/players/2529205/"]) > .sm-frame > .sm-img,
-  .sm:has(> .sm-frame > img[src*="/media/news/players/4433403/"]) > .sm-frame > .sm-img {
+  .sm--duo .sm-half:has(img[src*="/media/news/players/2529205/"]) .sm-img,
+  .sm--duo .sm-half:has(img[src*="/media/news/players/4433403/"]) .sm-img {
     opacity: 0;
   }
-  .sm-half:has(img[src*="/media/news/players/2529205/"]) {
+  .sm--duo .sm-half:has(img[src*="/media/news/players/2529205/"]) {
     background: radial-gradient(circle at 50% 42%, color-mix(in srgb, #266092 48%, var(--ink-2)), var(--ink-2));
   }
-  .sm-half:has(img[src*="/media/news/players/4433403/"]) {
+  .sm--duo .sm-half:has(img[src*="/media/news/players/4433403/"]) {
     background: radial-gradient(circle at 50% 42%, color-mix(in srgb, #002d62 48%, var(--ink-2)), var(--ink-2));
   }
-  .sm-half:has(img[src*="/media/news/players/2529205/"])::before,
-  .sm-half:has(img[src*="/media/news/players/4433403/"])::before {
+  .sm--duo .sm-half:has(img[src*="/media/news/players/2529205/"])::before,
+  .sm--duo .sm-half:has(img[src*="/media/news/players/4433403/"])::before {
     position: absolute;
     inset: 0;
     z-index: 1;
@@ -47,10 +45,10 @@
     letter-spacing: .12em;
     text-shadow: 0 5px 20px rgba(0,0,0,.45);
   }
-  .sm-half:has(img[src*="/media/news/players/2529205/"])::before { content: 'MIN'; }
-  .sm-half:has(img[src*="/media/news/players/4433403/"])::before { content: 'IND'; }
-  .sm:has(img[src*="/media/news/players/2529205/"]) .sm-credit,
-  .sm:has(img[src*="/media/news/players/4433403/"]) .sm-credit {
+  .sm--duo .sm-half:has(img[src*="/media/news/players/2529205/"])::before { content: 'MIN'; }
+  .sm--duo .sm-half:has(img[src*="/media/news/players/4433403/"])::before { content: 'IND'; }
+  .sm--duo:has(img[src*="/media/news/players/2529205/"]) .sm-credit,
+  .sm--duo:has(img[src*="/media/news/players/4433403/"]) .sm-credit {
     display: none;
   }
 }
