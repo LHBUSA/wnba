@@ -53,6 +53,22 @@
 .shot-photo-marker.n .shot-photo-ring { stroke: var(--dim); }
 .shot-photo-marker.miss .shot-photo-ring { stroke-dasharray: .55 .38; opacity: .82; }
 .shot-photo-result { fill: none; pointer-events: none; }
+.shot-cluster-tether {
+  stroke: rgba(245,241,235,.34);
+  stroke-width: .12;
+  stroke-dasharray: .42 .32;
+  pointer-events: none;
+}
+.shot-point.is-clustered .shot-photo-halo {
+  stroke: rgba(240,179,35,.34);
+  stroke-width: .16;
+}
+.shot-point.is-clustered:hover .shot-cluster-tether,
+.shot-point.is-clustered:focus-visible .shot-cluster-tether,
+.shot-point.is-clustered.is-selected .shot-cluster-tether {
+  stroke: rgba(240,179,35,.8);
+  stroke-width: .18;
+}
 .shot-photo-marker.made .shot-photo-result { stroke: rgba(255,255,255,.68); stroke-width: .11; }
 .shot-photo-marker.miss .shot-photo-result { stroke: rgba(255,255,255,.8); stroke-width: .17; stroke-linecap: round; }
 .shot-point.has-photo { transition: transform .16s ease, filter .16s ease; }
@@ -544,6 +560,10 @@
 .cast-rail a .r-top { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: var(--faint); margin-bottom: 4px; }
 .cast-rail a .r-row { display: flex; justify-content: space-between; gap: 8px; }
 .cast-rail-group { flex: none; align-self: center; font: 700 10px/1 var(--f-data); letter-spacing: .16em; color: var(--faint); writing-mode: vertical-rl; transform: rotate(180deg); padding: 0 2px; }
+.cast-score-card { margin-top: 2px; }
+.cast-score-card .score-hdr {
+  padding: clamp(22px, 2.4vw, 30px) var(--s5) var(--s4);
+}
 .score-hdr { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--s4); padding: var(--s4) var(--s5); }
 .sh-team { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .sh-team.home { flex-direction: row-reverse; text-align: right; }
@@ -557,6 +577,7 @@
 .sh-bar { width: 6px; height: 56px; border-radius: 3px; flex: none; }
 .poss { font: 700 10px/1 var(--f-data); letter-spacing: .12em; color: var(--flame); }
 @media (max-width: 640px) {
+  .cast-score-card .score-hdr { padding: 18px var(--s4) var(--s3); }
   .score-hdr { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: var(--s3) var(--s4); }
   .sh-team, .sh-team.home { flex-direction: row; text-align: left; justify-content: space-between; }
   .sh-team .sc { order: 3; font-size: 44px; }
