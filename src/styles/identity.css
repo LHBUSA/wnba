@@ -40,7 +40,7 @@ body::after {
 
 /* ------------------------------------------------------------ broadcast header strip */
 .ticker { display: flex; gap: 0; align-items: stretch; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: rgba(15, 13, 10, .7); backdrop-filter: blur(8px); margin-bottom: var(--s4); }
-.ticker > span { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; font: 600 11px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); white-space: nowrap; border-right: 1px solid var(--line); }
+.ticker > span { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; font: 600 11px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--paper-2) 78%, var(--dim)); white-space: nowrap; border-right: 1px solid var(--line); }
 .ticker > span:last-child { border-right: 0; }
 .ticker .tk-live { background: var(--live); color: #fff; }
 .ticker .tk-next { background: linear-gradient(90deg, var(--flame), #ff9a52); color: #1a0c04; }
@@ -50,13 +50,13 @@ body::after {
 .ticker .tk-final { background: var(--ink-3); color: var(--paper); }
 .ticker .tk-item { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; white-space: nowrap; text-decoration: none; color: var(--paper-2); font: 600 12px/1 var(--f-ui); border-right: 1px solid var(--line); }
 .ticker .tk-item:hover, .ticker .tk-item:focus-visible { color: var(--paper); background: rgba(255, 255, 255, .04); }
-.ticker .tk-tag { font: 700 10px/1 var(--f-data); letter-spacing: .12em; color: var(--dim); }
+.ticker .tk-tag { font: 700 10px/1 var(--f-data); letter-spacing: .12em; color: color-mix(in srgb, var(--paper-2) 74%, var(--dim)); }
 .ticker .tk-live_game .tk-tag { color: var(--live); }
 .ticker .tk-intl .tk-tag { color: var(--gold); }
 .ticker .tk-live_game.tk-intl .tk-tag { color: var(--live); }
 .ticker .tk-text { font-variant-numeric: tabular-nums; color: var(--paper); }
-.ticker .tk-meta { font: 500 11px/1 var(--f-data); color: var(--dim); font-variant-numeric: tabular-nums; }
-.ticker .tk-fresh { font: 600 10.5px/1 var(--f-data); letter-spacing: .06em; text-transform: none; }
+.ticker .tk-meta { font: 550 11px/1 var(--f-data); color: color-mix(in srgb, var(--paper-2) 72%, var(--dim)); font-variant-numeric: tabular-nums; }
+.ticker .tk-fresh { font: 650 10.5px/1 var(--f-data); letter-spacing: .06em; text-transform: none; color: color-mix(in srgb, var(--paper-2) 80%, var(--dim)); }
 @media (max-width: 600px) {
   .ticker .tk-fresh { display: none; }
   .ticker .tk-item { padding: 9px 12px; font-size: 12.5px; }
