@@ -193,7 +193,7 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
     case 'pro':
       return m({ title: `PropBetEdge WNBA Pro | ${BRAND}`, description: 'PropBetEdge WNBA Pro membership: the full WNBA research desk. $9.99 a month or $3.99 a week, cancel anytime.', image: pageShareImage('pro', 'PropBetEdge WNBA Pro — PropBetEdge WNBA') });
     case 'sources':
-      return m({ title: `WNBA Data Sources & Live Source Status | ${BRAND}`, description: 'The sources behind PropBetEdge WNBA — ESPN public data, The Odds API, the source wire and Wikimedia Commons — with live source status and freshness.', image: pageShareImage('sources', 'WNBA Data Sources & Live Source Status — PropBetEdge WNBA') });
+      return m({ title: `WNBA Data Sources & Live Source Status | ${BRAND}`, description: 'The sources behind PropBetEdge WNBA — PropSports.PropTechUSA.ai, the publisher source wire and licensed Wikimedia Commons imagery — with live source status and freshness.', image: pageShareImage('sources', 'WNBA Data Sources & Live Source Status — PropBetEdge WNBA') });
     case 'about':
       return m({ title: `About the PropBetEdge WNBA Newsroom | ${BRAND}`, description: 'Who publishes PropBetEdge WNBA, how the automated newsroom works, and how it keeps publisher reporting, structured records and market data separate.', image: pageShareImage('about', 'About the PropBetEdge WNBA Newsroom — PropBetEdge WNBA') });
     case 'editorial-policy':
