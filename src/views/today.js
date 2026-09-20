@@ -75,7 +75,8 @@ function renderHeroMatchup(hero) {
   if (!g) return html`<div class="lh-empty"><b>Desk is live.</b><span>No WNBA game is published in the current or next slate yet.</span></div>`;
   const st = gameState(g);
   const showScore = g.status?.state === 'in' || g.status?.state === 'post';
-  return html`<div class="lh-matchup" aria-live="polite" aria-atomic="true">
+  return html`${hero.mode === 'LIVE' ? html`<div class="lh-feed-label"><span>Live score feed</span><small>Score + clock · 10s refresh</small></div>` : ''}
+  <div class="lh-matchup" aria-live="polite" aria-atomic="true">
     <div class="lh-team lh-away">
       ${teamLogo(g.away, 58)}
       <span class="lh-team-name"><small>Away</small><b>${teamName(g.away)}</b><span>${g.away?.record || teamAbbr(g.away)}</span></span>
@@ -98,12 +99,18 @@ function renderHeroMarket(hero) {
   const g = hero.primary;
   if (!g) return '';
   const m = g.market;
-  if (!m) return html`<div class="lh-market lh-market-empty"><span>Market snapshot</span><b>Not published yet</b><small>Nothing is filled with a stand-in number.</small></div>`;
-  return html`<div class="lh-market" aria-label="Stored market snapshot">
+  if (!m) return html`<div class="lh-market-block">
+    <div class="lh-market-label"><span>Market odds</span><small>Stored snapshot · not published yet</small></div>
+    <div class="lh-market lh-market-empty"><span>Market snapshot</span><b>Not published yet</b><small>Nothing is filled with a stand-in number.</small></div>
+  </div>`;
+  return html`<div class="lh-market-block ${hero.mode === 'LIVE' ? 'is-live-context' : ''}">
+    <div class="lh-market-label"><span>Market odds</span><small>Stored snapshot${m.captured_at ? ` · captured ${relTime(m.captured_at)}` : ''}</small></div>
+    <div class="lh-market" aria-label="Stored market snapshot">
     <div><span>Spread</span><b>${teamAbbr(g.home)} ${signed(m.spread?.home_line)}</b><small>${m.spread?.home_best ? `${american(m.spread.home_best.price)} · ${bookName(m.spread.home_best.book)}` : 'best price unavailable'}</small></div>
     <div><span>Total</span><b>${m.total?.line ?? '—'}</b><small>${m.total?.over_best ? `O ${american(m.total.over_best.price)}` : 'price unavailable'}</small></div>
     <div><span>Moneyline</span><b>${teamAbbr(g.away)} ${american(m.moneyline?.away_best?.price)}</b><small>${teamAbbr(g.home)} ${american(m.moneyline?.home_best?.price)}</small></div>
     <div class="lh-market-age"><span>Captured</span><b>${m.captured_at ? relTime(m.captured_at) : '—'}</b><small>${m.books ? `${m.books} books` : 'stored snapshot'}</small></div>
+    </div>
   </div>`;
 }
 
