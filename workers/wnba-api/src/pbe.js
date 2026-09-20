@@ -75,7 +75,7 @@ function callItem(doc, lock, grade, ledger) {
     return { ledger, game: src.game, phase, call: null, reason: 'no_lock_recorded_before_tip' };
   }
   const side = src.pick_team_id === src.game.home_team_id ? 'home' : src.pick_team_id === src.game.away_team_id ? 'away' : null;
-  const r = side ? src.reasoning[side] : null;
+  const r = side ? src.reasoning?.[side] : null;
   return {
     ledger,
     shadow: ledger === 'shadow',
@@ -108,6 +108,113 @@ async function loadCall(env, ledger, gameId) {
     env.WNBA_KV.get(KV(ledger, 'grade', gameId), 'json')
   ]);
   return { doc: doc || (lock ? { game: lock.game, reasoning: lock.reasoning } : null), lock, grade };
+}
+
+const OFFICIAL_LOCK_SELECT = 'prediction_id,contract,game_id,season,season_type,scheduled_tip_utc,home_team_id,away_team_id,neutral_site,call,no_call_reason,selected_team_id,selected_side,p_home,win_probability,confidence,feature_vector,feature_hash,model_id,artifact_sha256,feature_spec_sha256,reasoning,generated_at,locked_at,lock_policy,market_at_lock,market_devig_probability,pbe_edge_at_lock';
+
+function officialLockDoc(row, doc = null) {
+  return {
+    schema: 'pbe-wnba-lock/1',
+    ledger: 'official',
+    contract: row.contract || CONTRACT,
+    lock_policy: row.lock_policy || LOCK_POLICY.id,
+    locked_at: row.locked_at,
+    prediction_id: row.prediction_id,
+    source_generated_at: row.generated_at,
+    game: doc?.game || {
+      game_id: String(row.game_id),
+      season: row.season,
+      season_type: row.season_type,
+      scheduled_tip_utc: row.scheduled_tip_utc,
+      neutral_site: Boolean(row.neutral_site),
+      home_team_id: String(row.home_team_id),
+      away_team_id: String(row.away_team_id),
+      home: null,
+      away: null
+    },
+    model: doc?.model || {
+      model_id: row.model_id,
+      artifact_sha256: row.artifact_sha256,
+      feature_spec_sha256: row.feature_spec_sha256,
+      feature_schema: null
+    },
+    call: row.call,
+    no_call_reason: row.no_call_reason,
+    flags: doc?.flags || [],
+    eligibility: doc?.eligibility || null,
+    p_home: row.p_home,
+    selected_team_id: row.selected_team_id,
+    selected_side: row.selected_side,
+    win_probability: row.win_probability,
+    confidence: row.confidence,
+    feature_order: row.feature_vector?.order ?? doc?.feature_order ?? [],
+    feature_vector: row.feature_vector?.values ?? doc?.feature_vector ?? [],
+    feature_hash: row.feature_hash,
+    reasoning: row.reasoning || doc?.reasoning || { home: { supporting: [], opposing: [], adjustments: [] }, away: { supporting: [], opposing: [], adjustments: [] } },
+    market_at_lock: row.market_at_lock || { available: false, reason: 'no_market_at_lock', pbe_edge: null },
+    pbe_edge_at_lock: row.pbe_edge_at_lock,
+    mirrored_from_ledger: true
+  };
+}
+
+async function officialLockWindow(env, { now = Date.now(), pastHours = 36, withGrades = true } = {}) {
+  if (!env.PBE_SUPABASE_URL || !env.PBE_SUPABASE_SERVICE_ROLE_KEY) return [];
+  try {
+    const since = new Date(now - pastHours * 3600e3).toISOString();
+    const locks = await sb(env, `wnba_pbe_locked_predictions?contract=eq.${CONTRACT}&scheduled_tip_utc=gte.${encodeURIComponent(since)}&select=${OFFICIAL_LOCK_SELECT}&order=scheduled_tip_utc.asc&limit=200`);
+    if (!withGrades || !locks.length) return locks.map((lock) => ({ lock, grade: null }));
+    const grades = await sb(env, 'wnba_pbe_current_grades?select=prediction_id,revision,result,home_score,away_score,winner_team_id,graded_at,correction_reason&limit=2000');
+    const byPrediction = new Map(grades.map((grade) => [String(grade.prediction_id), grade]));
+    return locks.map((lock) => ({ lock, grade: byPrediction.get(String(lock.prediction_id)) || null }));
+  } catch {
+    // KV remains a last-good serving path if the durable ledger is temporarily unreachable.
+    return [];
+  }
+}
+
+async function officialLockByGame(env, gameId) {
+  if (!env.PBE_SUPABASE_URL || !env.PBE_SUPABASE_SERVICE_ROLE_KEY) return null;
+  try {
+    const locks = await sb(env, `wnba_pbe_locked_predictions?contract=eq.${CONTRACT}&game_id=eq.${encodeURIComponent(gameId)}&select=${OFFICIAL_LOCK_SELECT}&limit=1`);
+    if (!locks.length) return null;
+    const lock = locks[0];
+    const grades = await sb(env, `wnba_pbe_current_grades?prediction_id=eq.${encodeURIComponent(lock.prediction_id)}&select=prediction_id,revision,result,home_score,away_score,winner_team_id,graded_at,correction_reason&limit=1`);
+    return { lock, grade: grades[0] || null };
+  } catch {
+    return null;
+  }
+}
+
+function mergeOfficialGames(indexGames, entries) {
+  const games = [...(indexGames || [])];
+  for (const entry of entries) {
+    const row = entry.lock;
+    const id = String(row.game_id);
+    if (games.some((g) => String(g.game_id) === id)) {
+      const existing = games.find((g) => String(g.game_id) === id);
+      existing.locked = true;
+      continue;
+    }
+    games.push({
+      game_id: id,
+      scheduled_tip_utc: row.scheduled_tip_utc,
+      home_team_id: String(row.home_team_id),
+      away_team_id: String(row.away_team_id),
+      locked: true
+    });
+  }
+  return games.sort((a, b) => Date.parse(a.scheduled_tip_utc) - Date.parse(b.scheduled_tip_utc));
+}
+
+async function loadCallAuthoritative(env, ledger, gameId, ledgerEntry = null) {
+  let { doc, lock, grade } = await loadCall(env, ledger, gameId);
+  if (ledger === 'official' && ledgerEntry?.lock) {
+    // The immutable Supabase row wins over every mutable discovery/index/cache layer.
+    lock = officialLockDoc(ledgerEntry.lock, doc);
+    grade = ledgerEntry.grade || grade;
+    if (!doc) doc = { game: lock.game, reasoning: lock.reasoning };
+  }
+  return { doc, lock, grade };
 }
 
 // ------------------------------------------------------------------ public
@@ -143,7 +250,8 @@ export async function pbeCoverage({ env }) {
   const ledger = env.PBE_PUBLISH === 'true' ? 'official' : 'shadow';
   const index = env.WNBA_KV ? await env.WNBA_KV.get(KV(ledger, 'index'), 'json') : null;
   const now = Date.now();
-  const games = (index?.games || [])
+  const official = ledger === 'official' ? await officialLockWindow(env, { now, pastHours: 3, withGrades: false }) : [];
+  const games = mergeOfficialGames(index?.games, official)
     .filter((g) => Date.parse(g.scheduled_tip_utc) > now - 3 * 3600e3)
     .map((g) => ({ game_id: g.game_id, scheduled_tip_utc: g.scheduled_tip_utc, home_team_id: g.home_team_id, away_team_id: g.away_team_id, phase: g.locked ? 'LOCKED' : lockPhase(g.scheduled_tip_utc, now) === 'pre_lock' ? 'PRE_LOCK' : 'NOT_LOCKED' }));
   return json({ ok: true, data: { published: env.PBE_PUBLISH === 'true', availability: env.PBE_PUBLISH === 'true' ? 'LIVE' : 'MODEL_IN_VALIDATION', generated_at: index?.generated_at || null, games } }, 30);
@@ -196,15 +304,16 @@ export async function pbeFreeSample({ env }) {
 
   const index = await env.WNBA_KV.get(KV('official', 'index'), 'json');
   const now = Date.now();
-  const ids = (index?.games || [])
+  const official = await officialLockWindow(env, { now, pastHours: 3, withGrades: false });
+  const byGame = new Map(official.map((entry) => [String(entry.lock.game_id), entry]));
+  const ids = mergeOfficialGames(index?.games, official)
     .filter((x) => Date.parse(x.scheduled_tip_utc) > now - 3 * 3600e3)
-    .sort((a, b) => Date.parse(a.scheduled_tip_utc) - Date.parse(b.scheduled_tip_utc))
-    .map((x) => x.game_id);
+    .map((x) => String(x.game_id));
 
   const picks = [];
   for (const id of ids) {
     if (picks.length >= 2) break;
-    const { doc, lock, grade } = await loadCall(env, 'official', id);
+    const { doc, lock, grade } = await loadCallAuthoritative(env, 'official', id, byGame.get(String(id)) || null);
     if (!doc) continue;
     const item = callItem(doc, lock, grade, 'official');
     if (item.call !== 'PICK' || !['PRE_LOCK', 'LOCKED'].includes(item.phase) || !item.pick_team_id) continue;
@@ -257,10 +366,14 @@ export async function pbePicks({ request, env }) {
   if (g instanceof Response) return g;
   const index = await env.WNBA_KV.get(KV(g.vis.ledger, 'index'), 'json');
   const now = Date.now();
-  const ids = (index?.games || []).filter((x) => Date.parse(x.scheduled_tip_utc) > now - 36 * 3600e3).map((x) => x.game_id);
+  const official = g.vis.ledger === 'official' ? await officialLockWindow(env, { now, pastHours: 36, withGrades: true }) : [];
+  const byGame = new Map(official.map((entry) => [String(entry.lock.game_id), entry]));
+  const ids = mergeOfficialGames(index?.games, official)
+    .filter((x) => Date.parse(x.scheduled_tip_utc) > now - 36 * 3600e3)
+    .map((x) => String(x.game_id));
   const calls = [];
   for (const id of ids) {
-    const { doc, lock, grade } = await loadCall(env, g.vis.ledger, id);
+    const { doc, lock, grade } = await loadCallAuthoritative(env, g.vis.ledger, id, byGame.get(String(id)) || null);
     if (doc) calls.push(callItem(doc, lock, grade, g.vis.ledger));
   }
   calls.sort((a, b) => Date.parse(a.game.scheduled_tip_utc) - Date.parse(b.game.scheduled_tip_utc));
@@ -270,7 +383,8 @@ export async function pbePicks({ request, env }) {
 export async function pbeGame({ request, env, params }) {
   const g = await gate(request, env);
   if (g instanceof Response) return g;
-  const { doc, lock, grade } = await loadCall(env, g.vis.ledger, params.id);
+  const entry = g.vis.ledger === 'official' ? await officialLockByGame(env, params.id) : null;
+  const { doc, lock, grade } = await loadCallAuthoritative(env, g.vis.ledger, params.id, entry);
   if (!doc) return privateJson(request, { ok: false, error: { code: 'no_call', message: 'No PBE call exists for this game.' } }, 404);
   return privateJson(request, { ok: true, data: callItem(doc, lock, grade, g.vis.ledger) });
 }
@@ -280,11 +394,13 @@ export async function pbeTeam({ request, env, params }) {
   if (g instanceof Response) return g;
   const index = await env.WNBA_KV.get(KV(g.vis.ledger, 'index'), 'json');
   const now = Date.now();
-  const next = (index?.games || [])
-    .filter((x) => (x.home_team_id === params.id || x.away_team_id === params.id) && Date.parse(x.scheduled_tip_utc) > now - 3 * 3600e3)
+  const official = g.vis.ledger === 'official' ? await officialLockWindow(env, { now, pastHours: 3, withGrades: true }) : [];
+  const byGame = new Map(official.map((entry) => [String(entry.lock.game_id), entry]));
+  const next = mergeOfficialGames(index?.games, official)
+    .filter((x) => (String(x.home_team_id) === String(params.id) || String(x.away_team_id) === String(params.id)) && Date.parse(x.scheduled_tip_utc) > now - 3 * 3600e3)
     .sort((a, b) => Date.parse(a.scheduled_tip_utc) - Date.parse(b.scheduled_tip_utc))[0];
   if (!next) return privateJson(request, { ok: true, data: { access: 'granted', team_id: params.id, call: null, reason: 'no_upcoming_covered_game' } });
-  const { doc, lock, grade } = await loadCall(env, g.vis.ledger, next.game_id);
+  const { doc, lock, grade } = await loadCallAuthoritative(env, g.vis.ledger, next.game_id, byGame.get(String(next.game_id)) || null);
   if (!doc) return privateJson(request, { ok: true, data: { access: 'granted', team_id: params.id, call: null, reason: 'no_upcoming_covered_game' } });
   const item = callItem(doc, lock, grade, g.vis.ledger);
   if (!item.call) return privateJson(request, { ok: true, data: { access: 'granted', team_id: params.id, ...item } });
