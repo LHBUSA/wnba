@@ -170,6 +170,23 @@ test('a collapsed duplicate article URL permanently redirects to the canonical s
   assert.ok(!nf.doc.includes('data-ssr-path'));
 });
 
+test('news archive is a real indexable collection, not a dead-end rail', async () => {
+  const ar = await page('/news/archive');
+  assert.equal(ar.status, 200);
+  assert.match(ar.doc, /<title>WNBA News Archive: Past Stories &amp; Published Record \| PropBetEdge<\/title>/);
+  assert.match(ar.doc, /<h1 class="mast-title">WNBA News Archive<\/h1>/);
+  assert.ok(ar.doc.includes('href="/news/carla-leite-in-focus-e22194"'));
+  assert.ok(ar.doc.includes('href="/news/satou-sabally-out-for-the-season-per-espns-injury-feed-dfe9a7"'));
+  assert.match(ar.doc, /← Current newsroom/);
+  const ld = ldOf(ar.doc);
+  const collection = ld['@graph'].find((x) => x['@type'] === 'CollectionPage');
+  const list = ld['@graph'].find((x) => x['@type'] === 'ItemList');
+  assert.equal(collection.url, `${SITE}/news/archive`);
+  assert.ok(list.itemListElement.length >= 2);
+  const sitemap = sitemapXml({ articles: liveCards, players: [], teams: [], games: [] });
+  assert.match(sitemap, /<loc>https:\/\/wnba\.propbetedge\.ai\/news\/archive<\/loc>/);
+});
+
 // ------------------------------------------------------------ entity pages
 
 test('player, team and matchup pages have unique, descriptive metadata and the right schema', async () => {
