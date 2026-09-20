@@ -37,6 +37,50 @@ export function fullCourtPoint(shot, { home, away } = {}) {
   return { x: shot.x, y: distanceFromBaseline, side };
 }
 
+/**
+ * Visual-only deconfliction for photo markers. Exact shot coordinates never move:
+ * clustered markers fan a few pixels/feet around the real point, while a classic
+ * make/miss glyph and a tether stay anchored at the published location.
+ */
+function markerOffsets(points, threshold = 2.7) {
+  const groups = [];
+  for (let i = 0; i < points.length; i += 1) {
+    const p = points[i].point;
+    let target = null;
+    let best = Infinity;
+    for (const g of groups) {
+      const d = Math.hypot(p.x - g.cx, p.y - g.cy);
+      if (d <= threshold && d < best) { target = g; best = d; }
+    }
+    if (!target) {
+      groups.push({ members: [i], cx: p.x, cy: p.y });
+      continue;
+    }
+    target.members.push(i);
+    target.cx = target.members.reduce((sum, idx) => sum + points[idx].point.x, 0) / target.members.length;
+    target.cy = target.members.reduce((sum, idx) => sum + points[idx].point.y, 0) / target.members.length;
+  }
+
+  const out = new Map();
+  for (const g of groups) {
+    if (g.members.length < 2) continue;
+    g.members.forEach((idx, pos) => {
+      const ring = Math.floor(pos / 6);
+      const ringStart = ring * 6;
+      const count = Math.min(6, g.members.length - ringStart);
+      const slot = pos % 6;
+      const radius = 1.55 + ring * 1.25;
+      const angle = (-Math.PI / 2) + ((Math.PI * 2 * slot) / count) + (ring % 2 ? Math.PI / 6 : 0);
+      out.set(idx, {
+        dx: Math.cos(angle) * radius,
+        dy: Math.sin(angle) * radius,
+        count: g.members.length
+      });
+    });
+  }
+  return out;
+}
+
 function halfCourtGeometry() {
   return `
     <rect x="17" y="${SOURCE_BASE_Y}" width="16" height="${14 - SOURCE_BASE_Y}" class="c-lane"/>
@@ -69,11 +113,14 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
     <text x="${COURT_W - 4}" y="${COURT_L - 7}" text-anchor="end" class="c-team-label home">${escapeXml(home?.abbr || 'HOME')}</text>
   `;
 
-  const marks = shots
+  const plotted = shots
     .filter((s) => Number.isFinite(s.x) && Number.isFinite(s.y) && s.y <= SOURCE_HALF_Y)
-    .map((s, index) => {
-      const point = fullCourtPoint(s, { home, away });
-      if (!point) return '';
+    .map((s, index) => ({ s, index, point: fullCourtPoint(s, { home, away }) }))
+    .filter((row) => row.point);
+  const offsets = photoMode ? markerOffsets(plotted) : new Map();
+
+  const marks = plotted
+    .map(({ s, index, point }, plottedIndex) => {
       const { x, y, side } = point;
       const latest = highlightSeq !== null && s.seq === highlightSeq;
       const entering = animateSeq !== null && s.seq === animateSeq;
@@ -97,25 +144,29 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
         ['data-shot-value', s.value ?? '']
       ].map(([k, v]) => `${k}="${escapeXml(v)}"`).join(' ');
       const hasPhoto = photoMode && Boolean(s.photo?.square);
-      const pointClass = ['shot-point', hasPhoto ? 'has-photo' : '', latest ? 'is-latest' : '', entering ? 'entering' : ''].filter(Boolean).join(' ');
+      const offset = hasPhoto ? offsets.get(plottedIndex) : null;
+      const markerX = x + (offset?.dx || 0);
+      const markerY = y + (offset?.dy || 0);
+      const pointClass = ['shot-point', hasPhoto ? 'has-photo' : '', offset ? 'is-clustered' : '', latest ? 'is-latest' : '', entering ? 'entering' : ''].filter(Boolean).join(' ');
       const markerClass = `shot ${s.made ? 'made' : 'miss'} ${side}`;
       const classicMarker = s.made
         ? `<circle cx="${x}" cy="${y}" r="0.85" class="${markerClass}"/>`
         : `<g class="${markerClass}"><line x1="${x - 0.6}" y1="${y - 0.6}" x2="${x + 0.6}" y2="${y + 0.6}"/><line x1="${x - 0.6}" y1="${y + 0.6}" x2="${x + 0.6}" y2="${y - 0.6}"/></g>`;
       const clipId = `shot-photo-${String(s.seq ?? index).replace(/[^a-z0-9_-]/gi, '')}-${index}`;
       const photoMarker = hasPhoto ? `
-        <defs><clipPath id="${clipId}"><circle cx="${x}" cy="${y}" r="1.24"/></clipPath></defs>
+        <defs><clipPath id="${clipId}"><circle cx="${markerX}" cy="${markerY}" r="1.24"/></clipPath></defs>
         <g class="shot-photo-marker ${s.made ? 'made' : 'miss'} ${side}" aria-hidden="true">
-          <circle cx="${x}" cy="${y}" r="1.42" class="shot-photo-halo"/>
-          <image href="${escapeXml(s.photo.square)}" x="${x - 1.24}" y="${y - 1.24}" width="2.48" height="2.48"
+          <circle cx="${markerX}" cy="${markerY}" r="1.42" class="shot-photo-halo"/>
+          <image href="${escapeXml(s.photo.square)}" x="${markerX - 1.24}" y="${markerY - 1.24}" width="2.48" height="2.48"
             preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})" class="shot-photo"/>
-          <circle cx="${x}" cy="${y}" r="1.27" class="shot-photo-ring"/>
-          ${s.made ? '<circle cx="' + x + '" cy="' + y + '" r="1.48" class="shot-photo-result"/>' : '<path d="M' + (x - 1.0) + ' ' + (y - 1.0) + ' L' + (x + 1.0) + ' ' + (y + 1.0) + ' M' + (x - 1.0) + ' ' + (y + 1.0) + ' L' + (x + 1.0) + ' ' + (y - 1.0) + '" class="shot-photo-result"/>'}
+          <circle cx="${markerX}" cy="${markerY}" r="1.27" class="shot-photo-ring"/>
+          ${s.made ? '<circle cx="' + markerX + '" cy="' + markerY + '" r="1.48" class="shot-photo-result"/>' : '<path d="M' + (markerX - 1.0) + ' ' + (markerY - 1.0) + ' L' + (markerX + 1.0) + ' ' + (markerY + 1.0) + ' M' + (markerX - 1.0) + ' ' + (markerY + 1.0) + ' L' + (markerX + 1.0) + ' ' + (markerY - 1.0) + '" class="shot-photo-result"/>'}
         </g>` : classicMarker;
       const body = `
-        <circle cx="${x}" cy="${y}" r="${hasPhoto ? 2.1 : 1.9}" class="shot-latest-ring" aria-hidden="true"/>
+        <circle cx="${markerX}" cy="${markerY}" r="${hasPhoto ? 2.1 : 1.9}" class="shot-latest-ring" aria-hidden="true"/>
+        ${offset ? `<line x1="${x}" y1="${y}" x2="${markerX}" y2="${markerY}" class="shot-cluster-tether" aria-hidden="true"/>${classicMarker}` : ''}
         ${photoMarker}
-        <circle cx="${x}" cy="${y}" r="${hasPhoto ? 2.55 : 2.35}" class="shot-hit" aria-hidden="true"/>
+        <circle cx="${markerX}" cy="${markerY}" r="${hasPhoto ? 2.55 : 2.35}" class="shot-hit" aria-hidden="true"/>
       `;
       const href = hasPhoto && s.athlete_id ? `/players/${escapeXml(s.athlete_id)}` : null;
       return href
