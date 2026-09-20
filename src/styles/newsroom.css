@@ -18,6 +18,33 @@
 .sm-vs { position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 800 13px/1 var(--f-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: var(--gold); padding: 7px 9px; border-radius: 999px; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); }
 .sm--lead .sm-vs, .sm--hero .sm-vs { font-size: 16px; padding: 9px 12px; }
 
+/* First-paint guard for the two identity-correct but mixed-league uniform
+   assets retired from newsroom use. The client resolver replaces them with
+   team compositions after hydration; this CSS prevents even the SSR frame
+   from flashing the Fenerbahçe/Iowa jerseys beforehand. */
+@supports selector(:has(*)) {
+  .sm-half:has(img[src*="/media/news/players/2529205/"]) .sm-img,
+  .sm-half:has(img[src*="/media/news/players/4433403/"]) .sm-img,
+  .sm:has(> .sm-frame > img[src*="/media/news/players/2529205/"]) > .sm-frame > .sm-img,
+  .sm:has(> .sm-frame > img[src*="/media/news/players/4433403/"]) > .sm-frame > .sm-img {
+    opacity: 0;
+  }
+  .sm-half:has(img[src*="/media/news/players/2529205/"]) {
+    background:
+      url('/media/teams/8/320.webp') center / min(46%, 150px) auto no-repeat,
+      radial-gradient(circle at 50% 42%, color-mix(in srgb, #266092 48%, var(--ink-2)), var(--ink-2));
+  }
+  .sm-half:has(img[src*="/media/news/players/4433403/"]) {
+    background:
+      url('/media/teams/5/320.webp') center / min(46%, 150px) auto no-repeat,
+      radial-gradient(circle at 50% 42%, color-mix(in srgb, #002d62 48%, var(--ink-2)), var(--ink-2));
+  }
+  .sm:has(img[src*="/media/news/players/2529205/"]) .sm-credit,
+  .sm:has(img[src*="/media/news/players/4433403/"]) .sm-credit {
+    display: none;
+  }
+}
+
 /* team compositions (no photographed subject): colour field, court lines, the team mark — no stand-in player */
 .sm--teamonly .sm-frame, .sm--teams .sm-frame { background:
   radial-gradient(ellipse 70% 90% at 70% 40%, color-mix(in srgb, var(--tc1) 42%, transparent), transparent 70%),
