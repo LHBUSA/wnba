@@ -20,6 +20,7 @@ const PAGES = {
   player: () => import('../pages/player.js'),
   injuries: () => import('../pages/injuries.js'),
   news: () => import('../pages/news.js'),
+  'news-archive': () => import('../pages/news-archive.js'),
   'news-cat': () => import('../pages/news.js'),
   'news-team': () => import('../pages/news.js'),
   story: () => import('../pages/story.js'),
