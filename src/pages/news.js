@@ -5,6 +5,7 @@ import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
 import { skeleton } from '../ui/components.js';
 import { KIND_LABEL, DESK } from '../ui/articles.js';
+import { attachVideo } from '../ui/video.js';
 import { createPoller } from '../lib/poller.js';
 import { routeMeta } from '../seo/meta.js';
 import { loadNews, newsView, newsHeadView } from '../views/news.js';
@@ -85,6 +86,7 @@ export async function mount(root, ctx) {
     const v = newsView(data);
     render(root, v.body);
     root.querySelectorAll('details[data-desk-menu] > summary').forEach((s) => { if (open.includes(s.textContent.trim())) s.parentElement.open = true; });
+    attachVideo(root);
     wireHero();
     if (teamId && data.team && !metaSet) { ctx.setMeta(routeMeta('news-team', { path: ctx.path, params: ctx.params, data: { team: data.team }, empty: v.empty })); metaSet = true; }
     painted = true;
