@@ -112,28 +112,77 @@ async function sbSelect(env, path) {
   return res.json();
 }
 
-/** KV mirror of a lock the database already holds. Every frozen value comes from the ledger row, never from a newer document. */
+/** KV mirror of a lock the database already holds. Every frozen value comes from the ledger row, never from a newer document.
+ * doc is optional: Supabase is the system of record and reconciliation must still work after the provisional KV doc expires. */
 export function lockDocFromLedgerRow(row, doc, ledger) {
+  const game = doc?.game || {
+    game_id: String(row.game_id),
+    season: row.season,
+    season_type: row.season_type,
+    scheduled_tip_utc: row.scheduled_tip_utc,
+    neutral_site: Boolean(row.neutral_site),
+    home_team_id: String(row.home_team_id),
+    away_team_id: String(row.away_team_id),
+    home: null,
+    away: null
+  };
+  const model = doc?.model || {
+    model_id: row.model_id,
+    artifact_sha256: row.artifact_sha256,
+    feature_spec_sha256: row.feature_spec_sha256,
+    feature_schema: null
+  };
   return {
-    ...lockDoc(doc, { now: Date.parse(row.locked_at), ledger }),
+    schema: 'pbe-wnba-lock/1',
+    ledger,
+    contract: row.contract || CONTRACT,
+    lock_policy: row.lock_policy || LOCK_POLICY.id,
     locked_at: row.locked_at,
     prediction_id: row.prediction_id,
     source_generated_at: row.generated_at,
+    game,
+    model,
     call: row.call,
     no_call_reason: row.no_call_reason,
+    flags: doc?.flags || [],
+    eligibility: doc?.eligibility || null,
     p_home: row.p_home,
     selected_team_id: row.selected_team_id,
     selected_side: row.selected_side,
     win_probability: row.win_probability,
     confidence: row.confidence,
-    feature_order: row.feature_vector?.order ?? doc.feature_order,
-    feature_vector: row.feature_vector?.values ?? doc.feature_vector,
+    feature_order: row.feature_vector?.order ?? doc?.feature_order ?? [],
+    feature_vector: row.feature_vector?.values ?? doc?.feature_vector ?? [],
     feature_hash: row.feature_hash,
     reasoning: row.reasoning,
     market_at_lock: row.market_at_lock || { available: false, reason: 'no_market_at_lock', pbe_edge: null },
     pbe_edge_at_lock: row.pbe_edge_at_lock,
     mirrored_from_ledger: true
   };
+}
+
+/** Reconcile recent immutable Supabase locks into the KV serving index.
+ * Supabase wins even when a Worker request dies after the database commit. */
+export async function reconcileOfficialLocks(env, index, { now = Date.now(), days = 7 } = {}) {
+  const since = new Date(now - days * 86400e3).toISOString();
+  const rows = await sbSelect(env, `wnba_pbe_locked_predictions?contract=eq.${CONTRACT}&scheduled_tip_utc=gte.${encodeURIComponent(since)}&select=*&order=scheduled_tip_utc.asc&limit=200`);
+  let mirrored = 0;
+  let indexed = 0;
+  for (const row of rows) {
+    const id = String(row.game_id);
+    let lock = await env.WNBA_KV.get(K('official', 'lock', id), 'json');
+    if (!lock || !lock.prediction_id) {
+      const doc = await env.WNBA_KV.get(K('official', 'pred', id), 'json');
+      lock = lockDocFromLedgerRow(row, doc, 'official');
+      await env.WNBA_KV.put(K('official', 'lock', id), JSON.stringify(lock), { expirationTtl: 30 * 86400 });
+      mirrored += 1;
+    }
+    if (!index.locked_history.includes(id)) {
+      index.locked_history.push(id);
+      indexed += 1;
+    }
+  }
+  return { rows: rows.length, mirrored, indexed };
 }
 
 function lockRowFromObservation(obs, doc) {
@@ -253,6 +302,21 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
     .filter((g) => { const m = (Date.parse(g.start_utc) - now) / 60e3; return m > 0 && m <= LOCK_POLICY.scoring_window_hours * 60; })
     .sort((a, b) => Date.parse(a.start_utc) - Date.parse(b.start_utc));
 
+  const summary = { mode, ledger, run_id: runId, upcoming: upcoming.length, scored: 0, observations: 0, locks: 0, grades: 0, reconciled_locks: 0, ledger_locks_seen: 0, rows: null, skipped: [], errors: [] };
+
+  // Supabase is authoritative in armed mode. Repair any lock that committed there but missed its KV/index
+  // mirror BEFORE deciding whether an upcoming game still needs a lock and before grading old locks.
+  if (mode === 'armed') {
+    try {
+      const rec = await reconcileOfficialLocks(env, index, { now });
+      summary.reconciled_locks = rec.mirrored;
+      summary.ledger_locks_seen = rec.rows;
+      if (rec.indexed) summary.skipped.push(`lock_index_recovered:${rec.indexed}`);
+    } catch (e) {
+      summary.errors.push({ game_id: null, stage: 'lock_reconcile', phase: 'ledger', error: String(e.message || e).slice(0, 300) });
+    }
+  }
+
   const due = [];
   for (const g of upcoming) {
     const phase = lockPhase(g.start_utc, now);
@@ -261,8 +325,6 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
     if (locked) continue;
     if (phase === 'lock_due' || !hasPred || scoringDue(g.start_utc, minute, now)) due.push({ g, phase });
   }
-
-  const summary = { mode, ledger, run_id: runId, upcoming: upcoming.length, scored: 0, observations: 0, locks: 0, grades: 0, rows: null, skipped: [], errors: [] };
 
   if (due.length) {
     const prior = await maintainRows(env, year - 1, { beforeEtDate: todayEt, fetchSummary, events: await loadEvents(year - 1, 86400) });
