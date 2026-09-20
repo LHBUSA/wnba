@@ -26,7 +26,7 @@
 
 .lh-market { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
 .lh-market > div { min-width: 0; padding: 10px 11px; border: 1px solid var(--line); border-radius: 11px; background: rgba(0,0,0,.18); }
-.lh-market span, .lh-market small { display: block; font: 600 9.5px/1.25 var(--f-data); color: var(--faint); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lh-market span, .lh-market small { display: block; font: 600 9.5px/1.25 var(--f-data); color: var(--meta); text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lh-market b { display: block; margin: 5px 0 3px; font: 750 14px/1.15 var(--f-data); color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lh-market-age { border-color: color-mix(in srgb, var(--gold) 25%, var(--line)) !important; }
 .lh-market-empty { grid-template-columns: 1fr; }
@@ -44,7 +44,7 @@
 .lh-selector span { margin-top: 4px; font: 600 9.5px/1 var(--f-data); color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
 
 .lh-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
-.lh-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font: 600 10px/1.2 var(--f-data); color: var(--faint); }
+.lh-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font: 600 10px/1.2 var(--f-data); color: var(--meta); }
 .lh-meta b { color: var(--paper-2); font-weight: 650; }
 .lh-presence { display: inline-flex; align-items: center; gap: 7px; color: var(--paper-2); letter-spacing: .08em; }
 .lh-presence i { width: 7px; height: 7px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 0 3px var(--pos-soft); }
