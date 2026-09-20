@@ -164,7 +164,9 @@ function fakeSupabase({ lockFail = () => null, existingLocks = [], existingGrade
     db.calls.push(`${init.method || 'GET'} ${table}`);
     if ((init.method || 'GET') === 'GET') {
       if (table === 'wnba_pbe_locked_predictions') {
-        const gid = (url.searchParams.get('game_id') || '').replace('eq.', '');
+        const raw = url.searchParams.get('game_id');
+        if (!raw) return reply(db.locks); // armed reconciliation scans recent authoritative locks
+        const gid = raw.replace('eq.', '');
         return reply(db.locks.filter((l) => l.game_id === gid));
       }
       if (table === 'wnba_pbe_grade_revisions') {
@@ -241,23 +243,33 @@ test('armed: one refused lock never takes the other game at that tip time down w
   assert.equal(index.last_summary.locks, 1);
 });
 
-test('armed: a lock the ledger already holds is mirrored from the ledger row, not skipped and not rebuilt', async (t) => {
-  const ledgerRow = { game_id: 'G_A', contract: 'game_winner_v1', prediction_id: 'pred-first', locked_at: '2026-09-01T00:00:00+00:00', generated_at: '2026-08-31T23:59:00+00:00', call: 'PICK', no_call_reason: null, p_home: 0.61, selected_team_id: '20', selected_side: 'home', win_probability: 0.61, confidence: 'medium', feature_vector: { order: ['f'], values: [1] }, feature_hash: 'a'.repeat(64), reasoning: { home: { supporting: [], opposing: [], adjustments: [] }, away: { supporting: [], opposing: [], adjustments: [] } }, market_at_lock: null, pbe_edge_at_lock: null };
+test('armed: a lock the ledger already holds is reconciled before scoring and never rebuilt', async (t) => {
+  const tip = new Date(NOW + 14 * 60e3).toISOString();
+  const ledgerRow = {
+    game_id: 'G_A', contract: 'game_winner_v1', prediction_id: 'pred-first',
+    season: 2026, season_type: 2, scheduled_tip_utc: tip, home_team_id: '20', away_team_id: '18', neutral_site: false,
+    locked_at: new Date(NOW - 60e3).toISOString(), generated_at: new Date(NOW - 2 * 60e3).toISOString(),
+    call: 'PICK', no_call_reason: null, p_home: 0.61, selected_team_id: '20', selected_side: 'home',
+    win_probability: 0.61, confidence: 'medium', feature_vector: { order: ['f'], values: [1] },
+    feature_hash: 'a'.repeat(64), model_id: 'pbe-wnba-model-v1', artifact_sha256: 'b'.repeat(64),
+    feature_spec_sha256: 'c'.repeat(64),
+    reasoning: { home: { supporting: [], opposing: [], adjustments: [] }, away: { supporting: [], opposing: [], adjustments: [] } },
+    market_at_lock: null, pbe_edge_at_lock: null, lock_policy: 'T-15m/v1'
+  };
   const supabase = fakeSupabase({ existingLocks: [ledgerRow] });
   const { kv, env, eventsFor } = await armedSetup(t, supabase);
   const s = await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
-  assert.ok(s.skipped.includes('already_locked_mirrored:G_A'));
+  assert.equal(s.reconciled_locks, 1);
+  assert.ok(s.skipped.includes('lock_index_recovered:1'));
   const lock = JSON.parse(kv.map.get('pbe:v1:official:lock:G_A'));
   assert.equal(lock.prediction_id, 'pred-first');
-  assert.equal(lock.p_home, 0.61, 'the frozen ledger value, not the newer document');
+  assert.equal(lock.p_home, 0.61, 'the frozen ledger value, not a newer document');
   assert.equal(lock.win_probability, 0.61);
   assert.equal(lock.mirrored_from_ledger, true);
   assert.ok(kv.map.has('pbe:v1:official:lock:G_B'));
-  // next minute: nothing is re-attempted for either game
-  const before = supabase.db.calls.length;
   const s2 = await pbeTask(env, { now: NOW + 60e3, minute: 1, eventsFor, fetchSummary: noSummaries });
   assert.equal(s2.locks, 0);
-  assert.equal(supabase.db.calls.length, before);
+  assert.equal(s2.reconciled_locks, 0, 'an intact KV mirror is not rewritten');
 });
 
 
@@ -300,4 +312,40 @@ test('armed: grade written to ledger but missing from KV is recovered idempotent
   assert.equal(repaired.grade_id, ledgerGrade.grade_id);
   assert.equal(repaired.result, ledgerGrade.result);
   assert.equal(supabase.db.grades.filter((g) => g.prediction_id === ledgerGrade.prediction_id).length, 1, 'no duplicate grade inserted');
+});
+
+
+test('armed: a Supabase lock missing from KV and index is recovered after tip and still graded', async (t) => {
+  const supabase = fakeSupabase();
+  const { kv, env, events, eventsFor } = await armedSetup(t, supabase);
+
+  // Create the official locks normally, then simulate the exact production failure:
+  // the immutable DB row survived but the serving KV mirror/index entry did not.
+  await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+  const row = supabase.db.locks.find((l) => l.game_id === 'G_A');
+  assert.ok(row?.prediction_id, 'authoritative lock exists first');
+
+  kv.map.delete('pbe:v1:official:lock:G_A');
+  const index = JSON.parse(kv.map.get('pbe:v1:official:index'));
+  index.locked_history = index.locked_history.filter((id) => id !== 'G_A');
+  await kv.put('pbe:v1:official:index', JSON.stringify(index));
+
+  const game = events[2026].find((e) => e.id === 'G_A');
+  game.status.type.name = 'STATUS_FINAL';
+  game.competitions[0].competitors.find((x) => x.homeAway === 'home').score = '88';
+  game.competitions[0].competitors.find((x) => x.homeAway === 'away').score = '79';
+
+  const s = await pbeTask(env, { now: NOW + 3 * 3600e3, minute: 2, eventsFor, fetchSummary: noSummaries });
+  assert.equal(s.reconciled_locks, 1, 'the missing lock mirror is rebuilt from Supabase even after tip');
+  const repairedLock = JSON.parse(kv.map.get('pbe:v1:official:lock:G_A'));
+  assert.equal(repairedLock.prediction_id, row.prediction_id);
+  assert.equal(repairedLock.mirrored_from_ledger, true);
+  const repairedIndex = JSON.parse(kv.map.get('pbe:v1:official:index'));
+  assert.ok(repairedIndex.locked_history.includes('G_A'), 'recovered lock is restored to grading history');
+
+  const grade = JSON.parse(kv.map.get('pbe:v1:official:grade:G_A'));
+  assert.equal(grade.result, 'win');
+  assert.equal(grade.home_score, 88);
+  assert.equal(grade.away_score, 79);
+  assert.equal(supabase.db.grades.filter((g) => g.prediction_id === row.prediction_id).length, 1, 'one immutable grade is recorded');
 });
