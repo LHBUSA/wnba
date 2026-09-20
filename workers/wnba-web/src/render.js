@@ -11,7 +11,7 @@ import { pageGraph } from '../../../src/seo/jsonld.js';
 import { headTags } from '../../../src/seo/head.js';
 import { DESKS } from '../../../src/seo/site.js';
 import { articleView, loadArticle } from '../../../src/views/article.js';
-import { loadNews, newsView } from '../../../src/views/news.js';
+import { loadNews, newsView, loadArchive, archiveView } from '../../../src/views/news.js';
 import { loadPlayer, playerView } from '../../../src/views/player.js';
 import { loadTeam, teamView } from '../../../src/views/team.js';
 import { loadMatchup, matchupView, loadMatchupsList, matchupsListView } from '../../../src/views/matchups.js';
@@ -47,6 +47,13 @@ export async function renderRoute(pathname, api) {
     case 'today': {
       const data = await loadToday(api);
       return out(200, routeMeta(id, { path }), todayView(data).body);
+    }
+    case 'news-archive': {
+      const archive = await loadArchive(api);
+      const v = archiveView(archive);
+      const meta = routeMeta(id, { path, data: { items: v.items || [] }, empty: !v.items?.length });
+      if (v.error) return out(503, { ...meta, robots: NOINDEX_ROBOTS }, v.body, null);
+      return out(200, meta, v.body, { items: v.items || [] });
     }
     case 'news':
     case 'news-cat': {
