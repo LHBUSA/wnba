@@ -51,7 +51,7 @@ export function bindingApi(env, { timeoutMs = 9000 } = {}) {
     news: (p) => N(`/v1/news${qs(p)}`),
     articles: async (p = {}) => correctArticleListResponse(
       await N(`/v1/articles${qs(p)}`),
-      { playerId: p.player ?? null, teamId: p.team ?? null }
+      { playerId: p.player ?? null, teamId: p.team ?? null, archive: p.archive === 1 || p.archive === '1' }
     ),
     article: async (slug) => {
       const incident = isMilesRecordSlug(slug);
