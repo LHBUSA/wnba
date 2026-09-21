@@ -8,6 +8,7 @@ export const title = () => 'Source status & methodology';
 export const description = () => 'Live source health for PropBetEdge WNBA, measured from the Cloudflare runtime, plus the methods behind every derived number.';
 
 export async function mount(root, ctx) {
+  if (typeof location !== 'undefined' && location.hash === '#winba-score') return ctx.go('/winba-score', { replace: true });
   render(root, html`${sourcesHead()}${sourcesRegistryView()}${skeleton(360)}`);
   const [src, health, news] = await Promise.all([api.sources(), api.health(), api.newsSources()]);
   if (!ctx.isCurrent()) return;
@@ -50,7 +51,7 @@ export async function mount(root, ctx) {
         <li><b>Runs, lead changes and team fouls</b> are computed from the published event stream; lead changes and largest leads reproduce ESPN’s own box totals on audited games.</li>
         <li><b>Pace</b> is the standard possessions estimate (FGA − OREB + TOV + 0.44·FTA) and is labelled as an estimate.</li>
         <li><b>Rotations</b> are observed from the last five real box scores; roles follow stated minute rules.</li>
-        <li id="winba-score"><b>WinBA Score</b> is PropBetEdge’s 0–100 winning-impact index from archived regular-season finals only: 45% league percentile of Box Impact per 36, 25% player win rate in games appeared, 20% share of Box Impact produced in wins, and 10% court share (average minutes ÷ 40). Box Impact = PTS + 1.2×REB + 1.5×AST. The production benchmark uses qualification-eligible players; 10 appearances or 250 minutes qualifies, otherwise the score is Provisional. WinBA describes box production and playing time associated with team wins; it is not a causal wins-added metric.</li>
+        <li><b>WinBA Score</b> has its own <a href="/winba-score">formula, live rankings, qualification rules and limitations</a>.</li>
         <li><b>Market consensus</b> is the median no-vig probability across books — a benchmark, never a PropBetEdge model.</li>
         <li><b>Newsroom events</b> are one story per real-world event: reports are joined by their facts (event type, player, team), scored by a stated materiality rule, and only material events become stories.</li>
         <li><b>Player photos</b> are Wikimedia Commons images under CC0 / public-domain / CC BY / CC BY-SA, matched to the player by exact name and date of birth on Wikidata, then crop-reviewed. Otherwise a neutral card.</li>
