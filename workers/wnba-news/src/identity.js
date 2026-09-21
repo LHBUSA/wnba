@@ -142,9 +142,12 @@ export function articleIdentityFailures(article, { dict = null } = {}) {
     failures.push(`identity: primary subject "${article.primary_subject}" disagrees with lead player "${leadName}"`);
   }
 
-  const expectedTeam = String(leadEntity?.team_id || dictPlayer?.team_id || '');
+  // For stored history, compare against the team captured on the article's
+  // player entity. Do not retroactively judge an old story by today's roster
+  // dictionary after a legitimate trade.
+  const expectedTeam = String(leadEntity?.team_id || '');
   if (leadId && expectedTeam && article.lead_team_id != null && String(article.lead_team_id) !== expectedTeam) {
-    failures.push(`identity: lead player ${leadName || leadId} belongs to team ${expectedTeam}, not lead team ${article.lead_team_id}`);
+    failures.push(`identity: lead player ${leadName || leadId} was linked to team ${expectedTeam} in this event, not lead team ${article.lead_team_id}`);
   }
 
   if (article.kind === 'brief' || article.facts?.brief) {
