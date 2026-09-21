@@ -184,3 +184,47 @@ export async function loadCorrectedArticle(api, slug) {
   const related = Array.isArray(res.data.related) ? res.data.related.map(correctMilesRecordCard) : res.data.related;
   return { ...res, data: { ...res.data, article, related } };
 }
+
+
+export function milesRecordStaticArticle() {
+  const base = {
+    id: '6ff81a',
+    slug: MILES_RECORD_BAD_SLUG,
+    kind: 'brief',
+    category: 'News Briefs',
+    status: 'published',
+    headline: 'Caitlin Clark honored for the Minnesota Lynx: the season behind it',
+    deck: '',
+    body: [],
+    sections: [],
+    method: [
+      'Correction standard: publisher evidence identifies the event subject first; roster identity is bound to that player before team context is attached.',
+      'Record scope: PropBetEdge verifies the player’s current structured identity and season context. The all-time WNBA rookie-record comparison remains attributed to the publishers that reported it.',
+      'The original publication history is preserved; the incorrect subject/team/event combination is not silently erased.'
+    ],
+    evidence: [
+      { kind: 'publisher_report', publisher: 'NBC Sports', headline: 'Olivia Miles breaks Caitlin Clark’s WNBA rookie points record by scoring 770th point', url: 'https://www.nbcsports.com/wnba/news/olivia-miles-breaks-caitlin-clarks-wnba-rookie-points-record-by-scoring-770th-point', published_at: '2026-09-20T19:20:06.000Z' },
+      { kind: 'publisher_report', publisher: 'ESPN', headline: "Olivia Miles breaks Caitlin Clark's WNBA rookie points record", url: 'https://www.espn.com/wnba/story/_/id/49990917/olivia-miles-breaks-caitlin-clark-wnba-rookie-points-record', published_at: '2026-09-20T20:35:18.000Z' },
+      { kind: 'publisher_report', publisher: 'CBS Sports', headline: "Lynx guard Olivia Miles breaks Caitlin Clark's WNBA rookie scoring record, continuing historic campaign", url: 'https://www.cbssports.com/wnba/news/olivia-miles-breaks-caitlin-clarks-wnba-rookie-scoring-record', published_at: '2026-09-20T22:26:40.000Z' },
+      { kind: 'publisher_report', publisher: 'Just Women’s Sports', headline: 'Olivia Miles Breaks Caitlin Clark’s Rookie Scoring Record as WNBA Awards Loom', url: 'https://justwomenssports.com/reads/olivia-miles-caitlin-clark-rookie-scoring-record-wnba-awards', published_at: '2026-09-21T15:11:33.000Z' },
+      { kind: 'record', source: 'PropBetEdge WNBA player record', url: 'https://wnba.propbetedge.ai/players/4433791', captured_at: CORRECTED_AT, record: { athlete_id: MILES_ID, team_id: LYNX_ID } }
+    ],
+    first_published_at: '2026-09-21T15:16:26.198Z',
+    published_at: '2026-09-21T15:16:26.198Z',
+    revised_at: CORRECTED_AT,
+    revisions: [],
+    generator: { version: 'publication-integrity-correction/1.0.0' },
+    provenance: {
+      generator: 'publication-integrity-correction/1.0.0',
+      generated_at: CORRECTED_AT,
+      source_observed_at: '2026-09-21T15:11:33.000Z'
+    },
+    facts: { brief: { event_type: 'awards', linked_entities: [] } },
+    context: { brief: { event_type: 'awards' } },
+    entities: []
+  };
+  return correctMilesRecordArticle(base, {
+    player: { athlete_id: MILES_ID, name: 'Olivia Miles', team: { team_id: LYNX_ID, name: 'Minnesota Lynx', short_name: 'Lynx' } },
+    recent: { season: { games: 41, pts: 19.5, reb: 4.8, ast: 6.0, min: 30.9 } }
+  });
+}
