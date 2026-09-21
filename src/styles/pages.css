@@ -1554,9 +1554,10 @@ a.pp-name:hover { color: var(--gold-bright); }
 /* WinBA flagship leaderboard */
 .winba-podium-showcase {
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr) minmax(0,.92fr);
   gap:14px;
-  margin:20px 0 14px;
+  align-items:end;
+  margin:22px 0 16px;
 }
 .winba-podium-feature {
   position:relative;
@@ -1579,9 +1580,13 @@ a.pp-name:hover { color: var(--gold-bright); }
   box-shadow:0 22px 54px rgba(0,0,0,.24);
 }
 .winba-podium-feature--1 {
-  border-color:rgba(240,179,35,.42);
-  box-shadow:0 20px 60px rgba(240,179,35,.08),0 16px 42px rgba(0,0,0,.2);
+  order:2;
+  min-height:462px;
+  border-color:rgba(240,179,35,.5);
+  box-shadow:0 24px 66px rgba(240,179,35,.1),0 18px 46px rgba(0,0,0,.24);
 }
+.winba-podium-feature--2 { order:1; }
+.winba-podium-feature--3 { order:3; }
 .winba-podium-photo {
   position:relative;
   min-height:285px;
@@ -1689,6 +1694,7 @@ a.pp-name:hover { color: var(--gold-bright); }
 }
 @media (max-width:860px) {
   .winba-podium-showcase { grid-template-columns:1fr; }
+  .winba-podium-feature--1,.winba-podium-feature--2,.winba-podium-feature--3 { order:initial; min-height:0; }
   .winba-podium-feature {
     grid-template-columns:minmax(150px,.62fr) minmax(0,1fr);
     min-height:0;
