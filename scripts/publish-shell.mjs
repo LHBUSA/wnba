@@ -12,6 +12,7 @@ import { shellHtml } from '../src/ui/shell.js';
 import { proFeaturePublicView } from '../src/views/pro-intelligence.js';
 import { playerLoadPublicView } from '../src/views/player-load.js';
 import { historyView } from '../src/views/history.js';
+import { winbaScoreView } from '../src/views/winba-score.js';
 import { intelligenceFeature } from '../src/data/pro-features.js';
 import { routeMeta } from '../src/seo/meta.js';
 import { pageGraph } from '../src/seo/jsonld.js';
@@ -53,6 +54,7 @@ for (const [route, pathname, filename] of premiumRoutes) {
 writeStaticRoute('player-load', '/player-load', 'player-load.html', playerLoadPublicView());
 writeStaticRoute('daily-brief', '/brief', 'brief.html');
 writeStaticRoute('history', '/history', 'history.html', historyView());
+writeStaticRoute('winba-score', '/winba-score', 'winba-score.html', winbaScoreView());
 
 if (process.env.VERCEL) fs.rmSync(src);
 console.log(`publish-shell: app shell + route-specific SEO shells written${process.env.VERCEL ? ' (index.html removed for Vercel routing)' : ''}`);
