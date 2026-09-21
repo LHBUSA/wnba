@@ -171,16 +171,13 @@
 
 /* A WinBA Index edition gives the ranking the full column. The generic entity
    rail is replaced by a series rail that is narrower and lower priority. */
-.story-layout--index { grid-template-columns: minmax(0, 1fr) 232px; gap: 34px; }
-@media (min-width: 1180px) {
-  .story--index .wrap, .story--index { --index-wide: 1; }
-  /* The board breaks out of the text column: a ranking reads better wide. */
-  .story--index .wb-board,
-  .story--index .wb-depth { width: calc(100% + 232px + 34px); max-width: calc(100vw - 96px); }
-}
-@media (max-width: 1100px) {
-  .story-layout--index { grid-template-columns: minmax(0, 1fr); }
-}
+/* The ranking IS the product, so it takes the whole column. A breakout that
+   widened the board under a floating rail overlapped it; single-column gives the
+   board the full width with no overlap possible, and the series rail becomes a
+   horizontal strip beneath the story where it reads as navigation, not clutter. */
+.story-layout--index { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+.story-layout--index .story-aside { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; align-items: start; padding-top: 22px; border-top: 1px solid var(--line); }
+.story-layout--index .story-aside > section { margin: 0; }
 
 /* Header hierarchy: status, then the one title, then the frozen facts. */
 .wb-board-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 10px; }
