@@ -20,7 +20,7 @@ import { normalizeOddsEvent, normalizeProps, teamIndex, normalizeName } from '..
 import { upsert, insert, supabaseConfigured } from '../../shared/supabase.js';
 import { etCompact, addDays, etHour } from '../../shared/time.js';
 import { pbeTask } from './pbe-runner.js';
-import { buildWinbaSnapshot } from '../../shared/winba.js';
+import { buildWinbaSnapshot, buildWinbaSnapshotAsOf } from '../../shared/winba.js';
 
 const SERVICE = 'wnba-ingest';
 const VERSION = '1.0.4';
@@ -56,6 +56,14 @@ export default {
       const status = env.WNBA_KV ? await env.WNBA_KV.get('ingest:v1:status', 'json') : null;
       return j({ ok: true, service: SERVICE, version: VERSION, status });
     }
+    // READ-ONLY. Reconstructs what the WinBA board would have read at the close
+    // of each past calendar month, from the archived finals only, and writes
+    // nothing. It exists so the owner can see which months are genuinely
+    // reconstructible before any historical Index is published.
+    if (url.pathname === '/v1/winba/history-dryrun') {
+      if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
+      return j({ ok: true, data: await winbaHistoryDryRun(env, { top: Number(url.searchParams.get('top') || 10) }) });
+    }
     const m = url.pathname.match(/^\/run\/(live|availability|backfill|winba|schedule|reference|odds|pbe)$/);
     if (m && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
@@ -65,6 +73,77 @@ export default {
     return j({ ok: false, error: 'not_found' }, 404);
   }
 };
+
+
+/**
+ * What the WinBA board would have read at the close of each past month.
+ *
+ * Every period is computed with `buildWinbaSnapshotAsOf`, which applies the
+ * frozen V1 formula to ONLY the games that had actually tipped before the
+ * cutoff. No present-day value can enter a historical period: a game played
+ * after the cutoff is not in the aggregate at all.
+ *
+ * Read-only by construction — it never writes a snapshot, an article or a
+ * publication ledger entry.
+ */
+async function winbaHistoryDryRun(env, { top = 10 } = {}) {
+  if (!env.WNBA_KV) return { error: 'no_kv' };
+  const ids = (await env.WNBA_KV.get('archive:v1:index', 'json')) || [];
+  if (!Array.isArray(ids) || !ids.length) return { error: 'no_archives' };
+
+  const docs = (await Promise.all(ids.slice(-500).map((id) => env.WNBA_KV.get(`game:v1:final:${id}`, 'json')))).filter(Boolean);
+  const regular = docs.filter((d) => Number(d?.summary?.game?.season?.type) === 2 && d?.summary?.game?.status?.completed);
+  const seasons = regular.map((d) => Number(d?.summary?.game?.season?.year)).filter(Number.isFinite);
+  if (!seasons.length) return { error: 'no_regular_season_archives' };
+  const season = Math.max(...seasons);
+  const inSeason = regular.filter((d) => Number(d?.summary?.game?.season?.year) === season);
+
+  const tips = inSeason.map((d) => Date.parse(d.summary.game.start_utc)).filter(Number.isFinite).sort((a, b) => a - b);
+  const et = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit' }).format(new Date(ms)).slice(0, 7);
+  const periods = [...new Set(tips.map(et))].sort();
+  const cutoffOf = (p) => {
+    const [y, mo] = p.split('-').map(Number);
+    return mo === 12 ? `${y + 1}-01-01T00:00:00.000Z` : `${y}-${String(mo + 1).padStart(2, '0')}-01T00:00:00.000Z`;
+  };
+
+  const withBox = inSeason.filter((d) => (d?.summary?.box?.players || []).length).length;
+  const out = { season, archive_index_count: ids.length, docs_loaded: docs.length, regular_season_finals: inSeason.length,
+    finals_with_box_score: withBox, finals_missing_box_score: inSeason.length - withBox,
+    first_tip: new Date(tips[0]).toISOString(), last_tip: new Date(tips.at(-1)).toISOString(),
+    periods: [], generated_at: new Date().toISOString(), method: 'buildWinbaSnapshotAsOf (frozen WinBA v1 over games tipped before the period cutoff)' };
+
+  let prior = null;
+  for (const period of periods) {
+    const asOf = cutoffOf(period);
+    const snap = buildWinbaSnapshotAsOf(inSeason, { season, asOf });
+    const qualified = (snap.rows || []).filter((r) => r.qualified);
+    const ranked = [...qualified].sort((a, b) => b.score - a.score || String(a.athlete_id).localeCompare(String(b.athlete_id)));
+    const afterCutoff = inSeason.filter((d) => Date.parse(d.summary.game.start_utc) >= Date.parse(asOf)).length;
+    const row = {
+      period,
+      as_of: asOf,
+      games_used: snap.games_used,
+      archive_docs_in_window: snap.archive_docs_in_window,
+      games_excluded_after_cutoff: afterCutoff,
+      players_scored: (snap.rows || []).length,
+      qualified_count: qualified.length,
+      provisional_count: (snap.rows || []).length - qualified.length,
+      meets_qualification_floor: qualified.length >= 10,
+      top: ranked.slice(0, top).map((r, i) => ({
+        rank: i + 1, athlete_id: String(r.athlete_id), name: r.name, team_id: r.team_id ? String(r.team_id) : null,
+        score: r.score, games: r.sample?.games ?? null, wins: r.sample?.wins ?? null, minutes: r.sample?.minutes ?? null,
+        pts: r.averages?.pts ?? null, reb: r.averages?.reb ?? null, ast: r.averages?.ast ?? null,
+        production_percentile: r.components?.production_percentile ?? null, win_rate: r.components?.win_rate ?? null
+      })),
+      prior_period: prior ? prior.period : null,
+      movement_computable: Boolean(prior && prior.qualified_count),
+      movement_overlap: prior ? ranked.slice(0, top).filter((r) => prior.ids.has(String(r.athlete_id))).length : 0
+    };
+    out.periods.push(row);
+    prior = { period, qualified_count: qualified.length, ids: new Set(ranked.slice(0, 25).map((r) => String(r.athlete_id))) };
+  }
+  return out;
+}
 
 async function runTasks(env, ctx, tasks, trigger) {
   const results = {};
