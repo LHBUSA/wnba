@@ -137,7 +137,8 @@ ok('archive points at the live leaderboard', archive.includes('/winba-score'));
 
 const leaderboard = (await get(`${WEB}/winba-score`, 'text')).body;
 ok('live leaderboard links the latest edition', leaderboard.includes(`/news/${card.slug}`));
-ok('leaderboard distinguishes live from frozen', /frozen at publication/.test(leaderboard));
+// The live page must say which board is which, in whatever words it uses.
+ok('leaderboard distinguishes live from frozen', /live and current/.test(leaderboard) && /frozen monthly record/.test(leaderboard));
 
 const playerPage = (await get(`${WEB}/players/${rows[0].player_id}`, 'text')).body;
 ok('leader’s player page links the edition', playerPage.includes(`/news/${card.slug}`));
