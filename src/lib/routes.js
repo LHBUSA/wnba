@@ -30,6 +30,7 @@ export const ROUTE_TABLE = [
   { id: 'watchlist', re: /^\/watchlist$/ },
   { id: 'track-record', re: /^\/track-record$/ },
   { id: 'pro', re: /^\/pro$/ },
+  { id: 'winba-score', re: /^\/winba-score$/ },
   { id: 'sources', re: /^\/sources$/ },
   { id: 'about', re: /^\/about$/ },
   { id: 'editorial-policy', re: /^\/editorial-policy$/ },
