@@ -21,7 +21,7 @@ test('primary desktop nav keeps only the highest-frequency destinations', () => 
 });
 
 test('secondary destinations live inside one accessible More disclosure', () => {
-  assert.deepEqual(SECONDARY_NAV.map(([, , l]) => l), ['Daily Brief · FREE', 'Injuries', 'Players', 'Player Load', 'International', 'History', 'Standings', 'Stats', 'Teams', 'Track Record']);
+  assert.deepEqual(SECONDARY_NAV.map(([, , l]) => l), ['Daily Brief · FREE', 'Injuries', 'Players', 'Player Load', 'International', 'History', 'Standings', 'Stats', 'WinBA Score', 'Teams', 'Track Record']);
   assert.match(navBlock, /<button class="nav-more-btn" type="button" aria-expanded="false" aria-controls="nav-more-menu" data-more>/);
   assert.match(navBlock, /id="nav-more-menu" hidden>/, 'menu starts closed');
   for (const [id, href] of SECONDARY_NAV) assert.ok(moreMenu.includes(`<a href="${href}" data-nav="${id}">`), `${href} in More menu`);
