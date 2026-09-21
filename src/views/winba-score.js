@@ -1,27 +1,50 @@
 import { html } from '../lib/dom.js';
-import { pageHead } from '../ui/components.js';
+import { pageHead, avatar } from '../ui/components.js';
 import { fmtDateTimeET } from '../lib/format.js';
 
 const one = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : Number(v).toFixed(1));
 
 export async function loadWinbaScore(api) {
-  const [winba, teams] = await Promise.all([api.statsWinba(), api.teams()]);
-  return { winba, teams };
+  const [winba, players] = await Promise.all([api.statsWinba(), api.players()]);
+  return { winba, players };
 }
 
-function leaderCard(row, teamMap) {
-  const team = teamMap.get(String(row.team_id));
+function leaderPortrait(row, player) {
+  const photo = player?.photo;
+  const team = player?.team;
+  const tc = team?.color ? `#${String(team.color).replace(/^#/, '')}` : 'var(--gold)';
+  return html`<a class="winba-podium-feature winba-podium-feature--${row.rank}" href="/players/${row.athlete_id}" style="--tc:${tc}">
+    <div class="winba-podium-photo">
+      ${photo?.portrait
+        ? html`<img src="${photo.portrait}" alt="${row.name}" width="600" height="750" loading="lazy" decoding="async" />`
+        : html`<div class="winba-podium-fallback">${avatar({ name: row.name, photo, team }, { teamColor: team?.color })}</div>`}
+      <span class="winba-podium-place">#${row.rank}</span>
+    </div>
+    <div class="winba-podium-copy">
+      <small>${team?.name || 'WNBA'} · ${row.sample?.games ?? '—'} GP</small>
+      <strong>${row.name}</strong>
+      <div><b>${one(row.score)}</b><span>WINBA</span></div>
+      <p>${one(row.components?.production_percentile)} production · ${one(row.components?.win_rate)} win rate · ${row.sample?.minutes ?? '—'} minutes</p>
+    </div>
+  </a>`;
+}
+
+function leaderRow(row, player) {
+  const team = player?.team;
   return html`<a class="winba-authority-leader" href="/players/${row.athlete_id}">
     <span class="winba-authority-rank">#${row.rank}</span>
+    ${avatar({ name: row.name, photo: player?.photo, team }, { size: 'sm', teamColor: team?.color })}
     <span class="winba-authority-player"><b>${row.name}</b><small>${team?.name || 'WNBA'} · ${row.sample?.games ?? '—'} GP · ${row.sample?.minutes ?? '—'} MIN</small></span>
     <span class="winba-score">${one(row.score)}<em>WINBA</em></span>
   </a>`;
 }
 
-export function winbaScoreView({ winba = null, teams = null } = {}) {
+export function winbaScoreView({ winba = null, players = null } = {}) {
   const d = winba?.ok ? winba.data : null;
-  const teamMap = new Map((teams?.ok ? teams.data?.teams || [] : []).map((t) => [String(t.team_id), t]));
-  const leaders = (d?.rows || []).filter((r) => r.qualified && r.rank).sort((a, b) => a.rank - b.rank).slice(0, 5);
+  const playerMap = new Map((players?.ok ? players.data?.players || [] : []).map((p) => [String(p.athlete_id), p]));
+  const leaders = (d?.rows || []).filter((r) => r.qualified && r.rank).sort((a, b) => a.rank - b.rank).slice(0, 10);
+  const podium = leaders.slice(0, 3);
+  const rest = leaders.slice(3);
   const updated = d?.generated_at ? fmtDateTimeET(d.generated_at) : null;
   return html`
     ${pageHead({ eyebrow: 'PropBetEdge original metric', title: 'WinBA Score', sub: 'A 0–100 WNBA winning-impact index built to show how player production, playing time and team results fit together across the regular season.' })}
@@ -36,6 +59,15 @@ export function winbaScoreView({ winba = null, teams = null } = {}) {
       <div class="winba-authority-scale" aria-label="WinBA Score range"><strong>0–100</strong><span>WNBA winning-impact index</span><small>Season metric · higher reflects a stronger combination of the four published components below.</small></div>
     </section>
 
+    <section class="winba-authority-section section" id="winba-rankings">
+      <div class="winba-section-head"><div><span class="eyebrow">Current season</span><h2>WNBA WinBA rankings</h2><p class="winba-authority-lead">The live qualified leaderboard — built around the players, not a spreadsheet.</p></div>${d ? html`<div class="winba-live-meta"><b>${d.season || 'Current'} season</b><span>${d.games_used ?? '—'} regular-season finals · ${d.qualified_count ?? '—'} qualified</span>${updated ? html`<small>Updated ${updated}</small>` : ''}</div>` : ''}</div>
+      ${leaders.length ? html`
+        <div class="winba-podium-showcase">${podium.map((r) => leaderPortrait(r, playerMap.get(String(r.athlete_id))))}</div>
+        ${rest.length ? html`<div class="winba-authority-leaders">${rest.map((r) => leaderRow(r, playerMap.get(String(r.athlete_id))))}</div>` : ''}
+        <p class="note">Top 10 qualified players in the current WinBA snapshot, with verified player photography where available. <a href="/stats">Open the full WNBA player leaderboard →</a></p>
+      ` : html`<div class="empty"><h3>Live WinBA rankings are reconnecting.</h3><p>The formula, qualification rules and interpretation on this page remain the published WinBA v1 methodology. Current rankings will return when the live snapshot is available.</p></div>`}
+    </section>
+
     <section class="winba-authority-section section" id="how-winba-is-calculated">
       <span class="eyebrow">WinBA formula</span>
       <h2>How WinBA Score is calculated</h2>
@@ -47,11 +79,6 @@ export function winbaScoreView({ winba = null, teams = null } = {}) {
         <span><b>10%</b><strong>Court share</strong><small>Average minutes played divided by a 40-minute WNBA game.</small></span>
       </div>
       <div class="winba-box-impact"><span>BOX IMPACT</span><strong>PTS + 1.2 × REB + 1.5 × AST</strong><p>Box Impact is the production base used for the per-36 percentile and winning-output share.</p></div>
-    </section>
-
-    <section class="winba-authority-section section" id="winba-rankings">
-      <div class="winba-section-head"><div><span class="eyebrow">Current season</span><h2>WNBA WinBA rankings</h2></div>${d ? html`<div class="winba-live-meta"><b>${d.season || 'Current'} season</b><span>${d.games_used ?? '—'} regular-season finals · ${d.qualified_count ?? '—'} qualified</span>${updated ? html`<small>Updated ${updated}</small>` : ''}</div>` : ''}</div>
-      ${leaders.length ? html`<div class="winba-authority-leaders">${leaders.map((r) => leaderCard(r, teamMap))}</div><p class="note">Top five qualified players in the current WinBA snapshot. <a href="/stats">Open the full WNBA player leaderboard →</a></p>` : html`<div class="empty"><h3>Live WinBA rankings are reconnecting.</h3><p>The formula, qualification rules and interpretation on this page remain the published WinBA v1 methodology. Current rankings will return when the live snapshot is available.</p></div>`}
     </section>
 
     <section class="winba-authority-section section" id="how-to-read-winba">
