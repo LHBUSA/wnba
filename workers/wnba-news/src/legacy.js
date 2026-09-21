@@ -8,7 +8,7 @@
 //   quality_upgrade_available   below the current standard, but the current generator can rebuild it from records
 //                               that still exist — the run's bounded upgrade pass does so through the normal gate.
 //   legacy_acceptable           below the current standard, legitimate when published, sound (no integrity failure), and
-//                               the records to rebuild it are no longer in reach. Kept listed and labelled as published
+//                               the records to rebuild it are no longer in reach. Preserved in the archive but not promoted
 //                               under an earlier standard.
 //   external_coverage           another publisher's coverage, not a newsroom event (briefs.js). Unlisted, URL kept.
 //   retired_from_index          no longer deserves standalone listing: an integrity failure under the current checks, or
@@ -22,7 +22,7 @@ import { intelligenceOf } from '../../../src/lib/intelligence.js';
 
 export const LEGACY_POLICY_VERSION = 'wnba-legacy-policy/1.1.0';
 export const QUALITY_STATES = ['current_quality', 'quality_upgrade_available', 'legacy_acceptable', 'external_coverage', 'retired_from_index'];
-export const UNLISTED_STATES = new Set(['external_coverage', 'retired_from_index']);
+export const UNLISTED_STATES = new Set(['external_coverage', 'retired_from_index', 'legacy_acceptable']);
 const LISTING_OVER_MS = 12 * 3600e3;
 
 /** Is a card shown in newsroom listings (front page, desks, team/player lists, sitemaps, related)? */
