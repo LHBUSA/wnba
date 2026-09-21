@@ -380,3 +380,29 @@ test('a board frozen after the month closes reports it as finished', () => {
   assert.match(text, /finishes September 2026 at the top/);
   assert.doesNotMatch(text, /still being played/);
 });
+
+
+// The renderer prints only paragraphs a section covers. A lede outside every
+// section is therefore invisible on the page while still present in the API —
+// which is exactly how the first published Index lost its opening three
+// paragraphs. The contract is that sections cover the whole body.
+test('every body paragraph is covered by a section, so none can be dropped', () => {
+  const a = composeWinbaIndex(freeze(), { movement: null });
+  assert.equal(a.sections[0].first, 0, 'the lede must open the first section');
+  const covered = new Set();
+  for (const s of a.sections) for (let i = s.first; i < s.first + s.count; i += 1) covered.add(i);
+  const missing = a.body.map((_, i) => i).filter((i) => !covered.has(i));
+  assert.deepEqual(missing, [], `body paragraphs outside every section: ${missing.join(', ')}`);
+  // The lede section is untitled, so no heading is printed above it.
+  assert.equal(a.sections[0].title, null);
+  assert.equal(a.sections[0].key, 'lede');
+});
+
+test('the lede survives rendering', async () => {
+  const { articleView } = await import('../src/views/article.js');
+  const a = composeWinbaIndex(freeze(), { movement: null });
+  const html = String(articleView({ article: { ...a, id: 'x', slug: 's', media: null, method: [], published_at: AT, first_published_at: AT }, related: [] }));
+  assert.ok(html.includes('at the top of'), 'the lede sentence renders');
+  assert.ok(html.includes('association-with-winning index'), 'the methodology paragraph renders');
+  assert.ok(html.includes('The league leaders'), 'the sectioned copy still renders');
+});

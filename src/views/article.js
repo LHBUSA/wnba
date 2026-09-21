@@ -208,7 +208,7 @@ export function articleView({ article: a, related = [] }) {
       <div class="story-layout">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)
+            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)}`
             : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">

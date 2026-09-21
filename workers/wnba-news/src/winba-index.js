@@ -198,10 +198,19 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
   const label = frozen.period_label;
   const body = [];
   const sections = [];
-  const open = (title, render = null) => sections.push({ title, key: kebab(title), first: body.length, count: 0, ...(render ? { render } : {}) });
+  const open = (title, render = null) => sections.push({
+    title: title || null,
+    key: title ? kebab(title) : 'lede',
+    first: body.length,
+    count: 0,
+    ...(render ? { render } : {})
+  });
   const close = () => { const s = sections.at(-1); if (s) s.count = body.length - s.first; };
 
-  // ---- lede: the story of the board, not a list header
+  // ---- lede: the story of the board, not a list header.
+  // It opens an untitled section so the renderer, which prints only paragraphs
+  // covered by a section, carries it. Without this the lede is dropped.
+  open(null);
   const leadBits = statBits(leader.averages);
   const closed = frozen.period_complete !== false;
   body.push(
@@ -222,6 +231,8 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
   body.push(
     `${WINBA_LABEL} is built only from completed WNBA games: Box Impact (points plus 1.2 times rebounds plus 1.5 times assists) measured per 36 minutes against the league, the player’s win rate, the share of her production that came in wins, and her court share. It is an association-with-winning index, not a causal estimate of wins added. ${frozen.qualified_count} players qualified this month at 10 games and 250 minutes.`
   );
+
+  close();
 
   // ---- the league leaders
   // The renderer draws this section as leader cards (photo, team, position,
