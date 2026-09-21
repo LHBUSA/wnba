@@ -7,18 +7,19 @@ for (const [w, h, tag] of [[1440, 1000, '1440'], [390, 844, '390']]) {
   const page = await ctx.newPage();
   await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 });
   await page.bringToFront();
-  await page.addStyleTag({ content: '*{scroll-behavior:auto !important;animation:none !important;transition:none !important}' }).catch(() => {});
+  // Sticky chrome bleeds into element captures; hide it for the shot only.
+  await page.addStyleTag({ content: '*{scroll-behavior:auto!important;animation:none!important;transition:none!important} header.site, .site-nav, nav.site-nav, .masthead-bar {position:static!important}' }).catch(() => {});
   for (const sel of ['.wb-board', '.wb-depth']) {
     const el = page.locator(sel).first();
     if (!(await el.count())) { console.log(tag, sel, 'ABSENT'); continue; }
     await el.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(250);
-    await el.screenshot({ path: `${OUT}/wb-${tag}-${sel.replace(/\W/g, '')}.png` });
+    await page.waitForTimeout(300);
+    await el.screenshot({ path: `${OUT}/v2-${tag}-${sel.replace(/\W/g, '')}.png` });
     const box = await el.boundingBox();
     console.log(`${tag} ${sel}: ${Math.round(box.width)}x${Math.round(box.height)}`);
   }
   const o = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
-  console.log(`${tag} overflow: scrollWidth ${o.sw} vs clientWidth ${o.cw}`, o.sw > o.cw ? 'OVERFLOW' : 'none');
+  console.log(`${tag} overflow:`, o.sw > o.cw ? `OVERFLOW ${o.sw}>${o.cw}` : 'none');
   await ctx.close();
 }
 await b.close();

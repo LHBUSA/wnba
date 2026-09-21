@@ -267,3 +267,19 @@
   .wb-spread-facts { grid-template-columns: 1fr; gap: 2px; }
   .wb-spread-facts dd { margin-bottom: 8px; }
 }
+
+
+/* Minimum legible type. Nothing in the ranking should need zooming: every
+   supporting label sits at 11px or above, which is where these all-caps
+   micro-labels stop being a squint at 1440. */
+.wb-first { font-size: 11px; letter-spacing: .08em; }
+.wb-stats span { font-size: 11px; letter-spacing: .06em; }
+.wb-pos { font-size: 11px; letter-spacing: .06em; }
+.wb-depth-count span { font-size: 11px; max-width: 86px; }
+.wb-spread-scale li span { font-size: 11px; bottom: -18px; }
+.wb-spread figcaption, .wb-board-note, .wb-spread-facts dt { font-size: 12px; }
+.wb-frozen { font-size: 11px; }
+.wb-more-rank { font-size: 13px; }
+.wb-components dt, .wb-components dd b { font-size: 12px; }
+.wb-depth-prank { font-size: 13px; }
+.wb-spread-scale { margin-bottom: 16px; }
