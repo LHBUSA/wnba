@@ -40,6 +40,7 @@ const PAGES = {
   watchlist: () => import('../pages/watchlist.js'),
   'track-record': () => import('../pages/track-record.js'),
   pro: () => import('../pages/pro.js'),
+  'winba-score': () => import('../pages/winba-score.js'),
   sources: () => import('../pages/sources.js'),
   about: () => import('../pages/trust.js'),
   'editorial-policy': () => import('../pages/trust.js'),
