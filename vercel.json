@@ -46,6 +46,22 @@
       "destination": "/news-olivia-miles-rookie-record.html"
     },
     {
+      "source": "/news",
+      "destination": "/news.html"
+    },
+    {
+      "source": "/news/archive",
+      "destination": "/news-archive.html"
+    },
+    {
+      "source": "/news/c/:kind",
+      "destination": "/app-shell.html"
+    },
+    {
+      "source": "/news/teams/:teamId",
+      "destination": "/app-shell.html"
+    },
+    {
       "source": "/",
       "destination": "https://wnba-web.sales-fd3.workers.dev/"
     },
