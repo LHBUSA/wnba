@@ -109,7 +109,7 @@ const DESK_LINKS = {
   international: [['/international', 'International women’s basketball'], ['/news/c/international', 'More international stories']]
 };
 
-const REVISION_LABEL = { data_update: 'Updated with new source data', editorial_upgrade: 'Rewritten by an improved generator (no facts changed)', editorial_quality_upgrade: 'Editorial quality upgrade (same facts)', depth_upgrade: 'Developed into a fuller story', metadata_correction: 'Timestamp metadata corrected', integrity_correction: 'Newsroom integrity correction', integrity_retirement: 'Removed from live listings after integrity audit', demoted_to_external_coverage: 'Moved to external coverage' };
+const REVISION_LABEL = { data_update: 'Updated with new source data', editorial_upgrade: 'Rewritten by an improved generator (no facts changed)', editorial_quality_upgrade: 'Editorial quality upgrade (same facts)', depth_upgrade: 'Developed into a fuller story', metadata_correction: 'Timestamp metadata corrected', integrity_correction: 'Newsroom integrity correction', integrity_retirement: 'Removed from live listings after integrity audit', integrity_restoration: 'Restored to live listings: the integrity failure did not hold', demoted_to_external_coverage: 'Moved to external coverage' };
 const MARKET_NAME = { spread: 'Spread', total: 'Total', moneyline: 'Moneyline', 'player props': 'Player props', line: 'Line' };
 
 /**

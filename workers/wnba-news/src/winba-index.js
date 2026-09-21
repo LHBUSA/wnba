@@ -362,6 +362,11 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
     lead_player_id: leader.player_id,
     lead_team_id: leader.team_id,
     primary_subject: WINBA_INDEX_SERIES,
+    // The subject of a ranking is the SERIES, not any one of the players in
+    // it. Declaring that structurally means the identity audit checks this
+    // article against the series contract, not the player-story contract.
+    identity_mode: 'series',
+    subject_type: 'editorial_series',
     entities: [...players, ...teams, { ...WINBA_METRIC_ENTITY }],
     winba_board: frozen,
     // Everything a leader card may show, resolved from the frozen board only.

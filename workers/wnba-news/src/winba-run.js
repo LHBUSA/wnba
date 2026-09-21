@@ -223,6 +223,7 @@ export function cardForIndex(a) {
     has_market: false,
     sources: [],
     media: a.media || null,
+    identity_mode: a.identity_mode || 'series',
     winba_podium: a.winba_podium || null,
     // A trimmed copy of the frozen board travels with the card so listings can
     // show the month's top three and a player page can state the rank THIS
