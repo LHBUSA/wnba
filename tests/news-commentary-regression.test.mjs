@@ -12,7 +12,7 @@ const classifyHeadline = (headline) => classify(
 );
 
 test('brief generator version advances for subject/event integrity hardening', () => {
-  assert.equal(BRIEF_VERSION, 'wnba-briefs/2.2.0');
+  assert.equal(BRIEF_VERSION, 'wnba-briefs/3.0.0');
 });
 
 test('current duplicate-producing commentary headlines cannot become material newsroom events', () => {
