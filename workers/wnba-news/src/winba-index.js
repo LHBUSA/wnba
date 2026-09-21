@@ -443,7 +443,8 @@ export async function runWinbaIndex({
   putIndexState,
   getArticle,
   putArticle,
-  force = false
+  force = false,
+  refreeze = false
 } = {}) {
   const target = period || winbaPeriodOf(at);
   const state = (await getIndexState()) || { version: WINBA_INDEX_VERSION, published: {} };
@@ -458,6 +459,21 @@ export async function runWinbaIndex({
   if (!frozen) {
     frozen = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at });
     if (!frozen) return { period: target, status: 'no_snapshot' };
+    await putMonthly(target, frozen);
+  } else if (refreeze) {
+    // A GUARDED enrichment, never a rewrite. Recompute the board from the same
+    // source snapshot and accept it only if every published value — the ranked
+    // players, their ranks and their scores — is byte-identical. That lets a
+    // stored board gain fields that were always true at its snapshot (the four
+    // components, total minutes) while making it impossible to quietly change a
+    // published ranking. Any divergence is refused and reported.
+    const rebuilt = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at: frozen.frozen_at });
+    if (!rebuilt) return { period: target, status: 'refreeze_no_snapshot' };
+    const key = (b) => JSON.stringify((b.rows || []).map((r) => [r.rank, String(r.player_id), r.score]));
+    if (key(rebuilt) !== key(frozen)) {
+      return { period: target, status: 'refreeze_refused', reason: 'the rebuilt board does not match the published ranks and scores', published: key(frozen).slice(0, 200), rebuilt: key(rebuilt).slice(0, 200) };
+    }
+    frozen = { ...rebuilt, frozen_at: frozen.frozen_at, snapshot_at: frozen.snapshot_at, refrozen_at: at };
     await putMonthly(target, frozen);
   }
 

@@ -24,7 +24,7 @@ const mkRow = (id, name, score, teamId, teamName, over = {}) => ({
   athlete_id: id, name, team_id: teamId, score, qualified: true,
   sample: { games: 40, wins: 28, losses: 12, minutes: 1240 },
   averages: { min: 31, pts: 20, reb: 6, ast: 4 },
-  components: { production_percentile: 95, win_rate: 70 },
+  components: { production_percentile: 95, win_rate: 70, winning_output_share: 72, court_share: 77 },
   ...over
 });
 
@@ -455,4 +455,50 @@ test('revisions accumulate across regenerations instead of overwriting', async (
   assert.equal(a.revisions.length, 3, 'each regeneration adds one revision');
   assert.equal(a.published_at, AT, 'published_at still never moves');
   assert.equal(a.revised_at, '2026-10-04T09:00:00.000Z');
+});
+
+
+// ------------------------------------------------------- guarded re-freeze
+
+test('a re-freeze enriches a stored board only when no published value changes', async () => {
+  const h = harness();
+  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const before = h.monthly.get('2026-09');
+  const frozenAt = before.frozen_at;
+
+  // Strip the newer fields to simulate a board frozen by an older generator.
+  h.monthly.set('2026-09', { ...before, rows: before.rows.map(({ components, minutes, ...r }) => r) });
+  assert.equal(h.monthly.get('2026-09').rows[0].components, undefined);
+
+  const again = await runWinbaIndex({
+    period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
+    at: '2026-10-05T09:00:00.000Z', force: true, refreeze: true, ...h.io
+  });
+  assert.equal(again.status, 'regenerated');
+  const after = h.monthly.get('2026-09');
+  // The published facts are identical...
+  assert.deepEqual(after.rows.map((r) => [r.rank, r.player_id, r.score]), before.rows.map((r) => [r.rank, r.player_id, r.score]));
+  assert.equal(after.frozen_at, frozenAt, 'the original freeze time is kept');
+  assert.equal(after.snapshot_at, before.snapshot_at);
+  assert.equal(after.refrozen_at, '2026-10-05T09:00:00.000Z', 'the enrichment is recorded');
+  // ...and the fields that were always true at that snapshot are now present.
+  assert.ok(Number.isFinite(after.rows[0].components.production_percentile));
+  assert.ok(Number.isFinite(after.rows[0].components.court_share));
+  assert.equal(h.articles.get(first.id).published_at, AT, 'published_at still never moves');
+});
+
+test('a re-freeze is refused outright if any published rank or score would change', async () => {
+  const h = harness();
+  await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const before = h.monthly.get('2026-09');
+
+  // The live snapshot has moved on: Wilson now leads.
+  const moved = { ...SNAP, rows: SNAP.rows.map((r) => ({ ...r, score: r.athlete_id === '3149391' ? 99 : r.score })) };
+  const res = await runWinbaIndex({
+    period: '2026-09', snapshot: moved, playerById: PLAYERS, teamById: TEAMS,
+    at: '2026-10-05T09:00:00.000Z', force: true, refreeze: true, ...h.io
+  });
+  assert.equal(res.status, 'refreeze_refused');
+  assert.match(res.reason, /does not match the published ranks and scores/);
+  assert.deepEqual(h.monthly.get('2026-09'), before, 'the published board is untouched');
 });

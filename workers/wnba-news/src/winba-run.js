@@ -147,7 +147,7 @@ const previousOf = (period) => {
 };
 
 /** The monthly lane, idempotent by stored publication state. */
-export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null, winbaPodium = null, winbaBoardMedia = null } = {}) {
+export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false } = {}) {
   if (!env?.NEWS_KV) return { skipped: 'no_kv' };
   const due = winbaIndexDue(at, { period, force });
   if (!due.due) return { status: 'not_due', period: due.period, reason: due.reason };
@@ -159,6 +159,7 @@ export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new D
     teamById: dict?.teamById || new Map(),
     at,
     force,
+    refreeze,
     getMonthly: (p) => env.NEWS_KV.get(winbaMonthlyKey(p), 'json'),
     putMonthly: (p, v) => env.NEWS_KV.put(winbaMonthlyKey(p), JSON.stringify(v)),
     getIndexState: () => env.NEWS_KV.get(WINBA_MONTHLY_INDEX_KEY, 'json'),
@@ -263,7 +264,7 @@ export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date()
   if (!snapshot?.rows?.length) return { version: WINBA_EDITORIAL_VERSION, status: 'no_snapshot', error };
 
   const daily = await runWinbaDaily(env, { snapshot, dict, at }).catch((e) => ({ error: e?.message || String(e) }));
-  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium, winbaBoardMedia }).catch((e) => ({ error: e?.message || String(e) }));
+  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium, winbaBoardMedia, refreeze }).catch((e) => ({ error: e?.message || String(e) }));
   return {
     version: WINBA_EDITORIAL_VERSION,
     index_version: WINBA_INDEX_VERSION,

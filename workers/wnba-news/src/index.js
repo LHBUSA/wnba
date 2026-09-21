@@ -57,7 +57,7 @@ export default {
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       if (url.searchParams.get('video') === 'force') return j({ ok: true, result: await runVideoPass(env, { channelsDoc: videoChannels, teams: ((await env.NEWS_KV.get('dict:v1', 'json')) || {}).teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null, force: true }) });
-      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null }) });
+      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null, winbaRefreeze: url.searchParams.get('winba_refreeze') === '1' }) });
     }
     return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/articles/videos', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
   }
@@ -102,7 +102,7 @@ async function dictionary(env) {
   }
 }
 
-async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false, forceWinba = false, winbaPeriod = null } = {}) {
+async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false, forceWinba = false, winbaPeriod = null, winbaRefreeze = false } = {}) {
   const startedAt = new Date().toISOString();
   const now = Date.parse(startedAt);
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
@@ -219,7 +219,7 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
   let winba;
   try {
     winba = await runWinbaPasses(env, {
-      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod, mediaFor, winbaPodium, winbaBoardMedia
+      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod, mediaFor, winbaPodium, winbaBoardMedia, refreeze: winbaRefreeze
     });
   } catch (e) {
     winba = { error: String(e.message || e).slice(0, 160) };
