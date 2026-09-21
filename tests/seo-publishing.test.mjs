@@ -277,7 +277,7 @@ test('WinBA Score is a first-class indexable authority page with metric schema a
   assert.match(doc, /PTS \+ 1\.2 × REB \+ 1\.5 × AST/);
   assert.match(doc, /10 appearances or 250 minutes/);
   assert.match(doc, /not a causal wins-added metric/);
-  for (const href of ['/stats', '/players', '/cast', '/teams', '/sources']) assert.ok(doc.includes(`href="${href}"`), href);
+  for (const href of ['/stats', '/players', '/cast', '/teams', '/methodology']) assert.ok(doc.includes(`href="${href}"`), href);
   const ld = ldOf(doc);
   const term = ld['@graph'].find((x) => x['@type'] === 'DefinedTerm');
   const faq = ld['@graph'].find((x) => x['@type'] === 'FAQPage');
