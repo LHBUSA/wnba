@@ -286,3 +286,25 @@
 
 /* The score label is a link a reader may want to follow; match the floor. */
 .wb-score a { font-size: 11px; }
+
+
+/* Mobile defects found in a real 390px capture:
+   the compact #2/#3 scores wrapped a two-digit rating onto two lines, and the
+   spread axis numbers collided into each other. */
+@media (max-width: 720px) {
+  .wb-score { flex-wrap: nowrap; white-space: nowrap; }
+  .wb-score b { white-space: nowrap; }
+  /* "First edition" is already stated on the #1 card; repeating it on the two
+     compact cards is what pushed their score onto a second line. */
+  .wb-podium-card:not(.wb-rank-1) .wb-first { display: none; }
+  .wb-podium-card:not(.wb-rank-1) .wb-meta { white-space: normal; }
+  .wb-stats { flex-wrap: nowrap; }
+}
+@media (max-width: 560px) {
+  /* Too many bars for per-bar labels at this width: the facts below carry the
+     numbers, so the axis keeps only its ends. */
+  .wb-spread-scale li span { display: none; }
+  .wb-spread-scale li:first-child span,
+  .wb-spread-scale li:last-child span { display: block; }
+  .wb-spread-scale { margin-bottom: 22px; }
+}
