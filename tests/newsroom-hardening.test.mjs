@@ -149,7 +149,7 @@ test('7 · a record story requires the achievement in PropBetEdge records (real 
   assert.equal(a.facts.brief.verified.record.season_count, 29);
   const text = a.body.join('\n');
   assert.match(text, /PropBetEdge’s game log confirms the count: Angel Reese has 29 double-doubles in 40 games of the 2026 regular season/);
-  assert.match(text, /makes no comparison with earlier seasons or league history; the record itself is ESPN’s reporting/);
+  assert.match(text, /It can verify the season production and threshold crossing above; the WNBA rookie-record comparison itself remains the attributed publisher reporting/);
   assert.equal(assessDepth(a, { now }).pass, true, assessDepth(a, { now }).failures.join('\n'));
   // The same claim with a count the log does not support stays external coverage.
   const wrong = items.map((x) => ({ ...x, headline: x.headline.replace('29th', '31st') }));
