@@ -166,7 +166,7 @@ export function statsBody({ pl, tm, teams }, state) {
         if (k === 'winbaScore') return html`<td class="${k === state.sort ? 'hi' : ''}" title="${r.winbaScore == null ? 'WinBA unavailable' : r.winbaQualified ? `WinBA league rank #${r.winbaRank || '—'}` : 'WinBA provisional'}">${r.winbaScore == null ? '—' : num(r.winbaScore, 1)}</td>`;
         return html`<td class="${k === state.sort ? 'hi' : ''}">${num(r[k], k === 'gamesPlayed' ? 0 : 1)}</td>`;
       })}</tr>`)}
-    </tbody></table></div><div class="card-body"><p class="note">ESPN’s season leaders list includes qualified players only (${rows.length} this season). WINBA is PropBetEdge’s season winning-impact score and appears here as another player stat; provisional or unavailable scores do not replace source stats.</p>${sourceLine(pl.meta)}</div></section>`;
+    </tbody></table></div><div class="card-body"><p class="note">ESPN’s season leaders list includes qualified players only (${rows.length} this season). WINBA is PropBetEdge’s season winning-impact score. <a href="/winba-score">How WinBA works →</a> Provisional or unavailable scores do not replace source stats.</p>${sourceLine(pl.meta)}</div></section>`;
   }
 
   if (!tm?.ok) return errorState(tm, 'Team stats');
