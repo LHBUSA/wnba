@@ -58,7 +58,7 @@ export function playerView({ id, res, news, props, arts, intl }) {
         <div class="tiles" style="margin-top:18px">
           ${[['Season', r?.season], ['Last 10', r?.last10], ['Last 5', r?.last5]].map(([lbl, w]) => html`<div class="tile"><small>${lbl}${w ? ` · ${w.games} g` : ''}</small><b>${w ? num(w.pts) : '—'}</b><span>${w ? `${num(w.reb)} reb · ${num(w.ast)} ast · ${num(w.min)} min` : 'no games'}</span></div>`)}
           ${career.available ? html`<div class="tile"><small>Career${career.games !== null ? ` · ${whole(career.games)} g` : ''}</small><b>${career.points !== null ? `${whole(career.points)} PTS` : careerRates || '—'}</b><span>${[career.rebounds !== null ? `${whole(career.rebounds)} reb` : null, career.assists !== null ? `${whole(career.assists)} ast` : null].filter(Boolean).join(' · ') || careerRates}</span></div>` : ''}
-          ${w ? html`<div class="tile"><small>WinBA</small><b>${num(w.score)}</b><span>${w.qualified ? `#${w.rank || '—'} league rank` : 'provisional'} · ${w.sample.games} g</span></div>` : ''}
+          ${w ? html`<div class="tile"><small><a href="/winba-score">WinBA</a></small><b>${num(w.score)}</b><span>${w.qualified ? `#${w.rank || '—'} league rank` : 'provisional'} · ${w.sample.games} g</span></div>` : ''}
           <div class="tile"><small>Minutes trend</small><b style="height:30px">${raw(sparkline((r?.minutes_trend || []).map((x) => x.min), { width: 110, height: 30 }))}</b><span>last ${r?.minutes_trend?.length || 0} games</span></div>
         </div>
         <p class="note" style="margin-top:8px">${r?.method || ''}</p>
