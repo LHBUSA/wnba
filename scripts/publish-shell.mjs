@@ -14,6 +14,7 @@ import { playerLoadPublicView } from '../src/views/player-load.js';
 import { historyView } from '../src/views/history.js';
 import { winbaScoreView } from '../src/views/winba-score.js';
 import { articleView } from '../src/views/article.js';
+import { newsHeadView } from '../src/views/news.js';
 import { milesRecordStaticArticle, MILES_RECORD_SLUG } from '../src/lib/news-corrections.js';
 import { intelligenceFeature } from '../src/data/pro-features.js';
 import { routeMeta } from '../src/seo/meta.js';
@@ -32,7 +33,10 @@ for (const marker of ['<!--seo:start-->', '<!--seo:end-->', '<div id="app"></div
 fs.writeFileSync(dest, html);
 
 function writeStaticRoute(route, pathname, filename, main = '', data = null) {
-  const meta = routeMeta(route, { path: pathname, data });
+  // routeMeta(article) consumes the article itself; pageGraph(article) consumes
+  // { article }. Keep one static writer without corrupting article canonical SEO.
+  const metaData = route === 'article' && data?.article ? data.article : data;
+  const meta = routeMeta(route, { path: pathname, data: metaData });
   const graph = pageGraph(route, meta, data || {});
   const head = `<!--seo:start-->\n    ${headTags(meta, graph)}\n    <!--seo:end-->`;
   const body = String(shellHtml({ main, ssrPath: pathname }));
@@ -57,6 +61,10 @@ writeStaticRoute('player-load', '/player-load', 'player-load.html', playerLoadPu
 writeStaticRoute('daily-brief', '/brief', 'brief.html');
 writeStaticRoute('history', '/history', 'history.html', historyView());
 writeStaticRoute('winba-score', '/winba-score', 'winba-score.html', winbaScoreView());
+// News collection routes temporarily render from Vercel so the current client
+// integrity adapter, not the older publishing Worker, owns visible card identity.
+writeStaticRoute('news', '/news', 'news.html', newsHeadView());
+writeStaticRoute('news-archive', '/news/archive', 'news-archive.html', newsHeadView());
 const milesArticle = milesRecordStaticArticle();
 writeStaticRoute('article', `/news/${MILES_RECORD_SLUG}`, 'news-olivia-miles-rookie-record.html', articleView({ article: milesArticle, related: [] }), { article: milesArticle });
 
