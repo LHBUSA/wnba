@@ -252,7 +252,7 @@ export function cardForIndex(a) {
 }
 
 /** Both lanes. Returns a compact report for the run status document. */
-export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null, winbaBoardMedia = null } = {}) {
+export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false } = {}) {
   let snapshot = null;
   let error = null;
   try {
