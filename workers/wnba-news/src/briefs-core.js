@@ -25,8 +25,9 @@ import { publicItem } from './sources.js';
 import { seasonLog } from './deep.js';
 import { dShort, dLong, dMonth, tET, f1, listJoin, nick, poss, wordN, countOf } from './prose.js';
 import { headlineConsensusPlayer, consensusEventType, teamForPlayer, headlineTeam } from './identity.js';
+import { buildBriefStory, BRIEF_STORY_VERSION } from './brief-story.js';
 
-export const BRIEF_VERSION = 'wnba-briefs/2.2.0'; // headline-consensus identity, record milestones and tighter event-specific prose
+export const BRIEF_VERSION = 'wnba-briefs/3.0.0'; // reader-first event planner + headline consensus + fail-closed storycraft
 export const BRIEF_MAX_AGE_MS = 36 * 3600e3;
 export const BRIEF_MAX_PER_RUN = 12;
 
@@ -568,36 +569,41 @@ export async function briefArticles({ externalItems = [], structured = [], now =
     }
     const value = originalValue(v);
     const publishers = new Set(reports.map((r) => r.publisher)).size;
-    // Original value test: PropBetEdge adds at least one verified record dimension, or the event is independently
-    // corroborated, or it is a fresh (developing) report about a linked WNBA player/team whose records will follow.
-    // A single uncorroborated report with nothing PropBetEdge can verify is a link, not a story.
-    const developingLinked = Boolean(player || teamEntity) && now - Date.parse(eventAt) <= 3 * 3600e3;
-    if (!(value.count >= 1 || publishers >= 2 || developingLinked)) {
-      decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'external_coverage', reason: `${underlying.reason}, but a single uncorroborated report with no PropBetEdge record to add` });
+    // Article threshold: wire coverage is cheap; a standalone article is not.
+    // Most briefs need at least one structured PBE dimension. A major league
+    // development with no player/team record can still stand alone only after
+    // three independent publishers report the same underlying event.
+    const sourceOnlyMajor = publishers >= 3 && ['awards', 'cba', 'expansion', 'league', 'business', 'front_office', 'coaching', 'playoff', 'draft'].includes(type);
+    if (!(value.count >= 1 || sourceOnlyMajor)) {
+      decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'external_coverage', reason: `${underlying.reason}, but the event does not yet have enough structured context for a standalone PropBetEdge article` });
       continue;
     }
-    decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'standalone', reason: `${underlying.reason}; PropBetEdge value: ${value.dimensions.join(', ') || 'none yet'}; ${publishers} publisher${publishers === 1 ? '' : 's'}` });
-    const headline = trimHeadline(briefHeadline({ eventType: type, storyType, player, team: v.team || team, verified: v }));
+    decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'standalone', reason: `${underlying.reason}; PropBetEdge value: ${value.dimensions.join(', ') || 'publisher consensus'}; ${publishers} publisher${publishers === 1 ? '' : 's'}` });
     const canonReport = reports.find((r) => r.headline === sourceHeadline && r.publisher === source) || reports[0];
     const others = reports.filter((r) => r !== canonReport && r.publisher !== source);
     const s = v.season;
-    const deckRecord = type === 'record' && player && v.record?.verified
-      ? v.record.kind === 'season-points'
-        ? `${player.name} crossed ${v.record.claimed} season points in PropBetEdge’s game log. ${source} first reported that the total moved her past the WNBA rookie scoring mark.`
-        : `${player.name}’s milestone is verified in her current-season game log; the historical record framing remains attributed to the reporting.`
-      : s
-        ? `${player.name} has averaged ${f1(s.pts)} points and ${f1(s.ast >= s.reb ? s.ast : s.reb)} ${s.ast >= s.reb ? 'assists' : 'rebounds'} in ${f1(s.min)} minutes across ${s.games} games for the ${v.team?.name}${s.last5 ? `, ${f1(s.last5.pts)} points over her last five` : ''}.`
-        : v.standing ? `The ${v.team.name} are ${v.standing.wins}–${v.standing.losses}${v.standing.last_ten ? `, ${v.standing.last_ten} over their last 10` : ''}.` : `What the reports establish, what they leave unresolved${publishers >= 2 ? `, and how ${publishers} publishers corroborate it` : ''}.`;
-    const deck = type === 'record' ? deckRecord : `${deckRecord} ${player ? `First reported by ${source}` : `Reported by ${source}`} on ${dShort(canonReport?.published_at || eventAt)}.`;
-    const writer = deskOf ? writeDeskBrief : writeBrief;
-    const { body, sections } = writer({ desk: deskOf, source, sourceHeadline, sourceAt: canonReport?.published_at || eventAt, others, player, team: v.team || team, v, type, leagueTeams: ctx.standingsById?.size || null });
+    const story = buildBriefStory({
+      source,
+      sourceHeadline,
+      sourceAt: canonReport?.published_at || eventAt,
+      others,
+      player,
+      team: v.team || team,
+      v,
+      type,
+      leagueTeams: ctx.standingsById?.size || null
+    });
+    const headline = trimHeadline(story.headline);
+    const deck = story.deck;
+    const body = story.body;
+    const sections = story.sections;
     const method = [
       `Why this is a standalone story: the report describes ${/^[aeiou]/i.test(underlying.reason) ? 'an' : 'a'} ${underlying.reason.replace(/ development$/, '').toLowerCase()} development${evM ? ` (materiality ${evM.score}, threshold 3.5; ${evM.publishers} publisher${evM.publishers === 1 ? '' : 's'})` : ''}, not a feature or commentary piece, and it is not already covered by a structured injury or transaction story. PropBetEdge’s own records add: ${value.dimensions.map((d) => d.replaceAll('_', ' ')).join(', ') || 'nothing yet (a developing report)'}.`,
       'Source rights: PropBetEdge stores the publisher’s headline, link and supplied metadata only. It does not reproduce the article body, and details that exist only in that report — quotes, context, characterisation — remain the publisher’s reporting.',
       'Story identity: this story is tied to one event in PropBetEdge’s persisted event registry, identified by its facts (event type, player, team), never by a publisher’s article id. When another publisher covers the same event, or PropBetEdge’s records change, the story is revised at the same URL with an Updated time; a different event becomes a new story.'
     ];
     const verifiedKey = JSON.stringify([s ? [s.games, f1(s.pts), f1(s.reb), f1(s.ast), f1(s.min)] : null, v.injury?.status || null, v.standing ? [v.standing.wins, v.standing.losses, v.standing.seed] : null, v.next_game?.game_id || null, v.transaction?.date || null, v.role ? [v.role.min_rank, v.role.starts] : null]);
-    const input_hash = [BRIEF_VERSION, type, canon.item_id, verifiedKey, ...members.map((m) => `${m.item_id}:${m.source_updated_at || m.published_at || ''}:${m.headline || ''}`).sort()].join('|');
+    const input_hash = [BRIEF_VERSION, BRIEF_STORY_VERSION, type, canon.item_id, verifiedKey, ...members.map((m) => `${m.item_id}:${m.source_updated_at || m.published_at || ''}:${m.headline || ''}`).sort()].join('|');
 
     out.push(finalize({
       id,
@@ -620,10 +626,10 @@ export async function briefArticles({ externalItems = [], structured = [], now =
       lead_player_id: player?.id || null,
       primary_subject: player?.name || v.team?.name || null,
       published_at: eventAt,
-      context: { brief: { cluster_id, story_type: storyType, event_type: type, desk: laneOf(type), source_item_id: canon.item_id, source_url: canon.canonical_url, source_name: source }, next_game: null },
+      context: { brief: { cluster_id, story_type: storyType, event_type: type, desk: laneOf(type), story_version: BRIEF_STORY_VERSION, source_item_id: canon.item_id, source_url: canon.canonical_url, source_name: source }, next_game: null },
       entities: [...allEntities, ...(v.next_game ? [{ type: 'game', id: v.next_game.game_id, name: `${v.team?.name} ${v.next_game.home ? 'vs' : 'at'} ${v.next_game.opponent}`, start_utc: v.next_game.start_utc }] : [])],
       facts: {
-        brief: { cluster_id, story_type: storyType, event_type: type, desk: deskOf || null, publishers, league_teams: ['cba', 'expansion'].includes(type) ? ctx.standingsById?.size || null : null, underlying_event: underlying.event, underlying_reason: underlying.reason, value, materiality: evM ? { score: evM.score, publishers: evM.publishers } : null, source_item_id: canon.item_id, linked_entities: allEntities.map((e) => ({ type: e.type, id: e.id, name: e.name, ...(e.team_id ? { team_id: e.team_id } : {}) })), linked_names: names, verified: v },
+        brief: { cluster_id, story_type: storyType, event_type: type, desk: deskOf || null, story_version: BRIEF_STORY_VERSION, publishers, league_teams: ['cba', 'expansion'].includes(type) ? ctx.standingsById?.size || null : null, underlying_event: underlying.event, underlying_reason: underlying.reason, value, materiality: evM ? { score: evM.score, publishers: evM.publishers } : null, source_item_id: canon.item_id, linked_entities: allEntities.map((e) => ({ type: e.type, id: e.id, name: e.name, ...(e.team_id ? { team_id: e.team_id } : {}) })), linked_names: names, verified: v },
         provenance: v.provenance ? [v.provenance] : []
       },
       evidence: [...reports, ...records],
