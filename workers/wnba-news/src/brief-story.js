@@ -287,8 +287,8 @@ function leagueStory({ source, sourceAt, others, team, v, type, leagueTeams }) {
   add('League context', 'context', [
     tn ? standingSentence(tn, v.standing) : null,
     ['cba', 'expansion'].includes(type) && leagueTeams ? `The current WNBA standings cover ${leagueTeams} teams, so the development reaches a league structure that spans every active club.` : null,
-    !tn && !leagueTeams
-      ? `The immediate basketball effect is not yet tied to one roster, one game or one player; the significance is league-wide and will become clearer as the change is applied across teams.`
+    !tn
+      ? `The immediate basketball effect is not tied to one roster, one game or one player. It is a league-wide development, and the practical effect will become clearer as the change reaches teams and future competition.`
       : null,
     type === 'business'
       ? `The filing or business action is the event itself. Competitive, financial or legal outcomes are not inferred beyond what the reported development establishes.`
