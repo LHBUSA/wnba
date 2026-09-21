@@ -1720,3 +1720,18 @@ a.pp-name:hover { color: var(--gold-bright); }
 .winba-index-callout .eyebrow { color: var(--gold); }
 .winba-index-callout a { color: var(--paper); font: 600 15px/1.35 var(--f-editorial); text-wrap: balance; }
 .winba-index-callout small { color: var(--faint); font: 400 12px/1.5 var(--f-data); }
+
+/* The WinBA Index archive — the series home. */
+.winba-live-pointer { display: grid; gap: 6px; margin: 18px 0; padding: 14px 16px; border: 1px solid var(--line-3); border-left: 2px solid var(--gold); border-radius: 8px; background: rgba(255, 255, 255, .018); }
+.winba-live-pointer .eyebrow { color: var(--gold); }
+.winba-live-pointer p { margin: 0; color: var(--paper-2); font: 600 14px/1.5 var(--f-data); overflow-wrap: anywhere; }
+.winba-live-pointer a { color: var(--paper); font: 600 13px/1.4 var(--f-data); }
+.winba-edition-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.winba-edition-link { display: grid; gap: 5px; padding: 16px; border: 1px solid var(--line-3); border-radius: 10px; background: rgba(255, 255, 255, .014); }
+.winba-edition-period { color: var(--gold); font: 700 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; }
+.winba-edition-headline { color: var(--paper); font: 600 clamp(16px, 2vw, 19px)/1.35 var(--f-editorial); text-wrap: balance; }
+.winba-edition-top { color: var(--paper-2); font: 500 12px/1.5 var(--f-data); overflow-wrap: anywhere; }
+.winba-edition-date { color: var(--faint); font: 400 11px/1.4 var(--f-data); }
+
+/* Player page → the WinBA Index edition that ranks her. */
+.winba-featured { display: inline-block; margin-top: 10px; color: var(--gold); font: 600 12px/1.4 var(--f-data); }

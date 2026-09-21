@@ -52,7 +52,20 @@ export function siteEntities() {
 export const playerRef = (e) => ({ '@type': 'Person', '@id': `${SITE}/players/${e.id}#person`, name: e.name, url: `${SITE}/players/${e.id}` });
 export const teamRef = (e) => ({ '@type': 'SportsTeam', '@id': `${SITE}/teams/${e.id}#team`, name: e.name, url: `${SITE}/teams/${e.id}` });
 export const gameRef = (e) => ({ '@type': 'SportsEvent', '@id': `${SITE}/matchups/${e.id}#event`, name: e.name, url: `${SITE}/matchups/${e.id}`, startDate: e.start_utc });
-const refOf = (e) => (e?.type === 'player' ? playerRef(e) : e?.type === 'team' ? teamRef(e) : e?.type === 'game' ? gameRef(e) : null);
+/** A PropBetEdge metric is a DefinedTerm: a named measure with a canonical page. */
+const METRIC_REF = {
+  winba: {
+    '@type': 'DefinedTerm',
+    '@id': `${SITE}/winba-score#definedterm`,
+    name: 'WinBA Score',
+    alternateName: 'WinBA',
+    description: 'PropBetEdge’s 0–100 WNBA winning-impact index: Box Impact per 36 minutes against the league, player win rate, share of production produced in wins, and court share. An association-with-winning index, not a causal estimate of wins added.',
+    inDefinedTermSet: { '@type': 'DefinedTermSet', '@id': `${SITE}/winba-score#termset`, name: 'PropBetEdge WNBA metrics', url: `${SITE}/winba-score` },
+    url: `${SITE}/winba-score`
+  }
+};
+const metricRef = (e) => METRIC_REF[String(e?.id)] || null;
+const refOf = (e) => (e?.type === 'player' ? playerRef(e) : e?.type === 'team' ? teamRef(e) : e?.type === 'game' ? gameRef(e) : e?.type === 'metric' ? metricRef(e) : null);
 
 export function breadcrumbs(url, items) {
   return { '@type': 'BreadcrumbList', '@id': `${url}#breadcrumb`, itemListElement: items.map(([name, path], i) => ({ '@type': 'ListItem', position: i + 1, name, item: abs(path) })) };
@@ -73,11 +86,44 @@ const webPage = (meta, type = 'WebPage', extra = {}) => ({
 
 export const wordCount = (a) => [a.headline, a.deck, ...(a.body || [])].join(' ').split(/\s+/).filter(Boolean).length;
 
+
+/**
+ * A short, honest keyword list built from what the article actually contains.
+ * Never keyword soup: the series or desk, the metric when the story uses it,
+ * and the named subject.
+ */
+function keywordsOf(a) {
+  const out = [];
+  if (a.kind === 'winba_index') {
+    out.push('WinBA Score', 'WNBA player rankings', 'WNBA player ratings', a.period_label ? `WinBA Index ${a.period_label}` : 'The WinBA Index');
+  } else {
+    const desk = DESKS[deskOf(a.kind)];
+    if (desk) out.push(desk);
+    if (a.winba_reference) out.push('WinBA Score');
+  }
+  const leadPlayer = (a.entities || []).find((e) => e?.type === 'player' && String(e.id) === String(a.lead_player_id));
+  const leadTeam = (a.entities || []).find((e) => e?.type === 'team' && String(e.id) === String(a.lead_team_id));
+  if (leadPlayer?.name) out.push(leadPlayer.name);
+  if (leadTeam?.name) out.push(leadTeam.name);
+  out.push('WNBA');
+  return [...new Set(out.filter(Boolean))].slice(0, 8).join(', ') || undefined;
+}
+
 export function newsArticle(a, meta) {
   const url = meta.url;
   const lead = (a.entities || []).filter(Boolean);
-  const about = lead.filter((e) => (e.type === 'player' && String(e.id) === String(a.lead_player_id)) || (e.type === 'team' && String(e.id) === String(a.lead_team_id)) || (e.type === 'game' && a.kind === 'preview'));
-  const mentions = lead.filter((e) => !about.includes(e));
+  // What the piece is ABOUT versus what it merely mentions. For a WinBA Index
+  // the subject is the metric and the month's leader, and the rest of the board
+  // is a mention — the whole league never belongs in `about`.
+  const isIndex = a.kind === 'winba_index';
+  const about = isIndex
+    ? lead.filter((e) => e.type === 'metric'
+      || (e.type === 'player' && String(e.id) === String(a.lead_player_id))
+      || (e.type === 'team' && String(e.id) === String(a.lead_team_id)))
+    : lead.filter((e) => (e.type === 'player' && String(e.id) === String(a.lead_player_id)) || (e.type === 'team' && String(e.id) === String(a.lead_team_id)) || (e.type === 'game' && a.kind === 'preview'));
+  // Ranked players and their teams, capped so the graph stays a document
+  // description rather than a database dump.
+  const mentions = lead.filter((e) => !about.includes(e)).slice(0, isIndex ? 16 : 24);
   const share = articleShareImage(a);
   const photo = a.media?.subjects?.[0]?.wide?.slice?.(-1)?.[0];
   const published = a.first_published_at || a.published_at;
@@ -100,12 +146,13 @@ export function newsArticle(a, meta) {
     publisher: { '@id': IDS.newsroom },
     mainEntityOfPage: { '@id': url },
     isPartOf: { '@id': IDS.website },
-    articleSection: DESKS[deskOf(a.kind)] || 'Newsroom',
+    articleSection: a.series || DESKS[deskOf(a.kind)] || 'Newsroom',
+    keywords: keywordsOf(a),
     inLanguage: LANG,
     isAccessibleForFree: true,
     wordCount: wordCount(a),
-    about: about.map(refOf),
-    mentions: mentions.map(refOf),
+    about: about.map(refOf).filter(Boolean),
+    mentions: mentions.map(refOf).filter(Boolean),
     citation: (a.evidence || []).filter((e) => e.url).slice(0, 8).map((e) => ({ '@type': 'CreativeWork', name: e.headline || e.source, url: e.url, publisher: e.publisher ? { '@type': 'Organization', name: e.publisher } : undefined, datePublished: e.published_at || undefined }))
   };
 }
@@ -198,13 +245,15 @@ export function pageGraph(route, meta, data = {}) {
     }
     case 'news':
     case 'news-archive':
+    case 'winba-index':
     case 'news-team':
     case 'news-cat': {
       crumbs.push(['News', '/news']);
       if (route === 'news-archive') crumbs.push(['Archive', meta.path]);
+      if (route === 'winba-index') crumbs.push(['The WinBA Index', meta.path]);
       if (route === 'news-cat') crumbs.push([DESKS[data.kind] || 'Desk', meta.path]);
       if (route === 'news-team') crumbs.push([data.team?.name ? `${data.team.name} news` : 'Team news', meta.path]);
-      const items = (data.items || []).slice(0, route === 'news-archive' ? 100 : 30).map((c) => ({ path: `/news/${c.slug}`, name: c.headline }));
+      const items = (data.items || []).slice(0, route === 'news-archive' ? 100 : route === 'winba-index' ? 60 : 30).map((c) => ({ path: `/news/${c.slug}`, name: c.headline }));
       g.push(webPage(meta, 'CollectionPage', { mainEntity: { '@id': `${meta.url}#list` }, publisher: { '@id': IDS.newsroom } }), itemList(meta.url, items));
       break;
     }

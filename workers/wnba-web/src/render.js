@@ -10,7 +10,8 @@ import { routeMeta, NOINDEX_ROBOTS } from '../../../src/seo/meta.js';
 import { pageGraph } from '../../../src/seo/jsonld.js';
 import { headTags } from '../../../src/seo/head.js';
 import { DESKS } from '../../../src/seo/site.js';
-import { articleView, loadArticle } from '../../../src/views/article.js';
+import { articleView, loadArticle, loadArticleSeries } from '../../../src/views/article.js';
+import { loadWinbaIndexArchive, winbaIndexArchiveView } from '../../../src/views/winba-index.js';
 import { loadNews, newsView, loadArchive, archiveView } from '../../../src/views/news.js';
 import { loadPlayer, playerView } from '../../../src/views/player.js';
 import { loadTeam, teamView } from '../../../src/views/team.js';
@@ -56,6 +57,13 @@ export async function renderRoute(pathname, api) {
       if (v.error) return out(503, { ...meta, robots: NOINDEX_ROBOTS }, v.body, null);
       return out(200, meta, v.body, { items: v.items || [] });
     }
+    case 'winba-index': {
+      const data = await loadWinbaIndexArchive(api);
+      const v = winbaIndexArchiveView(data);
+      const meta = routeMeta(id, { path, data: { items: v.items || [] }, empty: !v.items?.length });
+      if (data.error) return out(503, { ...meta, robots: NOINDEX_ROBOTS }, v.body, null);
+      return out(200, meta, v.body, { items: v.items || [] });
+    }
     case 'news':
     case 'news-cat': {
       if (id === 'news-cat' && !DESKS[params.kind]) return nf();
@@ -81,7 +89,8 @@ export async function renderRoute(pathname, api) {
       // A collapsed duplicate URL (or a legacy slug) resolves to the canonical story: redirect there permanently.
       if (a.slug && a.slug !== params.slug) return { status: 301, redirect: `/news/${a.slug}`, route: id };
       const meta = routeMeta(id, { path, data: a });
-      return out(200, meta, articleView({ article: a, related: res.data.related || [] }), { article: a });
+      const series = await loadArticleSeries(api, a);
+      return out(200, meta, articleView({ article: a, related: res.data.related || [], series }), { article: a });
     }
     case 'player': {
       const data = await loadPlayer(api, params.playerId);

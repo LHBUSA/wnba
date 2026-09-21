@@ -11,6 +11,8 @@ export const ROUTE_TABLE = [
   { id: 'injuries', re: /^\/injuries$/ },
   { id: 'news', re: /^\/news$/ },
   { id: 'news-archive', re: /^\/news\/archive$/ },
+  // Before `article`: the series home is a named path, not a story slug.
+  { id: 'winba-index', re: /^\/news\/winba-index$/ },
   { id: 'news-cat', re: /^\/news\/c\/([a-z]+)$/, keys: ['kind'] },
   { id: 'news-team', re: /^\/news\/teams\/(\d{1,8})$/, keys: ['teamId'] },
   { id: 'story', re: /^\/news\/story\/(pbe_[a-f0-9]{18})$/, keys: ['storyId'] },

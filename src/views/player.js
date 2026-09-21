@@ -16,7 +16,33 @@ export async function loadPlayer(api, id) {
   return { id, res, news, props, arts, intl };
 }
 
+
+/**
+ * The newest published WinBA Index that actually ranks this player, with the
+ * rank taken from that edition's FROZEN board — never from the live leaderboard,
+ * so the backlink states what the article states.
+ */
+export function featuredWinbaIndex(arts, playerId) {
+  const items = (arts?.ok ? arts.data?.items : arts?.items) || [];
+  const editions = items
+    .filter((c) => c && c.kind === 'winba_index' && c.status === 'published' && c.quality_state !== 'retired_from_index')
+    .sort((a, b) => String(b.period || '').localeCompare(String(a.period || '')));
+  for (const c of editions) {
+    const row = (c.winba_board?.rows || []).find((r) => String(r.player_id) === String(playerId));
+    if (row) return { slug: c.slug, period: c.period, period_label: c.period_label, rank: row.rank, score: row.score };
+    // No frozen board on the card: link the edition without asserting a rank.
+    if (!c.winba_board && (c.entities || []).some((e) => e.type === 'player' && String(e.id) === String(playerId))) {
+      return { slug: c.slug, period: c.period, period_label: c.period_label, rank: null, score: null };
+    }
+  }
+  return null;
+}
+
 export function playerView({ id, res, news, props, arts, intl }) {
+  // The most recent WinBA Index this player is ranked in. Taken from the
+  // articles already fetched for her, so it costs no extra request and can
+  // never claim an edition she is not actually in.
+  const winbaEdition = featuredWinbaIndex(arts, id);
   if (!res?.ok) return errorState(res, 'This player');
   const d = res.data;
   const p = d.player;
@@ -59,6 +85,7 @@ export function playerView({ id, res, news, props, arts, intl }) {
           ${[['Season', r?.season], ['Last 10', r?.last10], ['Last 5', r?.last5]].map(([lbl, w]) => html`<div class="tile"><small>${lbl}${w ? ` · ${w.games} g` : ''}</small><b>${w ? num(w.pts) : '—'}</b><span>${w ? `${num(w.reb)} reb · ${num(w.ast)} ast · ${num(w.min)} min` : 'no games'}</span></div>`)}
           ${career.available ? html`<div class="tile"><small>Career${career.games !== null ? ` · ${whole(career.games)} g` : ''}</small><b>${career.points !== null ? `${whole(career.points)} PTS` : careerRates || '—'}</b><span>${[career.rebounds !== null ? `${whole(career.rebounds)} reb` : null, career.assists !== null ? `${whole(career.assists)} ast` : null].filter(Boolean).join(' · ') || careerRates}</span></div>` : ''}
           ${w ? html`<div class="tile"><small><a href="/winba-score">WinBA</a></small><b>${num(w.score)}</b><span>${w.qualified ? `#${w.rank || '—'} league rank` : 'provisional'} · ${w.sample.games} g</span></div>` : ''}
+          ${winbaEdition ? html`<a class="winba-featured" href="/news/${winbaEdition.slug}">Featured in the ${winbaEdition.period_label || winbaEdition.period} WinBA Index${winbaEdition.rank ? html` · No. ${winbaEdition.rank}` : ''} →</a>` : ''}
           <div class="tile"><small>Minutes trend</small><b style="height:30px">${raw(sparkline((r?.minutes_trend || []).map((x) => x.min), { width: 110, height: 30 }))}</b><span>last ${r?.minutes_trend?.length || 0} games</span></div>
         </div>
         <p class="note" style="margin-top:8px">${r?.method || ''}</p>

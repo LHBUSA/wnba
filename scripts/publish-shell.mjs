@@ -13,6 +13,7 @@ import { proFeaturePublicView } from '../src/views/pro-intelligence.js';
 import { playerLoadPublicView } from '../src/views/player-load.js';
 import { historyView } from '../src/views/history.js';
 import { winbaScoreView } from '../src/views/winba-score.js';
+import { winbaIndexArchiveView } from '../src/views/winba-index.js';
 import { articleView } from '../src/views/article.js';
 import { newsHeadView } from '../src/views/news.js';
 import { milesRecordStaticArticle, MILES_RECORD_SLUG } from '../src/lib/news-corrections.js';
@@ -65,6 +66,11 @@ writeStaticRoute('winba-score', '/winba-score', 'winba-score.html', winbaScoreVi
 // integrity adapter, not the older publishing Worker, owns visible card identity.
 writeStaticRoute('news', '/news', 'news.html', newsHeadView());
 writeStaticRoute('news-archive', '/news/archive', 'news-archive.html', newsHeadView());
+writeStaticRoute('winba-index', '/news/winba-index', 'news-winba-index.html', winbaIndexHeadView());
+function winbaIndexHeadView() {
+  return winbaIndexArchiveView({ cards: [], winba: null }).body;
+}
+
 const milesArticle = milesRecordStaticArticle();
 writeStaticRoute('article', `/news/${MILES_RECORD_SLUG}`, 'news-olivia-miles-rookie-record.html', articleView({ article: milesArticle, related: [] }), { article: milesArticle });
 

@@ -82,6 +82,13 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
         image: pageShareImage('news', 'PropBetEdge WNBA News Archive'),
         robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS
       });
+    case 'winba-index':
+      return m({
+        title: `The WinBA Index: WNBA Player Rankings by Month | ${BRAND}`,
+        description: 'Every edition of The WinBA Index — PropBetEdge’s monthly record of the WNBA’s top players by WinBA Score, with each month’s ranks and ratings frozen at publication.',
+        image: pageShareImage('news', 'The WinBA Index — PropBetEdge WNBA'),
+        robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS
+      });
     case 'news-team': {
       const t = data?.team;
       if (!t) return m({ title: `WNBA Team News | ${BRAND}`, robots: empty ? NOINDEX_ROBOTS : INDEX_ROBOTS });

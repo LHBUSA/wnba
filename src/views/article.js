@@ -12,6 +12,7 @@ import { storyMedia, creditLine } from '../ui/story-media.js';
 import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
 import { intelligenceOf } from '../lib/intelligence.js';
 import { gameHighlights } from '../ui/video.js';
+import { winbaSeriesNav, winbaSeriesNavView, winbaIndexCards, WINBA_INDEX_KIND } from './winba-index.js';
 
 // A `metric` entity carries no id-based route: it is the canonical explainer
 // for a PropBetEdge statistic. Routing it here lets the generator keep URLs out
@@ -83,6 +84,17 @@ export function linkArticleEntities(text, entities, seen = new Set()) {
 
 export const loadArticle = async (api, slug) => api.article(slug);
 
+/**
+ * The published WinBA Index series, for previous/next navigation on an edition.
+ *
+ * Read at request time so a newly published month links backwards without
+ * anything being written into the older article. Only fetched for an Index, and
+ * a failure simply means no nav strip.
+ */
+export const loadArticleSeries = async (api, article) => (article?.kind === WINBA_INDEX_KIND
+  ? api.articles({ limit: 400 }).then((r) => (r?.data?.items || [])).catch(() => [])
+  : []);
+
 // Where a reader goes next from each desk: ordinary crawlable links into the rest of the product.
 const DESK_LINKS = {
   injury: [['/injuries', 'Injury Desk: every listed player'], ['/news/c/injury', 'More injury stories']],
@@ -150,7 +162,7 @@ export function intelligenceView(a) {
   </section>`;
 }
 
-export function articleView({ article: a, related = [] }) {
+export function articleView({ article: a, related = [], series = [] }) {
   const teams = (a.entities || []).filter((e) => e && e.type === 'team');
   const players = (a.entities || []).filter((e) => e && e.type === 'player');
   const games = (a.entities || []).filter((e) => e && e.type === 'game');
@@ -167,6 +179,12 @@ export function articleView({ article: a, related = [] }) {
   const metrics = (a.entities || []).filter((e) => e && e.type === 'metric' && entityHref(e));
   const linkedEntities = [...players, ...teams, ...metrics];
   const linkedSeen = new Set();
+  // An Index edition carries previous/next navigation across the published
+  // series, resolved from the series passed in rather than stored on the
+  // article: a later month appearing must not rewrite an earlier record.
+  const seriesNav = a.kind === WINBA_INDEX_KIND && a.period
+    ? winbaSeriesNav(winbaIndexCards({ items: series }), a.period)
+    : null;
   const winba = a.winba_reference && a.winba_sentence ? a.winba_reference : null;
   const winbaAfter = winba ? (a.winba_placement?.after_section ?? null) : null;
   // The reference is frozen at publication, so this paragraph is the score the
@@ -203,6 +221,7 @@ export function articleView({ article: a, related = [] }) {
           ${teams.map((t) => html`<a href="/teams/${t.id}">${t.name}</a>`)}
           ${winba ? html`<a href="${METRIC_HREF.winba}" title="WinBA Score — PropBetEdge overall WNBA player rating">WinBA ${Math.round(winba.score)}</a>` : ''}
         </nav>` : ''}
+        ${seriesNav ? winbaSeriesNavView(seriesNav) : ''}
       </header>
 
       <div class="story-layout">

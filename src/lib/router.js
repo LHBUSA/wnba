@@ -21,6 +21,7 @@ const PAGES = {
   injuries: () => import('../pages/injuries.js'),
   news: () => import('../pages/news.js'),
   'news-archive': () => import('../pages/news-archive.js'),
+  'winba-index': () => import('../pages/winba-index.js'),
   'news-cat': () => import('../pages/news.js'),
   'news-team': () => import('../pages/news.js'),
   story: () => import('../pages/story.js'),
