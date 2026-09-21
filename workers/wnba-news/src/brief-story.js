@@ -255,7 +255,7 @@ function teamChangeStory({ source, sourceAt, others, team, v, type }) {
     ? `${listJoin(v.core.map((r) => r.name))} carry the heaviest recent minutes as the ${tn} move into a new ${type === 'coaching' ? 'coaching' : 'front-office'} phase.`
     : `The ${tn} are moving through a reported ${label}.`;
   add(cap(label), 'change', [
-    `The ${tn} are making a ${label}.`,
+    `The ${tn} are making a ${label}, changing the leadership structure around a roster with established rotation roles and a season already in progress.`,
     reportSentence(source, sourceAt, others, `${label} for the ${tn}`)
   ]);
   add('The roster it inherits', 'context', [
