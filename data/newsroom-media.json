@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-21T21:35:24Z",
+ "generated_at": "2026-09-21T23:02:37Z",
  "ledger_promoted_at": "2026-09-21T21:23:16Z",
  "method": {
   "source": "The ledger's approved Commons file for each player (<=2560 px rendition), identity and rights as reviewed in data/player-photos.json.",
@@ -99,6 +99,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.269,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/1054/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.234,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/1054/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.117,
       "mode": "normal"
      }
     ]
@@ -563,6 +579,22 @@
       "scale": 0.319,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/2529122/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.338,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/2529122/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.169,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -627,6 +659,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.122,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/2529130/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.108,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/2529130/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.054,
       "mode": "normal"
      }
     ]
@@ -891,6 +939,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.179,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/2529205/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.189,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/2529205/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.095,
       "mode": "normal"
      }
     ]
@@ -1619,6 +1683,22 @@
       "scale": 0.234,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/2987891/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.248,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/2987891/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.124,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -1751,6 +1831,22 @@
       "scale": 1.042,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/2998928/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 1.105,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/2998928/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.553,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -1881,6 +1977,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.882,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/2999101/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.936,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/2999101/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.468,
       "mode": "normal"
      }
     ]
@@ -2279,6 +2391,22 @@
       "scale": 0.273,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/3065570/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.29,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/3065570/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.145,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -2675,6 +2803,22 @@
       "scale": 0.412,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/3142250/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.437,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/3142250/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.219,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -2871,6 +3015,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.089,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/3142328/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.086,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/3142328/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.043,
       "mode": "normal"
      }
     ]
@@ -3087,6 +3247,22 @@
       "scale": 0.349,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/3904576/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.37,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/3904576/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.185,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -3283,6 +3459,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.224,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/3906949/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.238,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/3906949/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.119,
       "mode": "normal"
      }
     ]
@@ -3679,6 +3871,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.142,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/3917450/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.15,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/3917450/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.075,
       "mode": "normal"
      }
     ]
@@ -4207,6 +4415,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.38,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4065870/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.403,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4065870/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.202,
       "mode": "normal"
      }
     ]
@@ -4869,6 +5093,22 @@
       "scale": 0.385,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4281929/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.408,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4281929/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.204,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -4999,6 +5239,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.103,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4336633/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.093,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4336633/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.047,
       "mode": "normal"
      }
     ]
@@ -5199,6 +5455,22 @@
       "scale": 0.282,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4398674/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.299,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4398674/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.15,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -5397,6 +5669,22 @@
       "scale": 0.76,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4398776/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.807,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4398776/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.403,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -5529,6 +5817,22 @@
       "scale": 0.888,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4398911/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.942,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4398911/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.471,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -5659,6 +5963,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.189,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4398935/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.2,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4398935/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.1,
       "mode": "normal"
      }
     ]
@@ -6123,6 +6443,22 @@
       "scale": 0.365,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4432831/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.388,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4432831/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.194,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -6467,6 +6803,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.645,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4433403/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.685,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4433403/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.342,
       "mode": "normal"
      }
     ]
@@ -7523,6 +7875,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.327,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4433730/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.347,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4433730/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.173,
       "mode": "normal"
      }
     ]
@@ -8927,6 +9295,22 @@
       "scale": 0.099,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4790264/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.104,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4790264/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.052,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -9255,6 +9639,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.554,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4898384/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.588,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4898384/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.294,
       "mode": "normal"
      }
     ]
@@ -10641,6 +11041,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.131,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/5345478/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.139,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/5345478/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.069,
       "mode": "normal"
      }
     ]

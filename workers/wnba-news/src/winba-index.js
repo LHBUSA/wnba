@@ -83,13 +83,25 @@ export function freezeWinbaMonthly(snapshot, { period, playerById = new Map(), t
   if (!snapshot?.rows?.length) return null;
   const qualified = snapshot.rows.filter((r) => r.qualified && Number.isFinite(Number(r.score)));
   if (!qualified.length) return null;
-  const ranked = [...qualified].sort((a, b) => Number(b.score) - Number(a.score) || String(a.athlete_id).localeCompare(String(b.athlete_id)));
+  // Use the metric's OWN rank, never a re-derived one. `scoreWinbaPlayers`
+  // breaks ties by minutes then name; re-sorting here by score and athlete id
+  // produced a different order for tied scores, so a frozen board could
+  // disagree with the ranking it claims to record. The snapshot's rank is the
+  // authoritative answer, so the board preserves it.
+  const ranked = [...qualified]
+    .filter((r) => Number.isFinite(Number(r.rank)))
+    .sort((a, b) => Number(a.rank) - Number(b.rank));
+  if (ranked.length < qualified.length) {
+    // A qualified row without a rank means the snapshot is malformed; refuse
+    // rather than invent an order.
+    return null;
+  }
 
-  const rows = ranked.slice(0, top).map((r, i) => {
+  const rows = ranked.slice(0, top).map((r) => {
     const p = playerById.get(String(r.athlete_id)) || null;
     const team = teamById.get(String(r.team_id)) || null;
     return {
-      rank: i + 1,
+      rank: Number(r.rank),
       player_id: String(r.athlete_id),
       player_name: r.name || p?.name || null,
       team_id: r.team_id ? String(r.team_id) : null,
@@ -238,7 +250,7 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
     body.push(`These are the standings as of ${new Intl.DateTimeFormat('en-US', { timeZone: TZ, month: 'long', day: 'numeric' }).format(new Date(frozen.leaderboard_as_of || frozen.snapshot_at))}, with ${label} still being played. The board is frozen at this point and the ranks recorded here are the ones the next edition will measure against.`);
   }
   body.push(
-    `${WINBA_LABEL} is built only from completed WNBA games: Box Impact (points plus 1.2 times rebounds plus 1.5 times assists) measured per 36 minutes against the league, the player’s win rate, the share of her production that came in wins, and her court share. It is an association-with-winning index, not a causal estimate of wins added. ${frozen.qualified_count} players qualified this month at 10 games and 250 minutes.`
+    `${WINBA_LABEL} is built only from completed WNBA games: Box Impact (points plus 1.2 times rebounds plus 1.5 times assists) measured per 36 minutes against the league, the player’s win rate, the share of her production that came in wins, and her court share. It is an association-with-winning index, not a causal estimate of wins added. ${frozen.qualified_count} players qualified for the league ranking, which takes at least 10 appearances or 250 minutes.`
   );
 
   close();

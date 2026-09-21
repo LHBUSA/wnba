@@ -126,7 +126,9 @@ async function winbaHistoryDryRun(env, { top = 25, only = null } = {}) {
     const asOf = cutoffOf(period);
     const snap = buildWinbaSnapshotAsOf(inSeason, { season, asOf });
     const qualified = (snap.rows || []).filter((r) => r.qualified);
-    const ranked = [...qualified].sort((a, b) => b.score - a.score || String(a.athlete_id).localeCompare(String(b.athlete_id)));
+    // The metric's own rank (score, then minutes, then name) is authoritative.
+    // Re-deriving it here diverged from it for tied scores.
+    const ranked = [...qualified].filter((r) => Number.isFinite(Number(r.rank))).sort((a, b) => Number(a.rank) - Number(b.rank));
     const afterCutoff = inSeason.filter((d) => Date.parse(d.summary.game.start_utc) >= Date.parse(asOf)).length;
     const row = {
       period,
@@ -138,8 +140,8 @@ async function winbaHistoryDryRun(env, { top = 25, only = null } = {}) {
       qualified_count: qualified.length,
       provisional_count: (snap.rows || []).length - qualified.length,
       meets_qualification_floor: qualified.length >= 10,
-      top: ranked.slice(0, top).map((r, i) => ({
-        rank: i + 1, athlete_id: String(r.athlete_id), name: r.name, team_id: r.team_id ? String(r.team_id) : null,
+      top: ranked.slice(0, top).map((r) => ({
+        rank: Number(r.rank), athlete_id: String(r.athlete_id), name: r.name, team_id: r.team_id ? String(r.team_id) : null,
         score: r.score, games: r.sample?.games ?? null, wins: r.sample?.wins ?? null, minutes: r.sample?.minutes ?? null,
         pts: r.averages?.pts ?? null, reb: r.averages?.reb ?? null, ast: r.averages?.ast ?? null,
         production_percentile: r.components?.production_percentile ?? null, win_rate: r.components?.win_rate ?? null

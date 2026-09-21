@@ -28,7 +28,15 @@ const mkRow = (id, name, score, teamId, teamName, over = {}) => ({
   ...over
 });
 
-const SNAP = {
+/** Ranks qualified rows in score order, the way scoreWinbaPlayers does. */
+const withRanks = (rows) => {
+  const q = rows.filter((r) => r.qualified)
+    .sort((a, b) => b.score - a.score || (b.sample?.minutes || 0) - (a.sample?.minutes || 0) || String(a.name).localeCompare(String(b.name)));
+  const rank = new Map(q.map((r, i) => [r.athlete_id, i + 1]));
+  return rows.map((r) => ({ ...r, rank: rank.get(r.athlete_id) ?? null }));
+};
+
+const SNAP_BASE = {
   version: 'winba/1.0.0', season: 2026, generated_at: SNAP_AT,
   qualified_count: 193, provisional_count: 44,
   rows: [
@@ -47,6 +55,7 @@ const SNAP = {
     mkRow('1001', 'Bench Player', 40, '5', 'Indiana Fever', { qualified: false })
   ]
 };
+const SNAP = { ...SNAP_BASE, rows: withRanks(SNAP_BASE.rows) };
 
 const PLAYERS = new Map([
   ['4433791', { athlete_id: '4433791', name: 'Olivia Miles', position: 'G', experience_years: 0 }],
@@ -105,7 +114,10 @@ test('the frozen board carries correct ids, teams, ranks and scores, and exclude
   assert.equal(f.period, '2026-09');
   assert.equal(f.rows.length, 12, 'the unqualified player must not be ranked');
   assert.deepEqual(f.rows.slice(0, 5).map((r) => r.rank), [1, 2, 3, 4, 5]);
-  assert.deepEqual(f.rows.slice(0, 5).map((r) => r.player_id), ['4433791', '3149391', '4433402', '4065870', '4433403']);
+  // Young and Clark are tied at 82; the metric breaks ties by minutes then
+  // name, so Clark precedes Young. The board preserves that, it does not
+  // re-sort by athlete id.
+  assert.deepEqual(f.rows.slice(0, 5).map((r) => r.player_id), ['4433791', '3149391', '4433402', '4433403', '4065870']);
   assert.deepEqual(f.rows.slice(0, 5).map((r) => r.score), [87, 86, 83, 82, 82]);
   const wilson = f.rows[1];
   assert.equal(wilson.team_id, '17');
@@ -121,8 +133,10 @@ test('ties break deterministically, so a rerun produces the same order', () => {
   const a = freeze().rows.map((r) => r.player_id);
   const b = freeze().rows.map((r) => r.player_id);
   assert.deepEqual(a, b);
-  // Young and Clark are both 82; the lower athlete id ranks first, every time.
-  assert.equal(freeze().rows[3].player_id, '4065870');
+  // Young and Clark are both 82 on equal minutes, so the metric's name
+  // tie-break decides and the board reports the metric's answer.
+  assert.equal(freeze().rows[3].player_id, '4433403');
+  assert.equal(freeze().rows[4].player_id, '4065870');
 });
 
 test('roster attributes are resolved at freeze time, so a later trade cannot rewrite a published Index', () => {
@@ -137,7 +151,7 @@ test('roster attributes are resolved at freeze time, so a later trade cannot rew
 });
 
 test('no qualified players means no board rather than an empty feature', () => {
-  assert.equal(freezeWinbaMonthly({ ...SNAP, rows: [mkRow('1', 'X', 40, '5', 'Fever', { qualified: false })] }, { period: '2026-09' }), null);
+  assert.equal(freezeWinbaMonthly({ ...SNAP, rows: withRanks([mkRow('1', 'X', 40, '5', 'Fever', { qualified: false })]) }, { period: '2026-09' }), null);
   assert.equal(freezeWinbaMonthly(null, { period: '2026-09' }), null);
 });
 
@@ -155,11 +169,11 @@ test('movement is null without a prior frozen board: no previous rank is ever in
 test('movement between two frozen boards reports real deltas only', () => {
   const august = freezeWinbaMonthly({
     ...SNAP,
-    rows: [
+    rows: withRanks([
       mkRow('3149391', "A'ja Wilson", 84, '17', 'Las Vegas Aces'),
       mkRow('4433402', 'Angel Reese', 82, '20', 'Atlanta Dream'),
       mkRow('4433791', 'Olivia Miles', 78, '8', 'Minnesota Lynx')
-    ]
+    ])
   }, { period: '2026-08', playerById: PLAYERS, teamById: TEAMS, at: '2026-08-31T22:00:00.000Z' });
 
   const m = winbaMovement(freeze(), august);
@@ -184,11 +198,11 @@ test('movement between two frozen boards reports real deltas only', () => {
 test('the movement section only states a delta the frozen boards support', () => {
   const august = freezeWinbaMonthly({
     ...SNAP,
-    rows: [
+    rows: withRanks([
       mkRow('3149391', "A'ja Wilson", 84, '17', 'Las Vegas Aces'),
       mkRow('4433402', 'Angel Reese', 82, '20', 'Atlanta Dream'),
       mkRow('4433791', 'Olivia Miles', 78, '8', 'Minnesota Lynx')
-    ]
+    ])
   }, { period: '2026-08', playerById: PLAYERS, teamById: TEAMS, at: '2026-08-31T22:00:00.000Z' });
   const a = composeWinbaIndex(freeze(), { movement: winbaMovement(freeze(), august) });
   const text = a.body.join(' ');
@@ -328,10 +342,10 @@ test('the October Index links back to September and measures movement against it
   await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
   const oct = await runWinbaIndex({
     period: '2026-10',
-    snapshot: { ...SNAP, generated_at: '2026-10-31T03:00:00.000Z', rows: SNAP.rows.map((r) => ({
+    snapshot: { ...SNAP, generated_at: '2026-10-31T03:00:00.000Z', rows: withRanks(SNAP.rows.map((r) => ({
       ...r,
       score: r.athlete_id === '3149391' ? 90 : r.athlete_id === '4433791' ? 85 : r.athlete_id === '4433402' ? 84 : r.score
-    })) },
+    }))) },
     playerById: PLAYERS, teamById: TEAMS, at: '2026-10-31T22:00:00.000Z', ...h.io
   });
   const a = h.articles.get(oct.id);
@@ -344,7 +358,7 @@ test('the October Index links back to September and measures movement against it
 
 test('a board too thin to support a feature is held, not padded', async () => {
   const h = harness();
-  const thin = { ...SNAP, qualified_count: 1, rows: [mkRow('4433791', 'Olivia Miles', 87, '8', 'Minnesota Lynx')] };
+  const thin = { ...SNAP, qualified_count: 1, rows: withRanks([mkRow('4433791', 'Olivia Miles', 87, '8', 'Minnesota Lynx')]) };
   const res = await runWinbaIndex({ period: '2026-09', snapshot: thin, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
   assert.equal(res.status, 'held_thin');
   assert.equal(h.articles.size, 0);
@@ -493,7 +507,7 @@ test('a re-freeze is refused outright if any published rank or score would chang
   const before = h.monthly.get('2026-09');
 
   // The live snapshot has moved on: Wilson now leads.
-  const moved = { ...SNAP, rows: SNAP.rows.map((r) => ({ ...r, score: r.athlete_id === '3149391' ? 99 : r.score })) };
+  const moved = { ...SNAP, rows: withRanks(SNAP.rows.map((r) => ({ ...r, score: r.athlete_id === '3149391' ? 99 : r.score }))) };
   const res = await runWinbaIndex({
     period: '2026-09', snapshot: moved, playerById: PLAYERS, teamById: TEAMS,
     at: '2026-10-05T09:00:00.000Z', force: true, refreeze: true, ...h.io
@@ -501,4 +515,43 @@ test('a re-freeze is refused outright if any published rank or score would chang
   assert.equal(res.status, 'refreeze_refused');
   assert.match(res.reason, /does not match the published ranks and scores/);
   assert.deepEqual(h.monthly.get('2026-09'), before, 'the published board is untouched');
+});
+
+
+// ------------------------------------------------- qualification language
+
+test('the edition states the real qualification rule: appearances OR minutes', () => {
+  const text = composeWinbaIndex(freeze(), { movement: null }).body.join(' ');
+  assert.match(text, /at least 10 appearances or 250 minutes/);
+  // The rule is a disjunction in workers/shared/winba.js; describing it as a
+  // conjunction understates who qualifies.
+  assert.doesNotMatch(text, /10 games and 250 minutes/);
+  assert.doesNotMatch(text, /10 appearances and 250 minutes/);
+});
+
+test('the frozen board preserves the metric rank rather than re-deriving it', () => {
+  // Two tied scores whose minutes order differs from their athlete-id order:
+  // re-ranking by id would swap them against the metric's own answer.
+  const snap = {
+    version: 'winba/1.0.0', season: 2026, generated_at: SNAP_AT, qualified_count: 3,
+    rows: [
+      { athlete_id: '9001', name: 'Low Id Fewer Minutes', team_id: '8', score: 72.2, rank: 2, qualified: true, sample: { games: 20, wins: 10, minutes: 400 }, averages: { min: 20, pts: 10, reb: 4, ast: 3 }, components: {} },
+      { athlete_id: '1002', name: 'High Minutes', team_id: '17', score: 72.2, rank: 1, qualified: true, sample: { games: 20, wins: 12, minutes: 700 }, averages: { min: 35, pts: 12, reb: 5, ast: 4 }, components: {} },
+      { athlete_id: '1003', name: 'Third', team_id: '20', score: 70, rank: 3, qualified: true, sample: { games: 20, wins: 9, minutes: 500 }, averages: { min: 25, pts: 9, reb: 3, ast: 2 }, components: {} }
+    ]
+  };
+  const f = freezeWinbaMonthly(snap, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: AT });
+  assert.deepEqual(f.rows.map((r) => [r.rank, r.player_name]), [
+    [1, 'High Minutes'],
+    [2, 'Low Id Fewer Minutes'],
+    [3, 'Third']
+  ], 'the metric rank wins, not an id-based re-sort');
+});
+
+test('a qualified row with no rank is refused rather than given an invented order', () => {
+  const snap = {
+    version: 'winba/1.0.0', season: 2026, generated_at: SNAP_AT, qualified_count: 1,
+    rows: [{ athlete_id: '1', name: 'No Rank', team_id: '8', score: 80, qualified: true, sample: { games: 12 }, averages: {}, components: {} }]
+  };
+  assert.equal(freezeWinbaMonthly(snap, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: AT }), null);
 });

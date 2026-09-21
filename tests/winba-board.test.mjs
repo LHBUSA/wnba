@@ -330,3 +330,42 @@ test('a board too short for a spread view simply omits it', async () => {
   assert.ok(!h.includes('wb-spread'));
   assert.match(h, /wb-podium/, 'the podium still renders');
 });
+
+// -------------------------------------- backfill must not displace September
+
+test('editions published LATER but for EARLIER periods never become current', () => {
+  // The backfill scenario: September is live, then June/July/August are
+  // published afterwards. Because "current" is period-based, September holds.
+  const sep = { ...ed('2026-09', 'sep'), first_published_at: '2026-09-21T20:48:01.908Z' };
+  const backfilled = ['2026-06', '2026-07', '2026-08'].map((p) => ({
+    ...ed(p, `bf-${p}`),
+    // Published today, long after September went live.
+    first_published_at: '2026-11-02T10:00:00.000Z',
+    historical_backfill: true
+  }));
+  const items = [...backfilled, sep];
+  assert.equal(currentWinbaEdition({ data: { items } }).period, '2026-09');
+  assert.equal(isCurrentWinbaEdition(sep, { data: { items } }), true);
+  for (const b of backfilled) {
+    assert.equal(isCurrentWinbaEdition(b, { data: { items } }), false, `${b.period} must not be current`);
+  }
+  // And October, when it legitimately arrives, takes over.
+  const withOct = { data: { items: [...items, ed('2026-10', 'oct')] } };
+  assert.equal(currentWinbaEdition(withOct).period, '2026-10');
+  assert.equal(isCurrentWinbaEdition(sep, withOct), false);
+});
+
+test('the series orders by period, so a backfill slots in behind September', async () => {
+  const { winbaIndexCards, winbaSeriesNav } = await import('../src/views/winba-index.js');
+  const items = [
+    { ...ed('2026-09', 'sep'), first_published_at: '2026-09-21T20:48:01.908Z' },
+    { ...ed('2026-06', 'jun'), first_published_at: '2026-11-02T10:00:00.000Z' },
+    { ...ed('2026-07', 'jul'), first_published_at: '2026-11-02T10:05:00.000Z' },
+    { ...ed('2026-08', 'aug'), first_published_at: '2026-11-02T10:10:00.000Z' }
+  ];
+  assert.deepEqual(winbaIndexCards({ data: { items } }).map((c) => c.period), ['2026-09', '2026-08', '2026-07', '2026-06']);
+  const nav = winbaSeriesNav(winbaIndexCards({ data: { items } }), '2026-07');
+  assert.equal(nav.prev.period, '2026-06');
+  assert.equal(nav.next.period, '2026-08');
+  assert.equal(winbaSeriesNav(winbaIndexCards({ data: { items } }), '2026-09').next, null, 'September stays the newest');
+});
