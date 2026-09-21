@@ -73,8 +73,11 @@ ok('every top-10 team id is a real team', topTen.every((r) => teamIds.has(String
 
 // ---- the published HTML (from the Worker, bypassing the CDN)
 const page = (await get(`${WEB}/news/${card.slug}`, 'text')).body;
-ok('page renders the lede (not only sectioned copy)', page.includes('at the top of'));
-ok('page states the methodology once', (page.match(/association-with-winning index/g) || []).length === 1);
+// Visible copy only: the JSON-LD DefinedTerm legitimately restates the caveat,
+// and counting it would make the editorial check unpassable.
+const visible = page.replace(/<script[\s\S]*?<\/script>/g, '');
+ok('page renders the lede (not only sectioned copy)', visible.includes('at the top of'));
+ok('visible copy states the methodology caveat once', (visible.match(/association-with-winning index/g) || []).length === 1);
 const playerLinks = [...new Set([...page.matchAll(/href="\/players\/(\d+)"/g)].map((m) => m[1]))];
 const teamLinks = [...new Set([...page.matchAll(/href="\/teams\/(\d+)"/g)].map((m) => m[1]))];
 ok('player links present for the top ten', playerLinks.length >= 10, `${playerLinks.length} distinct`);
@@ -142,9 +145,13 @@ ok('player page states the frozen rank', playerPage.includes(`No. ${rows[0].rank
 
 const sitemap = (await get(`${WEB}/news-sitemap.xml`, 'text')).body;
 ok('edition is in the news sitemap', sitemap.includes(card.slug));
-const general = (await get(`${WEB}/sitemap-pages.xml`, 'text').catch(() => ({ body: '' }))).body
-  || (await get(`${WEB}/sitemap.xml`, 'text')).body;
-ok('archive route is discoverable in a sitemap', general.includes('/news/winba-index') || sitemap.includes('/news/winba-index'), 'checked page sitemap');
+// A 404 body is still a string, so only a 200 counts as a sitemap.
+let general = '';
+for (const path of ['/sitemap-pages.xml', '/sitemap.xml']) {
+  const r = await get(`${WEB}${path}`, 'text');
+  if (r.status === 200) general += r.body;
+}
+ok('archive route is discoverable in a sitemap', general.includes('/news/winba-index') || sitemap.includes('/news/winba-index'));
 const rss = (await get(`${WEB}/rss.xml`, 'text')).body;
 ok('edition is in RSS', rss.includes(card.slug));
 
