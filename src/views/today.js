@@ -330,7 +330,7 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
           <p class="note" style="margin-top:8px;max-width:78ch">WinBA is PropBetEdge’s 0–100 WNBA winning-impact index, built from archived regular-season finals to show box-score production, playing time and how that production is associated with team wins.</p>
         </div>
         <div class="pill-row" style="margin:0">
-          <a class="btn gold" href="/sources#winba-score">Learn how WinBA works →</a>
+          <a class="btn gold" href="/sources#winba-score" data-external>Learn about the WinBA Score →</a>
           <a class="pill" href="/stats">See WinBA in player stats →</a>
         </div>
       </div>
