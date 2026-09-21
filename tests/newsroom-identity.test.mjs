@@ -10,6 +10,7 @@ import {
   IDENTITY_VERSION
 } from '../workers/wnba-news/src/identity.js';
 import { verifyRecordClaim } from '../workers/wnba-news/src/briefs.js';
+import { milesRecordStaticArticle, MILES_RECORD_SLUG } from '../src/lib/news-corrections.js';
 
 const CLARK = { type: 'player', id: '4433403', name: 'Caitlin Clark', team_id: '5' };
 const MILES = { type: 'player', id: '4433791', name: 'Olivia Miles', team_id: '8' };
@@ -126,4 +127,22 @@ test('full-catalog audit retires an identity-poisoned historical story but keeps
   assert.equal(card.quality_state, 'retired_from_index');
   assert.equal(puts.length, 1);
   assert.equal(puts[0].revisions.at(-1).kind, 'integrity_retirement');
+});
+
+
+test('public correction is a focused Olivia Miles record story with the verified Sep. 20 game', () => {
+  const a = milesRecordStaticArticle();
+  assert.equal(a.slug, MILES_RECORD_SLUG);
+  assert.equal(a.lead_player_id, MILES.id);
+  assert.equal(a.lead_team_id, LYNX.id);
+  assert.equal(a.primary_subject, MILES.name);
+  assert.equal(a.event_type, 'record');
+  assert.match(a.headline, /^Olivia Miles breaks Caitlin Clark/);
+  assert.match(a.deck, /770th point/);
+  assert.match(a.deck, /21 in Minnesota’s 101–89 win at Connecticut/);
+  assert.match(a.body.join(' '), /21 points with 3 rebounds and 6 assists in 30 minutes/);
+  assert.doesNotMatch(a.body.join(' '), /Caitlin Clark has averaged|Clark.*Minnesota Lynx/);
+  assert.ok(a.media?.subjects?.some((x) => String(x.player_id) === MILES.id));
+  assert.ok(a.entities.some((e) => e.type === 'game' && e.id === '401857201'));
+  assert.deepEqual(articleIdentityFailures(a), []);
 });
