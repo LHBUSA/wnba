@@ -176,9 +176,27 @@ export const articleHasTeam = (card, teamId) => Boolean(card) && (
   || (card.entities || []).some((e) => e?.type === 'team' && String(e.id) === String(teamId))
 );
 
-export function correctArticleListResponse(res, { playerId = null, teamId = null } = {}) {
+const briefGeneratorVersion = (card) => {
+  const direct = String(card?.context?.brief?.story_version || card?.facts?.brief?.story_version || '');
+  if (direct) return direct;
+  const hash = String(card?.input_hash || '');
+  if (hash.startsWith('wnba-briefs/3.0.0|')) return 'wnba-brief-story/1.0.0';
+  return null;
+};
+
+export function isCurrentQualityBrief(card) {
+  if (!card || card.kind !== 'brief') return true;
+  if (isMilesRecordSlug(card.slug)) return true;
+  return briefGeneratorVersion(card) === 'wnba-brief-story/1.0.0';
+}
+
+export function correctArticleListResponse(res, { playerId = null, teamId = null, archive = false } = {}) {
   if (!res?.ok || !Array.isArray(res.data?.items)) return res;
   let items = res.data.items.map(correctMilesRecordCard);
+  // Until the wnba-news Worker completes its versioned catalog audit, fail
+  // closed on legacy source briefs in LIVE collection surfaces. The archive
+  // keeps the historical record; current v3 briefs and structured stories stay.
+  if (!archive) items = items.filter(isCurrentQualityBrief);
   if (playerId !== null) items = items.filter((c) => articleHasPlayer(c, playerId));
   if (teamId !== null) items = items.filter((c) => articleHasTeam(c, teamId));
   return { ...res, data: { ...res.data, items } };
