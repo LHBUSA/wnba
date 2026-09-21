@@ -168,7 +168,7 @@ export const api = {
   news: (p) => getJson(`${NEWS_BASE}/v1/news${q(p)}`),
   articles: async (p = {}) => correctArticleListResponse(
     await getJson(`${NEWS_BASE}/v1/articles${q(p)}`),
-    { playerId: p.player ?? null, teamId: p.team ?? null }
+    { playerId: p.player ?? null, teamId: p.team ?? null, archive: p.archive === 1 || p.archive === '1' }
   ),
   article: async (slug) => {
     const incident = isMilesRecordSlug(slug);
