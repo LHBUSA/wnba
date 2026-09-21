@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-21T21:23:36Z",
+ "generated_at": "2026-09-21T21:35:24Z",
  "ledger_promoted_at": "2026-09-21T21:23:16Z",
  "method": {
   "source": "The ledger's approved Commons file for each player (<=2560 px rendition), identity and rights as reviewed in data/player-photos.json.",
@@ -25,6 +25,13 @@
     "aspect": 1.9048,
     "widths": [
      1200
+    ]
+   },
+   "podium": {
+    "aspect": 1.1111,
+    "widths": [
+     600,
+     300
     ]
    }
   },
@@ -2996,6 +3003,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.288,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/3149391/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.305,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/3149391/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.153,
       "mode": "normal"
      }
     ]
@@ -6364,6 +6387,22 @@
       "scale": 0.206,
       "mode": "normal"
      }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4433402/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.219,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4433402/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.109,
+      "mode": "normal"
+     }
     ]
    }
   },
@@ -7616,6 +7655,22 @@
       "w": 1200,
       "h": 630,
       "scale": 0.274,
+      "mode": "normal"
+     }
+    ],
+    "podium": [
+     {
+      "src": "/media/news/players/4433791/podium-600.jpg",
+      "w": 600,
+      "h": 540,
+      "scale": 0.291,
+      "mode": "normal"
+     },
+     {
+      "src": "/media/news/players/4433791/podium-300.jpg",
+      "w": 300,
+      "h": 270,
+      "scale": 0.145,
       "mode": "normal"
      }
     ]

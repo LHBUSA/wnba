@@ -16,7 +16,8 @@ Framing uses the reviewed face box already in the ledger (the same box the 4:5 /
 and the stage-6 head rules: head = face + 45% up + 10% headroom; the head is always fully inside the frame.
 Never upscaled beyond 1.3x (a size that would need more is simply not produced).
 
-Output: public/media/news/players/<espnAthleteId>/{wide-1280,wide-960,wide-640,half-640,half-480}.webp, og.jpg
+Output: public/media/news/players/<espnAthleteId>/{wide-1280,wide-960,wide-640,half-640,half-480}.webp, og.jpg,
+        {podium-600,podium-300}.jpg (share-card podium cells: JPEG, because satori does not decode WebP)
 Manifest: data/newsroom-media.json (bundled into wnba-news, which attaches media to articles).
 Review sheets: scripts/.cache/newsroom/sheets/*.png
 """
@@ -53,6 +54,10 @@ SLOTS = {
     "wide": dict(aspect=16 / 9, widths=[1280, 960, 640], fx=0.62, ey=0.34, fh=0.22, min_fh=0.11),
     "half": dict(aspect=8 / 9, widths=[640, 480], fx=0.50, ey=0.32, fh=0.20, min_fh=0.11),
     "og": dict(aspect=1200 / 630, widths=[1200], fx=0.70, ey=0.34, fh=0.21, min_fh=0.10),
+    # A small portrait cell for the WinBA Index podium card. JPEG, because the
+    # share-card renderer (satori) decodes JPEG and PNG, not WebP. The face runs
+    # larger than in the other slots because the cell is only ~300px wide.
+    "podium": dict(aspect=10 / 9, widths=[600, 300], fx=0.50, ey=0.33, fh=0.26, min_fh=0.13),
 }
 
 _last = [0.0]
@@ -335,8 +340,8 @@ def build(only=None):
                     problems.append((p["display_name"], f"{sname}-{W}: head top would leave the frame"))
                     continue
                 frame = compose(img, pl, tint, sname, credit=short_credit(p) if sname == "og" else None)
-                name = "og.jpg" if sname == "og" else f"{sname}-{W}.webp"
-                if sname == "og":
+                name = "og.jpg" if sname == "og" else f"{sname}-{W}.{'jpg' if sname == 'podium' else 'webp'}"
+                if sname in ("og", "podium"):
                     frame.save(os.path.join(d, name), "JPEG", quality=86, optimize=True, progressive=True)
                 else:
                     frame.save(os.path.join(d, name), "WEBP", quality=80, method=6)

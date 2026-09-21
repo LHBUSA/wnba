@@ -101,8 +101,13 @@ export async function cardModel(kind, key, api) {
             name: r.name,
             score: r.score,
             teamColor: color(teamColors({ team_id: r.team_id }).color, '#2a241c'),
-            photoPath: (r.half || []).slice(-1)[0]?.src || null
+            photoPath: (r.podium || []).find((x) => x.w === 600)?.src || (r.podium || []).slice(-1)[0]?.src || null
           }))
+          : null,
+        // CC BY-SA obliges us to credit each photograph, and a podium prints
+        // three, so the card carries one combined credit line.
+        credits: (a.winba_podium || []).length === 3
+          ? `Photos: ${[...new Set((a.winba_podium || []).map((r) => r.credit?.author).filter(Boolean))].join(', ')} · CC BY-SA via Wikimedia Commons`
           : null,
         photoPath: (a.winba_podium || []).length === 3 ? null : a.media?.og || null,
         colors: [color(teamColors({ team_id: lead.team_id }).color, '#2a241c'), color(teamColors({ team_id: top[1]?.team_id || lead.team_id }).color, '#3a2f22')],

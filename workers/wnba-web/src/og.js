@@ -116,6 +116,7 @@ function podiumLayout(model) {
       text({ fontFamily: 'Barlow Condensed', fontSize: 44, color: PAPER, textTransform: 'uppercase', lineHeight: 1 }, 'The WinBA Index'),
       text({ fontFamily: 'Barlow Condensed', fontSize: 30, color: ORANGE, letterSpacing: 2, textTransform: 'uppercase', marginTop: 2 }, model.period || '')),
     ...model.podium.map(cell),
+    model.credits ? text({ position: 'absolute', right: 20, bottom: 16, fontFamily: 'Inter', fontWeight: 500, fontSize: 15, color: '#8d8578' }, model.credits) : null,
     footer(model.footer));
 }
 

@@ -12,6 +12,7 @@ export function subjectFrom(PLAYERS, pid) {
     team_abbr: e.team_abbr,
     wide: e.slots.wide,
     half: e.slots.half || [],
+    podium: e.slots.podium || [],
     og: e.slots.og?.[0]?.src || null,
     square: `/media/players/${pid}/square.webp`,
     credit: { author: e.artist || null, license: e.license, license_url: e.license_url || null, source_page: e.source_page_url, text: e.attribution }
@@ -34,7 +35,9 @@ export function winbaPodiumFrom(PLAYERS, rows, n = 3) {
   const out = [];
   for (const r of top) {
     const s = subjectFrom(PLAYERS, r.player_id);
-    if (!s || !s.half?.length) return null;
+    // The podium slot is JPEG: the share-card renderer decodes JPEG and PNG,
+    // not WebP, so a subject without it cannot appear on the card.
+    if (!s || !s.podium?.length) return null;
     if (s.name && r.player_name && normName(s.name) !== normName(r.player_name)) return null;
     out.push({
       rank: r.rank,
@@ -43,6 +46,7 @@ export function winbaPodiumFrom(PLAYERS, rows, n = 3) {
       team_id: s.team_id,
       team_abbr: s.team_abbr,
       score: Math.round(Number(r.score)),
+      podium: s.podium,
       half: s.half,
       credit: s.credit
     });
