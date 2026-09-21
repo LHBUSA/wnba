@@ -3,8 +3,9 @@
 // is injected so this module stays testable without the media manifest.
 
 import { intelligenceFailures } from '../../../src/lib/intelligence.js';
+import { storyCraftFailures, storyCraftAssessment } from './storycraft.js';
 
-export const QUALITY_VERSION = 'wnba-quality/1.0.0';
+export const QUALITY_VERSION = 'wnba-quality/1.1.0';
 const ms = (x) => { const v = Date.parse(x || ''); return Number.isFinite(v) ? v : null; };
 const SKEW_MS = 60e3; // clock skew tolerated between the data service and the newsroom Worker
 
@@ -42,5 +43,20 @@ export function visualFailures(a, media) {
 
 /** Everything this module checks, for one generated article. */
 export function qualityFailures(a, { media = null, generatedAt } = {}) {
-  return [...provenanceFailures(a, { generatedAt }), ...visualFailures(a, media ?? undefined), ...(a.intelligence ? intelligenceFailures(a) : [])];
+  return [
+    ...provenanceFailures(a, { generatedAt }),
+    ...visualFailures(a, media ?? undefined),
+    ...storyCraftFailures(a),
+    ...(a.intelligence ? intelligenceFailures(a) : [])
+  ];
+}
+
+export function qualityAssessment(a, { media = null, generatedAt } = {}) {
+  const failures = qualityFailures(a, { media, generatedAt });
+  return {
+    version: QUALITY_VERSION,
+    pass: failures.length === 0,
+    failures,
+    storycraft: storyCraftAssessment(a)
+  };
 }
