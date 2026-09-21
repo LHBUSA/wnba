@@ -30,6 +30,7 @@ const PAGE_CARDS = Object.freeze({
   'pbe-model': ['Methodology', 'How the PBE WNBA Model Works', 'Features, validation, calibration, lock policy and known limits.'],
   'track-record': ['Transparency', 'PBE WNBA Track Record', 'Every official locked call stays on the board and is graded from the final score.'],
   pro: ['WNBA Pro', 'PropBetEdge WNBA Pro', 'The full WNBA research desk: premium intelligence, model context and deeper player research.'],
+  'winba-score': ['PropBetEdge original metric', 'WinBA Score', 'The 0–100 WNBA winning-impact metric: formula, current rankings, qualification rules and limits.'],
   sources: ['Trust layer', 'WNBA Data Sources', 'Source registry, freshness and the methodology behind PropBetEdge WNBA.'],
   about: ['About', 'PropBetEdge WNBA Newsroom', 'Independent WNBA intelligence and an automated newsroom inside the PropBetEdge network.'],
   'editorial-policy': ['Trust', 'Editorial Policy', 'How PropBetEdge WNBA verifies, attributes and publishes source-grounded coverage.'],
