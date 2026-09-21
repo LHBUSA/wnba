@@ -283,3 +283,6 @@
 .wb-components dt, .wb-components dd b { font-size: 12px; }
 .wb-depth-prank { font-size: 13px; }
 .wb-spread-scale { margin-bottom: 16px; }
+
+/* The score label is a link a reader may want to follow; match the floor. */
+.wb-score a { font-size: 11px; }
