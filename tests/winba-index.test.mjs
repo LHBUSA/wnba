@@ -438,3 +438,17 @@ test('a regeneration records revised_at while published_at never moves', async (
   assert.equal(a.first_published_at, AT);
   assert.equal(a.revised_at, '2026-10-02T09:00:00.000Z');
 });
+
+
+test('revisions accumulate across regenerations instead of overwriting', async () => {
+  const h = harness();
+  const r = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  assert.equal(h.articles.get(r.id).revisions.length, 0);
+  for (const t of ['2026-10-02T09:00:00.000Z', '2026-10-03T09:00:00.000Z', '2026-10-04T09:00:00.000Z']) {
+    await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: t, force: true, ...h.io });
+  }
+  const a = h.articles.get(r.id);
+  assert.equal(a.revisions.length, 3, 'each regeneration adds one revision');
+  assert.equal(a.published_at, AT, 'published_at still never moves');
+  assert.equal(a.revised_at, '2026-10-04T09:00:00.000Z');
+});

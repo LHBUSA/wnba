@@ -448,6 +448,10 @@ export async function runWinbaIndex({
   }
 
   const firstPublished = already?.published_at || at;
+  // The revision log lives on the stored article, not on the publication
+  // ledger, so carry it forward or repeated regenerations each overwrite it.
+  const stored = already ? await getArticle(already.id).catch(() => null) : null;
+  const priorRevisions = stored?.revisions || already?.revisions || [];
   const article = {
     ...composed,
     id: identity.id,
@@ -458,7 +462,7 @@ export async function runWinbaIndex({
     updated_at: at,
     // A regeneration is a revision, recorded the way the newsroom records every
     // other one. published_at never moves; revised_at is what changed.
-    revisions: already ? [...(already.revisions || []), { at, kind: 'editorial_upgrade', generator: WINBA_INDEX_VERSION }] : [],
+    revisions: already ? [...priorRevisions, { at, kind: 'editorial_upgrade', generator: WINBA_INDEX_VERSION }].slice(-20) : [],
     revised_at: already ? at : null,
     provenance: {
       generated_at: at,
