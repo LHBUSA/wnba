@@ -13,6 +13,7 @@
 import { html } from '../lib/dom.js';
 import { avatar } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
+import { fmtDateET } from '../lib/format.js';
 
 const f1 = (v) => (Number.isFinite(Number(v)) ? String(Math.round(Number(v) * 10) / 10) : null);
 const whole = (v) => (Number.isFinite(Number(v)) ? String(Math.round(Number(v))) : null);
@@ -125,25 +126,143 @@ function rankRows(article, rows, firstEdition) {
 }
 
 /**
- * The chart view: the top ten as one horizontal comparison, so the shape of the
- * board is readable at a glance. HTML and CSS, not canvas, so it is in the SSR
- * response and available to assistive technology.
+ * What the shape of the board says, which the podium and the rows do not.
+ *
+ * The top ten is already listed twice above, so repeating it as a bar chart
+ * would be the same ranking a third time. This instead shows the SPREAD across
+ * the whole frozen board — how tightly the leaders are bunched, where the
+ * board thins out — and the gap from No. 1, which is information the ordered
+ * list cannot convey.
  */
-function chart(article, rows) {
-  const max = Math.max(...rows.map((r) => Number(r.score) || 0), 1);
-  return html`<figure class="wb-chart">
-    <figcaption>Top 10 by WinBA Score</figcaption>
-    <ol>
+function distribution(article, rows) {
+  const scored = rows.filter((r) => Number.isFinite(Number(r.score)));
+  if (scored.length < 6) return '';
+  const top = Number(scored[0].score);
+  const last = Number(scored.at(-1).score);
+  const span = Math.max(top - last, 0.1);
+  // Biggest single drop between consecutive ranks: where the board breaks.
+  let cliff = null;
+  for (let i = 1; i < scored.length; i += 1) {
+    const drop = Number(scored[i - 1].score) - Number(scored[i].score);
+    if (!cliff || drop > cliff.drop) cliff = { drop, above: scored[i - 1], below: scored[i] };
+  }
+  return html`<figure class="wb-spread">
+    <figcaption>How the top ${scored.length} is spread</figcaption>
+    <ol class="wb-spread-scale" aria-label="WinBA score by rank across the frozen board">
+      ${scored.map((r) => html`<li class="${r.rank <= 3 ? 'is-podium' : r.rank <= 10 ? 'is-top10' : ''}" style="height:${Math.max(8, ((Number(r.score) - last) / span) * 100)}%" title="No. ${r.rank} ${r.player_name} — ${whole(r.score)}"><span>${r.rank <= 3 || r.rank % 5 === 0 ? r.rank : ''}</span></li>`)}
+    </ol>
+    <dl class="wb-spread-facts">
+      <dt>Top to No. ${scored.length}</dt><dd>${whole(top)} → ${whole(last)}, a ${f1(top - last)}-point spread</dd>
+      ${cliff && cliff.drop >= 0.6 ? html`<dt>Biggest single drop</dt><dd>${f1(cliff.drop)} points, between No. ${cliff.above.rank} ${cliff.above.player_name} and No. ${cliff.below.rank} ${cliff.below.player_name}</dd>` : ''}
+    </dl>
+  </figure>`;
+}
+
+/** Ranks 11 and beyond: supporting data, available without being heavy. */
+function continuation(article, rows) {
+  if (!rows.length) return '';
+  return html`<details class="wb-more">
+    <summary>View ranks ${rows[0].rank}–${rows.at(-1).rank}</summary>
+    <ol class="wb-more-rows">
       ${rows.map((row) => html`<li>
-        <span class="wb-chart-rank">${row.rank}</span>
-        <a class="wb-chart-thumb" href="/players/${row.player_id}" aria-hidden="true" tabindex="-1">${playerImage(article, row, 'square')}</a>
-        <a class="wb-chart-name" href="/players/${row.player_id}">${row.player_name}</a>
-        ${row.team_id ? html`<a class="wb-chart-team" href="/teams/${row.team_id}" aria-label="${row.team_name || ''}">${teamLogo({ team_id: row.team_id, name: row.team_name }, 16)}</a>` : html`<span class="wb-chart-team"></span>`}
-        <span class="wb-chart-bar"><i style="width:${Math.max(6, (Number(row.score) / max) * 100)}%"></i></span>
-        <b class="wb-chart-score">${whole(row.score)}</b>
+        <span class="wb-more-rank">${row.rank}</span>
+        <a class="wb-more-photo" href="/players/${row.player_id}" aria-hidden="true" tabindex="-1">${playerImage(article, row, 'square')}</a>
+        <a class="wb-more-name" href="/players/${row.player_id}">${row.player_name}</a>
+        ${row.team_id ? html`<a class="wb-more-team" href="/teams/${row.team_id}">${row.team_name || `Team ${row.team_id}`}</a>` : html`<span></span>`}
+        <b class="wb-more-score">${whole(row.score)}</b>
       </li>`)}
     </ol>
-  </figure>`;
+  </details>`;
+}
+
+/**
+ * TEAM DEPTH: which rosters place several players on the frozen board.
+ *
+ * Computed from the article's frozen board only, so it is the depth that was
+ * true that month — a later trade cannot reshape a published edition. Teams are
+ * ordered deterministically (most ranked players, then best rank, then name),
+ * but teams on the same count are presented as EQUAL: the order is a render
+ * decision, not a claim that one roster is deeper than another on the same
+ * number.
+ */
+export function winbaTeamDepthData(article) {
+  const rows = article?.winba_board?.rows || [];
+  const byTeam = new Map();
+  for (const r of rows) {
+    if (!r.team_id) continue;
+    const t = byTeam.get(String(r.team_id)) || { team_id: String(r.team_id), team_name: r.team_name, players: [] };
+    t.players.push(r);
+    byTeam.set(String(r.team_id), t);
+  }
+  return [...byTeam.values()]
+    .filter((t) => t.players.length >= 2)
+    .map((t) => ({ ...t, players: [...t.players].sort((a, b) => a.rank - b.rank) }))
+    .sort((a, b) => b.players.length - a.players.length
+      || a.players[0].rank - b.players[0].rank
+      || String(a.team_name || a.team_id).localeCompare(String(b.team_name || b.team_id)));
+}
+
+export function winbaTeamDepth(article) {
+  const teams = winbaTeamDepthData(article);
+  if (!teams.length) return '';
+  const total = (article?.winba_board?.rows || []).length;
+  const label = article?.winba_board?.period_label || article?.period_label || '';
+  const most = teams[0].players.length;
+
+  return html`<section class="wb-depth" aria-labelledby="wb-depth-title">
+    <header class="wb-depth-head">
+      <h2 id="wb-depth-title">Teams with the most top-${total} WinBA players</h2>
+      <p>Which rosters place multiple players among ${label ? `${label}’s` : 'the month’s'} ${total} highest-rated <a href="/winba-score">WinBA</a> players.</p>
+    </header>
+
+    <ol class="wb-depth-rank" aria-label="Top-${total} depth by team">
+      ${teams.map((t) => html`<li class="${t.players.length === most ? 'is-most' : ''}">
+        <b>${t.players.length}</b>
+        <span class="wb-depth-meter"><i style="width:${Math.round((t.players.length / most) * 100)}%"></i></span>
+        <a href="/teams/${t.team_id}">${t.team_name || `Team ${t.team_id}`}</a>
+      </li>`)}
+    </ol>
+
+    <ol class="wb-depth-cards">
+      ${teams.map((t) => html`<li class="wb-depth-card">
+        <header>
+          <a class="wb-depth-team" href="/teams/${t.team_id}">${teamLogo({ team_id: t.team_id, name: t.team_name }, 28)}<span>${t.team_name || `Team ${t.team_id}`}</span></a>
+          <p class="wb-depth-count"><b>${t.players.length}</b> <span>top-${total} ${t.players.length === 1 ? 'player' : 'players'}</span></p>
+        </header>
+        <ol class="wb-depth-players">
+          ${t.players.map((row) => html`<li>
+            <a class="wb-depth-photo" href="/players/${row.player_id}" aria-hidden="true" tabindex="-1">${playerImage(article, row, 'square')}</a>
+            <span class="wb-depth-prank">#${row.rank}</span>
+            <a class="wb-depth-name" href="/players/${row.player_id}">${row.player_name}</a>
+            <b class="wb-depth-score">${whole(row.score)}</b>
+          </li>`)}
+        </ol>
+      </li>`)}
+    </ol>
+  </section>`;
+}
+
+/**
+ * The aside for an Index edition. An ordinary story's generic Teams list is
+ * redundant here — the board already links every team several times — so the
+ * space carries the series instead: the live board, and this edition's top
+ * three from its frozen snapshot.
+ */
+export function winbaIndexAside(article) {
+  const rows = (article?.winba_board?.rows || []).slice(0, 3);
+  if (!rows.length) return '';
+  return html`<section class="wb-aside">
+    <h2 class="aside-title">This edition</h2>
+    <ol class="wb-aside-top">
+      ${rows.map((r) => html`<li>
+        <span>${r.rank}</span>
+        <a href="/players/${r.player_id}">${r.player_name}</a>
+        <b>${whole(r.score)}</b>
+      </li>`)}
+    </ol>
+    <a class="aside-row" href="/winba-score"><b>Live WinBA leaderboard</b><span class="note">Current board, updated from completed games →</span></a>
+    <a class="aside-row" href="/news/winba-index"><b>All WinBA Index editions</b><span class="note">The permanent series archive →</span></a>
+  </section>`;
 }
 
 /**
@@ -156,18 +275,21 @@ export function winbaIndexLeaderboard(article) {
   const rows = article?.winba_board?.rows || [];
   if (!rows.length) return '';
   const top10 = rows.slice(0, 10);
+  const rest = rows.slice(10);
   const firstEdition = !article?.winba_movement;
   const label = article.winba_board.period_label || article.period_label || '';
+  const asOf = article.winba_board.leaderboard_as_of || article.winba_board.snapshot_at || null;
 
   return html`<section class="wb-board" aria-labelledby="wb-board-title">
     <header class="wb-board-head">
-      <h2 id="wb-board-title">${label ? `${label} WinBA leaderboard` : 'The WinBA leaderboard'}</h2>
-      <p class="wb-board-note">Frozen at publication${article.winba_board.qualified_count ? ` · ${article.winba_board.qualified_count} qualified players` : ''} · <a href="/winba-score">how WinBA Score works</a></p>
+      <p class="wb-board-status"><span class="wb-frozen">Frozen monthly snapshot</span><a href="/winba-score">Live rankings →</a></p>
+      <h2 id="wb-board-title">Top 10 WinBA rankings</h2>
+      <p class="wb-board-note">${[label, asOf ? `frozen ${fmtDateET(asOf, { month: 'short', day: 'numeric' })}` : null, article.winba_board.qualified_count ? `${article.winba_board.qualified_count} qualified players` : null].filter(Boolean).join(' · ')} · <a href="/winba-score">How WinBA works →</a></p>
     </header>
     ${podium(article, top10.slice(0, 3), firstEdition)}
     ${rankRows(article, top10.slice(3), firstEdition)}
-    ${chart(article, top10)}
-    ${rows.length > 10 ? html`<p class="wb-board-more">Ranks 11–${rows.length} are recorded in this edition’s frozen board.</p>` : ''}
+    ${continuation(article, rest)}
+    ${distribution(article, rows)}
   </section>`;
 }
 

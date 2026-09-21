@@ -29,9 +29,13 @@ export function winbaPodium(rows) {
   return winbaPodiumFrom(PLAYERS, rows);
 }
 
-/** Approved media for the visual leaderboard's top ten; null per row is safe. */
+/**
+ * Approved media for every ranked row of a frozen board (top 25), because the
+ * team-depth cards reach past the top ten. A null image per row is safe: the
+ * renderer falls back, and a player is never dropped for want of a photograph.
+ */
 export function winbaBoardMedia(rows) {
-  return winbaBoardMediaFrom(PLAYERS, rows);
+  return winbaBoardMediaFrom(PLAYERS, rows, 25);
 }
 
 export const MEDIA_MANIFEST_AT = manifest.generated_at || null;

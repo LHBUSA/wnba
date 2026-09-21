@@ -114,3 +114,159 @@
 @media (max-width: 640px) {
   .wbx-hero-top { grid-template-columns: 1fr; gap: 10px; }
 }
+
+/* Team depth: which rosters place several players on the frozen board.
+   A ranking in its own right, not a table of records. */
+.wb-depth { margin: 28px 0; }
+.wb-depth-head h2 { margin: 0; color: var(--paper); font: 600 clamp(18px, 2.3vw, 24px)/1.22 var(--f-editorial); text-wrap: balance; }
+.wb-depth-head p { margin: 6px 0 16px; color: var(--paper-2); font: 400 15px/1.6 var(--f-editorial); }
+
+.wb-depth-rank { display: grid; gap: 6px; margin: 0 0 20px; padding: 14px 16px; border: 1px solid var(--line-3); border-radius: 10px; background: rgba(255, 255, 255, .015); list-style: none; }
+.wb-depth-rank li { display: grid; grid-template-columns: 22px minmax(60px, 1fr) minmax(0, 1.4fr); gap: 11px; align-items: center; }
+.wb-depth-rank b { color: var(--faint); font: 700 15px/1 var(--f-data); text-align: right; }
+.wb-depth-rank li.is-most b { color: var(--gold); }
+.wb-depth-meter { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.wb-depth-meter i { display: block; height: 100%; background: linear-gradient(90deg, #8a7320, var(--gold)); }
+.wb-depth-rank a { color: var(--paper-2); font: 500 13px/1.3 var(--f-data); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.wb-depth-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.wb-depth-card { display: grid; gap: 10px; padding: 15px 16px; border: 1px solid var(--line-3); border-radius: 11px; background: rgba(255, 255, 255, .015); }
+.wb-depth-card header { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+.wb-depth-team { display: inline-flex; align-items: center; gap: 9px; color: var(--paper); font: 600 15px/1.2 var(--f-editorial); }
+.wb-depth-team img, .wb-depth-team svg { flex: none; }
+.wb-depth-count { display: flex; align-items: baseline; gap: 6px; margin: 0; }
+.wb-depth-count b { color: var(--gold); font: 700 26px/1 var(--f-data); }
+.wb-depth-count span { color: var(--faint); font: 700 9px/1.2 var(--f-data); letter-spacing: .09em; text-transform: uppercase; max-width: 74px; }
+
+.wb-depth-players { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.wb-depth-players li { display: grid; grid-template-columns: 32px 30px minmax(0, 1fr) auto; gap: 9px; align-items: center; }
+.wb-depth-photo { display: block; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: #1a1610; }
+.wb-depth-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wb-depth-prank { color: var(--faint); font: 700 11px/1 var(--f-data); }
+.wb-depth-name { color: var(--paper-2); font: 500 13px/1.3 var(--f-data); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-depth-score { color: var(--gold); font: 700 14px/1 var(--f-data); }
+
+/* The Index edition's aside: the series, not a duplicate team list. */
+.wb-aside { display: grid; gap: 4px; }
+.wb-aside-top { display: grid; gap: 5px; margin: 0 0 10px; padding: 0; list-style: none; }
+.wb-aside-top li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.wb-aside-top span { color: var(--faint); font: 600 10px/1.3 var(--f-data); }
+.wb-aside-top a { color: var(--paper-2); font: 500 12px/1.4 var(--f-data); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-aside-top b { color: var(--gold); font: 700 13px/1.3 var(--f-data); }
+
+@media (max-width: 860px) {
+  .wb-depth-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  .wb-depth-rank li { grid-template-columns: 20px minmax(44px, 1fr) minmax(0, 1.2fr); gap: 8px; }
+  .wb-depth-count b { font-size: 22px; }
+  .wb-depth-players li { grid-template-columns: 28px 28px minmax(0, 1fr) auto; gap: 8px; }
+  .wb-depth-photo { width: 28px; height: 28px; }
+}
+
+
+/* ── Polish pass ────────────────────────────────────────────────────────────
+   The ranking is the product, so it gets the width; nothing important should
+   need zooming at 1440. */
+
+/* A WinBA Index edition gives the ranking the full column. The generic entity
+   rail is replaced by a series rail that is narrower and lower priority. */
+.story-layout--index { grid-template-columns: minmax(0, 1fr) 232px; gap: 34px; }
+@media (min-width: 1180px) {
+  .story--index .wrap, .story--index { --index-wide: 1; }
+  /* The board breaks out of the text column: a ranking reads better wide. */
+  .story--index .wb-board,
+  .story--index .wb-depth { width: calc(100% + 232px + 34px); max-width: calc(100vw - 96px); }
+}
+@media (max-width: 1100px) {
+  .story-layout--index { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Header hierarchy: status, then the one title, then the frozen facts. */
+.wb-board-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 10px; }
+.wb-frozen { padding: 4px 9px; border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--line-3)); border-radius: 999px; color: var(--gold); font: 700 10px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; }
+.wb-board-status a { color: var(--paper-2); font: 600 12px/1 var(--f-data); }
+.wb-board-note { font-size: 13px; }
+
+/* Podium: equal heights, readable secondary type, score separated from label. */
+.wb-podium { align-items: stretch; }
+.wb-podium-card { height: 100%; }
+.wb-podium-body { align-content: start; gap: 9px; padding: 14px 15px 16px; }
+.wb-podium-body .wb-name { font-size: clamp(17px, 1.9vw, 21px); }
+.wb-team { font-size: 13px; }
+.wb-score { align-items: center; gap: 8px; }
+.wb-score b { font-size: 34px; line-height: .9; }
+.wb-score a { color: var(--faint); font: 700 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; }
+.wb-stats { gap: 16px; }
+.wb-stats b { font-size: 17px; }
+.wb-stats span { font-size: 10px; letter-spacing: .07em; }
+.wb-meta { font-size: 12px; }
+.wb-components { gap: 6px 10px; margin-top: 6px; }
+.wb-components dt { font-size: 11px; }
+.wb-components dd b { font-size: 11px; min-width: 22px; }
+.wb-cbar { height: 5px; }
+
+/* Ranks 4-10: room to breathe and scan. */
+.wb-row { padding: 11px 13px; gap: 12px; }
+.wb-row-photo { width: 46px; height: 46px; }
+.wb-row { grid-template-columns: 28px 46px minmax(0, 1.5fr) minmax(90px, 1.3fr) 46px auto 46px; }
+.wb-row-id .wb-name { font-size: 15px; }
+.wb-row-sub { gap: 9px; }
+.wb-pos { font-size: 10px; }
+.wb-row-score { font-size: 19px; }
+.wb-row .wb-stats { gap: 14px; }
+.wb-row .wb-stats b { font-size: 15px; }
+.wb-move { font-size: 11px; }
+
+/* Ranks 11-25: supporting data, one tap away. */
+.wb-more { margin: 0 0 20px; border: 1px solid var(--line-3); border-radius: 10px; background: rgba(255, 255, 255, .012); }
+.wb-more summary { padding: 12px 15px; color: var(--paper-2); font: 600 13px/1 var(--f-data); cursor: pointer; }
+.wb-more summary::marker { color: var(--gold); }
+.wb-more-rows { display: grid; gap: 2px; margin: 0; padding: 0 12px 12px; list-style: none; }
+.wb-more-rows li { display: grid; grid-template-columns: 26px 30px minmax(0, 1.4fr) minmax(0, 1fr) 40px; gap: 10px; align-items: center; padding: 5px 0; border-top: 1px solid var(--line-3); }
+.wb-more-rank { color: var(--faint); font: 600 12px/1 var(--f-data); text-align: right; }
+.wb-more-photo { display: block; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; background: #1a1610; }
+.wb-more-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wb-more-name { color: var(--paper-2); font: 500 13px/1.3 var(--f-data); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-more-team { color: var(--faint); font: 400 12px/1.3 var(--f-data); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-more-score { color: var(--gold); font: 700 14px/1 var(--f-data); text-align: right; }
+
+/* The spread: what the ordered list cannot show. */
+.wb-spread { margin: 0; padding: 16px 0 4px; border-top: 1px solid var(--line-3); }
+.wb-spread figcaption { margin-bottom: 12px; color: var(--faint); font: 700 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; }
+.wb-spread-scale { display: flex; align-items: flex-end; gap: 3px; height: 92px; margin: 0 0 12px; padding: 0; list-style: none; }
+.wb-spread-scale li { position: relative; flex: 1 1 0; min-width: 0; border-radius: 3px 3px 0 0; background: rgba(255, 255, 255, .09); }
+.wb-spread-scale li.is-top10 { background: color-mix(in srgb, var(--gold) 45%, transparent); }
+.wb-spread-scale li.is-podium { background: var(--gold); }
+.wb-spread-scale li span { position: absolute; left: 0; right: 0; bottom: -16px; color: var(--faint); font: 600 9px/1 var(--f-data); text-align: center; }
+.wb-spread-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 18px 0 0; }
+.wb-spread-facts dt { color: var(--faint); font: 700 10px/1.4 var(--f-data); letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+.wb-spread-facts dd { margin: 0; color: var(--paper-2); font: 400 13px/1.5 var(--f-data); }
+
+/* Team depth typography. */
+.wb-depth-team { font-size: 16px; }
+.wb-depth-count span { font-size: 10px; max-width: 80px; }
+.wb-depth-name { font-size: 14px; }
+.wb-depth-prank { font-size: 12px; }
+.wb-depth-score { font-size: 15px; }
+.wb-depth-rank a { font-size: 14px; }
+.wb-depth-rank b { font-size: 16px; }
+
+@media (max-width: 720px) {
+  /* Mobile: #1 leads as a feature, #2 and #3 stay compact beneath it. */
+  .wb-podium { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .wb-podium-card.wb-rank-1 { grid-column: 1 / -1; }
+  .wb-podium-card.wb-rank-1 .wb-podium-photo { aspect-ratio: 16 / 10; }
+  .wb-podium-card:not(.wb-rank-1) .wb-podium-photo { aspect-ratio: 1 / 1; }
+  .wb-podium-card:not(.wb-rank-1) .wb-components { display: none; }
+  .wb-podium-card:not(.wb-rank-1) .wb-score b { font-size: 26px; }
+  .wb-podium-card:not(.wb-rank-1) .wb-stats { gap: 11px; }
+  .wb-podium-card:not(.wb-rank-1) .wb-stats b { font-size: 14px; }
+  .wb-row { grid-template-columns: 24px 40px minmax(0, 1fr) 46px; row-gap: 9px; }
+  .wb-row-photo { width: 40px; height: 40px; }
+  .wb-more-rows li { grid-template-columns: 22px 28px minmax(0, 1fr) 38px; }
+  .wb-more-team { display: none; }
+  .wb-spread-scale { height: 74px; gap: 2px; }
+  .wb-spread-facts { grid-template-columns: 1fr; gap: 2px; }
+  .wb-spread-facts dd { margin-bottom: 8px; }
+}

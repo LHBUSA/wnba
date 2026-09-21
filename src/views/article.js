@@ -13,7 +13,7 @@ import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
 import { intelligenceOf } from '../lib/intelligence.js';
 import { gameHighlights } from '../ui/video.js';
 import { winbaSeriesNav, winbaSeriesNavView, winbaIndexCards, WINBA_INDEX_KIND } from './winba-index.js';
-import { winbaIndexLeaderboard } from './winba-leaderboard.js';
+import { winbaIndexLeaderboard, winbaTeamDepth, winbaIndexAside } from './winba-leaderboard.js';
 
 // A `metric` entity carries no id-based route: it is the canonical explainer
 // for a PropBetEdge statistic. Routing it here lets the generator keep URLs out
@@ -190,6 +190,8 @@ export function articleView({ article: a, related = [], series = [] }) {
   // states the same frozen facts better — but it stays in the stored body for
   // feeds and for the edition's own word count.
   const indexBoard = a.kind === WINBA_INDEX_KIND ? winbaIndexLeaderboard(a) : '';
+  const indexDepth = a.kind === WINBA_INDEX_KIND ? winbaTeamDepth(a) : '';
+  const indexAside = a.kind === WINBA_INDEX_KIND ? winbaIndexAside(a) : '';
   const seriesNav = a.kind === WINBA_INDEX_KIND && a.period
     ? winbaSeriesNav(winbaIndexCards({ items: series }), a.period)
     : null;
@@ -205,7 +207,7 @@ export function articleView({ article: a, related = [], series = [] }) {
     : '';
 
   return html`
-    <article class="story">
+    <article class="story ${indexBoard ? 'story--index' : ''}">
       <div class="story-hero">${storyMedia(a.media, { slot: 'hero', eager: true, credit: true })}</div>
 
       ${a.quality_state === 'legacy_acceptable' ? html`<aside class="coverage-note" role="note"><b>Archived under an earlier newsroom standard.</b> This article remains part of the publication record but is no longer promoted in the current newsroom or search index.</aside>` : ''}\n      ${a.quality_state === 'retired_from_index' && !a.external_coverage ? html`<aside class="coverage-note" role="note"><b>No longer listed in the newsroom.</b> ${a.quality_review?.reason ? `${a.quality_review.reason.charAt(0).toUpperCase()}${a.quality_review.reason.slice(1)}.` : ''} The record below is kept as published.</aside>` : ''}
@@ -232,17 +234,17 @@ export function articleView({ article: a, related = [], series = [] }) {
         ${seriesNav ? winbaSeriesNavView(seriesNav) : ''}
       </header>
 
-      <div class="story-layout">
+      <div class="story-layout ${indexAside ? 'story-layout--index' : ''}">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
+            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : indexDepth && s.render === 'winba_team_depth' ? indexDepth : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
             : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">
           ${players.length ? html`<section><h2 class="aside-title">In this story</h2>
             ${players.slice(0, 6).map((p) => { const s = photoOf(p); return html`<a class="aside-row" href="/players/${p.id}">${avatar({ name: p.name, photo: s ? { square: s.square } : null })}<b>${p.name}</b>${pictured.has(String(p.id)) ? html`<span class="note">pictured</span>` : ''}</a>`; })}
           </section>` : ''}
-          ${teams.length ? html`<section><h2 class="aside-title">Teams</h2>${teams.map((t) => html`<a class="aside-row" href="/teams/${t.id}">${teamLogo({ team_id: t.id, name: t.name }, 28)}<b>${t.name}</b></a>`)}</section>` : ''}
+          ${indexAside || (teams.length ? html`<section><h2 class="aside-title">Teams</h2>${teams.map((t) => html`<a class="aside-row" href="/teams/${t.id}">${teamLogo({ team_id: t.id, name: t.name }, 28)}<b>${t.name}</b></a>`)}</section>` : '')}
           ${gameLinks.length ? html`<section><h2 class="aside-title">Game</h2>${gameLinks.map((g) => html`<a class="aside-row" href="/matchups/${g.id}"><b>${g.name}</b><span class="note">${g.start_utc ? `${fmtDateET(g.start_utc, { month: 'short', day: 'numeric' })} · ` : ''}Matchup research →</span></a><a class="aside-row" href="/cast/${g.id}"><b>WNBACast</b><span class="note">Live game &amp; replay →</span></a>`)}</section>` : ''}
           ${intl.length ? html`<section><h2 class="aside-title">International</h2>${intl.map((e) => html`<a class="aside-row" href="${e.type === 'intl_team' ? `/international/teams/${e.id}` : `/international/games/${e.id}`}"><b>${e.name}</b><span class="note">${e.type === 'intl_team' ? 'National team →' : 'Box score & play-by-play →'}</span></a>`)}</section>` : ''}
           <section><h2 class="aside-title">Keep reading</h2>

@@ -330,7 +330,10 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
   const deep = [...byTeam.values()].filter((t) => t.players.length >= 2)
     .sort((a, b) => b.players.length - a.players.length || a.players[0].rank - b.players[0].rank);
   if (deep.length) {
-    open('The teams with more than one');
+    // The renderer draws this as team-depth cards; the paragraphs remain the
+    // feed-safe and assistive form of the same frozen facts.
+    open(`Teams with the most top-${rows.length} WinBA players`, 'winba_team_depth');
+    body.push(`Which rosters place multiple players among ${label}'s ${rows.length} highest-rated WinBA players.`);
     for (const t of deep.slice(0, 4)) {
       body.push(`${t.team_name || `Team ${t.team_id}`}: ${t.players.map((p) => `${p.player_name} (No. ${p.rank}, ${Math.round(p.score)})`).join(', ')}.`);
     }
@@ -338,7 +341,7 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
   }
 
   // ---- synthesis, from observable components only
-  open('What the board is telling us');
+  open('What the rankings say');
   const topWinRate = rows.slice(0, 10).filter((r) => Number.isFinite(r.win_rate));
   if (topWinRate.length >= 5) {
     const avgWin = topWinRate.reduce((s, r) => s + r.win_rate, 0) / topWinRate.length;
