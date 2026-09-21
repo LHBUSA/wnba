@@ -192,6 +192,8 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: `PBE WNBA Live Track Record | ${BRAND}`, description: 'Every official PBE WNBA locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.', image: pageShareImage('track-record', 'PBE WNBA Live Track Record — PropBetEdge WNBA') });
     case 'pro':
       return m({ title: `PropBetEdge WNBA Pro | ${BRAND}`, description: 'PropBetEdge WNBA Pro membership: the full WNBA research desk. $9.99 a month or $3.99 a week, cancel anytime.', image: pageShareImage('pro', 'PropBetEdge WNBA Pro — PropBetEdge WNBA') });
+    case 'winba-score':
+      return m({ title: `WinBA Score: WNBA Winning-Impact Metric & Rankings | ${BRAND}`, description: 'What is WinBA Score? See the formula, weights, qualification rules, current WNBA player rankings and limitations behind PropBetEdge’s 0–100 winning-impact index.', image: pageShareImage('winba-score', 'WinBA Score — PropBetEdge WNBA winning-impact metric') });
     case 'sources':
       return m({ title: `WNBA Data Sources & Live Source Status | ${BRAND}`, description: 'The sources behind PropBetEdge WNBA — PropSports.PropTechUSA.ai, the publisher source wire and licensed Wikimedia Commons imagery — with live source status and freshness.', image: pageShareImage('sources', 'WNBA Data Sources & Live Source Status — PropBetEdge WNBA') });
     case 'about':
