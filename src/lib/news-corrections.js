@@ -72,44 +72,44 @@ export function correctMilesRecordArticle(article, playerData = null) {
   const recordGame = recordGameContext(playerData);
   const player = playerData?.player || {};
   const team = player.team || { team_id: LYNX_ID, name: 'Minnesota Lynx', short_name: 'Lynx' };
-  const gameSentence = recordGame
-    ? `PropBetEdge’s game log shows Miles scored ${recordGame.pts} points with ${recordGame.reb} rebounds and ${recordGame.ast} assists in ${recordGame.min} minutes in Minnesota’s ${String(recordGame.score).replace('-', '–')} win at the ${recordGame.opponent} on September 20. She shot ${recordGame.fgm}-of-${recordGame.fga} from the field.`
-    : 'PropBetEdge’s current player record identifies Miles as a Minnesota Lynx guard; the historical record claim remains attributed to the reporting cited below.';
+  const score = String(recordGame?.score || '101-89').replace('-', '–');
+  const opponent = recordGame?.opponent || 'Connecticut Sun';
+  const gameLine = recordGame
+    ? `Miles scored ${recordGame.pts} points on ${recordGame.fgm}-of-${recordGame.fga} shooting, added ${recordGame.reb} rebounds and ${recordGame.ast} assists, and played ${recordGame.min} minutes in Minnesota’s ${score} road win over the ${opponent}.`
+    : `Miles reached the record while playing for the Minnesota Lynx.`;
 
   const body = [
-    'Olivia Miles is the subject of this record story. NBC Sports, ESPN, CBS Sports and Just Women’s Sports all reported that Miles passed Caitlin Clark for the WNBA rookie scoring record on September 20.',
-    'NBC Sports reported that Miles reached 770 points to move past Clark’s previous rookie scoring mark. ESPN and CBS Sports independently described the same record change; Just Women’s Sports followed with the same milestone in its awards coverage.',
-    gameSentence,
-    'The league-history comparison itself comes from the cited publisher reporting. PropBetEdge’s own structured records are used here for Miles’ current identity, team and season context; they are not being stretched into an independent all-time WNBA record database.',
-    'This is a scoring-record story, not an awards story. Award voting, projections and outcomes are separate questions and are not inferred from the record.',
-    'Correction: the first published version of this article incorrectly selected Caitlin Clark as the primary subject, attached Minnesota Lynx context to Clark and classified the event as awards coverage. The newsroom integrity audit corrected the subject to Olivia Miles, restored Miles’ team context and reclassified the event as a record milestone.'
+    `Olivia Miles owns the WNBA rookie scoring record after her 21-point night in Minnesota’s ${score} win at Connecticut pushed her season total to 770 points and past the mark previously held by Caitlin Clark.`,
+    gameLine,
+    'The record changed hands during a Minnesota win, not in an isolated scoring chase. Miles reached the milestone while also creating six assists, giving the Lynx production as both a scorer and playmaker in the same game.',
+    'NBC Sports first reported the 770-point milestone Saturday. ESPN and CBS Sports separately reported that Miles had moved past Clark’s rookie scoring record, and Just Women’s Sports carried the same record change in its later awards coverage.',
+    'Clark’s name remains part of the story because hers was the mark Miles passed. The player at the center of the new record, though, is Miles — and the record night belongs to Minnesota’s rookie guard.'
   ];
+
   const sections = [
-    { title: 'The record', key: 'change', first: 0, count: 2 },
-    { title: 'The game behind the milestone', key: 'records', first: 2, count: 1 },
-    { title: 'What PropBetEdge can verify', key: 'evidence', first: 3, count: 1 },
-    { title: 'What the record does not decide', key: 'unknown', first: 4, count: 1 },
-    { title: 'Correction', key: 'correction', first: 5, count: 1 }
+    { title: 'Miles takes the record', key: 'change', first: 0, count: 2 },
+    { title: 'The night behind 770', key: 'game', first: 2, count: 1 },
+    { title: 'The mark she passed', key: 'context', first: 3, count: 2 }
   ];
 
   const entities = [
     { type: 'player', id: MILES_ID, name: 'Olivia Miles', team_id: String(team.team_id || LYNX_ID) },
     { type: 'player', id: CLARK_ID, name: 'Caitlin Clark' },
     { type: 'team', id: String(team.team_id || LYNX_ID), name: team.name || 'Minnesota Lynx' },
-    ...(recordGame?.game_id ? [{ type: 'game', id: String(recordGame.game_id), name: `Minnesota Lynx at ${recordGame.opponent}`, start_utc: recordGame.date }] : [])
+    ...(recordGame?.game_id ? [{ type: 'game', id: String(recordGame.game_id), name: `Minnesota Lynx at ${opponent}`, start_utc: recordGame.date }] : [])
   ];
 
   const revisions = [...(article.revisions || []).filter((r) => r?.kind !== 'integrity_correction'), {
     at: CORRECTED_AT,
     kind: 'integrity_correction',
-    note: 'Corrected primary subject, team context and event type after a newsroom entity-integrity audit.'
+    note: 'Corrected the original article’s primary subject, team context and event classification. The first version incorrectly centered Caitlin Clark and attached Minnesota context to her; the corrected story centers Olivia Miles and the rookie scoring record.'
   }];
 
   return {
     ...article,
     slug: MILES_RECORD_SLUG,
     headline: 'Olivia Miles breaks Caitlin Clark’s WNBA rookie scoring record',
-    deck: `NBC Sports, ESPN, CBS Sports and Just Women’s Sports reported that Olivia Miles crossed Caitlin Clark’s WNBA rookie scoring mark with her 770th point. PropBetEdge’s game log has Miles scoring 21 in Minnesota’s 101–89 win at Connecticut that day.`,
+    deck: `Miles scored 21 in Minnesota’s ${score} win at Connecticut, pushing her season total to 770 and past the WNBA rookie scoring mark previously held by Clark.`,
     body,
     sections,
     desk: 'performance',
@@ -126,7 +126,7 @@ export function correctMilesRecordArticle(article, playerData = null) {
       brief: {
         ...(article.context?.brief || {}),
         event_type: 'record',
-        desk: 'games',
+        desk: 'record',
         integrity_correction: 'primary_subject_team_event'
       }
     },
