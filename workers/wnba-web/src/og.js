@@ -96,15 +96,15 @@ function scoreboardLayout(model) {
 
 function podiumLayout(model) {
   const CELL_W = 300;
-  const CELL_H = 372;
+  const CELL_H = 356;
   const cell = (r, i) => h({
-    position: 'absolute', left: 56 + i * (CELL_W + 14), top: 190, width: CELL_W, height: CELL_H,
+    position: 'absolute', left: 56 + i * (CELL_W + 14), top: 206, width: CELL_W, height: CELL_H,
     flexDirection: 'column', borderRadius: 12, overflow: 'hidden', backgroundColor: '#1a1610'
   },
-  { type: 'img', props: { src: r.photo, width: CELL_W, height: 268, style: { width: CELL_W, height: 268, objectFit: 'cover' } } },
+  { type: 'img', props: { src: r.photo, width: CELL_W, height: 256, style: { width: CELL_W, height: 256, objectFit: 'cover' } } },
   h({ position: 'absolute', left: 0, top: 0, width: 54, height: 54, backgroundColor: r.teamColor, alignItems: 'center', justifyContent: 'center' },
     text({ fontFamily: 'Barlow Condensed', fontSize: 34, color: PAPER }, `${r.rank}`)),
-  h({ width: CELL_W, height: CELL_H - 268, paddingLeft: 14, paddingRight: 14, flexDirection: 'column', justifyContent: 'center' },
+  h({ width: CELL_W, height: CELL_H - 256, paddingLeft: 14, paddingRight: 14, flexDirection: 'column', justifyContent: 'center' },
     text({ fontFamily: 'Barlow Condensed', fontSize: 34, color: PAPER, textTransform: 'uppercase', lineHeight: 1 }, r.name),
     text({ fontFamily: 'Inter', fontWeight: 700, fontSize: 26, color: GOLD, marginTop: 4 }, `${r.score} WinBA`)));
 
@@ -112,9 +112,9 @@ function podiumLayout(model) {
     h({ position: 'absolute', left: 0, top: 0, width: 1200, height: 630, backgroundImage: `linear-gradient(120deg, ${INK} 0%, ${INK} 62%, #1d1a14 100%)` }),
     h({ position: 'absolute', left: 0, bottom: 0, width: 1200, height: 10, backgroundImage: `linear-gradient(90deg, ${GOLD}, ${ORANGE})` }),
     h({ position: 'absolute', left: 56, top: 52 }, brand()),
-    h({ position: 'absolute', left: 56, top: 116, flexDirection: 'column' },
-      text({ fontFamily: 'Barlow Condensed', fontSize: 44, color: PAPER, textTransform: 'uppercase', lineHeight: 1 }, 'The WinBA Index'),
-      text({ fontFamily: 'Barlow Condensed', fontSize: 30, color: ORANGE, letterSpacing: 2, textTransform: 'uppercase', marginTop: 2 }, model.period || '')),
+    h({ position: 'absolute', left: 56, top: 130, flexDirection: 'column' },
+      text({ fontFamily: 'Barlow Condensed', fontSize: 42, color: PAPER, textTransform: 'uppercase', lineHeight: 1 }, 'The WinBA Index'),
+      text({ fontFamily: 'Barlow Condensed', fontSize: 27, color: ORANGE, letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 }, model.period || '')),
     ...model.podium.map(cell),
     model.credits ? text({ position: 'absolute', right: 20, bottom: 16, fontFamily: 'Inter', fontWeight: 500, fontSize: 15, color: '#8d8578' }, model.credits) : null,
     footer(model.footer));
