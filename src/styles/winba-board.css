@@ -308,3 +308,11 @@
   .wb-spread-scale li:last-child span { display: block; }
   .wb-spread-scale { margin-bottom: 22px; }
 }
+
+/* The podium sources are framed with headroom, so a box at the source aspect
+   shows all of it and the dark arena background dominates the top. A slightly
+   tighter box with the subject pulled up crops dead space, not heads. */
+.wb-podium-photo img { object-position: 50% 22%; }
+@media (max-width: 720px) {
+  .wb-podium-card.wb-rank-1 .wb-podium-photo { aspect-ratio: 3 / 2; }
+}

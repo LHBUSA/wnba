@@ -6,6 +6,10 @@ for (const [w, h, tag] of [[1440, 1000, '1440'], [390, 844, '390']]) {
   const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: w > 1000 ? 1 : 2, isMobile: w < 1000, hasTouch: w < 1000 });
   const page = await ctx.newPage();
   await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.evaluate(() => { document.querySelectorAll('img[loading="lazy"]').forEach((i) => i.setAttribute('loading','eager')); window.scrollTo(0, document.body.scrollHeight); });
+  await page.waitForTimeout(900);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400);
   await page.bringToFront();
   // Sticky chrome bleeds into element captures; hide it for the shot only.
   await page.addStyleTag({ content: '*{scroll-behavior:auto!important;animation:none!important;transition:none!important} header.site, .site-nav, nav.site-nav, .masthead-bar {position:static!important}' }).catch(() => {});
