@@ -149,7 +149,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const producedIds = new Set(produced.map((a) => a.id));
   const regenerations = new Map();
   const getItem = (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json');
-  let upgradeBudget = 6;
+  let upgradeBudget = 40; // one-time/current-policy cleanup can rebuild far more of the existing catalog
   for (const c of priorIndex) {
     if (upgradeBudget <= 0) break;
     if (!listedCard(c) || producedIds.has(c.id) || !['result', 'performance', 'transaction', 'trend'].includes(c.kind) || !needsReview(c)) continue;
