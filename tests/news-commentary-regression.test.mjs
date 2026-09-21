@@ -11,8 +11,8 @@ const classifyHeadline = (headline) => classify(
   { entities: [PLAYER], source: SOURCE, timestampQuality: 'publisher' }
 );
 
-test('commentary hardening does not force a retroactive published-brief migration', () => {
-  assert.equal(BRIEF_VERSION, 'wnba-briefs/2.1.0');
+test('brief generator version advances for subject/event integrity hardening', () => {
+  assert.equal(BRIEF_VERSION, 'wnba-briefs/2.2.0');
 });
 
 test('current duplicate-producing commentary headlines cannot become material newsroom events', () => {
