@@ -24,8 +24,9 @@ import { eventMateriality, laneOf, legacyType, eventType, classify, EVENT_TYPES 
 import { publicItem } from './sources.js';
 import { seasonLog } from './deep.js';
 import { dShort, dLong, dMonth, tET, f1, listJoin, nick, poss, wordN, countOf } from './prose.js';
+import { headlineConsensusPlayer, consensusEventType, teamForPlayer, headlineTeam } from './identity.js';
 
-export const BRIEF_VERSION = 'wnba-briefs/2.1.0'; // record (verified in the game log), draft and league/business desk writers
+export const BRIEF_VERSION = 'wnba-briefs/2.2.0'; // headline-consensus identity, record milestones and tighter event-specific prose
 export const BRIEF_MAX_AGE_MS = 36 * 3600e3;
 export const BRIEF_MAX_PER_RUN = 12;
 
@@ -63,11 +64,9 @@ function canonical(members) {
   })[0];
 }
 
-/** The event's type: the most material member's (source-wire v2), else null. */
+/** Event type is decided by publisher consensus before materiality tie-breaks. */
 function eventTypeOf(members) {
-  const typed = members.filter((m) => m.event_type && m.materiality);
-  if (!typed.length) return null;
-  return [...typed].sort((a, b) => b.materiality.score - a.materiality.score || when(a) - when(b))[0].event_type;
+  return consensusEventType(members).type;
 }
 
 /**
@@ -156,7 +155,7 @@ export function briefHeadline({ eventType: type = null, storyType, player, team,
       case 'trade': return `${player.name} trade${withTeam}${role}`;
       case 'signing': case 'waiver': case 'roster_move': case 'transaction': return `${player.name} roster move${withTeam}${role}`;
       case 'awards': return `${player.name} honored${withTeam}${verified?.season ? ': the season behind it' : ''}`;
-      case 'record': return `${player.name} milestone${withTeam}${verified?.season ? ': the production behind it' : ''}`;
+      case 'record': return verified?.record?.kind === 'season-points' ? `${player.name} reaches ${verified.record.claimed} season points as the WNBA rookie scoring record changes hands` : `${player.name} milestone${withTeam}${verified?.season ? ': the production behind it' : ''}`;
       case 'lineup': return `${player.name} lineup change${withTeam}${verified?.role ? ': her minutes and starts in the records' : ''}`;
       case 'draft': return `${player.name} and the WNBA draft${withTeam ? `: the ${tn} context` : ''}`;
       default: return `${player.name}${withTeam}: ${LEAGUE_HEADLINE[t] || 'WNBA'} news and her season in the records`;
@@ -296,6 +295,34 @@ export function verifyRecordClaim(pRes, headline, reportAt, season) {
     const last10 = games.slice(0, 10);
     return { claim: `${want} ${kind}s`, kind, claimed: want, season_name: seasonLog.name, season_count: hits.length, games: games.length, rate_pct: games.length ? (100 * hits.length) / games.length : null, last10_games: last10.length, last10_count: last10.filter(kind === 'triple-double' ? isTriple : isDouble).length, season_highs: games.length ? { pts: Math.max(...games.map((x) => x.pts || 0)), reb: Math.max(...games.map((x) => x.reb || 0)) } : null, verified: hits.length === want && Boolean(recent), game: latest ? { date: latest.date, opponent: latest.opponent?.name || null, at_vs: latest.at_vs, pts: latest.pts, reb: latest.reb, ast: latest.ast, min: latest.min, fgm: latest.fgm, fga: latest.fga, result: latest.result, score: latest.score } : null, log_coverage: logCoverage, reason: hits.length !== want ? `the ${seasonLog.name} log shows ${hits.length}, not ${want}` : recent ? null : 'no qualifying game within two days of the report' };
   }
+  const seasonPoints = String(headline).match(/\b(\d{3,4})(?:st|nd|rd|th)?\s+point\b/i);
+  if (seasonPoints && /\b(record|scoring|points?)\b/i.test(String(headline))) {
+    const want = Number(seasonPoints[1]);
+    const chronological = [...games].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+    let total = 0;
+    let previous = 0;
+    let crossing = null;
+    for (const g of chronological) {
+      previous = total;
+      total += Number(g.pts || 0);
+      if (!crossing && previous < want && total >= want) crossing = g;
+    }
+    const recent = crossing && reportAt && Math.abs(Date.parse(reportAt) - Date.parse(crossing.date)) <= 2 * 86400e3;
+    return {
+      claim: `${want}th point`,
+      kind: 'season-points',
+      stat: 'pts',
+      claimed: want,
+      season_name: seasonLog.name,
+      games: games.length,
+      previous_total: crossing ? chronological.slice(0, chronological.indexOf(crossing)).reduce((a, x) => a + Number(x.pts || 0), 0) : null,
+      season_total_at_report: total,
+      verified: Boolean(crossing && recent),
+      game: crossing ? { date: crossing.date, opponent: crossing.opponent?.name || null, at_vs: crossing.at_vs, pts: crossing.pts, reb: crossing.reb, ast: crossing.ast, min: crossing.min, fgm: crossing.fgm, fga: crossing.fga, result: crossing.result, score: crossing.score } : null,
+      log_coverage: logCoverage,
+      reason: !crossing ? `the ${seasonLog.name} game log does not cross ${want} points` : recent ? null : 'the threshold-crossing game is not within two days of the report'
+    };
+  }
   const line = String(headline).match(/\b(\d{2})[- ](points?|rebounds?|assists?|steals?|blocks?)\b/i);
   if (line) {
     const want = Number(line[1]);
@@ -335,21 +362,28 @@ function writeDeskBrief({ desk, source, sourceHeadline, sourceAt, others, player
   if (desk === 'record') {
     const r = v.record;
     const g = r?.game;
-    section('The achievement', 'change', [
-      `${source} reported the milestone on ${dLong(sourceAt)}, under the headline “${sourceHeadline}”.${corroboration ? ` ${corroboration}` : ''}`,
-      r?.verified && g ? (r.kind === 'line'
-        ? `PropBetEdge’s game log confirms the line: ${pn} had ${g.pts} points, ${g.reb} rebounds and ${g.ast} assists in ${g.min} minutes ${g.at_vs === 'vs' ? 'against' : 'at'} the ${g.opponent} on ${dMonth(g.date)}${r.is_season_high ? `, her high for the ${r.season_name.toLowerCase()}` : ''}.`
-        : `PropBetEdge’s game log confirms the count: ${pn} has ${r.season_count} ${r.kind}s in ${r.games} games of the ${r.season_name.toLowerCase()}, the latest ${g.pts} points and ${g.reb} rebounds ${g.at_vs === 'vs' ? 'against' : 'at'} the ${g.opponent} on ${dMonth(g.date)}.`) : null
+    const reportLine = `${source} reported the milestone on ${dLong(sourceAt)}, under the headline “${sourceHeadline}”.${corroboration ? ` ${corroboration}` : ''}`;
+    const verification = r?.verified && g
+      ? r.kind === 'season-points'
+        ? `PropBetEdge’s ${r.season_name.toLowerCase()} game log confirms the threshold crossing: ${pn} entered the game at ${r.previous_total} season points, scored ${g.pts}, and moved through ${r.claimed} points ${g.at_vs === 'vs' ? 'against' : 'at'} the ${g.opponent} on ${dMonth(g.date)}.`
+        : r.kind === 'line'
+          ? `PropBetEdge’s game log confirms the line: ${pn} had ${g.pts} points, ${g.reb} rebounds and ${g.ast} assists in ${g.min} minutes ${g.at_vs === 'vs' ? 'against' : 'at'} the ${g.opponent} on ${dMonth(g.date)}${r.is_season_high ? `, her high for the ${r.season_name.toLowerCase()}` : ''}.`
+          : `PropBetEdge’s game log confirms the count: ${pn} has ${r.season_count} ${r.kind}s in ${r.games} games of the ${r.season_name.toLowerCase()}, the latest ${g.pts} points and ${g.reb} rebounds ${g.at_vs === 'vs' ? 'against' : 'at'} the ${g.opponent} on ${dMonth(g.date)}.`
+      : null;
+    section('The record', 'change', [reportLine, verification]);
+
+    section('Miles’ season context'.replace('Miles', pn || 'The player'), 'records', [
+      s ? `Across ${s.games} games this season, ${pn} has averaged ${f1(s.pts)} points, ${f1(s.reb)} rebounds and ${f1(s.ast)} assists in ${f1(s.min)} minutes.${s.last5 ? ` Over her last five games she is at ${f1(s.last5.pts)} points in ${f1(s.last5.min)} minutes.` : ''}` : null,
+      r?.verified && r.kind !== 'line' && r.kind !== 'season-points' && r.games ? `That is a ${r.kind} in ${f1(r.rate_pct)}% of her games this season, and ${r.last10_count} of her last ${r.last10_games}.` : null
     ]);
-    section('What PropBetEdge’s records show', 'records', [
-      s ? `Across her ${s.games} games this season, ${pn} has averaged ${f1(s.pts)} points, ${f1(s.reb)} rebounds and ${f1(s.ast)} assists in ${f1(s.min)} minutes.${s.last5 ? ` Over her last five games she is at ${f1(s.last5.pts)} points in ${f1(s.last5.min)} minutes.` : ''}` : null,
-      r?.verified && r.kind !== 'line' && r.games ? `That is a ${r.kind} in ${f1(r.rate_pct)}% of her games this season, and ${r.last10_count} of her last ${r.last10_games}.` : null,
-      r?.season_highs ? `Her season highs in the log are ${r.season_highs.pts} points and ${r.season_highs.reb} rebounds.` : null
+
+    if (g) section('The threshold game', 'game', [
+      `${pn} played ${g.min} minutes in the ${g.result === 'W' ? 'win' : 'loss'} ${g.at_vs === 'vs' ? 'against' : 'at'} the ${g.opponent} (final ${String(g.score || '').replace('-', '–')}), finishing with ${g.pts} points${Number.isFinite(g.reb) ? `, ${g.reb} rebounds` : ''}${Number.isFinite(g.ast) ? ` and ${g.ast} assists` : ''}.`
     ]);
-    if (g) section('The game', 'game', [`${pn} played ${g.min} minutes in the ${g.result === 'W' ? 'win' : 'loss'} ${g.at_vs === 'vs' ? 'against' : 'at'} the ${g.opponent} (final ${String(g.score || '').replace('-', '–')}), finishing with ${g.pts} points on ${g.fgm}-of-${g.fga} shooting, ${g.reb} rebounds and ${g.ast} assists.`]);
-    section('Historical context', 'history', [r ? `PropBetEdge’s game log for ${pn} covers ${listJoin(r.log_coverage.map((x) => x.replace(' Regular Season', '')))}, so this story makes no comparison with earlier seasons or league history; the ${/record/i.test(sourceHeadline) ? 'record' : 'milestone'} itself is ${poss(source)} reporting.` : null]);
-    section('Where the team stands', 'team', [standingPara]);
-    section('What comes next', 'next', [nextPara]);
+
+    section('What PropBetEdge can verify', 'history', [
+      r ? `PropBetEdge’s game log for ${pn} covers ${listJoin(r.log_coverage.map((x) => x.replace(' Regular Season', '')))}. It can verify the season production and threshold crossing above; the WNBA rookie-record comparison itself remains the attributed publisher reporting.` : null
+    ]);
     return { body, sections };
   }
 
@@ -416,7 +450,6 @@ function writeBrief({ source, sourceHeadline, sourceAt, others, player, team, v,
   }
   if (v.role) rec.push(`In the ${poss(tNick)} last ${wordN(v.role.sample)} completed games she ${v.role.starts ? `started ${v.role.starts === v.role.appearances ? `all ${wordN(v.role.appearances)} she played` : `${wordN(v.role.starts)} of the ${wordN(v.role.appearances)} she played`}` : `came off the bench in all ${wordN(v.role.appearances)} she played`} and averaged ${f1(v.role.min)} minutes — ${v.role.min_rank === 1 ? 'the most' : `the ${['', '', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'][v.role.min_rank] || `No. ${v.role.min_rank}`}-most`} on the team in that window.`);
   if (s && Number.isFinite(v.derived.scoring_share_pct) && shareWord(v.derived.scoring_share_pct)) rec.push(`Her ${f1(s.pts)} points a game are ${shareWord(v.derived.scoring_share_pct)} of the ${poss(tNick)} ${f1(v.standing.points_for_avg)}-point scoring average (${f1(v.derived.scoring_share_pct)}%).`);
-  if (player && v.injury && !['injury', 'availability'].includes(type)) rec.push(v.injury.status ? `ESPN’s injury feed lists her as ${v.injury.status}${v.injury.body_part ? ` (${String(v.injury.body_part).toLowerCase()})` : ''}, last updated ${dShort(v.injury.source_updated_at)} — ESPN’s status, not the league’s official report.` : `She is not listed on ESPN’s injury feed.`);
   section('What PropBetEdge’s records show', 'records', rec);
 
   // 3. Where the team stands.
@@ -429,28 +462,25 @@ function writeBrief({ source, sourceHeadline, sourceAt, others, player, team, v,
 
   // 4. Why it matters — only what the records support; no standing disclaimers.
   const why = [];
-  if (s && v.role) {
+  if (s && v.role && ['injury', 'availability', 'trade', 'signing', 'waiver', 'roster_move', 'lineup'].includes(type)) {
     why.push(v.role.min_rank <= 3
       ? `That is a core role: one of the ${poss(tNick)} top ${wordN(Math.max(v.role.min_rank, 3))} in minutes over the observed window${v.role.starts ? ' and a regular starter' : ''}, so ${['injury', 'availability', 'trade', 'waiver'].includes(type) ? `a change in her availability moves about ${f1(v.role.min)} minutes a night to teammates` : `the ${tNick} lean on her production`}.`
       : `She sits outside the top three in minutes over the observed window, so ${['injury', 'availability', 'trade', 'waiver'].includes(type) ? 'a change in her availability moves bench minutes rather than a starter’s share' : 'her role is a rotation one rather than the center of the offense'}.`);
-  } else if (s) {
-    why.push(`At ${f1(s.min)} minutes a game across ${s.games} games, ${s.min >= 24 ? 'her workload is a heavy-minutes role' : s.min >= 12 ? 'she holds a regular rotation spot' : 'her minutes are limited'}${tNick ? ` for the ${tNick}` : ''}.`);
   }
   section('Why it matters', 'why', why);
 
   // 5. What comes next — schedule and the specific record that would confirm the development.
   const next = [];
-  if (v.next_game) {
+  const roleEvent = ['injury', 'availability', 'trade', 'signing', 'waiver', 'roster_move', 'lineup'].includes(type);
+  if (roleEvent && v.next_game) {
     const o = v.next_game.opponent_record;
     next.push(`The ${tn} next play ${v.next_game.home ? `the ${v.next_game.opponent} at home` : `at the ${v.next_game.opponent}`} on ${dLong(v.next_game.start_utc)} at ${tET(v.next_game.start_utc)}${o ? `; the ${v.next_game.opponent} are ${o.wins}–${o.losses}${o.last_ten ? ` and ${o.last_ten} over their last 10` : ''}` : ''}.`);
-  } else if (tn) next.push(`No ${tn} game appears on the published schedule for the coming week.`);
-  next.push(['injury', 'availability'].includes(type)
-    ? `The record that would confirm it is ESPN’s injury feed${pn ? ` for ${pn}` : ''}; a status change there updates this story at the same address.`
-    : ['trade', 'signing', 'waiver', 'roster_move'].includes(type)
-      ? `The record that would confirm it is ESPN’s transactions log${tn ? ` for the ${tn}` : ''}; when the move appears there, this story is updated at the same address.`
-      : v.team || player
-        ? `This story is updated at the same address when a PropBetEdge record — a transaction, an injury-feed change or a box score — reflects the development.`
-        : `This story is updated at the same address as the league’s terms, dates or affected teams are confirmed in further reporting or PropBetEdge records.`);
+  } else if (roleEvent && tn) next.push(`No ${tn} game appears on the published schedule for the coming week.`);
+  if (['injury', 'availability'].includes(type)) {
+    next.push(`The next structured confirmation is ESPN’s injury feed${pn ? ` for ${pn}` : ''}; a status change there revises this story.`);
+  } else if (['trade', 'signing', 'waiver', 'roster_move'].includes(type)) {
+    next.push(`The next structured confirmation is ESPN’s transactions log${tn ? ` for the ${tn}` : ''}; a matching move there revises this story.`);
+  }
   section('What comes next', 'next', next);
 
   return { body, sections };
@@ -498,8 +528,13 @@ export async function briefArticles({ externalItems = [], structured = [], now =
       seen.add(k);
       allEntities.push(e);
     }
-    const player = allEntities.find((e) => e.type === 'player') || null;
-    const teamEntity = allEntities.find((e) => e.type === 'team') || (player?.team_id ? { type: 'team', id: player.team_id, name: null } : null);
+    const subject = headlineConsensusPlayer(members, allEntities, { canonicalHeadline: sourceHeadline });
+    const player = subject.player || null;
+    // A player-led event can only inherit that player's roster team. Never pair
+    // the first player entity with the first unrelated team entity in a cluster.
+    const teamEntity = player
+      ? teamForPlayer(player, allEntities, ctx.dict)
+      : headlineTeam(members, allEntities);
     const eventTimes = members.map(when).filter(Boolean);
     if (!eventTimes.length) continue;
     const eventAt = new Date(Math.min(...eventTimes)).toISOString();
@@ -509,7 +544,7 @@ export async function briefArticles({ externalItems = [], structured = [], now =
     const storyType = evType ? legacyType(evType) : canon.story_type;
     const evM = eventMateriality(members);
 
-    const deskOf = ['record', 'awards'].includes(type) && type === 'record' ? 'record' : type === 'draft' ? 'draft' : ['cba', 'expansion', 'league', 'business', 'front_office', 'coaching', 'playoff'].includes(type) ? 'league' : null;
+    const deskOf = type === 'record' ? 'record' : type === 'draft' ? 'draft' : ['cba', 'expansion', 'league', 'business', 'front_office', 'coaching', 'playoff', 'awards'].includes(type) ? 'league' : null;
     const { v, evidence: records, team } = await verify({ player, team: teamEntity?.name ? teamEntity : null, ctx: { ...ctx, now }, type, headline: sourceHeadline, reportAt: eventAt });
     // A record story needs the achievement itself in PropBetEdge's records; an unverifiable record claim stays coverage.
     if (deskOf === 'record' && !v.record?.verified) {
@@ -546,10 +581,14 @@ export async function briefArticles({ externalItems = [], structured = [], now =
     const canonReport = reports.find((r) => r.headline === sourceHeadline && r.publisher === source) || reports[0];
     const others = reports.filter((r) => r !== canonReport && r.publisher !== source);
     const s = v.season;
-    const deckRecord = s
-      ? `${player.name} has averaged ${f1(s.pts)} points and ${f1(s.ast >= s.reb ? s.ast : s.reb)} ${s.ast >= s.reb ? 'assists' : 'rebounds'} in ${f1(s.min)} minutes across ${s.games} games for the ${v.team?.name}${s.last5 ? `, ${f1(s.last5.pts)} points over her last five` : ''}.`
-      : v.standing ? `The ${v.team.name} are ${v.standing.wins}–${v.standing.losses}${v.standing.last_ten ? `, ${v.standing.last_ten} over their last 10` : ''}.` : `What the reports establish, what they leave unresolved${publishers >= 2 ? `, and how ${publishers} publishers corroborate it` : ''}.`;
-    const deck = `${deckRecord} ${player ? `First reported by ${source}` : `Reported by ${source}`} on ${dShort(canonReport?.published_at || eventAt)}.`;
+    const deckRecord = type === 'record' && player && v.record?.verified
+      ? v.record.kind === 'season-points'
+        ? `${player.name} crossed ${v.record.claimed} season points in PropBetEdge’s game log. ${source} first reported that the total moved her past the WNBA rookie scoring mark.`
+        : `${player.name}’s milestone is verified in her current-season game log; the historical record framing remains attributed to the reporting.`
+      : s
+        ? `${player.name} has averaged ${f1(s.pts)} points and ${f1(s.ast >= s.reb ? s.ast : s.reb)} ${s.ast >= s.reb ? 'assists' : 'rebounds'} in ${f1(s.min)} minutes across ${s.games} games for the ${v.team?.name}${s.last5 ? `, ${f1(s.last5.pts)} points over her last five` : ''}.`
+        : v.standing ? `The ${v.team.name} are ${v.standing.wins}–${v.standing.losses}${v.standing.last_ten ? `, ${v.standing.last_ten} over their last 10` : ''}.` : `What the reports establish, what they leave unresolved${publishers >= 2 ? `, and how ${publishers} publishers corroborate it` : ''}.`;
+    const deck = type === 'record' ? deckRecord : `${deckRecord} ${player ? `First reported by ${source}` : `Reported by ${source}`} on ${dShort(canonReport?.published_at || eventAt)}.`;
     const writer = deskOf ? writeDeskBrief : writeBrief;
     const { body, sections } = writer({ desk: deskOf, source, sourceHeadline, sourceAt: canonReport?.published_at || eventAt, others, player, team: v.team || team, v, type, leagueTeams: ctx.standingsById?.size || null });
     const method = [
@@ -584,7 +623,7 @@ export async function briefArticles({ externalItems = [], structured = [], now =
       context: { brief: { cluster_id, story_type: storyType, event_type: type, desk: laneOf(type), source_item_id: canon.item_id, source_url: canon.canonical_url, source_name: source }, next_game: null },
       entities: [...allEntities, ...(v.next_game ? [{ type: 'game', id: v.next_game.game_id, name: `${v.team?.name} ${v.next_game.home ? 'vs' : 'at'} ${v.next_game.opponent}`, start_utc: v.next_game.start_utc }] : [])],
       facts: {
-        brief: { cluster_id, story_type: storyType, event_type: type, desk: deskOf || null, publishers, league_teams: ['cba', 'expansion'].includes(type) ? ctx.standingsById?.size || null : null, underlying_event: underlying.event, underlying_reason: underlying.reason, value, materiality: evM ? { score: evM.score, publishers: evM.publishers } : null, source_item_id: canon.item_id, linked_entities: allEntities.map((e) => ({ type: e.type, id: e.id, name: e.name })), linked_names: names, verified: v },
+        brief: { cluster_id, story_type: storyType, event_type: type, desk: deskOf || null, publishers, league_teams: ['cba', 'expansion'].includes(type) ? ctx.standingsById?.size || null : null, underlying_event: underlying.event, underlying_reason: underlying.reason, value, materiality: evM ? { score: evM.score, publishers: evM.publishers } : null, source_item_id: canon.item_id, linked_entities: allEntities.map((e) => ({ type: e.type, id: e.id, name: e.name, ...(e.team_id ? { team_id: e.team_id } : {}) })), linked_names: names, verified: v },
         provenance: v.provenance ? [v.provenance] : []
       },
       evidence: [...reports, ...records],
