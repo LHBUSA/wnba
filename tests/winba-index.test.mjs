@@ -423,3 +423,18 @@ test('the leaderboard points at the newest published Index and survives having n
   const latest = latestWinbaIndex({ data: { items } });
   assert.equal(latest.slug, 'sep', 'newest by period, ignoring a retired one');
 });
+
+
+test('a regeneration records revised_at while published_at never moves', async () => {
+  const h = harness();
+  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  assert.equal(h.articles.get(first.id).revised_at, null, 'a first publication is not a revision');
+  const again = await runWinbaIndex({
+    period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
+    at: '2026-10-02T09:00:00.000Z', force: true, ...h.io
+  });
+  const a = h.articles.get(again.id);
+  assert.equal(a.published_at, AT);
+  assert.equal(a.first_published_at, AT);
+  assert.equal(a.revised_at, '2026-10-02T09:00:00.000Z');
+});

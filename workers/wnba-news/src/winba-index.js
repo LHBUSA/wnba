@@ -456,7 +456,10 @@ export async function runWinbaIndex({
     published_at: firstPublished,
     first_published_at: firstPublished,
     updated_at: at,
+    // A regeneration is a revision, recorded the way the newsroom records every
+    // other one. published_at never moves; revised_at is what changed.
     revisions: already ? [...(already.revisions || []), { at, kind: 'editorial_upgrade', generator: WINBA_INDEX_VERSION }] : [],
+    revised_at: already ? at : null,
     provenance: {
       generated_at: at,
       source_observed_at: frozen.snapshot_at,
