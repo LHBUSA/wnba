@@ -599,7 +599,7 @@ export async function mount(root, ctx) {
         ${rows.map((r, i) => html`<tr class="${i === 5 && rows[4]?.starter && !r.starter ? 'sep' : ''}"><td><a class="pname" href="/players/${r.athlete_id}">${r.name}${r.starter ? html`<span class="note"> · S</span>` : ''}</a></td>
           ${r.dnp ? html`<td>${r.winba ? num(r.winba.score) : '—'}</td><td colspan="12" class="l note">DNP${r.dnp_reason ? ` — ${r.dnp_reason}` : ''}</td>` : html`<td class="winba-box-cell">${r.winba ? html`<b>${num(r.winba.score)}</b><small>${r.winba.rank ? `#${r.winba.rank}` : 'PROV'}</small>` : '—'}</td><td>${r.min ?? '—'}</td><td class="hi">${r.pts ?? '—'}</td><td>${r.reb ?? '—'}</td><td>${r.ast ?? '—'}</td><td>${r.fgm ?? '—'}-${r.fga ?? '—'}</td><td>${r.fg3m ?? '—'}-${r.fg3a ?? '—'}</td><td>${r.ftm ?? '—'}-${r.fta ?? '—'}</td><td>${r.stl ?? '—'}</td><td>${r.blk ?? '—'}</td><td>${r.tov ?? '—'}</td><td>${r.pf ?? '—'}</td><td>${r.plus_minus ?? '—'}</td>`}</tr>`)}
         </tbody></table></div></div>`;
-    })}<p class="note">Box score via propsports.proptechusa.ai. WinBA is PropBetEdge’s season winning-impact index and is not a game-grade or live projection.</p>`;
+    })}<p class="note">Box score via propsports.proptechusa.ai. <a href="/winba-score">WinBA</a> is PropBetEdge’s season winning-impact index and is not a game-grade or live projection.</p>`;
   }
 
   function progression(d, g, v) {
