@@ -1,3 +1,5 @@
+import { MILES_RECORD_BAD_SLUG, MILES_ID, isMilesRecordSlug, correctMilesRecordArticle, correctArticleListResponse } from '../lib/news-corrections.js';
+
 // The ONLY data adapter in the browser. Every request goes to an owned
 // Cloudflare Worker (wnba-api or wnba-news). No provider host, no secret, no
 // Vercel function. Never throws: always resolves { ok, data, meta, error }.
@@ -164,8 +166,24 @@ export const api = {
   sources: () => getJson(`${API_BASE}/v1/sources`, { fresh: true, timeoutMs: 30000 }),
   health: () => getJson(`${API_BASE}/health`, { fresh: true }),
   news: (p) => getJson(`${NEWS_BASE}/v1/news${q(p)}`),
-  articles: (p) => getJson(`${NEWS_BASE}/v1/articles${q(p)}`),
-  article: (slug) => getJson(`${NEWS_BASE}/v1/articles/${encodeURIComponent(slug)}`),
+  articles: async (p = {}) => correctArticleListResponse(
+    await getJson(`${NEWS_BASE}/v1/articles${q(p)}`),
+    { playerId: p.player ?? null, teamId: p.team ?? null }
+  ),
+  article: async (slug) => {
+    const incident = isMilesRecordSlug(slug);
+    const sourceSlug = incident ? MILES_RECORD_BAD_SLUG : slug;
+    const [res, player] = await Promise.all([
+      getJson(`${NEWS_BASE}/v1/articles/${encodeURIComponent(sourceSlug)}`),
+      incident ? getJson(`${API_BASE}/v1/players/${encodeURIComponent(MILES_ID)}`) : Promise.resolve(null)
+    ]);
+    if (!res?.ok || !res.data?.article) return res;
+    const article = incident ? correctMilesRecordArticle(res.data.article, player?.ok ? player.data : null) : res.data.article;
+    const related = Array.isArray(res.data.related)
+      ? correctArticleListResponse({ ok: true, data: { items: res.data.related } }).data.items
+      : res.data.related;
+    return { ...res, data: { ...res.data, article, related } };
+  },
   story: (id) => getJson(`${NEWS_BASE}/v1/news/story/${encodeURIComponent(id)}`),
   newsSources: () => getJson(`${NEWS_BASE}/v1/news/sources`),
   intl: () => getJson(`${INTL_BASE}/v1/international`),
