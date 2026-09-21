@@ -99,10 +99,19 @@ export function freezeWinbaMonthly(snapshot, { period, playerById = new Map(), t
       // label a veteran a first-season player. Unknown stays unknown.
       first_wnba_season: firstSeasonFlag(p),
       score: Number(r.score),
+      // All four published components, so the article can show WHY a score is
+      // what it is from frozen values rather than recomputing anything.
+      components: {
+        production_percentile: num(r.components?.production_percentile),
+        win_rate: num(r.components?.win_rate),
+        winning_output_share: num(r.components?.winning_output_share),
+        court_share: num(r.components?.court_share)
+      },
       production_percentile: num(r.components?.production_percentile),
       win_rate: num(r.components?.win_rate),
       games: num(r.sample?.games),
       wins: num(r.sample?.wins),
+      minutes: num(r.sample?.minutes),
       averages: {
         min: num(r.averages?.min), pts: num(r.averages?.pts),
         reb: num(r.averages?.reb), ast: num(r.averages?.ast)
@@ -393,7 +402,21 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
         team_href: r.team_id ? `/teams/${r.team_id}` : null
       };
     }),
-    winba_movement: movement ? { from_period: movement.from_period, risers: movement.risers.slice(0, 5), fallers: movement.fallers.slice(0, 5) } : null,
+    // `moves` carries the per-player delta the visual leaderboard prints as a
+    // chip. Only the ranked top ten, and only when a real prior frozen board
+    // supplied it — a first edition has no movement to show.
+    winba_movement: movement
+      ? {
+        from_period: movement.from_period,
+        risers: movement.risers.slice(0, 5),
+        fallers: movement.fallers.slice(0, 5),
+        moves: movement.moves.slice(0, 10).map((m) => ({
+          player_id: m.player_id, player_name: m.player_name, rank: m.rank,
+          prior_rank: m.prior_rank, rank_delta: m.rank_delta,
+          score: m.score, prior_score: m.prior_score, score_delta: m.score_delta
+        }))
+      }
+      : null,
     prior_index: priorArticle ? { period: priorArticle.period, slug: priorArticle.slug, headline: priorArticle.headline } : null,
     links: { winba: WINBA_URL, methodology: WINBA_METHOD_URL },
     generator: { type: 'deterministic', version: WINBA_INDEX_VERSION },

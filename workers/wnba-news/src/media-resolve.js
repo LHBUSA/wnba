@@ -29,6 +29,35 @@ export function subjectFrom(PLAYERS, pid) {
  * falls back to the leader treatment. Identity comes only from
  * `subjectFrom`, which resolves the approved ledger entry by ESPN athlete id.
  */
+/**
+ * Approved media for the top N of a frozen board, for the article's visual
+ * leaderboard.
+ *
+ * Per row rather than all-or-nothing: a ranked player with no approved
+ * photograph still appears in the ranking with a null image, because the
+ * renderer falls back to a safe monogram/team treatment. Photography is
+ * presentation, never ranking eligibility. Identity still comes only from the
+ * approved ledger, resolved by ESPN athlete id.
+ */
+export function winbaBoardMediaFrom(PLAYERS, rows, n = 10) {
+  return (rows || []).slice(0, n).map((r) => {
+    const s = subjectFrom(PLAYERS, r.player_id);
+    if (!s || (s.name && r.player_name && normName(s.name) !== normName(r.player_name))) {
+      return { player_id: String(r.player_id), rank: r.rank, image: null, credit: null };
+    }
+    return {
+      player_id: s.player_id,
+      rank: r.rank,
+      image: {
+        square: s.square,
+        portrait: (s.podium || []).find((x) => x.w === 300)?.src || (s.podium || [])[0]?.src || null,
+        podium: (s.podium || []).find((x) => x.w === 600)?.src || null
+      },
+      credit: s.credit
+    };
+  });
+}
+
 export function winbaPodiumFrom(PLAYERS, rows, n = 3) {
   const top = (rows || []).slice(0, n);
   if (top.length < n) return null;

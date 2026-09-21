@@ -6,6 +6,8 @@
 // are intentionally separate.
 
 import { html, raw } from '../lib/dom.js';
+import { currentWinbaEdition } from './winba-index.js';
+import { winbaCurrentEditionModule } from './winba-leaderboard.js';
 import { articleCard, articleRow } from '../ui/articles.js';
 import * as base from './news-base.js';
 
@@ -240,6 +242,17 @@ export function newsView(data) {
       const marker = '<section class="front-band section">';
       body = body.includes(marker) ? body.replace(marker, `${String(gameDay)}${marker}`) : `${body}${String(gameDay)}`;
     }
+  }
+
+  // The current WinBA Index is promoted here by an explicit module rather than
+  // left to chronological story cards, which would bury a flagship monthly
+  // ranking within hours. It stays promoted until a later period publishes.
+  const currentIndex = winbaCurrentEditionModule(currentWinbaEdition(effective.arts));
+  if (currentIndex) {
+    const band = '<section class="front-band section">';
+    body = body.includes(band)
+      ? body.replace(band, `${String(currentIndex)}${band}`)
+      : `${String(currentIndex)}${body}`;
   }
 
   const archive = archiveRail(effective.archive);

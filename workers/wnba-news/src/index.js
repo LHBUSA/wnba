@@ -20,7 +20,7 @@ import { DESK_VERSION } from './pbe-desk.js';
 import { runArticles } from './articles-run.js';
 import { BRIEF_MAX_AGE_MS } from './briefs.js';
 import { ARTICLE_VERSION } from './articles.js';
-import { mediaFor, winbaPodium, MEDIA_MANIFEST_AT } from './media.js';
+import { mediaFor, winbaPodium, winbaBoardMedia, MEDIA_MANIFEST_AT } from './media.js';
 import videoChannels from '../../../data/video-channels.json';
 import { runWinbaPasses } from './winba-run.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
@@ -219,7 +219,7 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
   let winba;
   try {
     winba = await runWinbaPasses(env, {
-      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod, mediaFor, winbaPodium
+      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod, mediaFor, winbaPodium, winbaBoardMedia
     });
   } catch (e) {
     winba = { error: String(e.message || e).slice(0, 160) };

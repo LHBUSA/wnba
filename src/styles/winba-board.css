@@ -1,0 +1,116 @@
+/* The WinBA Index visual leaderboard.
+   Every value rendered here comes from the article's frozen board, never the
+   live leaderboard. Plain CSS so the ranking is in the first server response. */
+
+.wb-board { margin: 26px 0 30px; padding: 20px 0 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.wb-board-head { margin-bottom: 18px; }
+.wb-board-head h2 { margin: 0; font: 600 clamp(19px, 2.4vw, 26px)/1.2 var(--f-editorial); color: var(--paper); }
+.wb-board-note { margin: 6px 0 0; color: var(--faint); font: 500 12px/1.5 var(--f-data); }
+.wb-board-more { margin: 14px 0 6px; color: var(--faint); font: 400 12px/1.5 var(--f-data); }
+
+.wb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 16px; padding: 0; list-style: none; }
+.wb-podium-card { display: flex; flex-direction: column; border: 1px solid var(--line-3); border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, .018); }
+.wb-podium-card.wb-rank-1 { border-color: var(--gold); }
+.wb-podium-photo { position: relative; display: block; aspect-ratio: 10 / 9; background: #1a1610; }
+.wb-podium-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wb-rank-chip { position: absolute; left: 0; top: 0; min-width: 34px; padding: 5px 8px; background: var(--gold); color: #15120c; font: 700 17px/1 var(--f-data); text-align: center; }
+.wb-podium-body { display: grid; gap: 7px; padding: 12px 13px 14px; }
+
+.wb-name { color: var(--paper); font: 600 clamp(15px, 1.7vw, 18px)/1.2 var(--f-editorial); text-wrap: balance; }
+.wb-team { display: inline-flex; align-items: center; gap: 6px; color: var(--paper-2); font: 500 12px/1.3 var(--f-data); }
+.wb-team img, .wb-team svg { flex: none; }
+.wb-score { display: flex; align-items: baseline; gap: 6px; margin: 0; font: 500 12px/1 var(--f-data); color: var(--faint); }
+.wb-score b { color: var(--gold); font: 700 27px/1 var(--f-data); }
+.wb-score a { color: var(--faint); }
+.wb-first { margin-left: auto; color: var(--faint); font: 700 9px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; }
+.wb-meta { margin: 0; color: var(--faint); font: 400 11px/1.4 var(--f-data); }
+
+.wb-stats { display: flex; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.wb-stats li { display: grid; gap: 1px; }
+.wb-stats b { color: var(--paper); font: 700 15px/1 var(--f-data); }
+.wb-stats span { color: var(--faint); font: 700 9px/1 var(--f-data); letter-spacing: .08em; }
+
+.wb-components { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 9px; margin: 4px 0 0; align-items: center; }
+.wb-components dt { color: var(--faint); font: 500 10px/1.2 var(--f-data); white-space: nowrap; }
+.wb-components dd { display: flex; align-items: center; gap: 7px; margin: 0; }
+.wb-cbar { flex: 1 1 auto; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .09); overflow: hidden; }
+.wb-cbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), #ff7a2f); }
+.wb-components dd b { flex: none; min-width: 20px; color: var(--paper-2); font: 600 10px/1 var(--f-data); text-align: right; }
+
+.wb-rows { display: grid; gap: 6px; margin: 0 0 18px; padding: 0; list-style: none; }
+.wb-row { display: grid; grid-template-columns: 26px 40px minmax(0, 1fr) minmax(70px, 1.1fr) 40px auto 42px; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line-3); border-radius: 9px; }
+.wb-row-rank { color: var(--faint); font: 700 14px/1 var(--f-data); text-align: center; }
+.wb-row-photo { display: block; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #1a1610; }
+.wb-row-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wb-row-id { display: grid; gap: 2px; min-width: 0; }
+.wb-row-id .wb-name { font-size: 14px; }
+.wb-row-sub { display: flex; align-items: center; gap: 8px; }
+.wb-pos { color: var(--faint); font: 700 9px/1 var(--f-data); letter-spacing: .08em; }
+.wb-bar { display: block; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.wb-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), #ff7a2f); }
+.wb-row-score { color: var(--gold); font: 700 17px/1 var(--f-data); text-align: right; }
+.wb-row .wb-stats { gap: 10px; }
+
+.wb-move { font: 700 10px/1 var(--f-data); white-space: nowrap; }
+.wb-move--up { color: #6ac47a; }
+.wb-move--down { color: #e07a6a; }
+.wb-move--flat { color: var(--faint); }
+
+.wb-chart { margin: 0 0 6px; }
+.wb-chart figcaption { margin-bottom: 10px; color: var(--faint); font: 700 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; }
+.wb-chart ol { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.wb-chart li { display: grid; grid-template-columns: 20px 26px minmax(0, 1fr) 20px minmax(80px, 2fr) 34px; gap: 9px; align-items: center; }
+.wb-chart-rank { color: var(--faint); font: 600 11px/1 var(--f-data); text-align: right; }
+.wb-chart-thumb { display: block; width: 26px; height: 26px; border-radius: 50%; overflow: hidden; background: #1a1610; }
+.wb-chart-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wb-chart-name { color: var(--paper-2); font: 500 12px/1.3 var(--f-data); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-chart-team { display: flex; align-items: center; justify-content: center; }
+.wb-chart-bar { height: 9px; border-radius: 5px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.wb-chart-bar i { display: block; height: 100%; background: linear-gradient(90deg, #8a7320, var(--gold)); }
+.wb-chart-score { color: var(--paper); font: 700 13px/1 var(--f-data); text-align: right; }
+
+/* The promoted current edition, used on the newsroom, the live leaderboard and
+   the series home so a fresh Index is surfaced rather than buried. */
+.wb-current { display: grid; gap: 7px; margin: 18px 0; padding: 16px 18px; border: 1px solid var(--line-3); border-left: 2px solid var(--gold); border-radius: 10px; background: rgba(255, 255, 255, .02); }
+.wb-current .eyebrow { color: var(--gold); }
+.wb-current h2 { margin: 0; font: 600 clamp(17px, 2vw, 21px)/1.2 var(--f-editorial); }
+.wb-current h2 a { color: var(--paper); }
+.wb-current-period { margin: 0; color: var(--faint); font: 500 12px/1.4 var(--f-data); }
+.wb-current-top { display: grid; gap: 4px; margin: 4px 0 0; padding: 0; list-style: none; }
+.wb-current-top li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 9px; align-items: baseline; }
+.wb-current-top span { color: var(--faint); font: 600 11px/1.3 var(--f-data); }
+.wb-current-top a { color: var(--paper-2); font: 500 13px/1.4 var(--f-data); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-current-top b { color: var(--gold); font: 700 14px/1.3 var(--f-data); }
+.wb-current-cta { color: var(--gold); font: 600 12px/1.4 var(--f-data); }
+
+@media (max-width: 720px) {
+  .wb-podium { grid-template-columns: 1fr; }
+  .wb-podium-photo { aspect-ratio: 16 / 10; }
+  .wb-row { grid-template-columns: 22px 36px minmax(0, 1fr) 38px 40px; row-gap: 8px; }
+  .wb-row-bar { grid-column: 1 / -1; order: 3; }
+  .wb-row .wb-stats { grid-column: 1 / -1; order: 4; }
+  .wb-row-move { order: 2; text-align: right; }
+  .wb-chart li { grid-template-columns: 18px 24px minmax(0, 1fr) 30px; row-gap: 4px; }
+  .wb-chart-bar { grid-column: 1 / -1; }
+  .wb-chart-team { display: none; }
+}
+
+/* Series home: the current edition gets the premium card, earlier ones stay
+   compact so the franchise reads as a run of issues. */
+.wbx-current-edition { margin-bottom: 8px; }
+.wbx-current-edition .eyebrow { color: var(--gold); }
+.wbx-hero { display: grid; gap: 14px; margin-top: 8px; padding: 20px; border: 1px solid var(--line-3); border-left: 2px solid var(--gold); border-radius: 12px; background: rgba(255, 255, 255, .022); }
+.wbx-hero h2 { margin: 0; color: var(--paper); font: 600 clamp(19px, 2.6vw, 27px)/1.22 var(--f-editorial); text-wrap: balance; }
+.wbx-hero-top { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.wbx-hero-top li { display: grid; grid-template-columns: 56px minmax(0, 1fr); grid-template-rows: auto auto auto; gap: 1px 10px; align-items: center; }
+.wbx-hero-top img, .wbx-hero-blank { grid-row: 1 / 4; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #1a1610; }
+.wbx-hero-rank { color: var(--gold); font: 700 10px/1 var(--f-data); letter-spacing: .08em; }
+.wbx-hero-top b { color: var(--paper); font: 600 14px/1.25 var(--f-data); overflow: hidden; text-overflow: ellipsis; }
+.wbx-hero-team { color: var(--faint); font: 400 11px/1.3 var(--f-data); }
+.wbx-hero-score { grid-column: 2; color: var(--gold); font: 700 15px/1 var(--f-data); }
+.wbx-hero-cta { color: var(--gold); font: 600 13px/1.4 var(--f-data); }
+.wbx-older-title { margin: 6px 0 12px; color: var(--faint); font: 700 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; }
+
+@media (max-width: 640px) {
+  .wbx-hero-top { grid-template-columns: 1fr; gap: 10px; }
+}

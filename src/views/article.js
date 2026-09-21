@@ -13,6 +13,7 @@ import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
 import { intelligenceOf } from '../lib/intelligence.js';
 import { gameHighlights } from '../ui/video.js';
 import { winbaSeriesNav, winbaSeriesNavView, winbaIndexCards, WINBA_INDEX_KIND } from './winba-index.js';
+import { winbaIndexLeaderboard } from './winba-leaderboard.js';
 
 // A `metric` entity carries no id-based route: it is the canonical explainer
 // for a PropBetEdge statistic. Routing it here lets the generator keep URLs out
@@ -182,6 +183,13 @@ export function articleView({ article: a, related = [], series = [] }) {
   // An Index edition carries previous/next navigation across the published
   // series, resolved from the series passed in rather than stored on the
   // article: a later month appearing must not rewrite an earlier record.
+  // The visual leaderboard is the product of an Index edition, so it renders
+  // straight after the opening read rather than below several hundred words of
+  // analysis. Every value in it comes from the article's frozen board. When it
+  // renders, the prose top-ten section is suppressed on the page — the board
+  // states the same frozen facts better — but it stays in the stored body for
+  // feeds and for the edition's own word count.
+  const indexBoard = a.kind === WINBA_INDEX_KIND ? winbaIndexLeaderboard(a) : '';
   const seriesNav = a.kind === WINBA_INDEX_KIND && a.period
     ? winbaSeriesNav(winbaIndexCards({ items: series }), a.period)
     : null;
@@ -227,7 +235,7 @@ export function articleView({ article: a, related = [], series = [] }) {
       <div class="story-layout">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)}`
+            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
             : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">

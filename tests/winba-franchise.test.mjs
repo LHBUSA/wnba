@@ -75,14 +75,21 @@ test('a retired, superseded or externalised edition never appears', () => {
   assert.deepEqual(cards.map((c) => c.period), ['2026-09']);
 });
 
-test('the archive renders every edition with its frozen top three', () => {
+test('the archive gives the current edition the premium card and older ones the list', () => {
   const v = winbaIndexArchiveView({ cards: [SEP, AUG], winba: null });
   const html = String(v.body);
   assert.match(html, /The WinBA Index/);
-  assert.ok(html.includes(`/news/${SEP.slug}`));
+  // The newest edition is the promoted hero, not a row in a list.
+  assert.match(html, /wbx-current-edition/);
+  assert.ok(html.includes(`/news/${SEP.slug}`), 'the current edition links');
+  assert.match(html, /Olivia Miles/);
+  assert.match(html, />87</, 'the current edition shows its frozen leading score');
+  // Earlier editions stay in the compact list with their own frozen top three.
+  assert.match(html, /Previous editions/);
   assert.ok(html.includes(`/news/${AUG.slug}`));
-  assert.match(html, /1\. Olivia Miles 87/);
   assert.match(html, /1\. A&#39;ja Wilson 84|1\. A'ja Wilson 84/);
+  // The current edition is not duplicated into the older list.
+  assert.equal((html.match(new RegExp(`/news/${SEP.slug}`, 'g')) || []).length, 1, 'the hero is one anchor; the current edition is not repeated in the older list');
   // It says which board is live and which is the record.
   assert.match(html, /frozen at publication/);
   assert.match(html, /\/winba-score/);

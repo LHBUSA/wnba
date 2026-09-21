@@ -404,7 +404,11 @@ test('the lede survives rendering', async () => {
   const html = String(articleView({ article: { ...a, id: 'x', slug: 's', media: null, method: [], published_at: AT, first_published_at: AT }, related: [] }));
   assert.ok(html.includes('at the top of'), 'the lede sentence renders');
   assert.ok(html.includes('association-with-winning index'), 'the methodology paragraph renders');
-  assert.ok(html.includes('The league leaders'), 'the sectioned copy still renders');
+  // The prose top-ten section is deliberately suppressed on the page: the
+  // visual board states the same frozen facts. It stays in the stored body.
+  assert.ok(!html.includes('<h2>The league leaders</h2>'), 'the prose leaders section gives way to the visual board');
+  assert.ok(html.includes('wb-board'), 'the visual leaderboard renders in its place');
+  assert.ok(html.includes('What the board is telling us'), 'later analysis sections still render');
 });
 
 

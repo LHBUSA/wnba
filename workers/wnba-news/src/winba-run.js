@@ -147,7 +147,7 @@ const previousOf = (period) => {
 };
 
 /** The monthly lane, idempotent by stored publication state. */
-export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null, winbaPodium = null } = {}) {
+export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null, winbaPodium = null, winbaBoardMedia = null } = {}) {
   if (!env?.NEWS_KV) return { skipped: 'no_kv' };
   const due = winbaIndexDue(at, { period, force });
   if (!due.due) return { status: 'not_due', period: due.period, reason: due.reason };
@@ -166,14 +166,14 @@ export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new D
     getArticle: (id) => env.NEWS_KV.get(ITEM(id), 'json'),
     // The hero is the board leader's approved photograph, resolved by the same
     // ledger-backed path as every other desk: no approved subject, no photo.
-    putArticle: (a) => env.NEWS_KV.put(ITEM(a.id), JSON.stringify(decorate(a, { mediaFor, winbaPodium })), ITEM_TTL)
+    putArticle: (a) => env.NEWS_KV.put(ITEM(a.id), JSON.stringify(decorate(a, { mediaFor, winbaPodium, winbaBoardMedia })), ITEM_TTL)
   });
 
   // A published Index joins the newsroom index so it is listed, linked and
   // carried into feeds like any other story.
   if ((result.status === 'published' || result.status === 'regenerated') && result.article) {
     const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
-    const card = cardForIndex(decorate(result.article, { mediaFor, winbaPodium }));
+    const card = cardForIndex(decorate(result.article, { mediaFor, winbaPodium, winbaBoardMedia }));
     const next = index.some((c) => c.id === card.id)
       ? index.map((c) => (c.id === card.id ? { ...c, ...card } : c))
       : [card, ...index];
@@ -190,10 +190,14 @@ export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new D
  * The podium is all-or-nothing: a single unapproved subject means no podium and
  * the card falls back to the leader treatment.
  */
-function decorate(a, { mediaFor, winbaPodium }) {
+function decorate(a, { mediaFor, winbaPodium, winbaBoardMedia }) {
   const media = mediaFor ? mediaFor(a) : a.media || null;
-  const podium = winbaPodium ? winbaPodium(a.winba_board?.rows || []) : null;
-  return { ...a, ...(media ? { media } : {}), winba_podium: podium };
+  const rows = a.winba_board?.rows || [];
+  const podium = winbaPodium ? winbaPodium(rows) : null;
+  // Per-row media for the visual leaderboard. A null image is a safe fallback,
+  // never a reason to drop a ranked player.
+  const boardMedia = winbaBoardMedia ? winbaBoardMedia(rows) : null;
+  return { ...a, ...(media ? { media } : {}), winba_podium: podium, winba_board_media: boardMedia };
 }
 
 /** The listing card for an Index. Mirrors only what listings render. */
@@ -225,6 +229,7 @@ export function cardForIndex(a) {
     media: a.media || null,
     identity_mode: a.identity_mode || 'series',
     winba_podium: a.winba_podium || null,
+    winba_board_media: a.winba_board_media || null,
     // A trimmed copy of the frozen board travels with the card so listings can
     // show the month's top three and a player page can state the rank THIS
     // edition recorded. Only the printable fields: the full board with averages
@@ -246,7 +251,7 @@ export function cardForIndex(a) {
 }
 
 /** Both lanes. Returns a compact report for the run status document. */
-export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null } = {}) {
+export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null, winbaBoardMedia = null } = {}) {
   let snapshot = null;
   let error = null;
   try {
@@ -258,7 +263,7 @@ export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date()
   if (!snapshot?.rows?.length) return { version: WINBA_EDITORIAL_VERSION, status: 'no_snapshot', error };
 
   const daily = await runWinbaDaily(env, { snapshot, dict, at }).catch((e) => ({ error: e?.message || String(e) }));
-  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium }).catch((e) => ({ error: e?.message || String(e) }));
+  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium, winbaBoardMedia }).catch((e) => ({ error: e?.message || String(e) }));
   return {
     version: WINBA_EDITORIAL_VERSION,
     index_version: WINBA_INDEX_VERSION,

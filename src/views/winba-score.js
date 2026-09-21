@@ -1,4 +1,6 @@
 import { html } from '../lib/dom.js';
+import { winbaCurrentEditionModule } from './winba-leaderboard.js';
+import { currentWinbaEdition } from './winba-index.js';
 import { pageHead, avatar } from '../ui/components.js';
 import { fmtDateTimeET } from '../lib/format.js';
 
@@ -18,10 +20,9 @@ export async function loadWinbaScore(api) {
 
 /** The most recently published WinBA Index card, or null. */
 export function latestWinbaIndex(articles) {
-  const items = articles?.data?.items || articles?.items || [];
-  return items
-    .filter((c) => c && c.kind === 'winba_index' && c.status === 'published' && c.quality_state !== 'retired_from_index')
-    .sort((a, b) => String(b.period || b.first_published_at || '').localeCompare(String(a.period || a.first_published_at || '')))[0] || null;
+  // One definition of "current" for the whole product: the latest valid
+  // published edition by period.
+  return currentWinbaEdition(articles);
 }
 
 function leaderPortrait(row, player) {
@@ -80,11 +81,8 @@ export function winbaScoreView({ winba = null, players = null, index = null } = 
         <div class="winba-podium-showcase">${podium.map((r) => leaderPortrait(r, playerMap.get(String(r.athlete_id))))}</div>
         ${rest.length ? html`<div class="winba-authority-leaders">${rest.map((r) => leaderRow(r, playerMap.get(String(r.athlete_id))))}</div>` : ''}
         <p class="note">Top 10 qualified players in the current WinBA snapshot, with verified player photography where available. <a href="/stats">Open the full WNBA player leaderboard →</a></p>
-        ${index ? html`<aside class="winba-index-callout">
-          <span class="eyebrow">Latest WinBA Index</span>
-          <a href="/news/${index.slug}"><b>${index.headline}</b></a>
-          <small>The monthly editorial record of this leaderboard, frozen at publication. This board above is live and current.</small>
-        </aside>` : ''}
+        ${index ? html`${winbaCurrentEditionModule(index, { heading: 'The WinBA Index' })}
+          <p class="note">The board above is <b>live and current</b>. The Index is the <b>frozen monthly record</b> — its ranks and scores stay as published.</p>` : ''}
       ` : html`<div class="empty"><h3>Live WinBA rankings are reconnecting.</h3><p>The formula, qualification rules and interpretation on this page remain the published WinBA v1 methodology. Current rankings will return when the live snapshot is available.</p></div>`}
     </section>
 

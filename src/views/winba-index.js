@@ -30,6 +30,25 @@ export function winbaIndexCards(articles) {
 }
 
 /**
+ * THE CURRENT EDITION: the latest valid published edition by PERIOD.
+ *
+ * By period, not by recency of publication, so a late-published or corrected
+ * back issue can never displace the newest month. A freshly published Index
+ * stays the promoted current edition until a later period publishes, at which
+ * point the earlier one becomes permanent series history automatically —
+ * nothing has to be flipped by hand.
+ */
+export function currentWinbaEdition(articles) {
+  return winbaIndexCards(articles)[0] || null;
+}
+
+/** Is this card the current edition of the series? */
+export function isCurrentWinbaEdition(card, articles) {
+  const current = currentWinbaEdition(articles);
+  return Boolean(current && card && String(current.id) === String(card.id));
+}
+
+/**
  * The edition before and after a given period.
  *
  * "Next" exists only once a later edition has actually been published, which is
@@ -78,6 +97,13 @@ export function winbaSeriesNavView(nav) {
 
 export function winbaIndexArchiveView({ cards = [], winba = null, error = false } = {}) {
   if (error) return { body: errorState('The WinBA Index archive is unavailable', 'The newsroom record did not answer. Nothing is shown in its place.'), items: [] };
+  // The newest edition gets the premium treatment; earlier ones stay compact.
+  const current = cards[0] || null;
+  const older = cards.slice(1);
+  const imageFor = (card, playerId) => {
+    const m = (card?.winba_board_media || []).find((x) => String(x.player_id) === String(playerId));
+    return m?.image?.square || null;
+  };
   const live = winba?.ok ? winba.data : null;
   const liveTop = (live?.rows || []).filter((r) => r.qualified && r.rank).sort((a, b) => a.rank - b.rank).slice(0, 3);
 
@@ -96,9 +122,28 @@ export function winbaIndexArchiveView({ cards = [], winba = null, error = false 
         <a href="${WINBA_SCORE_PATH}">Open the live WinBA leaderboard →</a>
       </aside>` : ''}
 
+      ${current ? html`<section class="section wbx-current-edition">
+        <span class="eyebrow">Current edition</span>
+        <a class="wbx-hero" href="/news/${current.slug}">
+          <h2>${current.headline}</h2>
+          ${(current.winba_board?.rows || []).length ? html`<ol class="wbx-hero-top">
+            ${(current.winba_board.rows || []).slice(0, 3).map((r) => html`<li>
+              ${imageFor(current, r.player_id) ? html`<img src="${imageFor(current, r.player_id)}" alt="${r.player_name}" width="72" height="72" loading="lazy" decoding="async" />` : html`<span class="wbx-hero-blank" aria-hidden="true"></span>`}
+              <span class="wbx-hero-rank">${r.rank}</span>
+              <b>${r.player_name}</b>
+              <span class="wbx-hero-team">${r.team_name || ''}</span>
+              <span class="wbx-hero-score">${Math.round(Number(r.score))}</span>
+            </li>`)}
+          </ol>` : ''}
+          <span class="wbx-hero-cta">Read the ${current.period_label || ''} Index →</span>
+        </a>
+        ${current.first_published_at ? html`<small class="winba-edition-date">Published ${fmtDateET(current.first_published_at, { month: 'long', day: 'numeric', year: 'numeric' })}</small>` : ''}
+      </section>` : ''}
+
       <section class="section">
-        ${cards.length ? html`<ol class="winba-edition-list">
-          ${cards.map((c) => html`<li class="winba-edition">
+        ${older.length ? html`<h2 class="wbx-older-title">${current ? 'Previous editions' : 'Editions'}</h2>` : ''}
+        ${older.length ? html`<ol class="winba-edition-list">
+          ${older.map((c) => html`<li class="winba-edition">
             <a class="winba-edition-link" href="/news/${c.slug}">
               <span class="winba-edition-period">${c.period_label || c.period || ''}</span>
               <b class="winba-edition-headline">${c.headline}</b>

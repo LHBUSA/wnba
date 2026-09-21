@@ -7,6 +7,7 @@ import './styles/identity.css';
 import './styles/live-hero.css';
 import './styles/newsroom.css';
 import './styles/newsroom-article.css';
+import './styles/winba-board.css';
 import './styles/newsroom-hero-grid.css';
 import './styles/international.css';
 import './styles/pbe.css';
