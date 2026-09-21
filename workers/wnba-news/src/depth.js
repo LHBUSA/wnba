@@ -289,7 +289,15 @@ function elementsFor(contract, a, cls) {
       el('original_value', true, value.dimensions.length >= (cls === 'full' || cls === 'deep' ? 4 : cls === 'brief' ? (leagueDesk ? 1 : 2) : 0), true);
       const developedRecords = S('records').length + S('team').length + S('context').length + S('game').length + S('history').length;
       el('records_developed', value.dimensions.length, developedRecords >= (value.dimensions.length >= 3 ? 2 : 1), recordDesk);
-      const why = [...S('why'), ...S('implication'), ...S('history')].filter((p) => !BOILERPLATE.test(p));
+      const why = [
+        ...S('why'),
+        ...S('implication'),
+        ...S('history'),
+        ...(leagueDesk ? S('context') : [])
+      ].filter((p) => !BOILERPLATE.test(p));
+      // On league/front-office stories, grounded roster or standings context is
+      // itself the relevance. Do not force a synthetic "why it matters" section
+      // when the context already explains what the change inherits.
       el('why_it_matters', value.dimensions.length, why.length >= 1);
 
       if (recordDesk) {
