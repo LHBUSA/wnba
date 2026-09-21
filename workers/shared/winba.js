@@ -229,6 +229,31 @@ export function buildWinbaSnapshot(docs = [], { season = null, generatedAt = new
   };
 }
 
+/**
+ * The same frozen V1 formula, over only the games that had actually been played
+ * at `asOf`. This is a genuine historical WinBA state, not a reconstruction
+ * from a later dataset: a game tipping after the cutoff is excluded, so the
+ * result is what the index would have read at that moment given the same
+ * archive. Used to establish monthly Index snapshots that can be compared.
+ *
+ * `asOf` is exclusive, so a month-end cutoff is the first instant of the next
+ * month and the month's own games all count.
+ */
+export function buildWinbaSnapshotAsOf(docs = [], { season = null, asOf, generatedAt = new Date().toISOString() } = {}) {
+  const cutoff = Date.parse(asOf);
+  if (!Number.isFinite(cutoff)) throw new Error('buildWinbaSnapshotAsOf requires a parseable asOf');
+  const eligible = (docs || []).filter((doc) => {
+    const started = Date.parse(doc?.summary?.game?.start_utc || '');
+    return Number.isFinite(started) && started < cutoff;
+  });
+  return {
+    ...buildWinbaSnapshot(eligible, { season, generatedAt }),
+    as_of: new Date(cutoff).toISOString(),
+    archive_docs_considered: (docs || []).length,
+    archive_docs_in_window: eligible.length
+  };
+}
+
 export function winbaForPlayer(snapshot, athleteId) {
   if (!snapshot?.rows) return null;
   return snapshot.rows.find((r) => String(r.athlete_id) === String(athleteId)) || null;
