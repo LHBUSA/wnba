@@ -19,7 +19,7 @@
 
 import { sentencesOf, contentTokens, restates, duplicatedIdeas, repeatsIdea } from '../../../src/lib/semantic.js';
 
-export const DEPTH_VERSION = 'wnba-depth/1.0.0';
+export const DEPTH_VERSION = 'wnba-depth/1.1.0';
 
 export const DEPTH_CLASSES = {
   flash: { label: 'Flash', rank: 0, range: [150, 350], floor: 40, pass: 0.6, sections: 1, developed: 0, evidence: 1 },
@@ -282,16 +282,32 @@ function elementsFor(contract, a, cls) {
       const b = f.brief || {};
       // League/business desk: corroboration by independent publishers is part of what the story establishes.
       const value = { dimensions: [...((b.value || {}).dimensions || []), ...(b.desk === 'league' && (b.publishers || 0) >= 2 ? ['corroboration'] : [])] };
+      const recordDesk = b.desk === 'record';
       el('the_development', true, S('change').length >= 1, true);
       el('underlying_event', true, b.underlying_event === true, true);
       const leagueDesk = b.desk === 'league';
       el('original_value', true, value.dimensions.length >= (cls === 'full' || cls === 'deep' ? 4 : cls === 'brief' ? (leagueDesk ? 1 : 2) : 0), true);
-      el('records_developed', value.dimensions.length, S('records').length + S('team').length + S('context').length + S('game').length + S('history').length >= (value.dimensions.length >= 3 ? 2 : 1));
+      const developedRecords = S('records').length + S('team').length + S('context').length + S('game').length + S('history').length;
+      el('records_developed', value.dimensions.length, developedRecords >= (value.dimensions.length >= 3 ? 2 : 1), recordDesk);
       const why = [...S('why'), ...S('implication'), ...S('history')].filter((p) => !BOILERPLATE.test(p));
       el('why_it_matters', value.dimensions.length, why.length >= 1);
-      el('next', true, [...S('next'), ...S('unknown'), ...S('implication')].filter((p) => !BOILERPLATE.test(p)).length >= 1, true);
-      // Record desk: the achievement must be in PropBetEdge's own records.
-      if (b.desk === 'record') el('record_verified', true, b.verified?.record?.verified === true, true);
+
+      if (recordDesk) {
+        // A record story ends when the achievement and its basketball context
+        // are explained. It must never grow a fake "what comes next" paragraph
+        // merely to satisfy a template.
+        el('record_verified', true, b.verified?.record?.verified === true, true);
+        el('record_game_or_context', true, S('game').length + S('records').length >= 1, true);
+        el('record_history', true, S('history').length >= 1, true);
+      } else {
+        // "Next" is core only when the facts actually support a forward-looking
+        // basketball consequence. League/draft stories are not padded with an
+        // unresolved/process paragraph just to fill a slot.
+        const nextSupported = Boolean(b.verified?.next_game) || ['injury', 'availability', 'trade', 'signing', 'waiver', 'roster_move', 'lineup'].includes(b.event_type);
+        if (nextSupported) {
+          el('next', true, [...S('next'), ...S('implication')].filter((p) => !BOILERPLATE.test(p)).length >= 1, true);
+        }
+      }
     }
   }
   // Shared: sections developed for the class, and evidence cited for it.
