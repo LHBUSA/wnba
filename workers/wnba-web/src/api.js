@@ -1,3 +1,5 @@
+import { MILES_RECORD_BAD_SLUG, MILES_ID, isMilesRecordSlug, correctMilesRecordArticle, correctArticleListResponse } from '../../../src/lib/news-corrections.js';
+
 // Server-side twin of src/data/api.js: the same method names and { ok, data, meta, error, status } results,
 // but every call goes through a Cloudflare service binding (API = wnba-api, NEWS = wnba-news) instead of the
 // public workers.dev hosts. The shared views call these methods exactly as the browser page does.
@@ -47,8 +49,24 @@ export function bindingApi(env, { timeoutMs = 9000 } = {}) {
     pbeCoverage: () => A('/v1/pbe/coverage'),
     trackRecord: () => A('/v1/track-record'),
     news: (p) => N(`/v1/news${qs(p)}`),
-    articles: (p) => N(`/v1/articles${qs(p)}`),
-    article: (slug) => N(`/v1/articles/${encodeURIComponent(slug)}`),
+    articles: async (p = {}) => correctArticleListResponse(
+      await N(`/v1/articles${qs(p)}`),
+      { playerId: p.player ?? null, teamId: p.team ?? null }
+    ),
+    article: async (slug) => {
+      const incident = isMilesRecordSlug(slug);
+      const sourceSlug = incident ? MILES_RECORD_BAD_SLUG : slug;
+      const [res, player] = await Promise.all([
+        N(`/v1/articles/${encodeURIComponent(sourceSlug)}`),
+        incident ? A(`/v1/players/${encodeURIComponent(MILES_ID)}`) : Promise.resolve(null)
+      ]);
+      if (!res?.ok || !res.data?.article) return res;
+      const article = incident ? correctMilesRecordArticle(res.data.article, player?.ok ? player.data : null) : res.data.article;
+      const related = Array.isArray(res.data.related)
+        ? correctArticleListResponse({ ok: true, data: { items: res.data.related } }).data.items
+        : res.data.related;
+      return { ...res, data: { ...res.data, article, related } };
+    },
     newsSources: () => N('/v1/news/sources'),
     intl: () => I('/v1/international'),
     intlCompetition: (id, view) => I(`/v1/international/competitions/${encodeURIComponent(id)}${view ? `/${view}` : ''}`),
