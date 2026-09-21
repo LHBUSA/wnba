@@ -269,7 +269,31 @@ export async function runWinbaCopyCorrection(env, { at = new Date().toISOString(
     if (!item) continue;
     out.checked += 1;
     const fix = correctQualificationCopy(item, { at });
-    if (!fix) { out.unchanged.push(rec.period); continue; }
+    if (!fix) {
+      // The clause may already be correct because a regeneration recomposed the
+      // body. The correction still happened, so the ledger must say so — once.
+      const QUAL = 'qualification';
+      const documented = (item.revisions || []).some((r) => r.kind === 'integrity_correction' && String(r.note || '').startsWith(QUAL));
+      const correctNow = (item.body || []).some((b) => /at least \d+ appearances or \d+ minutes/.test(String(b)));
+      if (correctNow && !documented) {
+        const revision = {
+          at,
+          kind: 'integrity_correction',
+          note: 'qualification rule corrected: it requires at least 10 appearances OR 250 minutes, not both. The clause was corrected when this edition was regenerated; no other copy was changed by it.'
+        };
+        const next = { ...item, revisions: [...(item.revisions || []), revision].slice(-20), revised_at: at };
+        await env.NEWS_KV.put(ITEM(rec.id), JSON.stringify(next), ITEM_TTL);
+        const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+        await env.NEWS_KV.put('art:v1:index', JSON.stringify(index.map((c) => (c.id === rec.id
+          ? { ...c, revised_at: next.revised_at, revisions: next.revisions }
+          : c))));
+        out.documented = out.documented || [];
+        out.documented.push(rec.period);
+        continue;
+      }
+      out.unchanged.push(rec.period);
+      continue;
+    }
     await env.NEWS_KV.put(ITEM(rec.id), JSON.stringify(fix.article), ITEM_TTL);
     // Mirror revised_at onto the listing card without touching anything else.
     const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
