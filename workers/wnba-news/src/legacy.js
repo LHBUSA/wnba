@@ -75,5 +75,16 @@ export function reviewStory({ card, item, now = Date.now(), regeneration = null,
   return stamp('legacy_acceptable', `published under ${generator}; below the current ${d.label} standard (${d.failures[0]?.replace(/^depth: /, '') || 'substance'}) and outside the current generators' windows; kept as a legitimate short story`, { depth, failures: d.failures.slice(0, 4) });
 }
 
+/**
+ * Lanes that carry their own editorial gate are outside this policy.
+ *
+ * A WinBA Index is generated, gated and frozen by the WinBA lane against its own
+ * contract, and this policy cannot regenerate it. Assessing it against the
+ * article depth contracts therefore has only one possible outcome — it falls
+ * through to `legacy_acceptable` and leaves every listing — which is what
+ * happened to the first published edition.
+ */
+const SELF_GATED_KINDS = new Set(['winba_index']);
+
 /** Does a card need (re)review? */
-export const needsReview = (c, { rewrittenIds = new Set() } = {}) => !c.superseded_by && !rewrittenIds.has(c.id) && (c.quality_review?.policy !== LEGACY_POLICY_VERSION || Boolean(c.revised_at && Date.parse(c.revised_at) > Date.parse(c.quality_review?.at || 0)));
+export const needsReview = (c, { rewrittenIds = new Set() } = {}) => !SELF_GATED_KINDS.has(c?.kind) && !c.superseded_by && !rewrittenIds.has(c.id) && (c.quality_review?.policy !== LEGACY_POLICY_VERSION || Boolean(c.revised_at && Date.parse(c.revised_at) > Date.parse(c.quality_review?.at || 0)));

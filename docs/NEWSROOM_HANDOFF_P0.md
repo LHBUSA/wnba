@@ -52,8 +52,10 @@ const craft = storyCraftAssessment(item);
 return { ...depth, pass: depth.pass && craft.pass, failures: [...depth.failures, ...craft.failures], storycraft: craft };
 ```
 
-Identity never enters `d`. And the integrity branch below it filters `d.failures`
-through `INTEGRITY`, so identity failures cannot reach it either:
+Identity never enters `d`. The integrity branch below it filters `d.failures`
+through `INTEGRITY` — whose pattern **already anticipates `identity:`** — but
+since `assessStored` never contributes identity failures, that alternative can
+never match. The intent is present in the regex; the wiring is missing:
 
 ```js
 const integrity = d.failures.filter((f) => INTEGRITY.test(f));
@@ -184,3 +186,23 @@ affect either invariant:
 * both properties are asserted against the real assessor in
   `tests/winba-editorial.test.mjs` ("WinBA cannot raise a story's depth class,
   dimensions or pass state").
+
+---
+
+## Note: one change was made in `legacy.js` (declared, not silent)
+
+`needsReview` now skips kinds that carry their own editorial gate
+(`SELF_GATED_KINDS = { 'winba_index' }`).
+
+Reason: a WinBA Index is generated, gated and frozen by the WinBA lane, and
+`reviewStory` cannot regenerate it, so `assessStored` judged it against the
+article depth contracts, found no contract, produced `d.pass === false`, matched
+no `INTEGRITY` pattern, and fell through to `legacy_acceptable` — an unlisted
+state. The first published edition silently left every live listing while
+remaining in the archive and resolving at its URL.
+
+This is the same class of defect as P0-1: a card's state being decided by a pass
+that does not own it. If the quality session prefers a different mechanism (a
+contract registry, or `reviewStory` returning early on an unknown kind rather
+than demoting it), that is strictly better — an unknown kind currently demotes
+by default, which will bite the next new lane too.
