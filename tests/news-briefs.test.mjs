@@ -37,14 +37,15 @@ test('a fresh material source cluster becomes a publishable PBE News Brief', asy
   assert.equal(out[0].category, 'News Briefs');
   assert.equal(out[0].status, 'published');
   assert.equal(out[0].gate.ok, true, out[0].gate.failures?.join('\n'));
-  // The headline is PropBetEdge's own; the originating publisher and its exact headline are attributed in the deck.
+  // V3 leads with the event, not the source registry. Attribution remains in
+  // the article and evidence without quoting publisher headlines as body copy.
   assert.doesNotMatch(out[0].headline, /^NBC Sports:/);
   assert.ok(!out[0].headline.includes('WNBA announces a new league operations update'));
-  // The deck says what happened and who reported it; the publisher's exact headline is quoted once, in the body.
-  assert.match(out[0].deck, /Reported by NBC Sports on Sep 13\.$/);
-  // League desk: FACT (what changed, attributed and corroborated) → UNKNOWN (what remains unresolved); nothing invented.
-  assert.match(out[0].body[0], /^NBC Sports reported on Sunday, September 13, under the headline “WNBA announces a new league operations update”\. ESPN followed at \d{1,2}:\d{2} [AP]M ET with “WNBA league operations update confirmed”\. The details beyond that headline remain the publishers’ reporting\.$/);
-  assert.deepEqual(out[0].sections.map((x) => x.title), ['What changed', 'What remains unresolved']);
+  assert.match(out[0].deck, /Multiple independent publishers are reporting the same WNBA league development/i);
+  assert.match(out[0].body[0], /league-level change rather than a player-specific basketball event/i);
+  assert.match(out[0].body.join(' '), /NBC Sports and ESPN both reported/i);
+  assert.doesNotMatch(out[0].body.join(' '), /under the headline|The details beyond that headline remain/i);
+  assert.deepEqual(out[0].sections.map((x) => x.title), ['What changed', 'League context']);
   assert.equal(out[0].published_at, iso(5));
   assert.equal(out[0].bettor_angle, null, 'no stored market: no standing betting disclaimer');
 });
@@ -163,28 +164,22 @@ const carlaSigning = item({
   entities: [CARLA, FIRE]
 });
 
-test('a material brief is an original PBE article: development headline, records developed, method out of the body', async () => {
+test('a material brief is a reader-first PBE article with grounded basketball context', async () => {
   const [a] = await briefArticles({ externalItems: [carlaSigning], structured: [], now: NOW, ctx: carlaCtx });
   assert.equal(a.status, 'published', a.gate.failures.join('\n'));
-  assert.equal(a.headline, 'Carla Leite roster move for the Portland Fire: 16.4 points a game and the role behind them');
+  assert.equal(a.headline, 'Portland Fire sign Carla Leite: the role she enters');
   assert.doesNotMatch(a.headline, /^Swish Appeal:|the report and/);
-  assert.match(a.deck, /^Carla Leite has averaged 16\.4 points and 6 assists in 27\.4 minutes across 7 games for the Portland Fire, 18\.6 points over her last five\. First reported by Swish Appeal on Sep 13\.$/);
-  assert.deepEqual(a.sections.map((s) => s.title), ['The development', 'What PropBetEdge’s records show', 'Where the team stands', 'Why it matters', 'What comes next']);
+  assert.match(a.deck, /^Carla Leite brings 16\.4 points and 27\.4 minutes per game into a roster move/);
+  assert.deepEqual(a.sections.map((x) => x.title), ['The move', 'Leite’s role', 'The Fire context', 'Next game']);
   const text = a.body.join('\n');
-  assert.match(text, /under the headline “Portland Fire sign Carla Leite to contract extension”/);
-  assert.match(text, /ESPN’s transactions log does not yet record the move for the Portland Fire/);
-  assert.match(text, /has played 7 games for the Portland Fire this season, averaging 16\.4 points/);
-  assert.match(text, /Her last five games have run hotter: 18\.6 points in 29\.2 minutes, 2\.2 points above her season average/);
-  assert.match(text, /ESPN’s injury feed lists her as Out/);
-  assert.match(text, /The Portland Fire are 14–22, No\. 9 in the Western Conference/);
+  assert.match(text, /Portland Fire are involved in a reported roster move with Carla Leite/);
+  assert.match(text, /Carla Leite has averaged 16\.4 points, 2 rebounds and 6 assists in 27\.4 minutes across 7 games/);
+  assert.match(text, /last five games.*18\.6 points in 29\.2 minutes.*2\.2 above her season scoring average/);
+  assert.match(text, /Portland Fire are 14–22, No\. 9 in the Western Conference/);
   assert.match(text, /next play the Golden State Valkyries at home/);
-  // No boilerplate, no duplicated betting disclaimer, no source-rights text in the body; publisher summaries never appear.
-  assert.doesNotMatch(text, /context,? (rather than|not) a signal|does not restate it as PropBetEdge fact/i);
+  assert.doesNotMatch(text, /under the headline|What PropBetEdge|ESPN’s injury feed lists her as Out|Publisher summary text/);
   assert.equal(a.bettor_angle, null);
-  assert.doesNotMatch(text, /does not reproduce the publisher'?s article body/i);
-  assert.doesNotMatch(text, /Publisher summary text/);
   assert.ok(a.method.some((m) => /does not reproduce the article body/.test(m)));
-  assert.ok(a.method.some((m) => /not a feature or commentary piece/.test(m)));
   assert.ok(a.evidence.some((e) => e.kind === 'publisher_report' && e.publisher === 'Swish Appeal'));
   assert.ok(a.evidence.some((e) => e.kind === 'record' && /ESPN game log \(2026 Regular Season\)/.test(e.source)));
   assert.ok(a.entities.some((e) => e.type === 'game' && e.id === '401857199'));
