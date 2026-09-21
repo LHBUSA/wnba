@@ -17,6 +17,7 @@ import { loadTeam, teamView } from '../../../src/views/team.js';
 import { loadMatchup, matchupView, loadMatchupsList, matchupsListView } from '../../../src/views/matchups.js';
 import { loadInjuries, injuriesView, loadStandings, standingsView, loadTeams, teamsView, loadPlayers, playersView, loadStats, statsView } from '../../../src/views/league.js';
 import { loadToday, todayView } from '../../../src/views/today.js';
+import { loadWinbaScore, winbaScoreView } from '../../../src/views/winba-score.js';
 import { TRUST_VIEWS, sourcesHead, sourcesRegistryView, newsHealthView } from '../../../src/views/trust.js';
 import { fmtDateET, fmtTimeET } from '../../../src/lib/format.js';
 import { loadIntlHome, intlHomeView, loadCompetition, competitionView, loadIntlGame, intlGameView, loadNationalTeam, nationalTeamView, loadIntlPlayer, intlPlayerView, playerHref } from '../../../src/views/international.js';
@@ -148,6 +149,10 @@ export async function renderRoute(pathname, api) {
       return out(200, routeMeta(id, { path }), intro('PBE Picks', 'Live track record', 'Every official locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.', [['/pbe-picks', 'PBE Picks'], ['/pbe-picks/model', 'How the Model Works']]));
     case 'pro':
       return out(200, routeMeta(id, { path }), intro('Membership', 'PropBetEdge WNBA Pro', 'The full WNBA research desk: $9.99 a month or $3.99 a week. Cancel anytime.'));
+    case 'winba-score': {
+      const data = await loadWinbaScore(api);
+      return out(200, routeMeta(id, { path }), winbaScoreView(data), { winba: data.winba?.ok ? data.winba.data : null });
+    }
     case 'sources': {
       const news = api.newsSources ? await api.newsSources() : { ok: false };
       return out(200, routeMeta(id, { path }), html`${sourcesHead()}${sourcesRegistryView()}${newsHealthView(news)}`);
