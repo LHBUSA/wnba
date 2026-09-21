@@ -140,7 +140,7 @@ test('public correction is a focused Olivia Miles record story with the verified
   assert.match(a.headline, /^Olivia Miles breaks Caitlin Clark/);
   assert.match(a.deck, /770th point/);
   assert.match(a.deck, /21 in Minnesota’s 101–89 win at Connecticut/);
-  assert.match(a.body.join(' '), /21 points with 3 rebounds and 6 assists in 30 minutes/);
+  assert.match(a.body.join(' '), /21 points on 7-of-10 shooting, added 3 rebounds and 6 assists, and played 30 minutes/);
   assert.doesNotMatch(a.body.join(' '), /Caitlin Clark has averaged|Clark.*Minnesota Lynx/);
   assert.ok(a.media?.subjects?.some((x) => String(x.player_id) === MILES.id));
   assert.ok(a.entities.some((e) => e.type === 'game' && e.id === '401857201'));
