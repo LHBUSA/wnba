@@ -1713,3 +1713,10 @@ a.pp-name:hover { color: var(--gold-bright); }
   .winba-authority-leader .avatar { width:32px; height:32px; }
   .winba-authority-leader .winba-score { font-size:22px; }
 }
+
+/* Latest WinBA Index: an editorial pointer beside the live leaderboard. The
+   leaderboard stays the live truth; the Index is the frozen monthly record. */
+.winba-index-callout { display: grid; gap: 6px; margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line-3); border-left: 2px solid var(--gold); border-radius: 8px; background: rgba(255, 255, 255, .018); }
+.winba-index-callout .eyebrow { color: var(--gold); }
+.winba-index-callout a { color: var(--paper); font: 600 15px/1.35 var(--f-editorial); text-wrap: balance; }
+.winba-index-callout small { color: var(--faint); font: 400 12px/1.5 var(--f-data); }

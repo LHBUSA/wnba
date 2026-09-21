@@ -5,8 +5,23 @@ import { fmtDateTimeET } from '../lib/format.js';
 const one = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : Number(v).toFixed(1));
 
 export async function loadWinbaScore(api) {
-  const [winba, players] = await Promise.all([api.statsWinba(), api.players()]);
-  return { winba, players };
+  // The monthly Index is editorial and optional: the leaderboard is the live
+  // truth and must render whether or not an Index has been published yet.
+  const [winba, players, articles] = await Promise.all([
+    api.statsWinba(),
+    api.players(),
+    api.articles({ limit: 120 }).catch(() => null)
+  ]);
+  const index = latestWinbaIndex(articles);
+  return { winba, players, index };
+}
+
+/** The most recently published WinBA Index card, or null. */
+export function latestWinbaIndex(articles) {
+  const items = articles?.data?.items || articles?.items || [];
+  return items
+    .filter((c) => c && c.kind === 'winba_index' && c.status === 'published' && c.quality_state !== 'retired_from_index')
+    .sort((a, b) => String(b.period || b.first_published_at || '').localeCompare(String(a.period || a.first_published_at || '')))[0] || null;
 }
 
 function leaderPortrait(row, player) {
@@ -39,7 +54,7 @@ function leaderRow(row, player) {
   </a>`;
 }
 
-export function winbaScoreView({ winba = null, players = null } = {}) {
+export function winbaScoreView({ winba = null, players = null, index = null } = {}) {
   const d = winba?.ok ? winba.data : null;
   const playerMap = new Map((players?.ok ? players.data?.players || [] : []).map((p) => [String(p.athlete_id), p]));
   const leaders = (d?.rows || []).filter((r) => r.qualified && r.rank).sort((a, b) => a.rank - b.rank).slice(0, 10);
@@ -65,6 +80,11 @@ export function winbaScoreView({ winba = null, players = null } = {}) {
         <div class="winba-podium-showcase">${podium.map((r) => leaderPortrait(r, playerMap.get(String(r.athlete_id))))}</div>
         ${rest.length ? html`<div class="winba-authority-leaders">${rest.map((r) => leaderRow(r, playerMap.get(String(r.athlete_id))))}</div>` : ''}
         <p class="note">Top 10 qualified players in the current WinBA snapshot, with verified player photography where available. <a href="/stats">Open the full WNBA player leaderboard →</a></p>
+        ${index ? html`<aside class="winba-index-callout">
+          <span class="eyebrow">Latest WinBA Index</span>
+          <a href="/news/${index.slug}"><b>${index.headline}</b></a>
+          <small>The monthly editorial record of this leaderboard, frozen at publication. This board above is live and current.</small>
+        </aside>` : ''}
       ` : html`<div class="empty"><h3>Live WinBA rankings are reconnecting.</h3><p>The formula, qualification rules and interpretation on this page remain the published WinBA v1 methodology. Current rankings will return when the live snapshot is available.</p></div>`}
     </section>
 

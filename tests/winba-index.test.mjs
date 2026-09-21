@@ -406,3 +406,20 @@ test('the lede survives rendering', async () => {
   assert.ok(html.includes('association-with-winning index'), 'the methodology paragraph renders');
   assert.ok(html.includes('The league leaders'), 'the sectioned copy still renders');
 });
+
+
+// ------------------------------------------------- leaderboard integration
+
+test('the leaderboard points at the newest published Index and survives having none', async () => {
+  const { latestWinbaIndex } = await import('../src/views/winba-score.js');
+  assert.equal(latestWinbaIndex(null), null);
+  assert.equal(latestWinbaIndex({ data: { items: [] } }), null);
+  const items = [
+    { kind: 'winba_index', status: 'published', period: '2026-08', slug: 'aug', headline: 'August' },
+    { kind: 'winba_index', status: 'published', period: '2026-09', slug: 'sep', headline: 'September' },
+    { kind: 'injury', status: 'published', slug: 'other' },
+    { kind: 'winba_index', status: 'published', period: '2026-10', slug: 'oct-retired', quality_state: 'retired_from_index' }
+  ];
+  const latest = latestWinbaIndex({ data: { items } });
+  assert.equal(latest.slug, 'sep', 'newest by period, ignoring a retired one');
+});

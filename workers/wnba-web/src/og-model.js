@@ -87,7 +87,7 @@ export async function cardModel(kind, key, api) {
         kicker: `The WinBA Index · ${a.winba_board.period_label || a.period_label || ''}`.trim(),
         title: `The WNBA's top players by WinBA Score`,
         titleFont: 'display',
-        sub: top.map((r) => `${r.rank}. ${r.player_name} ${Math.round(r.score)}`).join('   '),
+        sub: top.map((r) => `${r.rank}. ${r.player_name} ${Math.round(r.score)}`).join(' · '),
         detail: `${a.winba_board.qualified_count || ''} qualified players ranked`.trim(),
         footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
         photoPath: a.media?.og || null,
