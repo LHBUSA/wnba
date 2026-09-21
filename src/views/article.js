@@ -89,7 +89,7 @@ const DESK_LINKS = {
   international: [['/international', 'International women’s basketball'], ['/news/c/international', 'More international stories']]
 };
 
-const REVISION_LABEL = { data_update: 'Updated with new source data', editorial_upgrade: 'Rewritten by an improved generator (no facts changed)', editorial_quality_upgrade: 'Editorial quality upgrade (same facts)', depth_upgrade: 'Developed into a fuller story', metadata_correction: 'Timestamp metadata corrected', demoted_to_external_coverage: 'Moved to external coverage' };
+const REVISION_LABEL = { data_update: 'Updated with new source data', editorial_upgrade: 'Rewritten by an improved generator (no facts changed)', editorial_quality_upgrade: 'Editorial quality upgrade (same facts)', depth_upgrade: 'Developed into a fuller story', metadata_correction: 'Timestamp metadata corrected', integrity_correction: 'Newsroom integrity correction', integrity_retirement: 'Removed from live listings after integrity audit', demoted_to_external_coverage: 'Moved to external coverage' };
 const MARKET_NAME = { spread: 'Spread', total: 'Total', moneyline: 'Moneyline', 'player props': 'Player props', line: 'Line' };
 
 /**
@@ -162,7 +162,7 @@ export function articleView({ article: a, related = [] }) {
     <article class="story">
       <div class="story-hero">${storyMedia(a.media, { slot: 'hero', eager: true, credit: true })}</div>
 
-      ${a.quality_state === 'retired_from_index' && !a.external_coverage ? html`<aside class="coverage-note" role="note"><b>No longer listed in the newsroom.</b> ${a.quality_review?.reason ? `${a.quality_review.reason.charAt(0).toUpperCase()}${a.quality_review.reason.slice(1)}.` : ''} The record below is kept as published.</aside>` : ''}
+      ${a.quality_state === 'legacy_acceptable' ? html`<aside class="coverage-note" role="note"><b>Archived under an earlier newsroom standard.</b> This article remains part of the publication record but is no longer promoted in the current newsroom or search index.</aside>` : ''}\n      ${a.quality_state === 'retired_from_index' && !a.external_coverage ? html`<aside class="coverage-note" role="note"><b>No longer listed in the newsroom.</b> ${a.quality_review?.reason ? `${a.quality_review.reason.charAt(0).toUpperCase()}${a.quality_review.reason.slice(1)}.` : ''} The record below is kept as published.</aside>` : ''}
       ${a.external_coverage ? html`<aside class="coverage-note" role="note"><b>Moved to external coverage.</b> This item was a note on another publisher’s feature rather than a newsroom event, so it is no longer listed in the PropBetEdge newsroom. ${a.external_coverage.source_url ? html`Read <a href="${a.external_coverage.source_url}" rel="noopener" target="_blank">${a.external_coverage.source_name || 'the original report'} ↗</a>. ` : ''}The record below is kept for transparency.</aside>` : ''}
       <header class="story-head">
         <div class="story-kicker">
