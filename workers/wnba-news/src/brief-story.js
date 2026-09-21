@@ -38,7 +38,11 @@ function seasonSentence(pn, tn, s) {
 
 function recentSentence(pn, s) {
   if (!pn || !s?.last5) return null;
-  return `Over her last five games, ${pn} is averaging ${f1(s.last5.pts)} points in ${f1(s.last5.min)} minutes.`;
+  const delta = Number.isFinite(s.pts) && Number.isFinite(s.last5.pts) ? s.last5.pts - s.pts : null;
+  const comparison = Number.isFinite(delta) && Math.abs(delta) >= 0.1
+    ? ` — ${f1(Math.abs(delta))} ${delta >= 0 ? 'above' : 'below'} her season scoring average`
+    : '';
+  return `Over her last five games, ${pn} is averaging ${f1(s.last5.pts)} points in ${f1(s.last5.min)} minutes${comparison}.`;
 }
 
 function roleSentence(pn, tn, v) {
@@ -157,7 +161,7 @@ function transactionStory({ source, sourceAt, others, player, v, type }) {
       : `The ${tn} are involved in a reported roster move with ${pn}.`,
     reportSentence(source, sourceAt, others, `roster move involving ${pn}`)
   ]);
-  add(`${pn.split(' ').at(-1)}’s role`, 'records', [seasonSentence(pn, tn, v.season), roleSentence(pn, tn, v)]);
+  add(`${pn.split(' ').at(-1)}’s role`, 'records', [seasonSentence(pn, tn, v.season), recentSentence(pn, v.season), roleSentence(pn, tn, v)]);
   add(`The ${nick(v.team || { name: tn })} context`, 'team', [standingSentence(tn, v.standing)]);
   add('Next game', 'next', [nextGameSentence(tn, v.next_game)]);
   return { headline, deck, body, sections };
