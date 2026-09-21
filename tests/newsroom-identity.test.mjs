@@ -7,6 +7,7 @@ import {
   teamForPlayer,
   articleIdentityFailures,
   auditStoredIdentity,
+  subjectNamesStoryTeam,
   IDENTITY_VERSION
 } from '../workers/wnba-news/src/identity.js';
 import { verifyRecordClaim } from '../workers/wnba-news/src/briefs.js';
@@ -156,4 +157,127 @@ test('legacy source briefs are quarantined from live collections but preserved i
   assert.deepEqual(live.data.items.map((x) => x.id), ['current-brief', 'injury-1']);
   const archive = correctArticleListResponse({ ok: true, data: { items: [legacy, current, structured] } }, { archive: true });
   assert.deepEqual(archive.data.items.map((x) => x.id), ['legacy-brief', 'current-brief', 'injury-1']);
+});
+
+
+// A team subject with a player lead is how game, performance and transaction
+// stories are modelled. Treating it as an identity contradiction flagged 16
+// correct live articles (Aces/Wilson, Wings/Thomas, Fire/Reese, ...) while
+// catching nothing true: the Clark record was caught by the roster and
+// headline-consensus checks, which own that question.
+test('team primary_subject with a player lead is coherent, not an identity failure', () => {
+  const YOUNG = { type: 'player', id: '4065870', name: 'Jackie Young', team_id: '17' };
+  const ACES = { type: 'team', id: '17', name: 'Las Vegas Aces' };
+  const STORM = { type: 'team', id: '14', name: 'Seattle Storm' };
+  const recap = {
+    kind: 'performance',
+    headline: 'Jackie Young’s 35 points lead the Aces past the Storm, 114–77',
+    primary_subject: 'Aces',
+    lead_player_id: '4065870',
+    lead_team_id: '17',
+    entities: [YOUNG, ACES, STORM, { type: 'game', id: '401857301', name: 'Seattle Storm at Las Vegas Aces' }]
+  };
+  assert.deepEqual(articleIdentityFailures(recap), []);
+
+  // The losing team's standout as lead is equally legitimate.
+  const REESE = { type: 'player', id: '4433402', name: 'Angel Reese', team_id: '20' };
+  const DREAM = { type: 'team', id: '20', name: 'Atlanta Dream' };
+  const FIRE = { type: 'team', id: '132052', name: 'Portland Fire' };
+  assert.deepEqual(articleIdentityFailures({
+    kind: 'performance',
+    headline: 'Angel Reese’s 16 points and 16 rebounds not enough as the Fire beat the Dream',
+    primary_subject: 'Fire',
+    lead_player_id: '4433402',
+    lead_team_id: '132052',
+    entities: [REESE, DREAM, FIRE, { type: 'game', id: '401857300', name: 'Atlanta Dream at Portland Fire' }]
+  }), []);
+});
+
+test('a subject naming neither the lead player nor a story team still fails', () => {
+  const YOUNG = { type: 'player', id: '4065870', name: 'Jackie Young', team_id: '17' };
+  const ACES = { type: 'team', id: '17', name: 'Las Vegas Aces' };
+  const failures = articleIdentityFailures({
+    kind: 'performance',
+    primary_subject: 'Kelsey Mitchell',
+    lead_player_id: '4065870',
+    lead_team_id: '17',
+    entities: [YOUNG, ACES, MITCHELL]
+  });
+  assert.equal(failures.length, 1);
+  assert.match(failures[0], /primary subject "Kelsey Mitchell" disagrees with lead player "Jackie Young"/);
+});
+
+test('the Clark/Lynx record still fails on roster and headline consensus', () => {
+  const failures = articleIdentityFailures({
+    kind: 'brief',
+    headline: 'Caitlin Clark honored for the Minnesota Lynx: the season behind it',
+    primary_subject: 'Caitlin Clark',
+    lead_player_id: CLARK.id,
+    lead_team_id: '8',
+    entities,
+    facts: { brief: { event_type: 'awards' } },
+    evidence: reports.map((r) => ({ kind: 'publisher_report', publisher: r.source_name, headline: r.headline, published_at: r.published_at }))
+  });
+  assert.ok(failures.some((f) => /was linked to team 5 in this event, not lead team 8/.test(f)));
+  assert.ok(failures.some((f) => /consensus names Olivia Miles/.test(f)));
+  // The subject check must not be what saves or condemns it.
+  assert.ok(!failures.some((f) => /primary subject/.test(f)));
+});
+
+test('short-name subject resolution uses the team suffix, not a loose substring', () => {
+  const teams = [{ type: 'team', id: '132052', name: 'Portland Fire' }];
+  assert.equal(subjectNamesStoryTeam('Fire', teams), true);
+  assert.equal(subjectNamesStoryTeam('Portland Fire', teams), true);
+  assert.equal(subjectNamesStoryTeam('Portland', teams), false);
+  assert.equal(subjectNamesStoryTeam('Sparks', teams), false);
+  // The lead team is resolvable from the dictionary when it is not an entity.
+  assert.equal(subjectNamesStoryTeam('Tempo', [], {
+    leadTeamId: '131935',
+    dict: { teamById: new Map([['131935', { name: 'Toronto Tempo', short_name: 'Tempo' }]]) }
+  }), true);
+});
+
+
+// The licence to diverge is structural, not a blanket exemption: a story that
+// is not about a specific game, or that never links the player's own team,
+// cannot attribute her to a team she does not play for.
+test('a game story may lead with the other team; a non-game story may not', () => {
+  const REESE = { type: 'player', id: '4433402', name: 'Angel Reese', team_id: '20' };
+  const DREAM = { type: 'team', id: '20', name: 'Atlanta Dream' };
+  const FIRE = { type: 'team', id: '132052', name: 'Portland Fire' };
+  const GAME = { type: 'game', id: '401857300', name: 'Atlanta Dream at Portland Fire' };
+
+  // Same teams, same lead, but no game entity: the divergence is unexplained.
+  const noGame = articleIdentityFailures({
+    kind: 'injury', primary_subject: 'Angel Reese',
+    lead_player_id: '4433402', lead_team_id: '132052', entities: [REESE, DREAM, FIRE]
+  });
+  assert.ok(noGame.some((f) => /was linked to team 20 in this event, not lead team 132052/.test(f)));
+
+  // Game present, but the player's own team is never linked (the Clark shape).
+  const noRosterTeam = articleIdentityFailures({
+    kind: 'performance', primary_subject: 'Angel Reese',
+    lead_player_id: '4433402', lead_team_id: '132052', entities: [REESE, FIRE, GAME]
+  });
+  assert.ok(noRosterTeam.some((f) => /not lead team 132052/.test(f)));
+
+  // Both present: legitimate.
+  assert.deepEqual(articleIdentityFailures({
+    kind: 'performance', primary_subject: 'Fire',
+    lead_player_id: '4433402', lead_team_id: '132052', entities: [REESE, DREAM, FIRE, GAME]
+  }), []);
+});
+
+test('the Fudd/Liberty wrong-team injury story still fails', () => {
+  const FUDD = { type: 'player', id: '4433635', name: 'Azzi Fudd', team_id: '3' };
+  const LIBERTY = { type: 'team', id: '9', name: 'New York Liberty' };
+  const WINGS = { type: 'team', id: '3', name: 'Dallas Wings' };
+  const failures = articleIdentityFailures({
+    kind: 'injury',
+    headline: 'Azzi Fudd injury update for the New York Liberty',
+    primary_subject: 'Azzi Fudd',
+    lead_player_id: '4433635', lead_team_id: '9',
+    entities: [FUDD, LIBERTY, WINGS]
+  });
+  assert.ok(failures.some((f) => /Azzi Fudd was linked to team 3 in this event, not lead team 9/.test(f)));
 });

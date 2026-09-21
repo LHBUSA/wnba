@@ -7,7 +7,7 @@
 
 import { eventType } from './taxonomy.js';
 
-export const IDENTITY_VERSION = 'wnba-news-identity/1.0.0';
+export const IDENTITY_VERSION = 'wnba-news-identity/1.1.0';
 
 const norm = (s) => String(s || '')
   .normalize('NFKD')
@@ -108,6 +108,34 @@ export function teamForPlayer(player, entities, dict = null) {
   return { type: 'team', id: teamId, name: team?.name || null, short_name: team?.short_name || null, method: 'player_roster_team' };
 }
 
+/**
+ * Does `subject` name a team this story is actually about?
+ *
+ * `primary_subject` is the story's subject, and for game, performance and
+ * transaction stories that is legitimately the TEAM ("Aces", "Wings", "Fire")
+ * while the lead player is the standout inside it. Stored entities carry only
+ * the full team name, so a bare short name has to match its last word(s).
+ */
+export function subjectNamesStoryTeam(subject, entities, { leadTeamId = null, dict = null } = {}) {
+  const s = norm(subject);
+  if (!s) return false;
+  const teams = uniqEntities(entities).filter((e) => e.type === 'team');
+  const leadId = leadTeamId == null ? null : String(leadTeamId);
+  if (leadId && !teams.some((t) => String(t.id) === leadId)) {
+    const lead = dict?.teamById?.get?.(leadId) || null;
+    if (lead) teams.push({ type: 'team', id: leadId, name: lead.name, short_name: lead.short_name });
+  }
+  return teams.some((team) => {
+    const dictTeam = dict?.teamById?.get?.(String(team.id)) || null;
+    return [team.name, team.short_name, dictTeam?.name, dictTeam?.short_name]
+      .filter(Boolean)
+      .some((candidate) => {
+        const n = norm(candidate);
+        return n === s || n.endsWith(` ${s}`);
+      });
+  });
+}
+
 export function headlineTeam(members, entities) {
   const teams = uniqEntities(entities).filter((e) => e.type === 'team' && e.name);
   if (teams.length === 1) return teams[0];
@@ -116,6 +144,27 @@ export function headlineTeam(members, entities) {
     mentions: (members || []).filter((m) => mentionPos(m?.headline, team.name) >= 0).length
   })).sort((a, b) => b.mentions - a.mentions || String(a.team.id).localeCompare(String(b.team.id)));
   return scores[0]?.mentions && (!scores[1] || scores[0].mentions > scores[1].mentions) ? scores[0].team : null;
+}
+
+/**
+ * In a story about one specific game, the lead team is the team the story turns
+ * on — usually the winner — while the lead player can be the standout on the
+ * other side ("Angel Reese's 16 and 16 not enough as the Fire beat the Dream").
+ * That divergence is only legitimate when the story is structurally about that
+ * game: a game entity is present and BOTH the player's roster team and the lead
+ * team are teams in the story.
+ *
+ * It is exactly this structure that the wrong-team failures lack. The Clark
+ * record carried no Fever entity at all; the Fudd/Liberty record carried no
+ * game. Neither can borrow a game story's licence to diverge.
+ */
+function isGameStoryDivergence(article, entities, rosterTeamId) {
+  const leadTeamId = article?.lead_team_id == null ? null : String(article.lead_team_id);
+  if (!leadTeamId || !rosterTeamId) return false;
+  const list = uniqEntities(entities);
+  if (!list.some((e) => e.type === 'game')) return false;
+  const teamIds = new Set(list.filter((e) => e.type === 'team').map((e) => String(e.id)));
+  return teamIds.has(String(rosterTeamId)) && teamIds.has(leadTeamId);
 }
 
 function evidenceMembers(article) {
@@ -143,7 +192,14 @@ export function articleIdentityFailures(article, { dict = null } = {}) {
   const leadName = leadEntity?.name || dictPlayer?.name || null;
 
   if (leadId && !leadEntity && !dictPlayer) failures.push(`identity: lead player ${leadId} is not present in article entities or roster dictionary`);
-  if (leadName && article.primary_subject && norm(article.primary_subject) !== norm(leadName)) {
+  // A team subject alongside a player lead is coherent, not a contradiction:
+  // "Jackie Young's 35 points lead the Aces past the Storm" has subject Aces
+  // and lead player Young. Only a subject naming neither the lead player nor a
+  // team in the story is an identity failure. Wrong-team attribution is caught
+  // by the roster check below, which is the check that owns that question.
+  if (leadName && article.primary_subject
+    && norm(article.primary_subject) !== norm(leadName)
+    && !subjectNamesStoryTeam(article.primary_subject, entities, { leadTeamId: article.lead_team_id, dict })) {
     failures.push(`identity: primary subject "${article.primary_subject}" disagrees with lead player "${leadName}"`);
   }
 
@@ -151,7 +207,8 @@ export function articleIdentityFailures(article, { dict = null } = {}) {
   // player entity. Do not retroactively judge an old story by today's roster
   // dictionary after a legitimate trade.
   const expectedTeam = String(leadEntity?.team_id || '');
-  if (leadId && expectedTeam && article.lead_team_id != null && String(article.lead_team_id) !== expectedTeam) {
+  if (leadId && expectedTeam && article.lead_team_id != null && String(article.lead_team_id) !== expectedTeam
+    && !isGameStoryDivergence(article, entities, expectedTeam)) {
     failures.push(`identity: lead player ${leadName || leadId} was linked to team ${expectedTeam} in this event, not lead team ${article.lead_team_id}`);
   }
 
