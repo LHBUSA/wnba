@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-09-11T17:55:15Z",
- "promoted_at": "2026-09-11T19:33:48Z",
+ "promoted_at": "2026-09-21T21:23:16Z",
  "method": {
   "roster": "ESPN site.web.api.espn.com /apis/site/v2/sports/basketball/wnba/teams (15) + /teams/{id}/roster; every athlete listed (all status.type=active). DOB = date part of athlete.dateOfBirth. ESPN images NOT used.",
   "identity": "Deterministic. Candidates: SPARQL bulk of all Wikidata items with P3588 (WNBA.com ID) plus wbsearchentities for every player (so uniqueness is checked beyond the P3588 set), then wbgetentities for full claims. Match only if (a) P31=Q5 and (P3588 present or P641=Q5372 basketball or P106=Q3665646 basketball player); (b) normalized ESPN displayName/fullName equals an English label/alias (languages en, mul, en-us, en-gb, en-ca; normalize = NFKD strip diacritics, casefold, hyphen->space, drop punctuation, collapse whitespace; suffixes kept literally); (c) best-rank day-precision P569 equals ESPN DOB exactly (conflicting P569 values => no match). Exactly one item must pass; 0 or >1 => no_identity_match.",
@@ -44,8 +44,8 @@
    "CC BY-SA 3.0 at": 1
   },
   "approved_by_discovery": {
-   "p18": 156,
-   "commons_category": 10
+   "p18": 155,
+   "commons_category": 11
   }
  },
  "players": [
@@ -7932,62 +7932,93 @@
    "wnba_com_id": "1643426",
    "dob": "2003-01-29",
    "status": "approved",
-   "reason": "identity, license and visual crop review passed",
-   "notes": [],
+   "reason": "identity, license and visual crop review passed (Commons-category discovery)",
+   "notes": [
+    "stage 9: found in the item's own Commons Category:Olivia Miles after the P18 route failed"
+   ],
    "image": {
-    "commons_file": "File:UNC vs ND (Jan 2025) 23 (cropped).jpg",
-    "p18_file": "File:UNC vs ND (Jan 2025) 23 (cropped).jpg",
-    "source_page_url": "https://commons.wikimedia.org/wiki/File:UNC_vs_ND_(Jan_2025)_23_(cropped).jpg",
-    "original_url": "https://upload.wikimedia.org/wikipedia/commons/3/3d/UNC_vs_ND_%28Jan_2025%29_23_%28cropped%29.jpg",
+    "commons_file": "File:Olivia Miles Lynx (cropped).jpg",
+    "p18_file": null,
+    "source_page_url": "https://commons.wikimedia.org/wiki/File:Olivia_Miles_Lynx_(cropped).jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Olivia_Miles_Lynx_%28cropped%29.jpg",
     "license_short": "CC BY-SA 4.0",
     "license_family": "CC BY-SA",
     "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
-    "artist": "Hameltion",
-    "credit": "Own work",
-    "attribution_text": "Photo: Hameltion / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
-    "capture_date": "2025-01-05 15:07:55",
-    "capture_year": 2025,
-    "description": "No. 3 Notre Dame 76, No. 17 North Carolina 66, in Chapel Hill, North Carolina",
-    "width": 2781,
-    "height": 3315,
+    "artist": "John Mac",
+    "credit": "https://www.flickr.com/photos/johnmac612/55243848095/",
+    "attribution_text": "Photo: John Mac / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+    "capture_date": "2026-05-01 19:07:40",
+    "capture_year": 2026,
+    "description": "MN Lynx vs Toronto Tempo, preseason, on May 1st 2026 at Target Center in Minneapolis, Minnesota (photo credit John McClellan). Lynx win 73 to 66.",
+    "width": 1856,
+    "height": 2521,
     "mime": "image/jpeg",
     "focal": {
-     "x": 0.6701,
-     "y": 0.2374
+     "x": 0.4224,
+     "y": 0.2783
     },
     "face_box": {
-     "x": 0.5974,
-     "y": 0.145,
-     "w": 0.1453,
-     "h": 0.1848
+     "x": 0.326,
+     "y": 0.1825,
+     "w": 0.1929,
+     "h": 0.1916
     },
-    "face_detector": "yunet+haar",
+    "face_detector": "yunet",
     "crops": {
      "portrait": {
-      "x": 1121,
-      "y": 0,
-      "w": 1485,
-      "h": 1855,
+      "x": 199,
+      "y": 66,
+      "w": 1171,
+      "h": 1464,
       "out_w": 600,
       "out_h": 750,
       "face_frac": 0.33,
-      "eye_frac": 0.391
+      "eye_frac": 0.4
      },
      "square": {
-      "x": 1198,
-      "y": 143,
-      "w": 1333,
-      "h": 1333,
+      "x": 259,
+      "y": 194,
+      "w": 1050,
+      "h": 1050,
       "out_w": 256,
       "out_h": 256,
       "face_frac": 0.46,
-      "eye_frac": 0.437
+      "eye_frac": 0.436
      }
     },
     "identity_confidence": "high",
-    "identity_evidence": "name+dob exact match (ESPN 2003-01-29); wikidata Q113641976; commons depicts=Q113641976; commons category: Olivia Miles",
-    "verified_at": "2026-09-11T17:55:15Z",
-    "review_status": "approved"
+    "identity_evidence": "name+dob exact match (ESPN 2003-01-29); wikidata Q113641976; commons title/description contains surname; commons depicts=Q113641976; file is in the item's own Commons Category:Olivia Miles (P373); reviewer: WNBA-era replacement for an approved college frame. Minnesota Lynx uniform; commons depicts=Q113641976 plus surname in title; one dominant face (yunet 0.936); head fully inside with headroom at 4:5 and 1:1; reviewed at native resolution and against the staged portrait/square. Supersedes File:UNC vs ND (Jan 2025) 23 (cropped).jpg, which is factually her but a Notre Dame college game.",
+    "verified_at": "2026-09-21T21:23:16Z",
+    "derivatives": {
+     "portrait": "public/media/players/4433791/portrait.webp",
+     "square": "public/media/players/4433791/square.webp"
+    },
+    "review_status": "approved",
+    "discovery": {
+     "method": "commons_category",
+     "category": "Category:Olivia Miles",
+     "category_source": "P373",
+     "files_inspected": 12,
+     "max_files": 40
+    }
+   },
+   "upgrade_review": {
+    "reason": "off_era_uniform",
+    "detail": "approved file is a Jan 2025 Notre Dame college game; she is the flagship hero of the monthly WinBA Index",
+    "requested_at": "2026-09-21T21:10:00Z",
+    "requested_by": "owner brief 2026-09-21 (item 4)"
+   },
+   "discovery": {
+    "method": "commons_category",
+    "run_at": "2026-09-21T21:22:19Z",
+    "category": "Category:Olivia Miles",
+    "category_source": "P373",
+    "files_inspected": 12,
+    "outcome": "candidate (needs visual review)",
+    "review": {
+     "decision": "approve",
+     "note": "WNBA-era replacement for an approved college frame. Minnesota Lynx uniform; commons depicts=Q113641976 plus surname in title; one dominant face (yunet 0.936); head fully inside with headroom at 4:5 and 1:1; reviewed at native resolution and against the staged portrait/square. Supersedes File:UNC vs ND (Jan 2025) 23 (cropped).jpg, which is factually her but a Notre Dame college game."
+    }
    }
   },
   {

@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-09-11T20:12:39Z",
- "ledger_promoted_at": "2026-09-11T19:33:48Z",
+ "generated_at": "2026-09-21T21:23:36Z",
+ "ledger_promoted_at": "2026-09-21T21:23:16Z",
  "method": {
   "source": "The ledger's approved Commons file for each player (<=2560 px rendition), identity and rights as reviewed in data/player-photos.json.",
   "framing": "Reviewed face box from the ledger; eye line at 40% of the box; head = face +45% up +10% headroom, always fully inside the frame (stage-6 rules). Never upscaled beyond 1.3x: larger sizes are omitted, not blown up.",
@@ -7559,38 +7559,38 @@
    "name": "Olivia Miles",
    "team_id": "8",
    "team_abbr": "MIN",
-   "commons_file": "File:UNC vs ND (Jan 2025) 23 (cropped).jpg",
-   "source_page_url": "https://commons.wikimedia.org/wiki/File:UNC_vs_ND_(Jan_2025)_23_(cropped).jpg",
-   "artist": "Hameltion",
+   "commons_file": "File:Olivia Miles Lynx (cropped).jpg",
+   "source_page_url": "https://commons.wikimedia.org/wiki/File:Olivia_Miles_Lynx_(cropped).jpg",
+   "artist": "John Mac",
    "license": "CC BY-SA 4.0",
    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
-   "attribution": "Photo: Hameltion / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
+   "attribution": "Photo: John Mac / CC BY-SA 4.0 via Wikimedia Commons (cropped)",
    "source_px": [
-    2781,
-    3315
+    1856,
+    2521
    ],
-   "other_faces_defocused": 2,
+   "other_faces_defocused": 0,
    "slots": {
     "wide": [
      {
       "src": "/media/news/players/4433791/wide-1280.webp",
       "w": 1280,
       "h": 720,
-      "scale": 0.259,
+      "scale": 0.328,
       "mode": "normal"
      },
      {
       "src": "/media/news/players/4433791/wide-960.webp",
       "w": 960,
       "h": 540,
-      "scale": 0.194,
+      "scale": 0.246,
       "mode": "normal"
      },
      {
       "src": "/media/news/players/4433791/wide-640.webp",
       "w": 640,
       "h": 360,
-      "scale": 0.129,
+      "scale": 0.164,
       "mode": "normal"
      }
     ],
@@ -7599,14 +7599,14 @@
       "src": "/media/news/players/4433791/half-640.webp",
       "w": 640,
       "h": 720,
-      "scale": 0.235,
+      "scale": 0.298,
       "mode": "normal"
      },
      {
       "src": "/media/news/players/4433791/half-480.webp",
       "w": 480,
       "h": 540,
-      "scale": 0.176,
+      "scale": 0.224,
       "mode": "normal"
      }
     ],
@@ -7615,7 +7615,7 @@
       "src": "/media/news/players/4433791/og.jpg",
       "w": 1200,
       "h": 630,
-      "scale": 0.216,
+      "scale": 0.274,
       "mode": "normal"
      }
     ]

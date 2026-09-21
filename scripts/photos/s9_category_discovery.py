@@ -52,6 +52,13 @@ def is_candidate(p):
         return False
     if p["status"] == "no_image":
         return True
+    # An approved photo can be factually correct and still wrong for the
+    # product: a college-uniform frame is not the visual identity of a WNBA
+    # ranking. Such a player is a candidate only when the ledger names the
+    # reason, per player. No identity, license, face or crop rule is relaxed
+    # here, and nothing ships without a recorded review plus s10_promote.
+    if p["status"] == "approved":
+        return bool((p.get("upgrade_review") or {}).get("reason"))
     if p["status"] == "rejected":
         r = p.get("reason") or ""
         if r.startswith("held:") and "face largely hidden" not in r:
