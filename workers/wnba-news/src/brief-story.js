@@ -260,9 +260,18 @@ function teamChangeStory({ source, sourceAt, others, team, v, type }) {
   ]);
   add('The roster it inherits', 'context', [
     v.core?.length ? `Over the last ${wordN(v.core_sample)} games, the heaviest minutes belong to ${listJoin(v.core.map((r) => `${r.name} (${f1(r.min)} minutes, ${f1(r.pts)} points)`))}.` : null,
+    v.core?.length >= 2
+      ? `That recent workload gives the incoming leadership a clear on-court baseline: ${v.core[0].name} and ${v.core[1].name} are carrying the two largest minute loads in the observed rotation, while the rest of the roster fits around those established roles.`
+      : null,
     standingSentence(tn, v.standing)
   ]);
-  add('Next game', 'next', [nextGameSentence(tn, v.next_game)]);
+  add('Recent roster movement', 'records', [
+    ...(v.team_moves || []).slice(0, 3).map((m) => `On ${dMonth(m.date)}, the transactions log recorded: ${String(m.description).replace(/\.$/, '')}.`)
+  ]);
+  add('Next game', 'next', [
+    nextGameSentence(tn, v.next_game),
+    v.next_game ? `That game is the first scheduled look at the roster under the new ${type === 'coaching' ? 'coaching' : 'front-office'} setup.` : null
+  ]);
   return { headline, deck, body, sections };
 }
 
