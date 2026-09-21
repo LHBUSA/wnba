@@ -322,6 +322,19 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
       ${logoManifest.teams.map((t) => html`<a href="/teams/${t.team_id}" title="${t.name}" style="flex:none;padding:6px;border-radius:10px">${teamLogo({ team_id: t.team_id, name: t.name }, 40)}</a>`)}
     </nav>
 
+    <section class="card card-pad" style="margin-top:16px;border-color:var(--gold-line);background:linear-gradient(110deg,rgba(212,175,55,.11),rgba(255,122,47,.04) 55%,transparent)">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px">
+        <div style="flex:1 1 620px;min-width:0">
+          <span class="eyebrow">PropBetEdge original metric</span>
+          <h2 class="sec-title bc" style="margin-top:7px">PropBetEdge — Home of the WinBA Score.</h2>
+          <p class="note" style="margin-top:8px;max-width:78ch">WinBA is PropBetEdge’s 0–100 WNBA winning-impact index, built from archived regular-season finals to show box-score production, playing time and how that production is associated with team wins.</p>
+        </div>
+        <div class="pill-row" style="margin:0">
+          <a class="btn gold" href="/sources#winba-score">Learn how WinBA works →</a>
+          <a class="pill" href="/stats">See WinBA in player stats →</a>
+        </div>
+      </div>
+    </section>
 
 
     <section class="section">
