@@ -12,6 +12,7 @@ import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles } from './lifecycle.js';
 import { qualityFailures } from './quality.js';
+import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
 const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8) + n)); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`; };
@@ -123,6 +124,13 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     // rest semantics, provider comment text, prose lint). A failure holds the story.
     a.reconcile = reconcileArticle(a, { season, injuries: feed });
     if (!a.reconcile.ok) a.status = 'held';
+    // Identity is a publication invariant, not a quality preference: subject,
+    // roster team and publisher-headline event consensus must agree.
+    a.identity_failures = articleIdentityFailures(a, { dict });
+    if (a.identity_failures.length) {
+      a.status = 'held';
+      a.reconcile.failures.push(...a.identity_failures);
+    }
     // Provenance chronology, resolved visuals and the Intelligence contract.
     a.quality = qualityFailures(a, { media: mediaFor ? mediaFor(a) : null, generatedAt: a.provenance?.generated_at || a.updated_at });
     if (a.quality.length) { a.status = 'held'; a.reconcile.failures.push(...a.quality); }
@@ -181,16 +189,28 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     versionOf: (a) => (a.kind === 'brief' ? BRIEF_VERSION : a.kind === 'international' ? INTL_VERSION : ARTICLE_VERSION),
     cardOf
   });
+
+  // Full versioned catalog audit: historical stories from older generators are
+  // rechecked against today's roster dictionary and their own publisher evidence.
+  // Any identity conflict is unlisted/noindexed while the historical URL remains.
+  const integrityAudit = await auditStoredIdentity(next, {
+    dict,
+    at: started,
+    getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'),
+    putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 })
+  });
+
   // Standalone stories that were only another publisher's feature (no underlying development) are demoted to external
   // coverage — deliberately, once per brief-generator version, keeping the item, its URL and its revision history.
   const demotions = await demoteExternalCoverage(next, { at: started, getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'), putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }) });
   // Every live story gets an intentional quality state (legacy.js). Rewritten stories passed the gate this pass.
   const writtenIds = new Set(events.map((e) => e.id));
   let reviewed = 0;
+  const reviewLimit = 500; // full current catalog review after a policy/version change
   for (const c of next) {
     if (c.superseded_by) continue;
     if (writtenIds.has(c.id)) { c.quality_state = 'current_quality'; c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'current_quality', reason: 'written this pass through the current gate', at: started, generator: String(c.input_hash || '').split('|')[0] || null }; continue; }
-    if (!needsReview(c) || reviewed >= 60) continue;
+    if (!needsReview(c) || reviewed >= reviewLimit) continue;
     reviewed += 1;
     const teamName = c.kind === 'trend' ? (ctx.teams || []).find((t) => String(t.team_id) === String(c.lead_team_id))?.short_name : null;
     const deskDecision = teamName ? (deskDecisions.trend || []).find((x) => x.team === teamName) || null : null;
@@ -200,7 +220,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   }
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), coverage_decisions: coverageDecisions.slice(0, 20), desk_decisions: deskDecisions, demotions, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 20), desk_decisions: deskDecisions, demotions, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }
