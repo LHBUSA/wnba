@@ -9,7 +9,7 @@
     "build": "vite build && node scripts/publish-shell.mjs",
     "preview": "vite preview --port 5190",
     "guard": "node scripts/guard-truth.mjs",
-    "test": "node --test \"tests/*.test.mjs\"",
+    "test": "node --test",
     "check": "npm run guard && npm run test && npm run build",
     "vercel-build": "npm run check",
     "qa": "node scripts/qa-screens.mjs",
