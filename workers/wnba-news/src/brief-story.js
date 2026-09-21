@@ -108,7 +108,15 @@ function recordStory({ source, sourceHeadline, sourceAt, others, player, v }) {
     lede,
     g ? `She finished with ${g.pts} points${Number.isFinite(g.reb) ? `, ${g.reb} rebounds` : ''}${Number.isFinite(g.ast) ? ` and ${g.ast} assists` : ''} in ${g.min} minutes.` : null
   ]);
-  add(`How ${pn.split(' ').at(-1)} got there`, 'records', [seasonSentence(pn, tn, v.season), recentSentence(pn, v.season)]);
+  add(`How ${pn.split(' ').at(-1)} got there`, 'records', [
+    seasonSentence(pn, tn, v.season),
+    recentSentence(pn, v.season),
+    r?.kind && r.kind !== 'season-points' && Number.isFinite(r.season_count) && Number.isFinite(r.games)
+      ? `Across the full regular-season log, that was ${pn.split(' ').at(-1)}’s ${r.season_count}th ${r.kind} in ${r.games} games. The count places the milestone inside a season-long pattern rather than treating the record night as an isolated box score.`
+      : r?.kind === 'season-points' && Number.isFinite(r.games)
+        ? `The threshold came within a ${r.games}-game regular-season log, giving the scoring milestone a full-season sample rather than a one-game frame.`
+        : null
+  ]);
   add(prior ? `The mark ${pn.split(' ').at(-1)} passed` : 'The milestone in context', 'history', [
     reportSentence(source, sourceAt, others, prior ? `record change involving ${pn} and ${prior}` : `record milestone for ${pn}`)
   ]);
