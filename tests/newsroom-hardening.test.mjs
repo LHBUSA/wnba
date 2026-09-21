@@ -149,8 +149,11 @@ test('7 · a record story requires the achievement in PropBetEdge records (real 
   assert.equal(a.facts.brief.verified.record.verified, true);
   assert.equal(a.facts.brief.verified.record.season_count, 29);
   const text = a.body.join('\n');
-  assert.match(text, /PropBetEdge’s game log confirms the count: Angel Reese has 29 double-doubles in 40 games of the 2026 regular season/);
-  assert.match(text, /It can verify the season production and threshold crossing above; the WNBA rookie-record comparison itself remains the attributed publisher reporting/);
+  assert.match(text, /Angel Reese reached 29 double-doubles on August 30/);
+  assert.match(text, /15 points, 11 rebounds and 2 assists in 33 minutes/);
+  assert.match(text, /15\.7 points, 12\.3 rebounds and 2\.8 assists in 31 minutes across 40 games/);
+  assert.match(text, /ESPN reported the record milestone for Angel Reese/);
+  assert.doesNotMatch(text, /What PropBetEdge can verify|game log confirms|publisher reporting/);
   assert.equal(assessDepth(a, { now }).pass, true, assessDepth(a, { now }).failures.join('\n'));
   // The same claim with a count the log does not support stays external coverage.
   const wrong = items.map((x) => ({ ...x, headline: x.headline.replace('29th', '31st') }));
@@ -168,9 +171,11 @@ test('8 · a draft story cannot invent scouting adjectives; physical data only a
   const [a] = await briefArticles({ externalItems: [item], structured: [], now: Date.parse('2026-09-13T12:30:00Z'), ctx: dctx });
   assert.ok(a, 'draft desk produces a story from real player/team records');
   const text = a.body.join(' ');
-  assert.match(text, /PropBetEdge’s player record lists Olivia Miles as a 5' 10" guard from TCU, age 23\./);
+  assert.match(text, /Olivia Miles is listed as a 5' 10" guard from TCU, age 23\./);
+  assert.match(text, /19\.5 points, 4\.8 rebounds and 6\.1 assists in 30\.8 minutes across 39 games/);
+  assert.match(text, /Minnesota Lynx are 31–9, No\. 1 in the Western Conference/);
   assert.doesNotMatch(text, SCOUTING_LANGUAGE);
-  assert.match(text, /not in PropBetEdge’s records until the draft itself is recorded/);
+  assert.doesNotMatch(text, /What PropBetEdge can verify|not in PropBetEdge’s records until/);
   const invented = { ...a, body: [...a.body.slice(0, -1), 'She brings a high motor and elite feel to a WNBA-ready guard room.'] };
   assert.ok(assessDepth(invented, { now: Date.parse('2026-09-13T12:30:00Z') }).failures.some((f) => /scouting language is not a record/.test(f)));
   // A publisher's own words inside its quoted headline are attribution, not PropBetEdge copy.
@@ -183,7 +188,9 @@ test('9–10 · league/business stories: FACT → CONTEXT → IMPLICATION → UN
   const now = Date.parse('2026-09-04T20:00:00Z');
   const [league] = await briefArticles({ externalItems: wire(/Engelbert/), structured: [], now, ctx: dctx });
   assert.equal(league.status, 'published', league.gate.failures.join('\n'));
-  assert.deepEqual(league.sections.map((s) => s.title), ['What changed', 'What remains unresolved']);
+  assert.deepEqual(league.sections.map((s) => s.title), ['What changed', 'League context']);
+  assert.match(league.body.join(' '), /league-level change rather than a player-specific basketball event/i);
+  assert.doesNotMatch(league.body.join(' '), /under the headline|What PropBetEdge|publisher reporting/i);
   assert.ok(!JSON.stringify(league.evidence).includes('wnba.com'), 'no review-required source');
   assert.equal(league.bettor_angle, null);
   assert.equal(intelligenceOf(league).render.intelligence, false);
@@ -194,13 +201,15 @@ test('9–10 · league/business stories: FACT → CONTEXT → IMPLICATION → UN
   assert.ok(biz);
   assert.equal(biz.bettor_angle, null, 'business news has no sportsbook component');
   assert.equal(intelligenceOf(biz).render.intelligence, false);
-  assert.match(biz.body.join(' '), /PropBetEdge makes no legal or financial assessment/);
+  assert.match(biz.body.join(' '), /financial or legal outcomes are not inferred/i);
   assert.doesNotMatch(biz.body.join(' ').replace(/“[^”]*”/g, ''), BUSINESS_CLAIMS);
+  assert.doesNotMatch(biz.body.join(' '), /What PropBetEdge can verify|under the headline/);
   const invented = { ...biz, body: [...biz.body, 'The Sky seek to avoid a $2 million settlement, and the claim is meritless.'] };
   assert.ok(assessDepth(invented, { now: Date.parse('2026-09-04T22:00:00Z') }).failures.some((f) => /unsourced financial, motive or legal claim/.test(f)));
   // Real Sparks general-manager hire: the team context comes from records, the next game is stated, nothing is inferred.
   const [fo] = await briefArticles({ externalItems: wire(/Andonian/), structured: [], now: Date.parse('2026-09-05T12:00:00Z'), ctx: dctx });
-  assert.match(fo.body.join(' '), /The roster the change inherits: the heaviest minutes over the Sparks’ last five games belong to/);
+  assert.match(fo.body.join(' '), /Over the last five games, the heaviest minutes belong to/);
+  assert.match(fo.sections.map((x) => x.title).join(' | '), /The roster it inherits/);
   assert.equal(assessDepth(fo, { now: Date.parse('2026-09-05T12:00:00Z') }).pass, true);
 });
 
