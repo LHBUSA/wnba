@@ -115,6 +115,6 @@ export function winbaScoreView({ winba = null, players = null } = {}) {
       <details><summary>Does WinBA predict games or make betting picks?</summary><p>No. WinBA is a season player metric. It is separate from PBE Picks, live game projections and sportsbook market data.</p></details>
     </section>
 
-    <section class="winba-source-note section"><b>Data note.</b> WinBA v1 is derived from archived regular-season final player box scores in the PropBetEdge WNBA replay layer. The metric itself is PropBetEdge’s calculation; underlying provenance and system status remain available on the <a href="/sources">data sources page</a>.</section>
+    <section class="winba-source-note section"><b>Data note.</b> WinBA v1 is derived from archived regular-season final player box scores in the PropBetEdge WNBA replay layer. The metric itself is PropBetEdge’s calculation; implementation details and related derivations are summarized on the <a href="/methodology">methodology page</a>.</section>
   `;
 }
