@@ -210,7 +210,8 @@ test('9–10 · league/business stories: FACT → CONTEXT → IMPLICATION → UN
   const [fo] = await briefArticles({ externalItems: wire(/Andonian/), structured: [], now: Date.parse('2026-09-05T12:00:00Z'), ctx: dctx });
   assert.match(fo.body.join(' '), /Over the last five games, the heaviest minutes belong to/);
   assert.match(fo.sections.map((x) => x.title).join(' | '), /The roster it inherits/);
-  assert.equal(assessDepth(fo, { now: Date.parse('2026-09-05T12:00:00Z') }).pass, true);
+  const foDepth = assessDepth(fo, { now: Date.parse('2026-09-05T12:00:00Z') });
+  assert.equal(foDepth.pass, true, foDepth.failures.join('\n'));
 });
 
 // ------------------------------------------------------------ 11: health
