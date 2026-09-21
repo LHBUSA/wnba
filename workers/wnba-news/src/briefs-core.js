@@ -569,13 +569,15 @@ export async function briefArticles({ externalItems = [], structured = [], now =
     }
     const value = originalValue(v);
     const publishers = new Set(reports.map((r) => r.publisher)).size;
-    // Article threshold: wire coverage is cheap; a standalone article is not.
-    // Most briefs need at least one structured PBE dimension. A major league
-    // development with no player/team record can still stand alone only after
-    // three independent publishers report the same underlying event.
-    const sourceOnlyMajor = publishers >= 3 && ['awards', 'cba', 'expansion', 'league', 'business', 'front_office', 'coaching', 'playoff', 'draft'].includes(type);
-    if (!(value.count >= 1 || sourceOnlyMajor)) {
-      decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'external_coverage', reason: `${underlying.reason}, but the event does not yet have enough structured context for a standalone PropBetEdge article` });
+    // Event admission and publication quality are separate decisions. A real
+    // event may enter the article pipeline when PropBetEdge has structured
+    // context, when two approved publishers independently corroborate it, or
+    // while a linked player/team event is still genuinely developing. The
+    // downstream depth + storycraft gates decide whether the resulting draft is
+    // strong enough to publish; admission itself must not erase real events.
+    const developingLinked = Boolean(player || teamEntity) && now - Date.parse(eventAt) <= 3 * 3600e3;
+    if (!(value.count >= 1 || publishers >= 2 || developingLinked)) {
+      decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'external_coverage', reason: `${underlying.reason}, but a single uncorroborated report with no PropBetEdge record to add` });
       continue;
     }
     decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'standalone', reason: `${underlying.reason}; PropBetEdge value: ${value.dimensions.join(', ') || 'publisher consensus'}; ${publishers} publisher${publishers === 1 ? '' : 's'}` });
