@@ -109,7 +109,7 @@ export function correctMilesRecordArticle(article, playerData = null) {
     ...article,
     slug: MILES_RECORD_SLUG,
     headline: 'Olivia Miles breaks Caitlin Clark’s WNBA rookie scoring record',
-    deck: `Miles scored 21 in Minnesota’s ${score} win at Connecticut, pushing her season total to 770 and past the WNBA rookie scoring mark previously held by Clark.`,
+    deck: `Miles scored 21 in Minnesota’s ${score} win at Connecticut, reaching her 770th point and moving past the WNBA rookie scoring mark previously held by Clark.`,
     body,
     sections,
     desk: 'performance',
