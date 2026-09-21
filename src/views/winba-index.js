@@ -66,7 +66,9 @@ const leadLine = (c) => {
 
 /** The series nav strip rendered on an Index article. */
 export function winbaSeriesNavView(nav) {
-  if (!nav || (!nav.prev && !nav.next)) return '';
+  // Renders for every edition, not only when a neighbour exists: the first
+  // edition still needs a way into the series home.
+  if (!nav) return '';
   return html`<nav class="winba-series-nav" aria-label="The WinBA Index editions">
     ${nav.prev ? html`<a class="winba-series-prev" href="/news/${nav.prev.slug}"><span>Previous</span><b>${nav.prev.period_label || nav.prev.period}</b></a>` : html`<span></span>`}
     <a class="winba-series-all" href="${WINBA_INDEX_PATH}">All editions${nav.total ? html` (${nav.total})` : ''}</a>

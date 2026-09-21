@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
   winbaIndexCards,
   winbaSeriesNav,
+  winbaSeriesNavView,
   winbaIndexArchiveView,
   loadWinbaIndexArchive,
   WINBA_INDEX_PATH
@@ -305,4 +306,19 @@ test('the card model uses the podium when present and the leader photo otherwise
   assert.equal(noPodium.podium, null);
   assert.equal(noPodium.photoPath, '/media/news/players/1/og.jpg');
   assert.match(noPodium.sub, /1\. One 87 · 2\. Two 86 · 3\. Three 83/);
+});
+
+
+test('the only edition still links to the series home', () => {
+  const nav = winbaSeriesNav(winbaIndexCards({ data: { items: [SEP] } }), '2026-09');
+  assert.equal(nav.prev, null);
+  assert.equal(nav.next, null);
+  assert.equal(nav.total, 1);
+  const html = String(winbaSeriesNavView(nav));
+  assert.ok(html.includes(WINBA_INDEX_PATH), 'the series home is reachable from a lone edition');
+  assert.match(html, /All editions/);
+});
+
+test('no navigation renders for a story that is not an edition', () => {
+  assert.equal(String(winbaSeriesNavView(null)), '');
 });
