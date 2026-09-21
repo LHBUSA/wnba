@@ -143,8 +143,13 @@ async function winbaHistoryDryRun(env, { top = 25, only = null } = {}) {
       top: ranked.slice(0, top).map((r) => ({
         rank: Number(r.rank), athlete_id: String(r.athlete_id), name: r.name, team_id: r.team_id ? String(r.team_id) : null,
         score: r.score, games: r.sample?.games ?? null, wins: r.sample?.wins ?? null, minutes: r.sample?.minutes ?? null,
+        min: r.averages?.min ?? null,
         pts: r.averages?.pts ?? null, reb: r.averages?.reb ?? null, ast: r.averages?.ast ?? null,
-        production_percentile: r.components?.production_percentile ?? null, win_rate: r.components?.win_rate ?? null
+        // All four published components, so a reconciliation can check each one.
+        production_percentile: r.components?.production_percentile ?? null,
+        win_rate: r.components?.win_rate ?? null,
+        winning_output_share: r.components?.winning_output_share ?? null,
+        court_share: r.components?.court_share ?? null
       })),
       prior_period: prior ? prior.period : null,
       movement_computable: Boolean(prior && prior.qualified_count),
