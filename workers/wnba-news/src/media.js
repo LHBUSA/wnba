@@ -13,7 +13,7 @@
 // Every photo carries its credit (author, license, source page) and a "Pictured:" caption.
 
 import manifest from '../../../data/newsroom-media.json';
-import { internationalMediaFrom, newsroomMediaFrom } from './media-resolve.js';
+import { internationalMediaFrom, newsroomMediaFrom, winbaPodiumFrom } from './media-resolve.js';
 
 const PLAYERS = manifest.players || {};
 
@@ -22,6 +22,11 @@ export const internationalMedia = (a) => internationalMediaFrom(PLAYERS, a);
 
 export function mediaFor(a) {
   return newsroomMediaFrom(PLAYERS, a);
+}
+
+/** The approved top-three podium for a WinBA Index share card, or null. */
+export function winbaPodium(rows) {
+  return winbaPodiumFrom(PLAYERS, rows);
 }
 
 export const MEDIA_MANIFEST_AT = manifest.generated_at || null;

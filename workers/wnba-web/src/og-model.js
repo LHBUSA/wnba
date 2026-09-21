@@ -85,12 +85,26 @@ export async function cardModel(kind, key, api) {
       const lead = top[0];
       return {
         kicker: `The WinBA Index · ${a.winba_board.period_label || a.period_label || ''}`.trim(),
+        period: a.winba_board.period_label || a.period_label || '',
         title: `The WNBA's top players by WinBA Score`,
         titleFont: 'display',
         sub: top.map((r) => `${r.rank}. ${r.player_name} ${Math.round(r.score)}`).join(' · '),
         detail: `${a.winba_board.qualified_count || ''} qualified players ranked`.trim(),
         footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
-        photoPath: a.media?.og || null,
+        // The premium treatment: the board's top three, each with her own
+        // approved photograph. The generator only attaches a podium when ALL
+        // three resolve to approved subjects, so there is never a blank cell
+        // and never a stand-in; otherwise this falls back to the leader photo.
+        podium: (a.winba_podium || []).length === 3
+          ? (a.winba_podium || []).map((r) => ({
+            rank: r.rank,
+            name: r.name,
+            score: r.score,
+            teamColor: color(teamColors({ team_id: r.team_id }).color, '#2a241c'),
+            photoPath: (r.half || []).slice(-1)[0]?.src || null
+          }))
+          : null,
+        photoPath: (a.winba_podium || []).length === 3 ? null : a.media?.og || null,
         colors: [color(teamColors({ team_id: lead.team_id }).color, '#2a241c'), color(teamColors({ team_id: top[1]?.team_id || lead.team_id }).color, '#3a2f22')],
         fallback: a.media?.og || DEFAULT_SHARE
       };

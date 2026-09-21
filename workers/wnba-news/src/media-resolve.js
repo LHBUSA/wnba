@@ -20,6 +20,39 @@ export function subjectFrom(PLAYERS, pid) {
 
 
 /**
+ * The WinBA Index podium: the board's top three, for the share card.
+ *
+ * All-or-nothing by design. A podium showing two photographs and one blank
+ * would read as a production error, and substituting anyone else would be an
+ * identity error, so a single unapproved subject means no podium and the card
+ * falls back to the leader treatment. Identity comes only from
+ * `subjectFrom`, which resolves the approved ledger entry by ESPN athlete id.
+ */
+export function winbaPodiumFrom(PLAYERS, rows, n = 3) {
+  const top = (rows || []).slice(0, n);
+  if (top.length < n) return null;
+  const out = [];
+  for (const r of top) {
+    const s = subjectFrom(PLAYERS, r.player_id);
+    if (!s || !s.half?.length) return null;
+    if (s.name && r.player_name && normName(s.name) !== normName(r.player_name)) return null;
+    out.push({
+      rank: r.rank,
+      player_id: s.player_id,
+      name: s.name,
+      team_id: s.team_id,
+      team_abbr: s.team_abbr,
+      score: Math.round(Number(r.score)),
+      half: s.half,
+      credit: s.credit
+    });
+  }
+  return out;
+}
+
+const normName = (x) => String(x || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[’‘`]/g, "'").toLowerCase().trim();
+
+/**
  * International story media. Priority:
  *   A/B  an approved Wikimedia Commons photograph of a player the article features, resolved by ESPN athlete id (the
  *        same person across WNBA and FIBA records) in the article's editorial order — winner's featured players first;

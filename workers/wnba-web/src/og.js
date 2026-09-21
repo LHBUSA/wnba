@@ -94,7 +94,33 @@ function scoreboardLayout(model) {
     footer(model.footer));
 }
 
+function podiumLayout(model) {
+  const CELL_W = 300;
+  const CELL_H = 372;
+  const cell = (r, i) => h({
+    position: 'absolute', left: 56 + i * (CELL_W + 14), top: 190, width: CELL_W, height: CELL_H,
+    flexDirection: 'column', borderRadius: 12, overflow: 'hidden', backgroundColor: '#1a1610'
+  },
+  { type: 'img', props: { src: r.photo, width: CELL_W, height: 268, style: { width: CELL_W, height: 268, objectFit: 'cover' } } },
+  h({ position: 'absolute', left: 0, top: 0, width: 54, height: 54, backgroundColor: r.teamColor, alignItems: 'center', justifyContent: 'center' },
+    text({ fontFamily: 'Barlow Condensed', fontSize: 34, color: PAPER }, `${r.rank}`)),
+  h({ width: CELL_W, height: CELL_H - 268, paddingLeft: 14, paddingRight: 14, flexDirection: 'column', justifyContent: 'center' },
+    text({ fontFamily: 'Barlow Condensed', fontSize: 34, color: PAPER, textTransform: 'uppercase', lineHeight: 1 }, r.name),
+    text({ fontFamily: 'Inter', fontWeight: 700, fontSize: 26, color: GOLD, marginTop: 4 }, `${r.score} WinBA`)));
+
+  return h({ width: 1200, height: 630, position: 'relative', backgroundColor: INK },
+    h({ position: 'absolute', left: 0, top: 0, width: 1200, height: 630, backgroundImage: `linear-gradient(120deg, ${INK} 0%, ${INK} 62%, #1d1a14 100%)` }),
+    h({ position: 'absolute', left: 0, bottom: 0, width: 1200, height: 10, backgroundImage: `linear-gradient(90deg, ${GOLD}, ${ORANGE})` }),
+    h({ position: 'absolute', left: 56, top: 52 }, brand()),
+    h({ position: 'absolute', left: 56, top: 116, flexDirection: 'column' },
+      text({ fontFamily: 'Barlow Condensed', fontSize: 44, color: PAPER, textTransform: 'uppercase', lineHeight: 1 }, 'The WinBA Index'),
+      text({ fontFamily: 'Barlow Condensed', fontSize: 30, color: ORANGE, letterSpacing: 2, textTransform: 'uppercase', marginTop: 2 }, model.period || '')),
+    ...model.podium.map(cell),
+    footer(model.footer));
+}
+
 function layout(model) {
+  if (model.podium) return podiumLayout(model);
   if (model.scoreboard) return scoreboardLayout(model);
   const size = model.title.length <= 60 ? 58 : model.title.length <= 95 ? 48 : 40;
   const titleStyle = model.titleFont === 'display'
@@ -136,6 +162,19 @@ export async function ogResponse(kind, key, deps) {
       if (!row.flagPath) continue;
       const r = await deps.fetchAsset(row.flagPath);
       if (r.ok) row.flag = `data:image/svg+xml;base64,${b64(await r.arrayBuffer())}`;
+    }
+  }
+  if (model.podium) {
+    for (const r of model.podium) {
+      if (!r.photoPath) continue;
+      const res = await deps.fetchAsset(r.photoPath);
+      if (res.ok) r.photo = `data:${res.headers.get('content-type') || 'image/webp'};base64,${b64(await res.arrayBuffer())}`;
+    }
+    // A cell that did not load would read as a production error, so the whole
+    // podium is dropped rather than rendered incomplete.
+    if (!model.podium.every((r) => r.photo)) {
+      model.podium = null;
+      if (!model.photoPath) model.photoPath = model.fallback;
     }
   }
   if (model.photoPath) {

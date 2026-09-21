@@ -147,7 +147,7 @@ const previousOf = (period) => {
 };
 
 /** The monthly lane, idempotent by stored publication state. */
-export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null } = {}) {
+export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null, winbaPodium = null } = {}) {
   if (!env?.NEWS_KV) return { skipped: 'no_kv' };
   const due = winbaIndexDue(at, { period, force });
   if (!due.due) return { status: 'not_due', period: due.period, reason: due.reason };
@@ -166,14 +166,14 @@ export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new D
     getArticle: (id) => env.NEWS_KV.get(ITEM(id), 'json'),
     // The hero is the board leader's approved photograph, resolved by the same
     // ledger-backed path as every other desk: no approved subject, no photo.
-    putArticle: (a) => env.NEWS_KV.put(ITEM(a.id), JSON.stringify(mediaFor ? { ...a, media: mediaFor(a) } : a), ITEM_TTL)
+    putArticle: (a) => env.NEWS_KV.put(ITEM(a.id), JSON.stringify(decorate(a, { mediaFor, winbaPodium })), ITEM_TTL)
   });
 
   // A published Index joins the newsroom index so it is listed, linked and
   // carried into feeds like any other story.
   if ((result.status === 'published' || result.status === 'regenerated') && result.article) {
     const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
-    const card = cardForIndex(mediaFor ? { ...result.article, media: mediaFor(result.article) } : result.article);
+    const card = cardForIndex(decorate(result.article, { mediaFor, winbaPodium }));
     const next = index.some((c) => c.id === card.id)
       ? index.map((c) => (c.id === card.id ? { ...c, ...card } : c))
       : [card, ...index];
@@ -182,6 +182,18 @@ export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new D
 
   const { article, ...rest } = result;
   return { ...rest, version: WINBA_INDEX_VERSION, reason: due.reason };
+}
+
+
+/**
+ * Hero and podium for an Index, both resolved from the approved-photo ledger.
+ * The podium is all-or-nothing: a single unapproved subject means no podium and
+ * the card falls back to the leader treatment.
+ */
+function decorate(a, { mediaFor, winbaPodium }) {
+  const media = mediaFor ? mediaFor(a) : a.media || null;
+  const podium = winbaPodium ? winbaPodium(a.winba_board?.rows || []) : null;
+  return { ...a, ...(media ? { media } : {}), winba_podium: podium };
 }
 
 /** The listing card for an Index. Mirrors only what listings render. */
@@ -210,12 +222,13 @@ export function cardForIndex(a) {
     period_label: a.period_label,
     has_market: false,
     sources: [],
-    media: a.media || null
+    media: a.media || null,
+    winba_podium: a.winba_podium || null
   };
 }
 
 /** Both lanes. Returns a compact report for the run status document. */
-export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null } = {}) {
+export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null } = {}) {
   let snapshot = null;
   let error = null;
   try {
@@ -227,7 +240,7 @@ export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date()
   if (!snapshot?.rows?.length) return { version: WINBA_EDITORIAL_VERSION, status: 'no_snapshot', error };
 
   const daily = await runWinbaDaily(env, { snapshot, dict, at }).catch((e) => ({ error: e?.message || String(e) }));
-  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor }).catch((e) => ({ error: e?.message || String(e) }));
+  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium }).catch((e) => ({ error: e?.message || String(e) }));
   return {
     version: WINBA_EDITORIAL_VERSION,
     index_version: WINBA_INDEX_VERSION,

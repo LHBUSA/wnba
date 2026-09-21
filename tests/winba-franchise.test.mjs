@@ -239,3 +239,61 @@ test('a story that does carry a WinBA reference says so in its keywords', () => 
   };
   assert.match(newsArticle(a, metaFor(a)).keywords, /WinBA Score/);
 });
+
+
+// ------------------------------------------------------------- podium card
+
+test('the podium resolves only when all three subjects are approved', async () => {
+  const { winbaPodiumFrom } = await import('../workers/wnba-news/src/media-resolve.js');
+  const slots = { wide: [{ src: '/w.webp', w: 640, h: 360 }], half: [{ src: '/h-480.webp', w: 480, h: 540 }] };
+  const PLAYERS = {
+    1: { name: 'One', team_id: '8', team_abbr: 'MIN', slots, artist: 'A', license: 'CC BY-SA 4.0', attribution: 'Photo: A' },
+    2: { name: 'Two', team_id: '17', team_abbr: 'LV', slots, artist: 'B', license: 'CC BY 4.0', attribution: 'Photo: B' },
+    3: { name: 'Three', team_id: '20', team_abbr: 'ATL', slots, artist: 'C', license: 'CC0', attribution: 'Photo: C' }
+  };
+  const rows = [
+    { rank: 1, player_id: '1', player_name: 'One', score: 87 },
+    { rank: 2, player_id: '2', player_name: 'Two', score: 86 },
+    { rank: 3, player_id: '3', player_name: 'Three', score: 83 }
+  ];
+  const podium = winbaPodiumFrom(PLAYERS, rows);
+  assert.equal(podium.length, 3);
+  assert.deepEqual(podium.map((r) => r.rank), [1, 2, 3]);
+  assert.deepEqual(podium.map((r) => r.score), [87, 86, 83]);
+  assert.ok(podium.every((r) => r.half.length && r.credit.license));
+
+  // One unapproved subject: no podium at all rather than a blank cell.
+  assert.equal(winbaPodiumFrom({ 1: PLAYERS[1], 2: PLAYERS[2] }, rows), null);
+  // Fewer than three ranked players: no podium.
+  assert.equal(winbaPodiumFrom(PLAYERS, rows.slice(0, 2)), null);
+  // A name that disagrees with the ledger is an identity mismatch, never shown.
+  assert.equal(winbaPodiumFrom(PLAYERS, [rows[0], { ...rows[1], player_name: 'Someone Else' }, rows[2]]), null);
+});
+
+test('the card model uses the podium when present and the leader photo otherwise', async () => {
+  const { cardModel } = await import('../workers/wnba-web/src/og-model.js');
+  const base = {
+    kind: 'winba_index', slug: 's', headline: 'H', deck: 'D',
+    first_published_at: '2026-09-30T22:00:00.000Z', period_label: 'September 2026',
+    winba_board: { period_label: 'September 2026', qualified_count: 193, rows: [
+      { rank: 1, player_id: '1', player_name: 'One', team_id: '8', score: 87 },
+      { rank: 2, player_id: '2', player_name: 'Two', team_id: '17', score: 86 },
+      { rank: 3, player_id: '3', player_name: 'Three', team_id: '20', score: 83 }
+    ] },
+    media: { og: '/media/news/players/1/og.jpg' }
+  };
+  const withPodium = await cardModel('news', 's', { article: async () => ({ ok: true, data: { article: {
+    ...base,
+    winba_podium: base.winba_board.rows.map((r) => ({ ...r, half: [{ src: `/h-${r.player_id}.webp`, w: 480, h: 540 }] }))
+  } } }) });
+  assert.equal(withPodium.podium.length, 3);
+  assert.equal(withPodium.photoPath, null, 'the podium replaces the single hero');
+  assert.deepEqual(withPodium.podium.map((r) => r.score), [87, 86, 83]);
+  assert.ok(withPodium.podium.every((r) => r.photoPath && r.teamColor));
+  assert.equal(withPodium.period, 'September 2026');
+
+  const noPodium = await cardModel('news', 's', { article: async () => ({ ok: true, data: { article: { ...base, winba_podium: null } } }) });
+  assert.equal(noPodium.podium, null);
+  assert.equal(noPodium.photoPath, '/media/news/players/1/og.jpg');
+  assert.match(noPodium.sub, /1\. One 87 · 2\. Two 86 · 3\. Three 83/);
+});
