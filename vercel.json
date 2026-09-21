@@ -38,6 +38,10 @@
       "destination": "/watchlist.html"
     },
     {
+      "source": "/winba-score",
+      "destination": "/winba-score.html"
+    },
+    {
       "source": "/",
       "destination": "https://wnba-web.sales-fd3.workers.dev/"
     },
@@ -125,6 +129,13 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/sources",
+      "destination": "/winba-score",
+      "permanent": true
     }
   ]
 }
