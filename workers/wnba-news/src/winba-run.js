@@ -232,6 +232,8 @@ export function cardForIndex(a) {
     sources: [],
     media: a.media || null,
     identity_mode: a.identity_mode || 'series',
+    historical_backfill: Boolean(a.historical_backfill),
+    snapshot_as_of: a.snapshot_as_of || null,
     winba_podium: a.winba_podium || null,
     winba_board_media: a.winba_board_media || null,
     // A trimmed copy of the frozen board travels with the card so listings can
