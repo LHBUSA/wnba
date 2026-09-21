@@ -10,7 +10,7 @@ import {
   IDENTITY_VERSION
 } from '../workers/wnba-news/src/identity.js';
 import { verifyRecordClaim } from '../workers/wnba-news/src/briefs.js';
-import { milesRecordStaticArticle, MILES_RECORD_SLUG } from '../src/lib/news-corrections.js';
+import { milesRecordStaticArticle, MILES_RECORD_SLUG, correctArticleListResponse } from '../src/lib/news-corrections.js';
 
 const CLARK = { type: 'player', id: '4433403', name: 'Caitlin Clark', team_id: '5' };
 const MILES = { type: 'player', id: '4433791', name: 'Olivia Miles', team_id: '8' };
@@ -145,4 +145,15 @@ test('public correction is a focused Olivia Miles record story with the verified
   assert.ok(a.media?.subjects?.some((x) => String(x.player_id) === MILES.id));
   assert.ok(a.entities.some((e) => e.type === 'game' && e.id === '401857201'));
   assert.deepEqual(articleIdentityFailures(a), []);
+});
+
+
+test('legacy source briefs are quarantined from live collections but preserved in archive', () => {
+  const legacy = { id: 'legacy-brief', slug: 'old-brief-a1b2c3', kind: 'brief', input_hash: 'wnba-briefs/2.2.0|x' };
+  const current = { id: 'current-brief', slug: 'new-brief-d4e5f6', kind: 'brief', input_hash: 'wnba-briefs/3.0.0|x' };
+  const structured = { id: 'injury-1', slug: 'injury-story-abcdef', kind: 'injury' };
+  const live = correctArticleListResponse({ ok: true, data: { items: [legacy, current, structured] } });
+  assert.deepEqual(live.data.items.map((x) => x.id), ['current-brief', 'injury-1']);
+  const archive = correctArticleListResponse({ ok: true, data: { items: [legacy, current, structured] } }, { archive: true });
+  assert.deepEqual(archive.data.items.map((x) => x.id), ['legacy-brief', 'current-brief', 'injury-1']);
 });
