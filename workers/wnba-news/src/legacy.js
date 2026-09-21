@@ -20,7 +20,7 @@
 import { assessDepth } from './depth.js';
 import { intelligenceOf } from '../../../src/lib/intelligence.js';
 
-export const LEGACY_POLICY_VERSION = 'wnba-legacy-policy/1.0.0';
+export const LEGACY_POLICY_VERSION = 'wnba-legacy-policy/1.1.0';
 export const QUALITY_STATES = ['current_quality', 'quality_upgrade_available', 'legacy_acceptable', 'external_coverage', 'retired_from_index'];
 export const UNLISTED_STATES = new Set(['external_coverage', 'retired_from_index']);
 const LISTING_OVER_MS = 12 * 3600e3;
@@ -30,7 +30,7 @@ export const listedCard = (c) => Boolean(c) && !c.superseded_by && c.status !== 
 
 // Failures that say the copy itself is unsound under current checks, as opposed to merely shorter or thinner.
 // (An Intelligence module that restates the body is not here: the renderer suppresses non-additive copy on read.)
-const INTEGRITY = /(duplicate paragraphs|repeated sentence|phrase repetition|play-by-play language without|unsupported characterisation|scouting language|unsourced financial)/;
+const INTEGRITY = /(duplicate paragraphs|repeated sentence|phrase repetition|play-by-play language without|unsupported characterisation|scouting language|unsourced financial|identity:)/;
 
 /** The stored item assessed as it renders today (legacy Intelligence copy recomputed additively). */
 export function assessStored(item, { now = Date.now() } = {}) {
