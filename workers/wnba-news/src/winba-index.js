@@ -110,11 +110,18 @@ export function freezeWinbaMonthly(snapshot, { period, playerById = new Map(), t
     };
   });
 
+  // Whether the ranking period had actually closed when the board was frozen.
+  // A mid-month board is a legitimate Index, but it must not claim a player
+  // "finishes" the month on top.
+  const frozenAt = Date.parse(at);
+  const periodComplete = Number.isFinite(frozenAt) && frozenAt >= Date.parse(periodCutoff(period));
+
   return {
     version: WINBA_INDEX_VERSION,
     metric_version: snapshot.version || null,
     period,
     period_label: winbaPeriodLabel(period),
+    period_complete: periodComplete,
     season: snapshot.season ?? null,
     frozen_at: at,
     snapshot_at: snapshot.generated_at || null,
@@ -196,8 +203,9 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
 
   // ---- lede: the story of the board, not a list header
   const leadBits = statBits(leader.averages);
+  const closed = frozen.period_complete !== false;
   body.push(
-    `${leader.player_name} finishes ${label} at the top of ${WINBA_LABEL}, PropBetEdge’s winning-impact rating, with a mark of ${Math.round(leader.score)}${leader.team_name ? ` for the ${leader.team_name}` : ''}${leadBits ? ` on ${leadBits} a game` : ''}.`
+    `${leader.player_name} ${closed ? `finishes ${label}` : `leads ${label} so far`} at the top of ${WINBA_LABEL}, PropBetEdge’s winning-impact rating, with a mark of ${Math.round(leader.score)}${leader.team_name ? ` for the ${leader.team_name}` : ''}${leadBits ? ` on ${leadBits} a game` : ''}.`
   );
   const second = rows[1];
   if (second) {
@@ -207,6 +215,9 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
         ? `${second.player_name} is next at ${Math.round(second.score)}, ${f1(gap)} points back — the clearest separation at the top of the board this month.`
         : `${second.player_name} is a stride behind at ${Math.round(second.score)}, close enough that ${poss(leader.player_name)} hold on the top spot is not settled.`
     );
+  }
+  if (!closed) {
+    body.push(`These are the standings as of ${new Intl.DateTimeFormat('en-US', { timeZone: TZ, month: 'long', day: 'numeric' }).format(new Date(frozen.leaderboard_as_of || frozen.snapshot_at))}, with ${label} still being played. The board is frozen at this point and the ranks recorded here are the ones the next edition will measure against.`);
   }
   body.push(
     `${WINBA_LABEL} is built only from completed WNBA games: Box Impact (points plus 1.2 times rebounds plus 1.5 times assists) measured per 36 minutes against the league, the player’s win rate, the share of her production that came in wins, and her court share. It is an association-with-winning index, not a causal estimate of wins added. ${frozen.qualified_count} players qualified this month at 10 games and 250 minutes.`

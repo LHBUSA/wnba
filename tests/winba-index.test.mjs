@@ -320,7 +320,7 @@ test('a stored Index keeps its numbers after the live leaderboard changes', asyn
   assert.equal(h.articles.size, 2);
   const september = h.articles.get(res.id);
   assert.deepEqual(september.winba_board.rows.map((r) => r.score), published.winba_board.rows.map((r) => r.score));
-  assert.match(september.body.join(' '), /Olivia Miles finishes September 2026 at the top/);
+  assert.match(september.body.join(' '), /Olivia Miles leads September 2026 so far at the top/);
 });
 
 test('the October Index links back to September and measures movement against it', async () => {
@@ -360,4 +360,23 @@ test('no snapshot means no article', async () => {
 test('the monthly KV key is the period, which is what makes storage idempotent', () => {
   assert.equal(winbaMonthlyKey('2026-09'), 'winba:v1:monthly:2026-09');
   assert.equal(WINBA_INDEX_VERSION, 'wnba-winba-index/1.0.0');
+});
+
+
+test('a mid-month board never claims the month finished', () => {
+  const mid = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: '2026-09-21T20:40:00.000Z' });
+  assert.equal(mid.period_complete, false);
+  const a = composeWinbaIndex(mid, { movement: null });
+  const text = a.body.join(' ');
+  assert.match(text, /leads September 2026 so far/);
+  assert.doesNotMatch(text, /finishes September 2026/);
+  assert.match(text, /with September 2026 still being played/);
+});
+
+test('a board frozen after the month closes reports it as finished', () => {
+  const closed = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: '2026-10-01T12:00:00.000Z' });
+  assert.equal(closed.period_complete, true);
+  const text = composeWinbaIndex(closed, { movement: null }).body.join(' ');
+  assert.match(text, /finishes September 2026 at the top/);
+  assert.doesNotMatch(text, /still being played/);
 });

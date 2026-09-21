@@ -16,7 +16,7 @@
 // decided and contributes no evidence dimension. See `assertDepthNeutral`.
 
 import { winbaForPlayer, WINBA_VERSION } from '../../shared/winba.js';
-import { f1, etDate } from './prose.js';
+import { f1, etDate, aan } from './prose.js';
 
 export const WINBA_EDITORIAL_VERSION = 'wnba-winba-editorial/1.0.0';
 
@@ -180,11 +180,11 @@ export function winbaSentence(ref, { articleId = '', averages = null, teamName =
     const bits = [`${f1(averages.pts)} points`];
     if (Number.isFinite(averages.reb)) bits.push(`${f1(averages.reb)} rebounds`);
     if (Number.isFinite(averages.ast)) bits.push(`${f1(averages.ast)} assists`);
-    styles.push(`${name} is averaging ${bits.join(', ')} this season and carries a ${score} ${WINBA_LABEL}${rankPhrase ? `, ${rankPhrase}` : ''}.`);
+    styles.push(`${name} is averaging ${bits.join(', ')} this season and carries ${aan(score)} ${score} ${WINBA_LABEL}${rankPhrase ? `, ${rankPhrase}` : ''}.`);
   }
 
-  // B — plain prose.
-  styles.push(`${name} carries a ${score} ${WINBA_LABEL}, PropBetEdge’s winning-impact rating${rankPhrase ? `, ${rankPhrase}` : ''}.`);
+  // B — plain prose. `aan` because the number is spoken: "an 86", "a 74".
+  styles.push(`${name} carries ${aan(score)} ${score} ${WINBA_LABEL}, PropBetEdge’s winning-impact rating${rankPhrase ? `, ${rankPhrase}` : ''}.`);
 
   // C — ranking context, only when a rank claim is available.
   if (rankPhrase) styles.push(`Her ${score} ${WINBA_LABEL} is ${rankPhrase}.`);

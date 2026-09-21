@@ -13,7 +13,15 @@ import { fmtDateTimeET, fmtDateET } from '../lib/format.js';
 import { intelligenceOf } from '../lib/intelligence.js';
 import { gameHighlights } from '../ui/video.js';
 
-const entityHref = (e) => e?.type === 'player' ? `/players/${e.id}` : e?.type === 'team' ? `/teams/${e.id}` : null;
+// A `metric` entity carries no id-based route: it is the canonical explainer
+// for a PropBetEdge statistic. Routing it here lets the generator keep URLs out
+// of prose and still have "WinBA Score" linked once, under the same
+// first-mention rule that governs players and teams.
+const METRIC_HREF = { winba: '/winba-score' };
+const entityHref = (e) => e?.type === 'player' ? `/players/${e.id}`
+  : e?.type === 'team' ? `/teams/${e.id}`
+    : e?.type === 'metric' ? METRIC_HREF[String(e.id)] || null
+      : null;
 const entityKey = (e) => `${e?.type || ''}:${e?.id || ''}`;
 const boundary = (ch) => !ch || !/[A-Za-z0-9]/.test(ch);
 const nameVariants = (name) => {
@@ -155,8 +163,20 @@ export function articleView({ article: a, related = [] }) {
   const photoOf = (p) => (a.media?.subjects || []).find((s) => s.player_id === String(p.id));
   const { published, revised, observed } = storyClock(a);
   const gameLinks = games.length ? games : mw.game_id ? [{ id: mw.game_id, name: ng ? `${ng.away?.abbr || ''} @ ${ng.home?.abbr || ''}` : 'This game', start_utc: ng?.start_utc }] : [];
-  const linkedEntities = [...players, ...teams];
+  // Metrics link last so a player or team name always wins a contested span.
+  const metrics = (a.entities || []).filter((e) => e && e.type === 'metric' && entityHref(e));
+  const linkedEntities = [...players, ...teams, ...metrics];
   const linkedSeen = new Set();
+  const winba = a.winba_reference && a.winba_sentence ? a.winba_reference : null;
+  const winbaAfter = winba ? (a.winba_placement?.after_section ?? null) : null;
+  // The reference is frozen at publication, so this paragraph is the score the
+  // story reported, not the score the leaderboard holds now.
+  const winbaPara = (key) => (winba && winbaAfter !== null && String(key) === String(winbaAfter)
+    ? html`<p class="winba-context">${linkArticleEntities(a.winba_sentence, linkedEntities, linkedSeen)}</p>`
+    : '');
+  const winbaTrailing = winba && (winbaAfter === null || !(a.sections || []).some((s) => String(s.key || s.title) === String(winbaAfter)))
+    ? html`<p class="winba-context">${linkArticleEntities(a.winba_sentence, linkedEntities, linkedSeen)}</p>`
+    : '';
 
   return html`
     <article class="story">
@@ -181,14 +201,15 @@ export function articleView({ article: a, related = [] }) {
           <span>In this story</span>
           ${players.map((p) => html`<a href="/players/${p.id}">${p.name}</a>`)}
           ${teams.map((t) => html`<a href="/teams/${t.id}">${t.name}</a>`)}
+          ${winba ? html`<a href="${METRIC_HREF.winba}" title="WinBA Score — PropBetEdge overall WNBA player rating">WinBA ${Math.round(winba.score)}</a>` : ''}
         </nav>` : ''}
       </header>
 
       <div class="story-layout">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)
-            : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections?.length > 1 ? '' : gameHighlights(a)}
+            ? a.sections.map((s, i) => html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`)
+            : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">
           ${players.length ? html`<section><h2 class="aside-title">In this story</h2>

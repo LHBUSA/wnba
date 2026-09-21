@@ -304,3 +304,63 @@ test('an as-of cutoff is exclusive, so the period’s own games count', () => {
 test('an unparseable as-of is refused rather than silently treated as now', () => {
   assert.throws(() => buildWinbaSnapshotAsOf([], { asOf: 'not-a-date' }), /parseable asOf/);
 });
+
+
+// ------------------------------------------------------------- renderer wiring
+
+const { articleView } = await import('../src/views/article.js');
+
+const rendered = (over = {}) => {
+  const out = applyWinbaContext(article(over), {
+    snapshot: snapshot(), state: freshState(), at: new Date(NOW).toISOString(),
+    averages: row().averages, teamName: 'Aces'
+  });
+  assert.equal(out.applied, true, 'fixture should be eligible');
+  return { html: String(articleView({ article: { ...out.article, media: null, method: [] }, related: [] })), article: out.article };
+};
+
+test('the renderer prints the frozen sentence and links the metric to the explainer', () => {
+  const { html, article: a } = rendered();
+  assert.ok(html.includes('winba-context'), 'the sentence renders inside the body');
+  assert.ok(html.includes(`href="${WINBA_URL}"`), 'WinBA Score links to the canonical explainer');
+  // The score in the markup is the frozen score, not a live read.
+  assert.ok(html.includes(`${Math.round(a.winba_reference.score)} <a class="entity-link" href="${WINBA_URL}">WinBA Score</a>`), 'the frozen score sits next to the linked metric');
+  assert.ok(!/WinBA Score<\/a>[^<]*<a[^>]*>WinBA Score/.test(html), 'the metric is linked once, not repeatedly');
+});
+
+test('the spoken score takes the right indefinite article', () => {
+  const ref = winbaReferenceFor(snapshot(), '3149391', { generatedAt: GEN_AT, now: NOW });
+  assert.match(winbaSentence({ ...ref, rank: null }, { articleId: 'x', averages: row().averages }), /carries an 86 WinBA Score/);
+  assert.match(winbaSentence({ ...ref, score: 74, rank: null }, { articleId: 'x', averages: row().averages }), /carries a 74 WinBA Score/);
+  assert.match(winbaSentence({ ...ref, score: 81, rank: null }, { articleId: 'x', averages: row().averages }), /carries an 81 WinBA Score/);
+});
+
+test('the metric appears in the In this story rail with its frozen value', () => {
+  const { html } = rendered();
+  assert.match(html, /In this story/);
+  assert.match(html, /WinBA 86/);
+  assert.match(html, /PropBetEdge overall WNBA player rating/);
+});
+
+test('a player or team name still wins a contested span over the metric', () => {
+  const { html } = rendered();
+  // Wilson is linked to her profile, not swallowed by the metric link.
+  assert.match(html, /href="\/players\/3149391"/);
+  assert.match(html, /href="\/teams\/17"/);
+});
+
+test('an article with no WinBA reference renders no WinBA markup at all', () => {
+  const plain = String(articleView({ article: { ...article(), media: null, method: [] }, related: [] }));
+  assert.ok(!plain.includes('winba-context'));
+  assert.ok(!plain.includes(WINBA_URL));
+  assert.ok(!/WinBA/.test(plain));
+});
+
+test('the sentence renders exactly once even when placement does not match a section', () => {
+  const out = applyWinbaContext(article({ sections: [] }), {
+    snapshot: snapshot(), state: freshState(), at: new Date(NOW).toISOString(), averages: row().averages
+  });
+  const html = String(articleView({ article: { ...out.article, media: null, method: [] }, related: [] }));
+  const hits = (html.match(/winba-context/g) || []).length;
+  assert.equal(hits, 1, `expected one WinBA paragraph, saw ${hits}`);
+});

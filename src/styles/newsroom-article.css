@@ -30,3 +30,8 @@
   .gh-frame { border-radius: 10px; }
   .gh-meta { padding: 8px 10px; font-size: 11px; }
 }
+
+/* WinBA context reads as ordinary body prose, never as a promotional callout:
+   it inherits .story-body p entirely. The only rule here is defensive — the
+   drop cap must never land on it if it ever becomes the first paragraph. */
+.story-body > p.winba-context::first-letter { float: none; font: inherit; margin: 0; color: inherit; }

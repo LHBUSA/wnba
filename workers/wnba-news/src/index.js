@@ -22,6 +22,7 @@ import { BRIEF_MAX_AGE_MS } from './briefs.js';
 import { ARTICLE_VERSION } from './articles.js';
 import { mediaFor, MEDIA_MANIFEST_AT } from './media.js';
 import videoChannels from '../../../data/video-channels.json';
+import { runWinbaPasses } from './winba-run.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
 
 const SERVICE = 'wnba-news';
@@ -56,7 +57,7 @@ export default {
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       if (url.searchParams.get('video') === 'force') return j({ ok: true, result: await runVideoPass(env, { channelsDoc: videoChannels, teams: ((await env.NEWS_KV.get('dict:v1', 'json')) || {}).teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null, force: true }) });
-      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international' }) });
+      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null }) });
     }
     return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/articles/videos', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
   }
@@ -85,7 +86,13 @@ async function dictionary(env) {
     const teams = [];
     const seen = new Set();
     for (const p of d.players) if (p.team && !seen.has(p.team.team_id)) { seen.add(p.team.team_id); teams.push(p.team); }
-    const dict = { captured_at: new Date().toISOString(), players: d.players.map((p) => ({ athlete_id: p.athlete_id, name: p.name, team_id: p.team_id })), teams };
+    const dict = { captured_at: new Date().toISOString(), players: d.players.map((p) => ({
+      athlete_id: p.athlete_id, name: p.name, team_id: p.team_id,
+      // The WinBA Index names positional leaders and first-season players, so
+      // the dictionary carries both. Absent values stay absent, never 0.
+      position: p.position ?? null,
+      experience_years: p.experience_years ?? null
+    })), teams };
     await env.NEWS_KV.put('dict:v1', JSON.stringify(dict));
     return { dict, fresh: true };
   } catch (e) {
@@ -95,7 +102,7 @@ async function dictionary(env) {
   }
 }
 
-async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false } = {}) {
+async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false, forceWinba = false, winbaPeriod = null } = {}) {
   const startedAt = new Date().toISOString();
   const now = Date.parse(startedAt);
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
@@ -206,6 +213,18 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
   }
   const desk = { status: articles?.error ? 'FAIL' : articles?.errors?.length ? 'DEGRADED' : 'PASS', articles };
 
+  // WinBA editorial lanes, strictly after the article pass: substance is already
+  // decided, gated and written, so the metric cannot influence what publishes.
+  // A failure here leaves every story exactly as the newsroom wrote it.
+  let winba;
+  try {
+    winba = await runWinbaPasses(env, {
+      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod
+    });
+  } catch (e) {
+    winba = { error: String(e.message || e).slice(0, 160) };
+  }
+
   // Official game highlights: its own bounded pass on its own cadence; a failure never touches the articles.
   let video;
   try {
@@ -225,6 +244,7 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
     desk,
     totals: { items: list.length, events: clusters.length, clusters: clusters.length, material_events: clusters.filter((c) => c.materiality?.material).length, articles_published: articles?.published_total ?? null, sources: NEWS_SOURCES.length, sources_ok: runs.filter((r) => ['PASS', 'NOT_MODIFIED', 'SKIPPED'].includes(r.status)).length },
     article_version: ARTICLE_VERSION,
+    winba,
     video,
     supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
   };
