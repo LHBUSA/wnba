@@ -234,6 +234,36 @@ export function pageGraph(route, meta, data = {}) {
     case 'today':
       g.push(webPage({ ...meta, url: `${SITE}/` }, 'WebPage', { about: { '@id': IDS.newsroom } }));
       break;
+    case 'winba-score': {
+      const termId = `${meta.url}#winba`;
+      crumbs.push(['WinBA Score', meta.path]);
+      g.push(
+        webPage(meta, 'WebPage', { mainEntity: { '@id': termId }, about: { '@id': termId } }),
+        {
+          '@type': 'DefinedTerm',
+          '@id': termId,
+          name: 'WinBA Score',
+          alternateName: ['WinBA', 'PropBetEdge WinBA Score'],
+          termCode: 'WINBA',
+          url: meta.url,
+          description: 'PropBetEdge’s 0–100 WNBA winning-impact index: 45% Box Impact per 36 league percentile, 25% player win rate, 20% winning-output share and 10% court share. It describes association with team wins and is not a causal wins-added metric.',
+          inDefinedTermSet: { '@type': 'DefinedTermSet', name: 'PropBetEdge WNBA metrics', url: meta.url }
+        },
+        {
+          '@type': 'FAQPage',
+          '@id': `${meta.url}#faq`,
+          mainEntity: [
+            ['What is WinBA Score?', 'WinBA Score is PropBetEdge’s 0–100 WNBA winning-impact index. It combines box-score production, player win rate, production in wins and playing time.'],
+            ['How is WinBA Score calculated?', 'WinBA is 45% league percentile of Box Impact per 36, 25% player win rate, 20% share of Box Impact produced in wins and 10% court share. Box Impact equals points plus 1.2 times rebounds plus 1.5 times assists.'],
+            ['Is WinBA the same as wins added?', 'No. WinBA measures box production and playing time associated with team wins. It is not a causal estimate of wins added.'],
+            ['What makes a WinBA score qualified?', 'A player qualifies for the production benchmark and league ranking with at least 10 appearances or 250 minutes. Other players can receive a provisional score but do not move the qualified benchmark.'],
+            ['How often does WinBA update?', 'PropBetEdge checks the archived final-game index every 10 minutes and rebuilds the season WinBA snapshot when the archive changes.'],
+            ['Does WinBA predict games or make betting picks?', 'No. WinBA is a season player metric. It is not a live game grade, win probability, betting pick or sportsbook market rating.']
+          ].map(([name, text]) => ({ '@type': 'Question', name, acceptedAnswer: { '@type': 'Answer', text } }))
+        }
+      );
+      break;
+    }
     case 'international':
       crumbs.push(['International', '/international']);
       g.push(webPage(meta, 'CollectionPage'), itemList(meta.url, (data.competitions || []).filter((c) => c.coverage === 'full').map((c) => ({ path: `/international/${c.slug}`, name: c.name }))));
