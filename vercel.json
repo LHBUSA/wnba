@@ -42,6 +42,10 @@
       "destination": "/winba-score.html"
     },
     {
+      "source": "/news/olivia-miles-breaks-caitlin-clarks-wnba-rookie-scoring-record-6ff81a",
+      "destination": "/news-olivia-miles-rookie-record.html"
+    },
+    {
       "source": "/",
       "destination": "https://wnba-web.sales-fd3.workers.dev/"
     },
@@ -132,6 +136,11 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/news/caitlin-clark-honored-for-the-minnesota-lynx-the-season-behind-it-6ff81a",
+      "destination": "/news/olivia-miles-breaks-caitlin-clarks-wnba-rookie-scoring-record-6ff81a",
+      "permanent": true
+    },
     {
       "source": "/sources",
       "destination": "/winba-score",
