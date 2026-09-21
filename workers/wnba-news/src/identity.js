@@ -86,7 +86,12 @@ export function consensusEventType(members) {
     if (Number.isFinite(at) && at > 0) row.earliest = Math.min(row.earliest, at);
     rows.set(type, row);
   }
-  const ranked = [...rows.values()].map((r) => ({ ...r, publishers: r.sources.size }))
+  const rankedAll = [...rows.values()].map((r) => ({ ...r, publishers: r.sources.size }));
+  // "news" is a fallback classification, not a competing event. Once any
+  // publisher identifies a concrete development inside a persisted cluster,
+  // generic follow-up wording cannot vote that event back into generic news.
+  const specific = rankedAll.filter((r) => r.type !== 'news');
+  const ranked = (specific.length ? specific : rankedAll)
     .sort((a, b) => b.publishers - a.publishers || b.members - a.members || b.maxScore - a.maxScore || a.earliest - b.earliest || a.type.localeCompare(b.type));
   const best = ranked[0] || null;
   return best ? { type: best.type, publishers: best.publishers, members: best.members, alternatives: ranked.map((r) => ({ type: r.type, publishers: r.publishers, members: r.members, maxScore: r.maxScore })) } : { type: null, publishers: 0, members: 0, alternatives: [] };
