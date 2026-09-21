@@ -13,6 +13,8 @@ import { proFeaturePublicView } from '../src/views/pro-intelligence.js';
 import { playerLoadPublicView } from '../src/views/player-load.js';
 import { historyView } from '../src/views/history.js';
 import { winbaScoreView } from '../src/views/winba-score.js';
+import { articleView } from '../src/views/article.js';
+import { milesRecordStaticArticle, MILES_RECORD_SLUG } from '../src/lib/news-corrections.js';
 import { intelligenceFeature } from '../src/data/pro-features.js';
 import { routeMeta } from '../src/seo/meta.js';
 import { pageGraph } from '../src/seo/jsonld.js';
@@ -29,9 +31,9 @@ for (const marker of ['<!--seo:start-->', '<!--seo:end-->', '<div id="app"></div
 
 fs.writeFileSync(dest, html);
 
-function writeStaticRoute(route, pathname, filename, main = '') {
-  const meta = routeMeta(route, { path: pathname });
-  const graph = pageGraph(route, meta, {});
+function writeStaticRoute(route, pathname, filename, main = '', data = null) {
+  const meta = routeMeta(route, { path: pathname, data });
+  const graph = pageGraph(route, meta, data || {});
   const head = `<!--seo:start-->\n    ${headTags(meta, graph)}\n    <!--seo:end-->`;
   const body = String(shellHtml({ main, ssrPath: pathname }));
   const out = html
@@ -55,6 +57,8 @@ writeStaticRoute('player-load', '/player-load', 'player-load.html', playerLoadPu
 writeStaticRoute('daily-brief', '/brief', 'brief.html');
 writeStaticRoute('history', '/history', 'history.html', historyView());
 writeStaticRoute('winba-score', '/winba-score', 'winba-score.html', winbaScoreView());
+const milesArticle = milesRecordStaticArticle();
+writeStaticRoute('article', `/news/${MILES_RECORD_SLUG}`, 'news-olivia-miles-rookie-record.html', articleView({ article: milesArticle, related: [] }), { article: milesArticle });
 
 if (process.env.VERCEL) fs.rmSync(src);
 console.log(`publish-shell: app shell + route-specific SEO shells written${process.env.VERCEL ? ' (index.html removed for Vercel routing)' : ''}`);
