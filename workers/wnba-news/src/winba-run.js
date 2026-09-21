@@ -18,6 +18,7 @@ import {
 } from './winba-editorial.js';
 import {
   runWinbaIndex,
+  correctQualificationCopy,
   winbaPeriodOf,
   winbaMonthlyKey,
   WINBA_MONTHLY_INDEX_KEY,
@@ -147,7 +148,7 @@ const previousOf = (period) => {
 };
 
 /** The monthly lane, idempotent by stored publication state. */
-export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false } = {}) {
+export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new Date().toISOString(), period = null, force = false, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false, backfill = false, acceptRankCorrection = false, fixCopy = false } = {}) {
   if (!env?.NEWS_KV) return { skipped: 'no_kv' };
   const due = winbaIndexDue(at, { period, force });
   if (!due.due) return { status: 'not_due', period: due.period, reason: due.reason };
@@ -160,6 +161,8 @@ export async function runWinbaIndexPass(env, { snapshot, dict = null, at = new D
     at,
     force,
     refreeze,
+    backfill,
+    acceptRankCorrection,
     getMonthly: (p) => env.NEWS_KV.get(winbaMonthlyKey(p), 'json'),
     putMonthly: (p, v) => env.NEWS_KV.put(winbaMonthlyKey(p), JSON.stringify(v)),
     getIndexState: () => env.NEWS_KV.get(WINBA_MONTHLY_INDEX_KEY, 'json'),
@@ -251,8 +254,35 @@ export function cardForIndex(a) {
   };
 }
 
+
+/**
+ * Apply the surgical qualification-copy correction to every published edition
+ * that still carries the wrong clause. Touches only that paragraph; published_at,
+ * the slug and the frozen board are untouched.
+ */
+export async function runWinbaCopyCorrection(env, { at = new Date().toISOString() } = {}) {
+  if (!env?.NEWS_KV) return { skipped: 'no_kv' };
+  const state = (await env.NEWS_KV.get(WINBA_MONTHLY_INDEX_KEY, 'json')) || { published: {} };
+  const out = { checked: 0, corrected: [], unchanged: [] };
+  for (const rec of Object.values(state.published || {})) {
+    const item = await env.NEWS_KV.get(ITEM(rec.id), 'json').catch(() => null);
+    if (!item) continue;
+    out.checked += 1;
+    const fix = correctQualificationCopy(item, { at });
+    if (!fix) { out.unchanged.push(rec.period); continue; }
+    await env.NEWS_KV.put(ITEM(rec.id), JSON.stringify(fix.article), ITEM_TTL);
+    // Mirror revised_at onto the listing card without touching anything else.
+    const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+    await env.NEWS_KV.put('art:v1:index', JSON.stringify(index.map((c) => (c.id === rec.id
+      ? { ...c, revised_at: fix.article.revised_at, revisions: fix.article.revisions }
+      : c))));
+    out.corrected.push({ period: rec.period, paragraph: fix.paragraph, before: fix.before.slice(-90), after: fix.after.slice(-110) });
+  }
+  return out;
+}
+
 /** Both lanes. Returns a compact report for the run status document. */
-export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false } = {}) {
+export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false, backfill = false, acceptRankCorrection = false, fixCopy = false } = {}) {
   let snapshot = null;
   let error = null;
   try {
@@ -264,7 +294,8 @@ export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date()
   if (!snapshot?.rows?.length) return { version: WINBA_EDITORIAL_VERSION, status: 'no_snapshot', error };
 
   const daily = await runWinbaDaily(env, { snapshot, dict, at }).catch((e) => ({ error: e?.message || String(e) }));
-  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium, winbaBoardMedia, refreeze }).catch((e) => ({ error: e?.message || String(e) }));
+  const copyFix = fixCopy ? await runWinbaCopyCorrection(env, { at }).catch((e) => ({ error: e?.message || String(e) })) : null;
+  const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium, winbaBoardMedia, refreeze, backfill, acceptRankCorrection }).catch((e) => ({ error: e?.message || String(e) }));
   return {
     version: WINBA_EDITORIAL_VERSION,
     index_version: WINBA_INDEX_VERSION,
@@ -272,6 +303,7 @@ export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date()
     snapshot_at: snapshot.generated_at || null,
     qualified: snapshot.qualified_count ?? null,
     daily,
-    monthly
+    monthly,
+    ...(copyFix ? { copy_correction: copyFix } : {})
   };
 }

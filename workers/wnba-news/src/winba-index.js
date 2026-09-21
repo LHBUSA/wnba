@@ -212,7 +212,7 @@ const POSITION_NAME = { G: 'guard', F: 'forward', C: 'center' };
  * Build the monthly feature from the frozen board. Sections render only when
  * their facts exist, and every number printed comes from the snapshot.
  */
-export function composeWinbaIndex(frozen, { movement = null, identity, priorArticle = null } = {}) {
+export function composeWinbaIndex(frozen, { movement = null, identity, priorArticle = null, backfill = false } = {}) {
   if (!frozen?.rows?.length) return null;
   const rows = frozen.rows;
   const leader = rows[0];
@@ -245,6 +245,9 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
         ? `${second.player_name} is next at ${Math.round(second.score)}, ${f1(gap)} points back — the clearest separation at the top of the board this month.`
         : `${second.player_name} is a stride behind at ${Math.round(second.score)}, close enough that ${poss(leader.player_name)} hold on the top spot is not settled.`
     );
+  }
+  if (backfill) {
+    body.push(`This edition of ${WINBA_INDEX_SERIES} was reconstructed from PropBetEdge's archived game record. The board below is the ${label} ranking as it stood at the close of the period; the article itself was published later, and its publication date reflects that.`);
   }
   if (!closed) {
     body.push(`These are the standings as of ${new Intl.DateTimeFormat('en-US', { timeZone: TZ, month: 'long', day: 'numeric' }).format(new Date(frozen.leaderboard_as_of || frozen.snapshot_at))}, with ${label} still being played. The board is frozen at this point and the ranks recorded here are the ones the next edition will measure against.`);
@@ -379,6 +382,7 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
     series: WINBA_INDEX_SERIES,
     period: frozen.period,
     period_label: label,
+    historical_backfill: Boolean(backfill),
     headline,
     deck,
     body,
@@ -440,6 +444,52 @@ export function composeWinbaIndex(frozen, { movement = null, identity, priorArti
 }
 
 /**
+ * A SURGICAL copy correction for an already-published edition.
+ *
+ * The qualification rule is a disjunction — at least 10 appearances OR 250
+ * minutes — and earlier editions stated it as a conjunction, which understates
+ * who qualifies. Recomposing the article would rewrite unrelated copy that has
+ * moved on since it was published, so this replaces only the incorrect clause
+ * and leaves every other paragraph byte-identical.
+ *
+ * Returns null when there is nothing to correct, so it is safe to run twice.
+ */
+export function correctQualificationCopy(item, { at = new Date().toISOString() } = {}) {
+  const body = Array.isArray(item?.body) ? item.body : null;
+  if (!body) return null;
+  const WRONG = /qualified this month at (\d+) games and (\d+) minutes\./;
+  const idx = body.findIndex((p) => WRONG.test(String(p)));
+  if (idx < 0) return null;
+
+  const before = body[idx];
+  const after = before.replace(
+    WRONG,
+    (_m, games, minutes) => `qualified for the league ranking, which takes at least ${games} appearances or ${minutes} minutes.`
+  );
+  if (after === before) return null;
+
+  const nextBody = [...body];
+  nextBody[idx] = after;
+  const revision = {
+    at,
+    kind: 'integrity_correction',
+    note: 'qualification rule corrected: it requires at least 10 appearances OR 250 minutes, not both. Only that clause changed.',
+    generator: WINBA_INDEX_VERSION
+  };
+  return {
+    article: {
+      ...item,
+      body: nextBody,
+      revisions: [...(item.revisions || []), revision].slice(-20),
+      revised_at: at
+    },
+    paragraph: idx,
+    before,
+    after
+  };
+}
+
+/**
  * Generate at most one Index per calendar period.
  *
  * Idempotency is by stored publication state, not by article search: a cron
@@ -459,7 +509,9 @@ export async function runWinbaIndex({
   getArticle,
   putArticle,
   force = false,
-  refreeze = false
+  refreeze = false,
+  backfill = false,
+  acceptRankCorrection = false
 } = {}) {
   const target = period || winbaPeriodOf(at);
   const state = (await getIndexState()) || { version: WINBA_INDEX_VERSION, published: {} };
@@ -470,6 +522,7 @@ export async function runWinbaIndex({
     return { period: target, status: 'already_published', id: already.id, slug: already.slug, article: existing, published_at: already.published_at };
   }
 
+  let rankCorrection = null;
   let frozen = await getMonthly(target).catch(() => null);
   if (!frozen) {
     frozen = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at });
@@ -485,8 +538,42 @@ export async function runWinbaIndex({
     const rebuilt = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at: frozen.frozen_at });
     if (!rebuilt) return { period: target, status: 'refreeze_no_snapshot' };
     const key = (b) => JSON.stringify((b.rows || []).map((r) => [r.rank, String(r.player_id), r.score]));
+    // Rank-independent content: who is on the board and at what score. If this
+    // matches, no published NUMBER changes — only the order of equal scores.
+    const content = (b) => JSON.stringify((b.rows || [])
+      .map((r) => [String(r.player_id), r.score])
+      .sort((x, y) => String(x[0]).localeCompare(String(y[0]))));
+    const tieOnly = content(rebuilt) === content(frozen)
+      && (rebuilt.rows || []).every((r) => {
+        const was = (frozen.rows || []).find((x) => String(x.player_id) === String(r.player_id));
+        // A rank may move only among players sharing its score.
+        return was && (was.rank === r.rank || was.score === r.score);
+      });
+
     if (key(rebuilt) !== key(frozen)) {
-      return { period: target, status: 'refreeze_refused', reason: 'the rebuilt board does not match the published ranks and scores', published: key(frozen).slice(0, 200), rebuilt: key(rebuilt).slice(0, 200) };
+      if (!(tieOnly && acceptRankCorrection)) {
+        return {
+          period: target,
+          status: 'refreeze_refused',
+          refusal: tieOnly
+            ? 'a tie-order correction needs explicit authorisation'
+            : 'the rebuilt board does not match the published ranks and scores',
+          tie_order_only: tieOnly
+        };
+      }
+      // Authorised factual correction. Record it: the original freezer ranked
+      // tied scores by athlete id; the metric's canonical order is score, then
+      // minutes, then name.
+      const moved = (rebuilt.rows || [])
+        .map((r) => ({ r, was: (frozen.rows || []).find((x) => String(x.player_id) === String(r.player_id)) }))
+        .filter(({ r, was }) => was && was.rank !== r.rank)
+        .map(({ r, was }) => `${r.player_name}: No. ${was.rank} -> No. ${r.rank} (score ${r.score})`);
+      rankCorrection = {
+        at,
+        kind: 'integrity_correction',
+        note: `tie-break corrected to the metric's canonical score -> minutes -> name ordering; the original freezer ordered tied scores by athlete id. ${moved.join('; ')}`,
+        generator: WINBA_INDEX_VERSION
+      };
     }
     frozen = { ...rebuilt, frozen_at: frozen.frozen_at, snapshot_at: frozen.snapshot_at, refrozen_at: at };
     await putMonthly(target, frozen);
@@ -497,7 +584,7 @@ export async function runWinbaIndex({
   const identity = await winbaIndexIdentity(target);
   const priorPublished = state.published?.[previousPeriod(target)] || null;
 
-  const composed = composeWinbaIndex(frozen, { movement, identity, priorArticle: priorPublished });
+  const composed = composeWinbaIndex(frozen, { movement, identity, priorArticle: priorPublished, backfill });
   if (!composed) return { period: target, status: 'not_composable' };
 
   // The depth target for the franchise. Below it, the board did not support a
@@ -516,12 +603,20 @@ export async function runWinbaIndex({
     id: identity.id,
     slug: identity.slug,
     status: 'published',
+    // published_at is ALWAYS the real moment of publication. A reconstructed
+    // edition is never backdated to the month it covers: the period lives in
+    // `period` and the cutoff in `snapshot_as_of`, so the record says what it
+    // is without inventing a publication history.
     published_at: firstPublished,
     first_published_at: firstPublished,
+    historical_backfill: Boolean(backfill),
+    snapshot_as_of: frozen.leaderboard_as_of || frozen.snapshot_at || null,
     updated_at: at,
     // A regeneration is a revision, recorded the way the newsroom records every
     // other one. published_at never moves; revised_at is what changed.
-    revisions: already ? [...priorRevisions, { at, kind: 'editorial_upgrade', generator: WINBA_INDEX_VERSION }].slice(-20) : [],
+    revisions: already
+      ? [...priorRevisions, ...(rankCorrection ? [rankCorrection] : []), { at, kind: 'editorial_upgrade', generator: WINBA_INDEX_VERSION }].slice(-20)
+      : [],
     revised_at: already ? at : null,
     provenance: {
       generated_at: at,
