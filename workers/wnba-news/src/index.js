@@ -219,7 +219,7 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
   let winba;
   try {
     winba = await runWinbaPasses(env, {
-      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod
+      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod, mediaFor
     });
   } catch (e) {
     winba = { error: String(e.message || e).slice(0, 160) };

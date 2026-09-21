@@ -76,6 +76,25 @@ export async function cardModel(kind, key, api) {
         fallback: photoPath || DEFAULT_SHARE
       };
     }
+    // The WinBA Index gets its own card: the series and period as the kicker,
+    // the board's top three with their frozen scores, and the leader's approved
+    // photograph. Every value comes from the frozen board on the article, so an
+    // old month's card keeps that month's leaders.
+    if (a.kind === 'winba_index' && a.winba_board?.rows?.length) {
+      const top = a.winba_board.rows.slice(0, 3);
+      const lead = top[0];
+      return {
+        kicker: `The WinBA Index · ${a.winba_board.period_label || a.period_label || ''}`.trim(),
+        title: `The WNBA's top players by WinBA Score`,
+        titleFont: 'display',
+        sub: top.map((r) => `${r.rank}. ${r.player_name} ${Math.round(r.score)}`).join('   '),
+        detail: `${a.winba_board.qualified_count || ''} qualified players ranked`.trim(),
+        footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
+        photoPath: a.media?.og || null,
+        colors: [color(teamColors({ team_id: lead.team_id }).color, '#2a241c'), color(teamColors({ team_id: top[1]?.team_id || lead.team_id }).color, '#3a2f22')],
+        fallback: a.media?.og || DEFAULT_SHARE
+      };
+    }
     const photoPath = a.media?.og || null;
     const teams = (a.media?.teams || []).map((t) => teamColors({ team_id: t }).color);
     return {
