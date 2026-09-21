@@ -1549,3 +1549,161 @@ a.pp-name:hover { color: var(--gold-bright); }
   .winba-box-impact { grid-template-columns:1fr; }
   .winba-box-impact p { grid-column:1; }
 }
+
+
+/* WinBA flagship leaderboard */
+.winba-podium-showcase {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin:20px 0 14px;
+}
+.winba-podium-feature {
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  min-height:430px;
+  border:1px solid var(--line-2);
+  border-top:3px solid var(--tc,var(--gold));
+  border-radius:var(--r4);
+  background:
+    radial-gradient(460px 180px at 50% 0%, color-mix(in srgb,var(--tc,var(--gold)) 18%, transparent), transparent 68%),
+    linear-gradient(180deg,rgba(255,255,255,.026),rgba(255,255,255,.008));
+  text-decoration:none;
+  box-shadow:0 16px 42px rgba(0,0,0,.16);
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.winba-podium-feature:hover {
+  transform:translateY(-3px);
+  border-color:rgba(240,179,35,.5);
+  box-shadow:0 22px 54px rgba(0,0,0,.24);
+}
+.winba-podium-feature--1 {
+  border-color:rgba(240,179,35,.42);
+  box-shadow:0 20px 60px rgba(240,179,35,.08),0 16px 42px rgba(0,0,0,.2);
+}
+.winba-podium-photo {
+  position:relative;
+  min-height:285px;
+  overflow:hidden;
+  background:radial-gradient(circle at 50% 20%,rgba(255,255,255,.08),rgba(255,255,255,.01) 52%,rgba(0,0,0,.24));
+}
+.winba-podium-photo::after {
+  content:'';
+  position:absolute;
+  inset:auto 0 0;
+  height:42%;
+  background:linear-gradient(180deg,transparent,rgba(12,10,8,.94));
+  pointer-events:none;
+}
+.winba-podium-photo img {
+  width:100%;
+  height:100%;
+  min-height:285px;
+  max-height:330px;
+  object-fit:cover;
+  object-position:center 16%;
+  display:block;
+  transform:scale(1.015);
+}
+.winba-podium-fallback {
+  min-height:285px;
+  display:grid;
+  place-items:center;
+}
+.winba-podium-fallback .avatar {
+  width:112px;
+  height:112px;
+  font-size:30px;
+  border-width:3px;
+}
+.winba-podium-place {
+  position:absolute;
+  top:12px;
+  left:14px;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:50%;
+  background:rgba(10,9,7,.76);
+  backdrop-filter:blur(8px);
+  color:var(--gold-bright);
+  font:850 19px/1 var(--f-display);
+}
+.winba-podium-feature--1 .winba-podium-place {
+  width:50px;
+  height:50px;
+  color:#fff3b4;
+  border-color:rgba(240,179,35,.42);
+  box-shadow:0 0 0 4px rgba(240,179,35,.08);
+}
+.winba-podium-copy {
+  display:grid;
+  align-content:start;
+  padding:17px 18px 20px;
+}
+.winba-podium-copy > small {
+  color:var(--faint);
+  font:700 9px/1.25 var(--f-data);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.winba-podium-copy > strong {
+  margin-top:6px;
+  color:var(--paper);
+  font:850 clamp(22px,2.2vw,30px)/.95 var(--f-display);
+  letter-spacing:-.015em;
+  text-transform:uppercase;
+}
+.winba-podium-copy > div {
+  display:flex;
+  align-items:end;
+  gap:8px;
+  margin-top:14px;
+}
+.winba-podium-copy > div b {
+  color:var(--gold-bright);
+  font:850 clamp(42px,4.2vw,58px)/.78 var(--f-display);
+  letter-spacing:-.045em;
+}
+.winba-podium-copy > div span {
+  padding-bottom:3px;
+  color:var(--faint);
+  font:800 9px/1 var(--f-data);
+  letter-spacing:.14em;
+}
+.winba-podium-copy p {
+  margin-top:13px;
+  color:var(--meta);
+  font:600 10.5px/1.45 var(--f-data);
+}
+.winba-authority-leader {
+  grid-template-columns:40px 42px minmax(0,1fr) auto;
+}
+.winba-authority-leader .avatar {
+  width:38px;
+  height:38px;
+}
+@media (max-width:860px) {
+  .winba-podium-showcase { grid-template-columns:1fr; }
+  .winba-podium-feature {
+    grid-template-columns:minmax(150px,.62fr) minmax(0,1fr);
+    min-height:0;
+  }
+  .winba-podium-photo,
+  .winba-podium-fallback { min-height:230px; }
+  .winba-podium-photo img { min-height:230px; height:100%; max-height:none; }
+  .winba-podium-copy { align-content:center; }
+}
+@media (max-width:540px) {
+  .winba-podium-feature { grid-template-columns:1fr; }
+  .winba-podium-photo,
+  .winba-podium-fallback { min-height:260px; }
+  .winba-podium-photo img { min-height:260px; max-height:300px; }
+  .winba-authority-leader { grid-template-columns:30px 34px minmax(0,1fr) auto; gap:9px; }
+  .winba-authority-leader .avatar { width:32px; height:32px; }
+  .winba-authority-leader .winba-score { font-size:22px; }
+}
