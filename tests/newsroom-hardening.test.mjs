@@ -56,10 +56,11 @@ test('1 · legacy-state classification: every live story gets one intentional st
   assert.equal(needsReview(card({ quality_review: { policy: LEGACY_POLICY_VERSION, at: '2026-09-13T19:00:00Z' }, revised_at: '2026-09-13T19:30:00Z' })), true, '…and again after a revision');
 });
 
-test('2 · a weak historical story can remain intentionally preserved, listed and labelled', () => {
+test('2 · a weak historical story is preserved in the archive but removed from live promotion', () => {
   const c = card({ quality_state: 'legacy_acceptable', quality_review: { policy: LEGACY_POLICY_VERSION, state: 'legacy_acceptable', generator: 'wnba-articles/1.2.0', reason: 'published under wnba-articles/1.2.0; kept as a legitimate short story' } });
-  assert.equal(listedCard(c), true);
+  assert.equal(listedCard(c), false);
   const html = String(articleView({ article: { ...thinResult, ...c, first_published_at: c.first_published_at, media: null, method: [] }, related: [] }));
+  assert.match(html, /Archived under an earlier newsroom standard/);
   assert.match(html, /Published under an earlier newsroom standard \(wnba-articles\/1\.2\.0\)/);
   assert.equal(c.first_published_at, '2026-09-11T18:49:07.399Z');
 });
@@ -220,8 +221,8 @@ test('11 · health metrics reflect the actual stored states', () => {
   assert.equal(h.intelligence_suppressed_non_additive, 1);
   assert.equal(h.held_for_substance, 1);
   assert.equal(h.provenance_failures_this_run, 1);
-  assert.deepEqual(h.live_depth_classes, { full: 2, unclassified: 1 });
-  assert.deepEqual(h.words_by_desk, { injury: 470, game: 248, preview: 706 });
+  assert.deepEqual(h.live_depth_classes, { full: 2 });
+  assert.deepEqual(h.words_by_desk, { injury: 470, preview: 706 });
 });
 
 // ------------------------------------------------------------ 12: maturation
