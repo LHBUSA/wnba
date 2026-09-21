@@ -42,12 +42,25 @@ const milesMedia = () => ({
   resolved: 'publication_integrity_correction'
 });
 
-function seasonContext(playerData) {
-  const s = playerData?.recent?.season || null;
-  if (!s) return null;
-  const pts = n1(s.pts), reb = n1(s.reb), ast = n1(s.ast), min = n1(s.min);
-  if (![pts, reb, ast, min].every(Boolean)) return null;
-  return { games: s.games, pts, reb, ast, min };
+function recordGameContext(playerData) {
+  const seasons = playerData?.gamelog?.seasons || [];
+  const regular = seasons.find((x) => /2026 Regular Season/i.test(x?.name || '')) || seasons.find((x) => /Regular Season/i.test(x?.name || ''));
+  const game = (regular?.games || []).find((g) => String(g?.date || '').startsWith('2026-09-20')) || null;
+  if (!game) return null;
+  return {
+    date: game.date,
+    opponent: game.opponent?.name || game.opponent?.abbr || 'Connecticut Sun',
+    at_vs: game.at_vs || '@',
+    result: game.result || 'W',
+    score: game.score || '101-89',
+    min: game.min,
+    pts: game.pts,
+    reb: game.reb,
+    ast: game.ast,
+    fgm: game.fgm,
+    fga: game.fga,
+    game_id: game.game_id || '401857201'
+  };
 }
 
 export function isMilesRecordSlug(slug) {
@@ -56,33 +69,34 @@ export function isMilesRecordSlug(slug) {
 
 export function correctMilesRecordArticle(article, playerData = null) {
   if (!article || !isMilesRecordSlug(article.slug)) return article;
-  const season = seasonContext(playerData);
+  const recordGame = recordGameContext(playerData);
   const player = playerData?.player || {};
   const team = player.team || { team_id: LYNX_ID, name: 'Minnesota Lynx', short_name: 'Lynx' };
-  const seasonSentence = season
-    ? `PropBetEdge’s current player record lists Miles at ${season.pts} points, ${season.reb} rebounds and ${season.ast} assists in ${season.min} minutes across ${season.games} games this season.`
+  const gameSentence = recordGame
+    ? `PropBetEdge’s game log shows Miles scored ${recordGame.pts} points with ${recordGame.reb} rebounds and ${recordGame.ast} assists in ${recordGame.min} minutes in Minnesota’s ${String(recordGame.score).replace('-', '–')} win at the ${recordGame.opponent} on September 20. She shot ${recordGame.fgm}-of-${recordGame.fga} from the field.`
     : 'PropBetEdge’s current player record identifies Miles as a Minnesota Lynx guard; the historical record claim remains attributed to the reporting cited below.';
 
   const body = [
     'Olivia Miles is the subject of this record story. NBC Sports, ESPN, CBS Sports and Just Women’s Sports all reported that Miles passed Caitlin Clark for the WNBA rookie scoring record on September 20.',
     'NBC Sports reported that Miles reached 770 points to move past Clark’s previous rookie scoring mark. ESPN and CBS Sports independently described the same record change; Just Women’s Sports followed with the same milestone in its awards coverage.',
-    seasonSentence,
+    gameSentence,
     'The league-history comparison itself comes from the cited publisher reporting. PropBetEdge’s own structured records are used here for Miles’ current identity, team and season context; they are not being stretched into an independent all-time WNBA record database.',
     'This is a scoring-record story, not an awards story. Award voting, projections and outcomes are separate questions and are not inferred from the record.',
     'Correction: the first published version of this article incorrectly selected Caitlin Clark as the primary subject, attached Minnesota Lynx context to Clark and classified the event as awards coverage. The newsroom integrity audit corrected the subject to Olivia Miles, restored Miles’ team context and reclassified the event as a record milestone.'
   ];
   const sections = [
     { title: 'The record', key: 'change', first: 0, count: 2 },
-    { title: 'Miles’ season', key: 'records', first: 2, count: 1 },
+    { title: 'The game behind the milestone', key: 'records', first: 2, count: 1 },
     { title: 'What PropBetEdge can verify', key: 'evidence', first: 3, count: 1 },
     { title: 'What the record does not decide', key: 'unknown', first: 4, count: 1 },
     { title: 'Correction', key: 'correction', first: 5, count: 1 }
   ];
 
   const entities = [
-    { type: 'player', id: MILES_ID, name: 'Olivia Miles' },
+    { type: 'player', id: MILES_ID, name: 'Olivia Miles', team_id: String(team.team_id || LYNX_ID) },
     { type: 'player', id: CLARK_ID, name: 'Caitlin Clark' },
-    { type: 'team', id: String(team.team_id || LYNX_ID), name: team.name || 'Minnesota Lynx' }
+    { type: 'team', id: String(team.team_id || LYNX_ID), name: team.name || 'Minnesota Lynx' },
+    ...(recordGame?.game_id ? [{ type: 'game', id: String(recordGame.game_id), name: `Minnesota Lynx at ${recordGame.opponent}`, start_utc: recordGame.date }] : [])
   ];
 
   const revisions = [...(article.revisions || []).filter((r) => r?.kind !== 'integrity_correction'), {
@@ -95,7 +109,7 @@ export function correctMilesRecordArticle(article, playerData = null) {
     ...article,
     slug: MILES_RECORD_SLUG,
     headline: 'Olivia Miles breaks Caitlin Clark’s WNBA rookie scoring record',
-    deck: `Miles reached 770 points to move past Clark’s rookie scoring mark, according to NBC Sports, ESPN, CBS Sports and Just Women’s Sports.${season ? ` PropBetEdge’s current player record has her at ${season.pts} points per game for Minnesota.` : ''}`,
+    deck: `NBC Sports, ESPN, CBS Sports and Just Women’s Sports reported that Olivia Miles crossed Caitlin Clark’s WNBA rookie scoring mark with her 770th point. PropBetEdge’s game log has Miles scoring 21 in Minnesota’s 101–89 win at Connecticut that day.`,
     body,
     sections,
     desk: 'performance',
@@ -225,6 +239,6 @@ export function milesRecordStaticArticle() {
   };
   return correctMilesRecordArticle(base, {
     player: { athlete_id: MILES_ID, name: 'Olivia Miles', team: { team_id: LYNX_ID, name: 'Minnesota Lynx', short_name: 'Lynx' } },
-    recent: { season: { games: 41, pts: 19.5, reb: 4.8, ast: 6.0, min: 30.9 } }
+    gamelog: { seasons: [{ name: '2026 Regular Season', games: [{ game_id: '401857201', date: '2026-09-20T23:00:00Z', opponent: { team_id: '18', name: 'Connecticut Sun', abbr: 'CON' }, at_vs: '@', result: 'W', score: '101-89', min: 30, pts: 21, reb: 3, ast: 6, fgm: 7, fga: 10 }] }] }
   });
 }
