@@ -513,7 +513,8 @@ test('a re-freeze is refused outright if any published rank or score would chang
     at: '2026-10-05T09:00:00.000Z', force: true, refreeze: true, ...h.io
   });
   assert.equal(res.status, 'refreeze_refused');
-  assert.match(res.reason, /does not match the published ranks and scores/);
+  assert.match(res.refusal, /does not match the published ranks and scores/);
+  assert.equal(res.tie_order_only, false);
   assert.deepEqual(h.monthly.get('2026-09'), before, 'the published board is untouched');
 });
 
