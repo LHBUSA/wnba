@@ -72,7 +72,7 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
   const m = (x) => ({ ...base, ...x, url: `${SITE}${(x.path ?? base.path) === '/' ? '/' : x.path ?? base.path}` });
   switch (route) {
     case 'today':
-      return m({ title: 'PropBetEdge WNBA — WNBA News, Injuries, Odds & Live Game Intelligence', description: 'Independent WNBA intelligence: today’s slate with stored sportsbook lines, WNBACast live games, sourced injuries, standings and an original PropBetEdge WNBA newsroom.', image: pageShareImage('home', 'PropBetEdge WNBA — live WNBA intelligence') });
+      return m({ title: 'PropBetEdge WNBA — WNBA News, Injuries, Odds & Live Game Intelligence', description: 'Independent WNBA intelligence: today’s slate, WNBACast live games, sourced injuries, standings, original newsroom coverage and WinBA — PropBetEdge’s 0–100 winning-impact score.', image: pageShareImage('home', 'PropBetEdge WNBA — live WNBA intelligence') });
     case 'news':
       return m({ title: `WNBA News Today, Injuries, Transactions & Analysis | ${BRAND}`, description: 'The PropBetEdge WNBA newsroom: original, source-grounded WNBA news briefs, injury and roster-move stories, game previews, recaps and market analysis, updated every 10 minutes.', image: pageShareImage('news', 'PropBetEdge WNBA Newsroom') });
     case 'news-archive':
