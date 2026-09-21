@@ -61,8 +61,12 @@ export default {
     // nothing. It exists so the owner can see which months are genuinely
     // reconstructible before any historical Index is published.
     if (url.pathname === '/v1/winba/history-dryrun') {
+      // GET only. The handler reads two KV keys and returns a computed value;
+      // refusing every other method makes that explicit at the edge.
+      if (request.method !== 'GET') return j({ ok: false, error: 'method_not_allowed', allow: 'GET' }, 405, { Allow: 'GET' });
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
-      return j({ ok: true, data: await winbaHistoryDryRun(env, { top: Number(url.searchParams.get('top') || 10) }) });
+      const top = Math.min(Math.max(Number(url.searchParams.get('top') || 25), 1), 50);
+      return j({ ok: true, data: await winbaHistoryDryRun(env, { top, only: url.searchParams.get('periods') || null }) });
     }
     const m = url.pathname.match(/^\/run\/(live|availability|backfill|winba|schedule|reference|odds|pbe)$/);
     if (m && request.method === 'POST') {
@@ -86,12 +90,16 @@ export default {
  * Read-only by construction — it never writes a snapshot, an article or a
  * publication ledger entry.
  */
-async function winbaHistoryDryRun(env, { top = 10 } = {}) {
+async function winbaHistoryDryRun(env, { top = 25, only = null } = {}) {
   if (!env.WNBA_KV) return { error: 'no_kv' };
   const ids = (await env.WNBA_KV.get('archive:v1:index', 'json')) || [];
   if (!Array.isArray(ids) || !ids.length) return { error: 'no_archives' };
 
   const docs = (await Promise.all(ids.slice(-500).map((id) => env.WNBA_KV.get(`game:v1:final:${id}`, 'json')))).filter(Boolean);
+  // The aggregate takes a player's team from the LAST game it processes, so the
+  // docs must be in chronological order for "team at snapshot" to mean the team
+  // she last played for inside the window rather than whatever order KV listed.
+  docs.sort((a, b) => String(a?.summary?.game?.start_utc || '').localeCompare(String(b?.summary?.game?.start_utc || '')));
   const regular = docs.filter((d) => Number(d?.summary?.game?.season?.type) === 2 && d?.summary?.game?.status?.completed);
   const seasons = regular.map((d) => Number(d?.summary?.game?.season?.year)).filter(Number.isFinite);
   if (!seasons.length) return { error: 'no_regular_season_archives' };
@@ -112,6 +120,7 @@ async function winbaHistoryDryRun(env, { top = 10 } = {}) {
     first_tip: new Date(tips[0]).toISOString(), last_tip: new Date(tips.at(-1)).toISOString(),
     periods: [], generated_at: new Date().toISOString(), method: 'buildWinbaSnapshotAsOf (frozen WinBA v1 over games tipped before the period cutoff)' };
 
+  const wanted = only ? new Set(only.split(',').map((x) => x.trim()).filter(Boolean)) : null;
   let prior = null;
   for (const period of periods) {
     const asOf = cutoffOf(period);
@@ -137,10 +146,28 @@ async function winbaHistoryDryRun(env, { top = 10 } = {}) {
       })),
       prior_period: prior ? prior.period : null,
       movement_computable: Boolean(prior && prior.qualified_count),
-      movement_overlap: prior ? ranked.slice(0, top).filter((r) => prior.ids.has(String(r.athlete_id))).length : 0
+      movement_overlap: prior ? ranked.slice(0, top).filter((r) => prior.ids.has(String(r.athlete_id))).length : 0,
+      // A ranked row with no name is an unresolved identity and must be visible
+      // rather than silently rendered as a blank.
+      identity_unresolved: ranked.slice(0, top).filter((r) => !r.name).map((r) => String(r.athlete_id)),
+      movement: prior
+        ? ranked.slice(0, top).map((r, i) => {
+          const before = prior.ranks.get(String(r.athlete_id));
+          return before
+            ? { athlete_id: String(r.athlete_id), name: r.name, rank: i + 1, prior_rank: before.rank, rank_delta: before.rank - (i + 1), score: r.score, prior_score: before.score, score_delta: Math.round((r.score - before.score) * 10) / 10 }
+            : { athlete_id: String(r.athlete_id), name: r.name, rank: i + 1, prior_rank: null, rank_delta: null, score: r.score, prior_score: null, score_delta: null, entered: true };
+        })
+        : null
     };
-    out.periods.push(row);
-    prior = { period, qualified_count: qualified.length, ids: new Set(ranked.slice(0, 25).map((r) => String(r.athlete_id))) };
+    // The prior period is always computed so movement stays legitimate, even
+    // when the caller only asked to see some periods.
+    if (!wanted || wanted.has(period)) out.periods.push(row);
+    prior = {
+      period,
+      qualified_count: qualified.length,
+      ids: new Set(ranked.slice(0, top).map((r) => String(r.athlete_id))),
+      ranks: new Map(ranked.map((r, i) => [String(r.athlete_id), { rank: i + 1, score: r.score }]))
+    };
   }
   return out;
 }
@@ -575,6 +602,6 @@ async function odds(env) {
   }
 }
 
-function j(body, status = 200) {
-  return new Response(JSON.stringify(body, null, 2), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
+function j(body, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(body, null, 2), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extraHeaders } });
 }
