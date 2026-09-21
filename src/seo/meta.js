@@ -106,7 +106,7 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
         modified,
         section: DESKS[deskOf(a.kind)] || 'Newsroom',
         // A story moved to external coverage keeps its URL and record but is no longer a newsroom page for search.
-        ...(a.external_coverage || a.quality_state === 'retired_from_index' ? { robots: NOINDEX_ROBOTS } : {})
+        ...(a.external_coverage || a.quality_state === 'retired_from_index' || a.quality_state === 'legacy_acceptable' ? { robots: NOINDEX_ROBOTS } : {})
       });
     }
     case 'player': {
