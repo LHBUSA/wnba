@@ -223,7 +223,24 @@ export function cardForIndex(a) {
     has_market: false,
     sources: [],
     media: a.media || null,
-    winba_podium: a.winba_podium || null
+    winba_podium: a.winba_podium || null,
+    // A trimmed copy of the frozen board travels with the card so listings can
+    // show the month's top three and a player page can state the rank THIS
+    // edition recorded. Only the printable fields: the full board with averages
+    // stays on the article.
+    winba_board: a.winba_board
+      ? {
+        period: a.winba_board.period,
+        period_label: a.winba_board.period_label,
+        period_complete: a.winba_board.period_complete,
+        qualified_count: a.winba_board.qualified_count,
+        snapshot_at: a.winba_board.snapshot_at,
+        rows: (a.winba_board.rows || []).map((r) => ({
+          rank: r.rank, player_id: r.player_id, player_name: r.player_name,
+          team_id: r.team_id, team_name: r.team_name, score: r.score
+        }))
+      }
+      : null
   };
 }
 

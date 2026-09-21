@@ -17,7 +17,7 @@ const CAST_FINAL = opt('final', '401857189');
 const routes = opt('routes', `/,/cast,/cast/${CAST_FINAL},/props,/matchups,/matchups/401857190,/players,/players/4433730,/injuries,/news,/standings,/stats,/teams,/teams/3,/track-record,/pro,/sources`).split(',');
 const OUT = path.resolve('qa-artifacts');
 const CHROME = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const ALLOWED = [new URL(base).host, 'wnba-api.sales-fd3.workers.dev', 'wnba-news.sales-fd3.workers.dev', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+const ALLOWED = [new URL(base).host, 'wnba-api.sales-fd3.workers.dev', 'wnba-news.sales-fd3.workers.dev', 'wnba-international.sales-fd3.workers.dev', 'wnba-web.sales-fd3.workers.dev', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 const report = [];
