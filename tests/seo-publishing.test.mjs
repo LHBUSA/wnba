@@ -245,7 +245,7 @@ test('missing entities are real 404s (not soft 404s); an upstream outage is a 50
 });
 
 test('no duplicate canonical URLs across indexable routes; canonicals never carry query strings or trailing slashes', async () => {
-  const paths = ['/', '/news', '/news/c/injury', `/news/${satouArticle.slug}`, '/players/4281929', '/teams/9', '/matchups', '/matchups/401857190', '/injuries', '/standings', '/stats', '/teams', '/players', '/props', '/cast', '/about', '/editorial-policy', '/corrections', '/methodology', '/sources'];
+  const paths = ['/', '/news', '/news/c/injury', `/news/${satouArticle.slug}`, '/players/4281929', '/teams/9', '/matchups', '/matchups/401857190', '/injuries', '/standings', '/stats', '/teams', '/players', '/props', '/cast', '/winba-score', '/about', '/editorial-policy', '/corrections', '/methodology', '/sources'];
   const canon = [];
   for (const p of paths) {
     const { doc, status } = await page(p);
@@ -264,6 +264,27 @@ test('search-intent titles for the top-of-funnel routes', () => {
   assert.equal(routeMeta('injuries', { path: '/injuries' }).title, 'WNBA Injuries Today & Player Availability | PropBetEdge');
   assert.equal(routeMeta('props', { path: '/props' }).title, 'WNBA Player Props & Best Sportsbook Lines | PropBetEdge');
   assert.equal(routeMeta('standings', { path: '/standings' }).title, 'WNBA Standings & Playoff Race | PropBetEdge');
+  assert.equal(routeMeta('winba-score', { path: '/winba-score' }).title, 'WinBA Score: WNBA Winning-Impact Metric & Rankings | PropBetEdge');
+});
+
+test('WinBA Score is a first-class indexable authority page with metric schema and FAQ', async () => {
+  const { status, doc } = await page('/winba-score');
+  assert.equal(status, 200);
+  assert.match(doc, /<title>WinBA Score: WNBA Winning-Impact Metric &amp; Rankings \| PropBetEdge<\/title>/);
+  assert.match(doc, /rel="canonical" href="https:\/\/wnba\.propbetedge\.ai\/winba-score"/);
+  assert.match(doc, /Home of the WinBA Score/);
+  assert.match(doc, /45%/);
+  assert.match(doc, /PTS \+ 1\.2 × REB \+ 1\.5 × AST/);
+  assert.match(doc, /10 appearances or 250 minutes/);
+  assert.match(doc, /not a causal wins-added metric/);
+  for (const href of ['/stats', '/players', '/cast', '/teams', '/sources']) assert.ok(doc.includes(`href="${href}"`), href);
+  const ld = ldOf(doc);
+  const term = ld['@graph'].find((x) => x['@type'] === 'DefinedTerm');
+  const faq = ld['@graph'].find((x) => x['@type'] === 'FAQPage');
+  assert.equal(term.name, 'WinBA Score');
+  assert.equal(term.termCode, 'WINBA');
+  assert.equal(faq.mainEntity.length, 6);
+  assert.ok(faq.mainEntity.some((q) => /wins added/i.test(q.name)));
 });
 
 test('an empty newsroom desk is noindex rather than a thin indexed page', async () => {
@@ -317,7 +338,7 @@ test('general sitemap: canonical URLs only, real lastmod, no duplicates, no quer
   const xml = sitemapXml({ articles: [carlaCard, satouCard, collapsedDuplicate], players: [{ athlete_id: '4281929' }], teams: [{ team_id: '9' }], games: [{ game_id: '401857190' }], desks: ['brief', 'injury'] });
   const locs = all(xml, /<loc>([^<]*)<\/loc>/g);
   assert.equal(new Set(locs).size, locs.length);
-  for (const must of ['/', '/news', '/news/c/brief', '/news/c/injury', `/news/${carlaCard.slug}`, `/news/${satouCard.slug}`, '/players/4281929', '/teams/9', '/matchups/401857190', '/injuries', '/standings', '/stats', '/about', '/editorial-policy', '/corrections', '/methodology', '/sources']) assert.ok(locs.includes(`${SITE}${must}`), must);
+  for (const must of ['/', '/news', '/news/c/brief', '/news/c/injury', `/news/${carlaCard.slug}`, `/news/${satouCard.slug}`, '/players/4281929', '/teams/9', '/matchups/401857190', '/injuries', '/standings', '/stats', '/winba-score', '/about', '/editorial-policy', '/corrections', '/methodology', '/sources']) assert.ok(locs.includes(`${SITE}${must}`), must);
   assert.ok(!locs.some((l) => l.includes(collapsedDuplicate.slug)));
   assert.ok(!locs.some((l) => /[?#]/.test(l)));
   assert.ok(xml.includes(`<loc>${SITE}/news/${satouCard.slug}</loc><lastmod>${new Date(satouCard.revised_at).toISOString()}</lastmod>`));
@@ -370,6 +391,8 @@ test('share cards state only page facts: no odds, a labelled season line, approv
   assert.ok(tmCard.markPath, 'team share card carries the team mark');
   const pageCard = await cardModel('pages', 'players', api);
   assert.equal(pageCard.title, 'WNBA Players');
+  const winbaCard = await cardModel('pages', 'winba-score', api);
+  assert.equal(winbaCard.title, 'WinBA Score');
   const mu = await cardModel('matchups', '401857190', api);
   assert.equal(mu.title, 'Sun at Dream');
   const text = JSON.stringify([article, pl, mu]);
