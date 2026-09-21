@@ -152,7 +152,35 @@ export function correctMilesRecordCard(card) {
   };
 }
 
-export function correctArticleListResponse(res) {
+export const articleHasPlayer = (card, playerId) => Boolean(card) && (
+  String(card.lead_player_id || '') === String(playerId)
+  || (card.entities || []).some((e) => e?.type === 'player' && String(e.id) === String(playerId))
+);
+
+export const articleHasTeam = (card, teamId) => Boolean(card) && (
+  String(card.lead_team_id || '') === String(teamId)
+  || (card.entities || []).some((e) => e?.type === 'team' && String(e.id) === String(teamId))
+);
+
+export function correctArticleListResponse(res, { playerId = null, teamId = null } = {}) {
   if (!res?.ok || !Array.isArray(res.data?.items)) return res;
-  return { ...res, data: { ...res.data, items: res.data.items.map(correctMilesRecordCard) } };
+  let items = res.data.items.map(correctMilesRecordCard);
+  if (playerId !== null) items = items.filter((c) => articleHasPlayer(c, playerId));
+  if (teamId !== null) items = items.filter((c) => articleHasTeam(c, teamId));
+  return { ...res, data: { ...res.data, items } };
+}
+
+export async function loadCorrectedArticle(api, slug) {
+  const incident = isMilesRecordSlug(slug);
+  const sourceSlug = incident ? MILES_RECORD_BAD_SLUG : slug;
+  const [res, player] = await Promise.all([
+    api.article(sourceSlug),
+    incident && api.player ? Promise.resolve(api.player(MILES_ID)).catch(() => null) : Promise.resolve(null)
+  ]);
+  if (!res?.ok || !res.data?.article) return res;
+  const article = incident
+    ? correctMilesRecordArticle(res.data.article, player?.ok ? player.data : null)
+    : res.data.article;
+  const related = Array.isArray(res.data.related) ? res.data.related.map(correctMilesRecordCard) : res.data.related;
+  return { ...res, data: { ...res.data, article, related } };
 }
