@@ -3,7 +3,7 @@ import { NETWORK, CURRENT_SPORT } from './network.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-20.1';
+export const SHELL_REV = '2026-09-21.2';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -25,6 +25,7 @@ export const SECONDARY_NAV = [
   ['history', '/history', 'History'],
   ['standings', '/standings', 'Standings'],
   ['stats', '/stats', 'Stats'],
+  ['winba-score', '/winba-score', 'WinBA Score'],
   ['teams', '/teams', 'Teams'],
   ['track-record', '/track-record', 'Track Record']
 ];
@@ -124,6 +125,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
             <li><a href="/matchups">Matchups</a></li>
             <li><a href="/injuries">Availability</a></li>
             <li><a href="/pbe-picks/model">PBE methodology</a></li>
+            <li><a href="/winba-score">WinBA Score</a></li>
             <li><a href="/methodology">Data methodology</a></li>
             <li><a href="/about">About the newsroom</a></li>
             <li><a href="/editorial-policy">Editorial policy</a></li>
