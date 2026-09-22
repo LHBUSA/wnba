@@ -7,18 +7,20 @@ import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, fmtTimeET, american,
 import logoManifest from '../../data/team-logos.json' with { type: 'json' };
 import { buildTicker } from '../lib/ticker.js';
 import { countdownLabel, resolveTodayHero } from '../lib/today-hero.js';
+import { currentWinbaEdition, WINBA_INDEX_KIND } from './winba-index.js';
 
 export async function loadToday(api) {
   // The ticker reads the international canonical layer too (live, recent finals, next games); a failure there only
   // removes international items, never the page. Today is explicitly fresh so a live hero is never held by browser TTL.
-  const [today, arts, injuries, standings, intl] = await Promise.all([
+  const [today, arts, injuries, standings, intl, winbaIndexes] = await Promise.all([
     api.today({ fresh: true }),
     api.articles({ limit: 12 }),
     api.injuries(),
     api.standings(),
-    api.intl ? api.intl().catch(() => null) : Promise.resolve(null)
+    api.intl ? api.intl().catch(() => null) : Promise.resolve(null),
+    api.articles({ limit: 24, kind: WINBA_INDEX_KIND }).catch(() => null)
   ]);
-  return { today, arts, injuries, standings, intl };
+  return { today, arts, injuries, standings, intl, winbaIndexes };
 }
 
 /** Returns { body, live } — `live` lets the page pick its poll interval. */
@@ -32,6 +34,26 @@ export function tickerRail(ticker, { freshness = null } = {}) {
       <span class="tk-scroll"><span class="tk-scroll-in ${items.length <= 2 ? 'tk-static' : ''}">${items.map((x) => item(x))}${items.length > 2 ? items.map((x) => item(x, true)) : ''}</span></span>
       ${freshness ? html`<span class="tk-fresh">${freshness}</span>` : ''}
     </div>`;
+}
+
+export function frontPageEditorialStories(stories = [], winbaIndexes = null) {
+  const fresh = [...(stories || [])].sort((a, b) =>
+    String(b?.first_published_at || b?.published_at || '').localeCompare(String(a?.first_published_at || a?.published_at || ''))
+  );
+
+  // A reconstructed historical edition belongs in the archive/series, never in
+  // the live front-page stack. Keep only the current WinBA edition by PERIOD.
+  // Fail closed if the dedicated Index lookup is unavailable: better to omit an
+  // Index from Today than promote an older reconstructed month as breaking news.
+  const currentIndex = winbaIndexes?.ok ? currentWinbaEdition(winbaIndexes) : null;
+
+  return fresh.filter((a) => {
+    if (a?.historical_backfill === true) return false;
+    if (a?.kind !== WINBA_INDEX_KIND) return true;
+    if (!currentIndex) return false;
+    return String(a?.id || '') === String(currentIndex.id || '')
+      || (a?.period && String(a.period) === String(currentIndex.period || ''));
+  });
 }
 
 const signed = (v) => (v === null || v === undefined ? '—' : `${Number(v) > 0 ? '+' : ''}${v}`);
@@ -279,7 +301,7 @@ function renderLiveFront(hero, meta) {
   </section>`;
 }
 
-export function todayView({ today, arts, injuries, standings, intl = null }) {
+export function todayView({ today, arts, injuries, standings, intl = null, winbaIndexes = null }) {
   if (!today?.ok) return { body: errorState(today, 'The WNBA slate'), live: false };
   const d = today.data;
   const slate = d.slate;
@@ -288,15 +310,9 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   const games = slate.games;
   const priced = games.filter((g) => g.market);
   const stories = arts.ok ? arts.data.items : [];
-  // The newsroom endpoint is newest-first, but keep the homepage contract explicit:
-  // the hero is always the freshest editorial origin, never pinned by story kind.
-  const freshStories = [...stories].sort((a, b) =>
-    String(b.first_published_at || b.published_at || '').localeCompare(String(a.first_published_at || a.published_at || ''))
-  );
-  // Historical WinBA backfills belong in the newsroom archive and series pages,
-  // not in the live Today/front-page news stack. They are newly published records
-  // of older periods, so sorting by publication time must not make them headline news.
-  const frontPageStories = freshStories.filter((a) => a?.historical_backfill !== true);
+  // The newsroom endpoint is newest-first, but keep the homepage contract explicit.
+  // Historical WinBA backfills are publication-history records, not current news.
+  const frontPageStories = frontPageEditorialStories(stories, winbaIndexes);
   const leadStory = frontPageStories[0];
   const secondaryStories = frontPageStories.filter((c) => c.id !== leadStory?.id).slice(0, 3);
   const heroStoryIds = new Set([leadStory?.id, ...secondaryStories.map((c) => c.id)].filter(Boolean));
