@@ -170,7 +170,7 @@ test('a material brief is a reader-first PBE article with grounded basketball co
   assert.equal(a.headline, 'Portland Fire sign Carla Leite, adding another option to the rotation');
   assert.doesNotMatch(a.headline, /^Swish Appeal:|the report and/);
   assert.match(a.deck, /^Carla Leite is averaging 16\.4 points in 27\.4 minutes per game/);
-  assert.deepEqual(a.sections.map((x) => x.title), ['The move', 'Where she fits', 'The Fire context', 'Next game']);
+  assert.deepEqual(a.sections.map((x) => x.title), ['The move', 'Where she fits', 'The Portland Fire context', 'Next game']);
   const text = a.body.join('\n');
   assert.match(text, /Carla Leite is part of a reported roster move involving the Portland Fire/);
   assert.match(text, /Carla Leite has averaged 16\.4 points, 2 rebounds and 6 assists in 27\.4 minutes across 7 games/);
