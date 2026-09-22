@@ -62,10 +62,6 @@
       "destination": "/app-shell.html"
     },
     {
-      "source": "/preview/article/:slug",
-      "destination": "/app-shell.html"
-    },
-    {
       "source": "/",
       "destination": "https://wnba-web.sales-fd3.workers.dev/"
     },
