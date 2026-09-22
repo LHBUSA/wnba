@@ -113,7 +113,11 @@ function lineSeriesFigure(spec) {
   const x = (i) => (n === 1 ? padL + plotW / 2 : padL + (i * plotW) / (n - 1));
   const y = (v) => padT + (1 - (v - a.min) / (a.max - a.min)) * plotH;
 
-  const coords = pts.map((p, i) => ({ ...p, cx: x(i), cy: y(p.value) }));
+  // The outermost columns sit on the frame edge, so their labels are anchored
+  // inwards rather than centred: a centred label on the last point runs off the
+  // card, and a centred label on the first one lands on the axis ticks.
+  const anchor = (i) => (i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle');
+  const coords = pts.map((p, i) => ({ ...p, cx: x(i), cy: y(p.value), anchor: anchor(i) }));
   const line = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.cx.toFixed(1)} ${c.cy.toFixed(1)}`).join(' ');
   const area = `${line} L${coords.at(-1).cx.toFixed(1)} ${(padT + plotH).toFixed(1)} L${coords[0].cx.toFixed(1)} ${(padT + plotH).toFixed(1)} Z`;
   const gid = `pvg-${spec.id}`;
@@ -147,12 +151,12 @@ function lineSeriesFigure(spec) {
         <line class="pv-stem" x1="${c.cx.toFixed(1)}" y1="${c.cy.toFixed(1)}" x2="${c.cx.toFixed(1)}" y2="${(padT + plotH).toFixed(1)}"/>
         <circle class="pv-dot-halo" cx="${c.cx.toFixed(1)}" cy="${c.cy.toFixed(1)}" r="${last ? 13 : 0}"/>
         <circle class="pv-dot" cx="${c.cx.toFixed(1)}" cy="${c.cy.toFixed(1)}" r="${last ? 8 : 6}"/>
-        <text class="pv-value" x="${c.cx.toFixed(1)}" y="${valueY.toFixed(1)}" text-anchor="middle">${f1(c.value)}</text>
-        ${c.annotation ? html`<text class="pv-rank" x="${c.cx.toFixed(1)}" y="${rankY.toFixed(1)}" text-anchor="middle">${c.annotation}</text>` : ''}
-        <text class="pv-xlabel" x="${c.cx.toFixed(1)}" y="${(padT + plotH + 34).toFixed(1)}" text-anchor="middle">${c.short_label}</text>
+        <text class="pv-value" x="${c.cx.toFixed(1)}" y="${valueY.toFixed(1)}" text-anchor="${c.anchor}">${f1(c.value)}</text>
+        ${c.annotation ? html`<text class="pv-rank" x="${c.cx.toFixed(1)}" y="${rankY.toFixed(1)}" text-anchor="${c.anchor}">${c.annotation}</text>` : ''}
+        <text class="pv-xlabel" x="${c.cx.toFixed(1)}" y="${(padT + plotH + 34).toFixed(1)}" text-anchor="${c.anchor}">${c.short_label}</text>
       </g>`;
     })}
-    <text class="pv-unit" x="${padL - 12}" y="${padT - 26}" text-anchor="end">${VISUAL_UNITS[spec.unit]?.label || ''}</text>
+    <text class="pv-unit" x="${padL}" y="${padT - 28}" text-anchor="start">${VISUAL_UNITS[spec.unit]?.label || ''}</text>
   </svg>`;
 }
 

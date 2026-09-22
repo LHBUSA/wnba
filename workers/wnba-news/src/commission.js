@@ -216,7 +216,7 @@ function composeReese(ctx) {
       id: 'reese-climb',
       title: `${subject.name}'s WinBA climb`,
       subtitle: 'Monthly WinBA Score, with her league rank at each frozen snapshot',
-      caption: `Frozen monthly ${WINBA_LABEL} snapshots. ${winbaPeriodLabel(sept.period)} reflects the current published ${WINBA_INDEX_SERIES}.`,
+      caption: `Frozen monthly ${WINBA_LABEL} snapshots. ${winbaPeriodLabel(sept.period)} is the currently published edition of ${WINBA_INDEX_SERIES}.`,
       entity: { type: 'player', id: String(subject.id), name: subject.name, team_id: team?.team_id ? String(team.team_id) : null },
       unit: 'winba_score',
       points: traj,
