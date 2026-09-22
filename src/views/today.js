@@ -212,6 +212,64 @@ function renderHeroMeta(meta, live) {
   </div>`;
 }
 
+function renderHomepageMasthead({ hero, games, priced }) {
+  const g = hero.primary;
+  const state = g ? gameState(g) : null;
+  const deskLabel = hero.mode === 'FINAL'
+    ? 'Latest final'
+    : hero.mode === 'DELAYED'
+      ? 'Schedule watch'
+      : hero.mode === 'OFFDAY'
+        ? 'Next WNBA game'
+        : 'Next tip';
+  const matchup = g ? `${teamAbbr(g.away)} @ ${teamAbbr(g.home)}` : 'WNBA desk online';
+  const when = g
+    ? `${fmtDateET(g.start_utc, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTimeET(g.start_utc)}`
+    : 'Newsroom, availability and model surfaces stay current';
+  const market = g?.market
+    ? `${teamAbbr(g.home)} ${signed(g.market.spread?.home_line)} · Total ${g.market.total?.line ?? '—'}`
+    : priced.length
+      ? `${priced.length} priced game${priced.length === 1 ? '' : 's'} on the current slate`
+      : 'Market data appears only after a verified snapshot is published';
+  const castHref = g ? `/cast/${g.game_id}` : '/cast';
+
+  return html`<section class="home-masthead" aria-label="PropBetEdge WNBA intelligence">
+    <div class="home-masthead-copy">
+      <span class="home-masthead-kicker"><i></i>Real-time data · proprietary models · WNBA-native newsroom</span>
+      <h1>WNBA intelligence <em>that gives you the edge.</em></h1>
+      <p>Real-time news, PBE Picks, props, matchup research, WNBACast and WinBA Score — built as one WNBA-native research desk.</p>
+      <div class="home-masthead-actions">
+        <a class="btn gold" href="/pbe-picks">View PBE Picks →</a>
+        <a class="btn" href="${castHref}">Explore WNBACast →</a>
+        <a class="home-masthead-pro" href="/pro">WNBA Pro →</a>
+      </div>
+    </div>
+
+    <aside class="home-masthead-now" aria-label="Current WNBA desk">
+      <div class="home-now-head">
+        <span class="eyebrow">${deskLabel}</span>
+        <span class="home-now-presence"><i></i>Current</span>
+      </div>
+      <a class="home-now-game" href="${castHref}">
+        <b>${matchup}</b>
+        <span>${state?.label || when}</span>
+        <small>${state ? when : ''}</small>
+      </a>
+      <div class="home-now-market">
+        <span>Market context</span>
+        <b>${market}</b>
+      </div>
+    </aside>
+
+    <nav class="home-capabilities" aria-label="WNBA research tools">
+      <a href="/pbe-picks"><b>PBE Picks</b><span>Model calls + track record</span></a>
+      <a href="/props"><b>Best Line</b><span>Props + book comparison</span></a>
+      <a href="${castHref}"><b>WNBACast</b><span>Live + replay intelligence</span></a>
+      <a href="/winba-score"><b>WinBA Score</b><span>Player winning impact</span></a>
+    </nav>
+  </section>`;
+}
+
 function renderEditorialFront(leadStory, secondaryStories) {
   return html`<section class="editorial-front" aria-label="Top WNBA stories">
     <div class="sec-head sports-front-head">
@@ -333,6 +391,8 @@ export function todayView({ today, arts, injuries, standings, intl = null, winba
 
   return { live: live || intlLive, body: html`
     ${tickerRail(ticker, { freshness: today.meta?.served_at ? `Updated ${relTime(today.meta.served_at)}` : null })}
+
+    ${!live ? renderHomepageMasthead({ hero, games, priced }) : ''}
 
     ${live
       ? html`${renderLiveFront(hero, today.meta)}${renderEditorialFront(leadStory, secondaryStories)}`
