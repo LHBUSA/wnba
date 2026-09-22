@@ -93,6 +93,11 @@ export const wordCount = (a) => [a.headline, a.deck, ...(a.body || [])].join(' '
  * and the named subject.
  */
 function keywordsOf(a) {
+  // A commissioned feature declares its own keyword set, built from what it
+  // actually contains rather than from its desk.
+  if (Array.isArray(a.seo?.keywords) && a.seo.keywords.length) {
+    return [...new Set([...a.seo.keywords, 'WNBA'].filter(Boolean))].slice(0, 8).join(', ');
+  }
   const out = [];
   if (a.kind === 'winba_index') {
     out.push('WinBA Score', 'WNBA player rankings', 'WNBA player ratings', a.period_label ? `WinBA Index ${a.period_label}` : 'The WinBA Index');
@@ -120,7 +125,9 @@ export function newsArticle(a, meta) {
     ? lead.filter((e) => e.type === 'metric'
       || (e.type === 'player' && String(e.id) === String(a.lead_player_id))
       || (e.type === 'team' && String(e.id) === String(a.lead_team_id)))
-    : lead.filter((e) => (e.type === 'player' && String(e.id) === String(a.lead_player_id)) || (e.type === 'team' && String(e.id) === String(a.lead_team_id)) || (e.type === 'game' && a.kind === 'preview'));
+    : lead.filter((e) => (e.type === 'player' && String(e.id) === String(a.lead_player_id)) || (e.type === 'team' && String(e.id) === String(a.lead_team_id)) || (e.type === 'game' && a.kind === 'preview')
+      // A feature built on a PropBetEdge metric is partly ABOUT that metric.
+      || (e.type === 'metric' && a.winba_reference));
   // Ranked players and their teams, capped so the graph stays a document
   // description rather than a database dump.
   const mentions = lead.filter((e) => !about.includes(e)).slice(0, isIndex ? 16 : 24);

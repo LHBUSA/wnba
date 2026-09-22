@@ -14,6 +14,7 @@ import { intelligenceOf } from '../lib/intelligence.js';
 import { gameHighlights } from '../ui/video.js';
 import { winbaSeriesNav, winbaSeriesNavView, winbaIndexCards, WINBA_INDEX_KIND } from './winba-index.js';
 import { winbaIndexLeaderboard, winbaTeamDepth, winbaIndexAside } from './winba-leaderboard.js';
+import { sectionVisual } from './visuals.js';
 
 // A `metric` entity carries no id-based route: it is the canonical explainer
 // for a PropBetEdge statistic. Routing it here lets the generator keep URLs out
@@ -107,7 +108,8 @@ const DESK_LINKS = {
   props: [['/props', 'Player props & best lines'], ['/news/c/props', 'More Prop Watch']],
   market: [['/props', 'Best-line board'], ['/news/c/market', 'More Market Watch']],
   brief: [['/news/c/brief', 'More News Briefs'], ['/injuries', 'Injury Desk']],
-  international: [['/international', 'International women’s basketball'], ['/news/c/international', 'More international stories']]
+  international: [['/international', 'International women’s basketball'], ['/news/c/international', 'More international stories']],
+  commissioned_feature: [['/winba-score', 'WinBA Score: the full methodology'], ['/news/winba-index', 'The WinBA Index: every monthly edition']]
 };
 
 const REVISION_LABEL = { data_update: 'Updated with new source data', editorial_upgrade: 'Rewritten by an improved generator (no facts changed)', editorial_quality_upgrade: 'Editorial quality upgrade (same facts)', depth_upgrade: 'Developed into a fuller story', metadata_correction: 'Timestamp metadata corrected', integrity_correction: 'Newsroom integrity correction', integrity_retirement: 'Removed from live listings after integrity audit', integrity_restoration: 'Restored to live listings: the integrity failure did not hold', demoted_to_external_coverage: 'Moved to external coverage' };
@@ -214,7 +216,8 @@ export function articleView({ article: a, related = [], series = [] }) {
       ${a.external_coverage ? html`<aside class="coverage-note" role="note"><b>Moved to external coverage.</b> This item was a note on another publisher’s feature rather than a newsroom event, so it is no longer listed in the PropBetEdge newsroom. ${a.external_coverage.source_url ? html`Read <a href="${a.external_coverage.source_url}" rel="noopener" target="_blank">${a.external_coverage.source_name || 'the original report'} ↗</a>. ` : ''}The record below is kept for transparency.</aside>` : ''}
       <header class="story-head">
         <div class="story-kicker">
-          <a class="cat" href="/news/c/${deskKind}">${DESK[a.kind] || KIND_LABEL[a.kind] || a.category}</a>
+          <a class="cat" href="${a.commission ? '/news' : `/news/c/${deskKind}`}">${DESK[a.kind] || KIND_LABEL[a.kind] || a.category}</a>
+          ${a.commission ? html`<span class="commission-chip">Commissioned feature</span>` : ''}
           <span class="story-teams">${teams.slice(0, 2).map((t) => html`<a href="/teams/${t.id}" aria-label="${t.name}">${teamLogo({ team_id: t.id, name: t.name }, 26)}</a>`)}</span>
         </div>
         <h1>${headlineText(a.headline)}</h1>
@@ -232,12 +235,13 @@ export function articleView({ article: a, related = [], series = [] }) {
           ${winba ? html`<a href="${METRIC_HREF.winba}" title="WinBA Score — PropBetEdge overall WNBA player rating">WinBA ${Math.round(winba.score)}</a>` : ''}
         </nav>` : ''}
         ${seriesNav ? winbaSeriesNavView(seriesNav) : ''}
+        ${a.commission?.note ? html`<p class="commission-note"><b>Why we commissioned this.</b> ${a.commission.note}</p>` : ''}
       </header>
 
       <div class="story-layout ${indexAside ? 'story-layout--index' : ''}">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : indexDepth && s.render === 'winba_team_depth' ? indexDepth : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
+            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : indexDepth && s.render === 'winba_team_depth' ? indexDepth : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${sectionVisual(a, s)}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
             : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">

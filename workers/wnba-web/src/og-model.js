@@ -114,6 +114,27 @@ export async function cardModel(kind, key, api) {
         fallback: a.media?.og || DEFAULT_SHARE
       };
     }
+    // A commissioned feature gets a restrained data treatment over its subject's
+    // approved photograph: the frozen rank and rating, and the monthly rank motif
+    // read straight off the article's own frozen chart payload. The text sits in
+    // the card's dark left panel, so it never covers the subject.
+    if (a.kind === 'commissioned_feature' && a.winba_reference) {
+      const ref = a.winba_reference;
+      const climb = (a.visuals || []).find((v) => v.type === 'line_series');
+      const ranks = (climb?.series || []).map((pt) => pt.rank).filter((r) => r !== null && r !== undefined);
+      const photo = a.media?.og || null;
+      const teamColor = teamColors({ team_id: a.lead_team_id }).color;
+      return {
+        kicker: 'PropBetEdge Features · WinBA Score',
+        title: clip(a.headline, 150),
+        sub: `No. ${ref.rank} · ${one(ref.score)} WinBA`,
+        detail: ranks.length >= 2 ? `Monthly ranks ${ranks.join(' · ')}` : null,
+        footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
+        photoPath: photo,
+        colors: [color(teamColor, '#2a241c'), color(teamColor, '#3a2f22')],
+        fallback: photo || DEFAULT_SHARE
+      };
+    }
     const photoPath = a.media?.og || null;
     const teams = (a.media?.teams || []).map((t) => teamColors({ team_id: t }).color);
     return {

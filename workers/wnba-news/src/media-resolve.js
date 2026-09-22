@@ -116,9 +116,9 @@ export function internationalMediaFrom(PLAYERS, a) {
 // winba_index leads with the board's top-rated player, resolved through the same
 // approved-subject path as every other single-subject desk: an unapproved or
 // unidentified player yields no photo rather than a stand-in.
-const SINGLE = new Set(['injury', 'transaction', 'performance', 'result', 'props', 'brief', 'winba_index']);
+const SINGLE = new Set(['injury', 'transaction', 'performance', 'result', 'props', 'brief', 'winba_index', 'commissioned_feature']);
 const MATCHUP = new Set(['preview', 'market']);
-const DESK_VISUAL = { injury: 'Injury Desk', transaction: 'Roster Moves', performance: 'Game Recap', result: 'Game Recap', preview: 'Matchup Preview', trend: 'Team Trends', props: 'Prop Watch', market: 'Market Watch', brief: 'News Brief', international: 'International', winba_index: 'The WinBA Index' };
+const DESK_VISUAL = { injury: 'Injury Desk', transaction: 'Roster Moves', performance: 'Game Recap', result: 'Game Recap', preview: 'Matchup Preview', trend: 'Team Trends', props: 'Prop Watch', market: 'Market Watch', brief: 'News Brief', international: 'International', winba_index: 'The WinBA Index', commissioned_feature: 'PropBetEdge Features' };
 const idsOf = (xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').map(String);
 
 /**

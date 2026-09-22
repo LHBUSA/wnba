@@ -21,6 +21,12 @@ const TOKEN = fs.readFileSync('.admin-token', 'utf8').trim();
 const INGEST = 'https://wnba-ingest.sales-fd3.workers.dev';
 const API = 'https://wnba-api.propbetedge.ai';
 const FROZEN_AT = opt('at', new Date().toISOString());
+// A freeze instant in the future is not provenance, it is a placeholder, and a
+// board carrying one gets retired by the identity audit the moment it is read.
+if (!(Date.parse(FROZEN_AT) <= Date.now() + 60e3)) {
+  console.error(`refusing --at=${FROZEN_AT}: a board cannot be frozen in the future`);
+  process.exit(2);
+}
 
 const get = async (url, headers = {}) => {
   const r = await fetch(url, { headers });

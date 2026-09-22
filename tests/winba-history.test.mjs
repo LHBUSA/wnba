@@ -15,6 +15,9 @@ const doc = (id, startUtc, home, away, players) => ({
     box: { players }
   }
 });
+// These fixtures replay months that are later than the real clock, so the
+// freeze guard is handed the fixture's own instant.
+const NOW = Date.parse('2026-11-04T00:00:00.000Z');
 const line = (athleteId, name, teamId, over = {}) => ({ athlete_id: athleteId, name, team_id: teamId, min: 32, pts: 20, reb: 6, ast: 4, ...over });
 
 // Twelve June games, then twelve more in July. A June board must not see July.
@@ -48,8 +51,8 @@ test('games played after the cutoff cannot change a historical board', () => {
   const withJuly = buildWinbaSnapshotAsOf([...JUNE, ...JULY], { season: 2026, asOf: '2026-07-01T00:00:00.000Z' });
   assert.equal(juneOnly.games_used, 12);
   assert.equal(withJuly.games_used, 12, 'July games are not in the June window');
-  const a = freezeWinbaMonthly(juneOnly, { period: '2026-06', at: '2026-11-02T10:00:00.000Z' });
-  const b = freezeWinbaMonthly(withJuly, { period: '2026-06', at: '2026-11-02T10:00:00.000Z' });
+  const a = freezeWinbaMonthly(juneOnly, { period: '2026-06', at: '2026-09-02T10:00:00.000Z' });
+  const b = freezeWinbaMonthly(withJuly, { period: '2026-06', at: '2026-09-02T10:00:00.000Z' });
   assert.equal(hash(a), hash(b), 'the June board is identical with July present or absent');
   // July's own board does see them.
   const july = buildWinbaSnapshotAsOf([...JUNE, ...JULY], { season: 2026, asOf: '2026-08-01T00:00:00.000Z' });
@@ -58,11 +61,11 @@ test('games played after the cutoff cannot change a historical board', () => {
 
 test('a later team change cannot rewrite a historical team assignment', () => {
   const june = buildWinbaSnapshotAsOf(JUNE, { season: 2026, asOf: '2026-07-01T00:00:00.000Z' });
-  const frozen = freezeWinbaMonthly(june, { period: '2026-06', at: '2026-11-02T10:00:00.000Z' });
+  const frozen = freezeWinbaMonthly(june, { period: '2026-06', at: '2026-09-02T10:00:00.000Z' });
   assert.equal(frozen.rows.find((r) => r.player_id === '1').team_id, '8', 'the team she played for in June');
   // Today's dictionary says she is elsewhere; the frozen board is unmoved.
   const traded = freezeWinbaMonthly(june, {
-    period: '2026-06', at: '2026-11-02T10:00:00.000Z',
+    period: '2026-06', at: '2026-09-02T10:00:00.000Z',
     playerById: new Map([['1', { name: 'June Star', team_id: '99' }]]),
     teamById: new Map([['99', { name: 'Somewhere Else' }]])
   });
@@ -72,20 +75,20 @@ test('a later team change cannot rewrite a historical team assignment', () => {
 test('current roster status cannot remove a player who qualified historically', () => {
   const june = buildWinbaSnapshotAsOf(JUNE, { season: 2026, asOf: '2026-07-01T00:00:00.000Z' });
   // An empty roster dictionary: every player is "off roster" today.
-  const frozen = freezeWinbaMonthly(june, { period: '2026-06', at: '2026-11-02T10:00:00.000Z', playerById: new Map(), teamById: new Map() });
+  const frozen = freezeWinbaMonthly(june, { period: '2026-06', at: '2026-09-02T10:00:00.000Z', playerById: new Map(), teamById: new Map() });
   assert.ok(frozen.rows.length >= 1);
   assert.ok(frozen.rows.some((r) => r.player_id === '1'), 'she stays on the board');
 });
 
 test('a frozen board is deterministic across repeated builds', () => {
   const june = buildWinbaSnapshotAsOf(JUNE, { season: 2026, asOf: '2026-07-01T00:00:00.000Z' });
-  const hashes = [1, 2, 3, 4].map(() => hash(freezeWinbaMonthly(june, { period: '2026-06', at: '2026-11-02T10:00:00.000Z' })));
+  const hashes = [1, 2, 3, 4].map(() => hash(freezeWinbaMonthly(june, { period: '2026-06', at: '2026-09-02T10:00:00.000Z' })));
   assert.equal(new Set(hashes).size, 1, `expected one hash, saw ${new Set(hashes).size}`);
 });
 
 test('movement between historical months comes only from frozen ranks', () => {
-  const june = freezeWinbaMonthly(buildWinbaSnapshotAsOf(JUNE, { season: 2026, asOf: '2026-07-01T00:00:00.000Z' }), { period: '2026-06', at: '2026-11-02T10:00:00.000Z' });
-  const july = freezeWinbaMonthly(buildWinbaSnapshotAsOf([...JUNE, ...JULY], { season: 2026, asOf: '2026-08-01T00:00:00.000Z' }), { period: '2026-07', at: '2026-11-02T10:00:00.000Z' });
+  const june = freezeWinbaMonthly(buildWinbaSnapshotAsOf(JUNE, { season: 2026, asOf: '2026-07-01T00:00:00.000Z' }), { period: '2026-06', at: '2026-09-02T10:00:00.000Z' });
+  const july = freezeWinbaMonthly(buildWinbaSnapshotAsOf([...JUNE, ...JULY], { season: 2026, asOf: '2026-08-01T00:00:00.000Z' }), { period: '2026-07', at: '2026-09-02T10:00:00.000Z' });
   const m = winbaMovement(july, june);
   assert.equal(m.from_period, '2026-06');
   assert.equal(m.to_period, '2026-07');
@@ -109,12 +112,12 @@ test('a re-freeze refuses to change a published board', async () => {
     putArticle: async (a) => { articles.set(a.id, a); }
   };
   const snap = buildWinbaSnapshotAsOf(JUNE, { season: 2026, asOf: '2026-07-01T00:00:00.000Z' });
-  monthly.set('2026-06', freezeWinbaMonthly(snap, { period: '2026-06', at: '2026-11-02T10:00:00.000Z' }));
+  monthly.set('2026-06', freezeWinbaMonthly(snap, { period: '2026-06', at: '2026-09-02T10:00:00.000Z' }));
   const before = JSON.parse(JSON.stringify(monthly.get('2026-06')));
 
   // A snapshot whose ranks differ from the published board.
   const moved = { ...snap, rows: snap.rows.map((r) => ({ ...r, score: r.athlete_id === '2' ? 99 : r.score, rank: r.athlete_id === '2' ? 1 : 2 })) };
-  const res = await runWinbaIndex({ period: '2026-06', snapshot: moved, at: '2026-11-03T10:00:00.000Z', force: true, refreeze: true, ...io });
+  const res = await runWinbaIndex({ period: '2026-06', snapshot: moved, at: '2026-11-03T10:00:00.000Z', force: true, refreeze: true, ...io , now: NOW });
   assert.equal(res.status, 'refreeze_refused');
   assert.deepEqual(monthly.get('2026-06'), before, 'the published board is untouched');
 });

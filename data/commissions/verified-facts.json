@@ -1,0 +1,58 @@
+{
+  "note": "Externally verified facts cited by commissioned features. PropBetEdge holds no career-history or awards data of its own: our archive is the 2026 season only. Anything in this file was read from an official league or club page at `captured_at` and is cited in the article's evidence list with that URL. Nothing here may be edited without re-reading the source, and nothing may be added that the source does not state.",
+  "facts": {
+    "wilson_official_profile": {
+      "subject": { "type": "player", "id": "3149391", "name": "A'ja Wilson" },
+      "source": "WNBA.com official player profile",
+      "publisher": "WNBA",
+      "url": "https://www.wnba.com/player/1628932/aja-wilson",
+      "captured_at": "2026-09-21T23:52:00.000Z",
+      "honours": [
+        { "key": "mvp", "count": 4, "label": "WNBA MVP", "plural": "MVP awards", "verbatim": "4x WNBA MVP" },
+        { "key": "championship", "count": 3, "label": "WNBA champion", "plural": "WNBA championships", "verbatim": "3x WNBA Champion" },
+        { "key": "finals_mvp", "count": 2, "label": "Finals MVP", "plural": "Finals MVP awards", "verbatim": "2x WNBA Finals MVP" },
+        { "key": "dpoy", "count": 3, "label": "Defensive Player of the Year", "plural": "Defensive Player of the Year awards", "verbatim": "3x WNBA Defensive Player of the Year" },
+        { "key": "all_wnba_first", "count": 5, "label": "All-WNBA First Team", "plural": "All-WNBA First Team selections", "verbatim": "5x All-WNBA First Team" }
+      ],
+      "career_line": {
+        "window": "career, through the 2026 regular season",
+        "verbatim": { "pts": "22.0", "reb": "9.3", "ast": "2.4" }
+      },
+      "season_line_2026": {
+        "window": "2026 regular season",
+        "verbatim": { "pts": "26.2", "reb": "9.3", "ast": "3.2" },
+        "reconciliation": "Identical to PropBetEdge's own 2026 season aggregate (26.2 / 9.3 / 3.2). The two sources agree, so the article prints our own number."
+      }
+    },
+    "reese_official_profile": {
+      "subject": { "type": "player", "id": "4433402", "name": "Angel Reese" },
+      "source": "WNBA.com official player profile",
+      "publisher": "WNBA",
+      "url": "https://www.wnba.com/player/1642291/angel-reese",
+      "captured_at": "2026-09-21T23:54:00.000Z",
+      "team_verbatim": "Atlanta Dream",
+      "season_line_2026": {
+        "window": "2026 regular season",
+        "verbatim": { "pts": "16.6", "reb": "12.3", "ast": "2.8" },
+        "reconciliation": "Identical to PropBetEdge's own 2026 season aggregate (16.6 / 12.3 / 2.8). The two sources agree, so the article prints our own number."
+      },
+      "honours": []
+    },
+    "reese_dream_season_awards": {
+      "subject": { "type": "player", "id": "4433402", "name": "Angel Reese" },
+      "source": "Atlanta Dream 2026 season player awards",
+      "publisher": "Atlanta Dream (dream.wnba.com)",
+      "url": "https://dream.wnba.com/atlanta-dream-end-of-season-player-awards",
+      "captured_at": "2026-09-21T23:56:00.000Z",
+      "season": "2026",
+      "awards_verbatim": "DEFENSIVE PLAYER OF THE YEAR • ALL-WNBA • ALL-DEFENSIVE TEAM",
+      "records_verbatim": [
+        "owns the WNBA single-season record for total rebounds",
+        "owns the WNBA single-season record for offensive rebounds",
+        "the WNBA record for the most double-doubles in a single season"
+      ],
+      "double_doubles": 29,
+      "attribution_rule": "Cite as what the Dream's own 2026 season-awards page states. Do not restate as an unattributed league fact, and do not characterise the Defensive Player of the Year award as outright or shared: the page does not say which."
+    }
+  }
+}

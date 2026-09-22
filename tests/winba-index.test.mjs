@@ -19,6 +19,9 @@ import {
 
 const SNAP_AT = '2026-09-21T03:17:45.205Z';
 const AT = '2026-09-30T22:00:00.000Z';
+// These fixtures model a closed ranking period, which is later than the real
+// clock while the season is live, so the freeze guard is given that instant.
+const NOW = Date.parse('2026-10-02T00:00:00.000Z');
 
 const mkRow = (id, name, score, teamId, teamName, over = {}) => ({
   athlete_id: id, name, team_id: teamId, score, qualified: true,
@@ -81,7 +84,7 @@ const TEAMS = new Map([
 ]);
 
 const freeze = (period = '2026-09', snap = SNAP) =>
-  freezeWinbaMonthly(snap, { period, playerById: PLAYERS, teamById: TEAMS, at: AT });
+  freezeWinbaMonthly(snap, { period, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW });
 
 // ------------------------------------------------------------------- periods
 
@@ -145,7 +148,7 @@ test('roster attributes are resolved at freeze time, so a later trade cannot rew
   traded.set('17', { team_id: '17', name: 'Somewhere Else', short_name: 'Else' });
   // The already-frozen board is unaffected by any later dictionary.
   assert.equal(f.rows[1].team_name, 'Las Vegas Aces');
-  const refrozen = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: PLAYERS, teamById: traded, at: AT });
+  const refrozen = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: PLAYERS, teamById: traded, at: AT, now: NOW });
   assert.equal(refrozen.rows[1].team_name, 'Somewhere Else');
   assert.equal(f.rows[1].team_name, 'Las Vegas Aces', 'the original object must not be mutated');
 });
@@ -257,7 +260,7 @@ test('the leaders section is marked for card rendering but keeps readable paragr
 
 test('sections render only when their facts exist', () => {
   const noPositions = new Map([...PLAYERS].map(([k, v]) => [k, { ...v, position: null, experience_years: null }]));
-  const f = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: noPositions, teamById: TEAMS, at: AT });
+  const f = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: noPositions, teamById: TEAMS, at: AT, now: NOW });
   const a = composeWinbaIndex(f, { movement: null });
   const titles = a.sections.map((s) => s.title);
   assert.ok(!titles.includes('Who leads each position'));
@@ -292,7 +295,7 @@ test('one Index per calendar month: twelve cron firings produce one article', as
     results.push(await runWinbaIndex({
       period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
       at: `2026-09-30T${String(10 + i).padStart(2, '0')}:00:00.000Z`, ...h.io
-    }));
+    , now: NOW }));
   }
   assert.equal(results[0].status, 'published');
   assert.ok(results.slice(1).every((r) => r.status === 'already_published'), 'every later run is a no-op');
@@ -302,7 +305,7 @@ test('one Index per calendar month: twelve cron firings produce one article', as
 
 test('a rerun preserves published_at and never rewrites history', async () => {
   const h = harness();
-  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   const original = h.articles.get(first.id);
   assert.equal(original.published_at, AT);
   assert.equal(original.first_published_at, AT);
@@ -313,7 +316,7 @@ test('a rerun preserves published_at and never rewrites history', async () => {
   const again = await runWinbaIndex({
     period: '2026-09', snapshot: moved, playerById: PLAYERS, teamById: TEAMS,
     at: '2026-10-20T04:00:00.000Z', force: true, ...h.io
-  });
+  , now: NOW });
   const after = h.articles.get(again.id);
   assert.equal(after.published_at, AT, 'published_at is immutable');
   assert.equal(after.first_published_at, AT);
@@ -324,12 +327,12 @@ test('a rerun preserves published_at and never rewrites history', async () => {
 
 test('a stored Index keeps its numbers after the live leaderboard changes', async () => {
   const h = harness();
-  const res = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const res = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   const published = JSON.parse(JSON.stringify(h.articles.get(res.id)));
   await runWinbaIndex({
     period: '2026-10',
     snapshot: { ...SNAP, generated_at: '2026-10-31T03:00:00.000Z', rows: SNAP.rows.map((r) => ({ ...r, score: r.athlete_id === '3149391' ? 95 : r.score === 87 ? 70 : r.score })) },
-    playerById: PLAYERS, teamById: TEAMS, at: '2026-10-31T22:00:00.000Z', ...h.io
+    playerById: PLAYERS, teamById: TEAMS, at: '2026-10-31T22:00:00.000Z', now: Date.parse('2026-11-01T00:00:00.000Z'), ...h.io
   });
   assert.equal(h.articles.size, 2);
   const september = h.articles.get(res.id);
@@ -339,14 +342,14 @@ test('a stored Index keeps its numbers after the live leaderboard changes', asyn
 
 test('the October Index links back to September and measures movement against it', async () => {
   const h = harness();
-  await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   const oct = await runWinbaIndex({
     period: '2026-10',
     snapshot: { ...SNAP, generated_at: '2026-10-31T03:00:00.000Z', rows: withRanks(SNAP.rows.map((r) => ({
       ...r,
       score: r.athlete_id === '3149391' ? 90 : r.athlete_id === '4433791' ? 85 : r.athlete_id === '4433402' ? 84 : r.score
     }))) },
-    playerById: PLAYERS, teamById: TEAMS, at: '2026-10-31T22:00:00.000Z', ...h.io
+    playerById: PLAYERS, teamById: TEAMS, at: '2026-10-31T22:00:00.000Z', now: Date.parse('2026-11-01T00:00:00.000Z'), ...h.io
   });
   const a = h.articles.get(oct.id);
   assert.equal(oct.movement, true);
@@ -359,14 +362,14 @@ test('the October Index links back to September and measures movement against it
 test('a board too thin to support a feature is held, not padded', async () => {
   const h = harness();
   const thin = { ...SNAP, qualified_count: 1, rows: withRanks([mkRow('4433791', 'Olivia Miles', 87, '8', 'Minnesota Lynx')]) };
-  const res = await runWinbaIndex({ period: '2026-09', snapshot: thin, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const res = await runWinbaIndex({ period: '2026-09', snapshot: thin, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   assert.equal(res.status, 'held_thin');
   assert.equal(h.articles.size, 0);
 });
 
 test('no snapshot means no article', async () => {
   const h = harness();
-  const res = await runWinbaIndex({ period: '2026-09', snapshot: null, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const res = await runWinbaIndex({ period: '2026-09', snapshot: null, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   assert.equal(res.status, 'no_snapshot');
   assert.equal(h.articles.size, 0);
 });
@@ -388,7 +391,7 @@ test('a mid-month board never claims the month finished', () => {
 });
 
 test('a board frozen after the month closes reports it as finished', () => {
-  const closed = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: '2026-10-01T12:00:00.000Z' });
+  const closed = freezeWinbaMonthly(SNAP, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: '2026-10-01T12:00:00.000Z', now: NOW });
   assert.equal(closed.period_complete, true);
   const text = composeWinbaIndex(closed, { movement: null }).body.join(' ');
   assert.match(text, /finishes September 2026 at the top/);
@@ -445,12 +448,12 @@ test('the leaderboard points at the newest published Index and survives having n
 
 test('a regeneration records revised_at while published_at never moves', async () => {
   const h = harness();
-  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   assert.equal(h.articles.get(first.id).revised_at, null, 'a first publication is not a revision');
   const again = await runWinbaIndex({
     period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
     at: '2026-10-02T09:00:00.000Z', force: true, ...h.io
-  });
+  , now: NOW });
   const a = h.articles.get(again.id);
   assert.equal(a.published_at, AT);
   assert.equal(a.first_published_at, AT);
@@ -460,10 +463,10 @@ test('a regeneration records revised_at while published_at never moves', async (
 
 test('revisions accumulate across regenerations instead of overwriting', async () => {
   const h = harness();
-  const r = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const r = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   assert.equal(h.articles.get(r.id).revisions.length, 0);
   for (const t of ['2026-10-02T09:00:00.000Z', '2026-10-03T09:00:00.000Z', '2026-10-04T09:00:00.000Z']) {
-    await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: t, force: true, ...h.io });
+    await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: t, force: true, ...h.io , now: NOW });
   }
   const a = h.articles.get(r.id);
   assert.equal(a.revisions.length, 3, 'each regeneration adds one revision');
@@ -476,7 +479,7 @@ test('revisions accumulate across regenerations instead of overwriting', async (
 
 test('a re-freeze enriches a stored board only when no published value changes', async () => {
   const h = harness();
-  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  const first = await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   const before = h.monthly.get('2026-09');
   const frozenAt = before.frozen_at;
 
@@ -487,7 +490,7 @@ test('a re-freeze enriches a stored board only when no published value changes',
   const again = await runWinbaIndex({
     period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
     at: '2026-10-05T09:00:00.000Z', force: true, refreeze: true, ...h.io
-  });
+  , now: NOW });
   assert.equal(again.status, 'regenerated');
   const after = h.monthly.get('2026-09');
   // The published facts are identical...
@@ -503,7 +506,7 @@ test('a re-freeze enriches a stored board only when no published value changes',
 
 test('a re-freeze is refused outright if any published rank or score would change', async () => {
   const h = harness();
-  await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, ...h.io });
+  await runWinbaIndex({ period: '2026-09', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW, ...h.io });
   const before = h.monthly.get('2026-09');
 
   // The live snapshot has moved on: Wilson now leads.
@@ -511,7 +514,7 @@ test('a re-freeze is refused outright if any published rank or score would chang
   const res = await runWinbaIndex({
     period: '2026-09', snapshot: moved, playerById: PLAYERS, teamById: TEAMS,
     at: '2026-10-05T09:00:00.000Z', force: true, refreeze: true, ...h.io
-  });
+  , now: NOW });
   assert.equal(res.status, 'refreeze_refused');
   assert.match(res.refusal, /does not match the published ranks and scores/);
   assert.equal(res.tie_order_only, false);
@@ -541,7 +544,7 @@ test('the frozen board preserves the metric rank rather than re-deriving it', ()
       { athlete_id: '1003', name: 'Third', team_id: '20', score: 70, rank: 3, qualified: true, sample: { games: 20, wins: 9, minutes: 500 }, averages: { min: 25, pts: 9, reb: 3, ast: 2 }, components: {} }
     ]
   };
-  const f = freezeWinbaMonthly(snap, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: AT });
+  const f = freezeWinbaMonthly(snap, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW });
   assert.deepEqual(f.rows.map((r) => [r.rank, r.player_name]), [
     [1, 'High Minutes'],
     [2, 'Low Id Fewer Minutes'],
@@ -554,5 +557,5 @@ test('a qualified row with no rank is refused rather than given an invented orde
     version: 'winba/1.0.0', season: 2026, generated_at: SNAP_AT, qualified_count: 1,
     rows: [{ athlete_id: '1', name: 'No Rank', team_id: '8', score: 80, qualified: true, sample: { games: 12 }, averages: {}, components: {} }]
   };
-  assert.equal(freezeWinbaMonthly(snap, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: AT }), null);
+  assert.equal(freezeWinbaMonthly(snap, { period: '2026-09', playerById: PLAYERS, teamById: TEAMS, at: AT, now: NOW }), null);
 });

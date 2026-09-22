@@ -79,8 +79,14 @@ export function winbaIndexHeadline(period) {
  * with the roster attributes (position, first-season flag) resolved AT FREEZE
  * TIME so a later trade or roster edit cannot change a published Index.
  */
-export function freezeWinbaMonthly(snapshot, { period, playerById = new Map(), teamById = new Map(), at = new Date().toISOString(), top = 25 } = {}) {
+export function freezeWinbaMonthly(snapshot, { period, playerById = new Map(), teamById = new Map(), at = new Date().toISOString(), top = 25, now = Date.now() } = {}) {
   if (!snapshot?.rows?.length) return null;
+  // `frozen_at` is provenance, and provenance cannot be in the future. A
+  // placeholder freeze instant once put three backfilled boards six weeks ahead
+  // of the articles that published them, which the identity audit correctly read
+  // as a board frozen after the story was written — and retired them.
+  const frozenAt = Date.parse(at);
+  if (!Number.isFinite(frozenAt) || frozenAt > now + 60e3) return null;
   const qualified = snapshot.rows.filter((r) => r.qualified && Number.isFinite(Number(r.score)));
   if (!qualified.length) return null;
   // Use the metric's OWN rank, never a re-derived one. `scoreWinbaPlayers`
@@ -134,8 +140,7 @@ export function freezeWinbaMonthly(snapshot, { period, playerById = new Map(), t
   // Whether the ranking period had actually closed when the board was frozen.
   // A mid-month board is a legitimate Index, but it must not claim a player
   // "finishes" the month on top.
-  const frozenAt = Date.parse(at);
-  const periodComplete = Number.isFinite(frozenAt) && frozenAt >= Date.parse(periodCutoff(period));
+  const periodComplete = frozenAt >= Date.parse(periodCutoff(period));
 
   return {
     version: WINBA_INDEX_VERSION,
@@ -511,7 +516,8 @@ export async function runWinbaIndex({
   force = false,
   refreeze = false,
   backfill = false,
-  acceptRankCorrection = false
+  acceptRankCorrection = false,
+  now = Date.now()
 } = {}) {
   const target = period || winbaPeriodOf(at);
   const state = (await getIndexState()) || { version: WINBA_INDEX_VERSION, published: {} };
@@ -525,7 +531,7 @@ export async function runWinbaIndex({
   let rankCorrection = null;
   let frozen = await getMonthly(target).catch(() => null);
   if (!frozen) {
-    frozen = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at });
+    frozen = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at, now });
     if (!frozen) return { period: target, status: 'no_snapshot' };
     await putMonthly(target, frozen);
   } else if (refreeze) {
@@ -535,7 +541,7 @@ export async function runWinbaIndex({
     // stored board gain fields that were always true at its snapshot (the four
     // components, total minutes) while making it impossible to quietly change a
     // published ranking. Any divergence is refused and reported.
-    const rebuilt = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at: frozen.frozen_at });
+    const rebuilt = freezeWinbaMonthly(snapshot, { period: target, playerById, teamById, at: frozen.frozen_at, now });
     if (!rebuilt) return { period: target, status: 'refreeze_no_snapshot' };
     const key = (b) => JSON.stringify((b.rows || []).map((r) => [r.rank, String(r.player_id), r.score]));
     // Rank-independent content: who is on the board and at what score. If this

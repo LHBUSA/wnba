@@ -20,7 +20,8 @@ export const KIND_LABEL = {
   preview: 'Previews',
   trend: 'Team trends',
   props: 'Prop watch',
-  market: 'Market moves'
+  market: 'Market moves',
+  commissioned_feature: 'Features'
 };
 
 // Desk names used on the front page (editorial voice), keyed by kind.
@@ -35,7 +36,8 @@ export const DESK = {
   preview: 'Previews',
   trend: 'Team Trends',
   props: 'Prop Watch',
-  market: 'Market Watch'
+  market: 'Market Watch',
+  commissioned_feature: 'PropBetEdge Features'
 };
 
 export const KIND_ORDER = ['brief', 'international', 'preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];

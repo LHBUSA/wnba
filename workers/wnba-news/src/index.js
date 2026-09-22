@@ -23,6 +23,7 @@ import { ARTICLE_VERSION } from './articles.js';
 import { mediaFor, winbaPodium, winbaBoardMedia, MEDIA_MANIFEST_AT } from './media.js';
 import videoChannels from '../../../data/video-channels.json';
 import { runWinbaPasses } from './winba-run.js';
+import { runCommissionPass } from './commission-run.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
 
 const SERVICE = 'wnba-news';
@@ -57,7 +58,7 @@ export default {
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       if (url.searchParams.get('video') === 'force') return j({ ok: true, result: await runVideoPass(env, { channelsDoc: videoChannels, teams: ((await env.NEWS_KV.get('dict:v1', 'json')) || {}).teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null, force: true }) });
-      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null, winbaRefreeze: url.searchParams.get('winba_refreeze') === '1', winbaBackfill: url.searchParams.get('winba_backfill') === '1', winbaAcceptRankCorrection: url.searchParams.get('winba_accept_rank_correction') === '1', winbaFixCopy: url.searchParams.get('winba_fix_copy') === '1' }) });
+      return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null, winbaRefreeze: url.searchParams.get('winba_refreeze') === '1', winbaBackfill: url.searchParams.get('winba_backfill') === '1', winbaAcceptRankCorrection: url.searchParams.get('winba_accept_rank_correction') === '1', winbaFixCopy: url.searchParams.get('winba_fix_copy') === '1', winbaFixFrozenAt: url.searchParams.get('winba_fix_frozen_at') === '1', commission: url.searchParams.get('commission') || null, commissionForce: url.searchParams.get('commission_force') === '1' }) });
     }
     return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/articles/videos', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
   }
@@ -102,7 +103,7 @@ async function dictionary(env) {
   }
 }
 
-async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false, forceWinba = false, winbaPeriod = null, winbaRefreeze = false, winbaBackfill = false, winbaAcceptRankCorrection = false, winbaFixCopy = false } = {}) {
+async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false, forceWinba = false, winbaPeriod = null, winbaRefreeze = false, winbaBackfill = false, winbaAcceptRankCorrection = false, winbaFixCopy = false, winbaFixFrozenAt = false, commission = null, commissionForce = false } = {}) {
   const startedAt = new Date().toISOString();
   const now = Date.parse(startedAt);
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
@@ -219,10 +220,22 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
   let winba;
   try {
     winba = await runWinbaPasses(env, {
-      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod, mediaFor, winbaPodium, winbaBoardMedia, refreeze: winbaRefreeze, backfill: winbaBackfill, acceptRankCorrection: winbaAcceptRankCorrection, fixCopy: winbaFixCopy
+      apiGet: (p) => apiGet(env, p), dict, at: startedAt, force: forceWinba, indexPeriod: winbaPeriod, mediaFor, winbaPodium, winbaBoardMedia, refreeze: winbaRefreeze, backfill: winbaBackfill, acceptRankCorrection: winbaAcceptRankCorrection, fixCopy: winbaFixCopy, fixFrozenAt: winbaFixFrozenAt
     });
   } catch (e) {
     winba = { error: String(e.message || e).slice(0, 160) };
+  }
+
+  // Commissioned features: manual editorial, and explicit only. Nothing in this
+  // lane runs on a cron — an editor names the commission on the request, and the
+  // pass reads the frozen monthly boards the Index lane has already published.
+  let commissioned = null;
+  if (commission) {
+    try {
+      commissioned = await runCommissionPass(env, { key: commission, apiGet: (p) => apiGet(env, p), at: startedAt, force: commissionForce, mediaFor, winbaBoardMedia });
+    } catch (e) {
+      commissioned = { error: String(e.message || e).slice(0, 200) };
+    }
   }
 
   // Official game highlights: its own bounded pass on its own cadence; a failure never touches the articles.
@@ -245,6 +258,7 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
     totals: { items: list.length, events: clusters.length, clusters: clusters.length, material_events: clusters.filter((c) => c.materiality?.material).length, articles_published: articles?.published_total ?? null, sources: NEWS_SOURCES.length, sources_ok: runs.filter((r) => ['PASS', 'NOT_MODIFIED', 'SKIPPED'].includes(r.status)).length },
     article_version: ARTICLE_VERSION,
     winba,
+    ...(commissioned ? { commissioned } : {}),
     video,
     supabase: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
   };

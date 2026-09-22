@@ -307,8 +307,74 @@ export async function runWinbaCopyCorrection(env, { at = new Date().toISOString(
   return out;
 }
 
+/**
+ * Correct a future-dated `frozen_at` on a published edition.
+ *
+ * A backfilled board was written with a placeholder freeze instant six weeks
+ * ahead of the article that published it. `frozen_at` is provenance only — it
+ * appears in no reader-facing copy — but the identity audit reads it, correctly
+ * concludes the board was frozen after the story was written, and retires the
+ * edition from the newsroom. Two editions were invisible because of it.
+ *
+ * The true freeze instant was not recorded. The article's own generation time is
+ * a PROVEN upper bound: the pass that published the edition had already read the
+ * board, so the board existed no later than that. The correction uses it and
+ * says so.
+ *
+ * Touches nothing else. The rows, ranks, scores, snapshot_at, slug and
+ * published_at are all left byte-identical, and the board's content hash is
+ * asserted unchanged before the write.
+ */
+export async function runWinbaFrozenAtCorrection(env, { at = new Date().toISOString() } = {}) {
+  if (!env?.NEWS_KV) return { skipped: 'no_kv' };
+  const rowKey = (b) => JSON.stringify((b?.rows || []).map((r) => [r.rank, r.player_id, r.score, r.team_id, r.components]));
+  const state = (await env.NEWS_KV.get(WINBA_MONTHLY_INDEX_KEY, 'json')) || { published: {} };
+  const out = { checked: 0, corrected: [], unchanged: [] };
+
+  for (const rec of Object.values(state.published || {})) {
+    const item = await env.NEWS_KV.get(ITEM(rec.id), 'json').catch(() => null);
+    const board = await env.NEWS_KV.get(winbaMonthlyKey(rec.period), 'json').catch(() => null);
+    if (!item || !board) continue;
+    out.checked += 1;
+    const generatedAt = Date.parse(item.provenance?.generated_at || item.published_at || '');
+    const frozenAt = Date.parse(board.frozen_at || '');
+    if (!Number.isFinite(generatedAt) || !Number.isFinite(frozenAt) || frozenAt <= generatedAt + 60e3) {
+      out.unchanged.push(rec.period);
+      continue;
+    }
+    const corrected = item.provenance?.generated_at || item.published_at;
+    const nextBoard = { ...board, frozen_at: corrected, frozen_at_corrected_from: board.frozen_at, frozen_at_corrected_at: at };
+    if (rowKey(nextBoard) !== rowKey(board)) { out.unchanged.push(`${rec.period}:row_mismatch`); continue; }
+
+    const revision = {
+      at,
+      kind: 'metadata_correction',
+      note: `frozen_at corrected from ${board.frozen_at} to ${corrected}: the backfill wrote a placeholder freeze instant later than the article that published the board. No ranked value, score, publication date or word of copy changed.`,
+      generator: WINBA_INDEX_VERSION
+    };
+    const nextItem = {
+      ...item,
+      winba_board: { ...(item.winba_board || {}), frozen_at: corrected, frozen_at_corrected_from: item.winba_board?.frozen_at || board.frozen_at, frozen_at_corrected_at: at },
+      revisions: [...(item.revisions || []), revision].slice(-24),
+      revised_at: at
+    };
+    await env.NEWS_KV.put(winbaMonthlyKey(rec.period), JSON.stringify(nextBoard));
+    await env.NEWS_KV.put(ITEM(rec.id), JSON.stringify(nextItem), ITEM_TTL);
+    const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
+    await env.NEWS_KV.put('art:v1:index', JSON.stringify(index.map((c) => (c.id === rec.id
+      ? { ...c, revised_at: nextItem.revised_at, revisions: nextItem.revisions }
+      : c))));
+    await env.NEWS_KV.put(WINBA_MONTHLY_INDEX_KEY, JSON.stringify({
+      ...state,
+      published: { ...state.published, [rec.period]: { ...rec, frozen_at: corrected } }
+    }));
+    out.corrected.push({ period: rec.period, from: board.frozen_at, to: corrected });
+  }
+  return out;
+}
+
 /** Both lanes. Returns a compact report for the run status document. */
-export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false, backfill = false, acceptRankCorrection = false, fixCopy = false } = {}) {
+export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date().toISOString(), force = false, indexPeriod = null, mediaFor = null, winbaPodium = null, winbaBoardMedia = null, refreeze = false, backfill = false, acceptRankCorrection = false, fixCopy = false, fixFrozenAt = false } = {}) {
   let snapshot = null;
   let error = null;
   try {
@@ -321,6 +387,7 @@ export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date()
 
   const daily = await runWinbaDaily(env, { snapshot, dict, at }).catch((e) => ({ error: e?.message || String(e) }));
   const copyFix = fixCopy ? await runWinbaCopyCorrection(env, { at }).catch((e) => ({ error: e?.message || String(e) })) : null;
+  const frozenAtFix = fixFrozenAt ? await runWinbaFrozenAtCorrection(env, { at }).catch((e) => ({ error: e?.message || String(e) })) : null;
   const monthly = await runWinbaIndexPass(env, { snapshot, dict, at, period: indexPeriod, force, mediaFor, winbaPodium, winbaBoardMedia, refreeze, backfill, acceptRankCorrection }).catch((e) => ({ error: e?.message || String(e) }));
   return {
     version: WINBA_EDITORIAL_VERSION,
@@ -330,6 +397,7 @@ export async function runWinbaPasses(env, { apiGet, dict = null, at = new Date()
     qualified: snapshot.qualified_count ?? null,
     daily,
     monthly,
-    ...(copyFix ? { copy_correction: copyFix } : {})
+    ...(copyFix ? { copy_correction: copyFix } : {}),
+    ...(frozenAtFix ? { frozen_at_correction: frozenAtFix } : {})
   };
 }

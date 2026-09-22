@@ -340,7 +340,7 @@ test('editions published LATER but for EARLIER periods never become current', ()
   const backfilled = ['2026-06', '2026-07', '2026-08'].map((p) => ({
     ...ed(p, `bf-${p}`),
     // Published today, long after September went live.
-    first_published_at: '2026-11-02T10:00:00.000Z',
+    first_published_at: '2026-09-02T10:00:00.000Z',
     historical_backfill: true
   }));
   const items = [...backfilled, sep];
@@ -359,7 +359,7 @@ test('the series orders by period, so a backfill slots in behind September', asy
   const { winbaIndexCards, winbaSeriesNav } = await import('../src/views/winba-index.js');
   const items = [
     { ...ed('2026-09', 'sep'), first_published_at: '2026-09-21T20:48:01.908Z' },
-    { ...ed('2026-06', 'jun'), first_published_at: '2026-11-02T10:00:00.000Z' },
+    { ...ed('2026-06', 'jun'), first_published_at: '2026-09-02T10:00:00.000Z' },
     { ...ed('2026-07', 'jul'), first_published_at: '2026-11-02T10:05:00.000Z' },
     { ...ed('2026-08', 'aug'), first_published_at: '2026-11-02T10:10:00.000Z' }
   ];

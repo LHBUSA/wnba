@@ -12,7 +12,8 @@ import {
 } from '../workers/wnba-news/src/winba-index.js';
 
 const SNAP_AT = '2026-07-01T00:00:00.000Z';
-const PUBLISHED_NOW = '2026-11-02T10:00:00.000Z';
+const PUBLISHED_NOW = '2026-09-02T10:00:00.000Z';
+const NOW = Date.parse('2026-10-08T00:00:00.000Z');
 
 const mkRow = (id, name, score, teamId, teamName, over = {}) => ({
   athlete_id: id, name, team_id: teamId, score, qualified: true,
@@ -77,7 +78,7 @@ test('a reconstructed edition is never backdated and says it was reconstructed',
   const res = await runWinbaIndex({
     period: '2026-06', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
     at: PUBLISHED_NOW, force: true, backfill: true, ...h.io
-  });
+  , now: NOW });
   assert.equal(res.status, 'published');
   const a = h.articles.get(res.id);
   assert.equal(a.published_at, PUBLISHED_NOW, 'the real publication instant, not a June date');
@@ -97,7 +98,7 @@ test('a same-period edition is not marked as a backfill', async () => {
   const res = await runWinbaIndex({
     period: '2026-06', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
     at: PUBLISHED_NOW, force: true, ...h.io
-  });
+  , now: NOW });
   const a = h.articles.get(res.id);
   assert.equal(a.historical_backfill, false);
   assert.doesNotMatch(a.body.join(' '), /reconstructed from PropBetEdge/);
@@ -111,7 +112,7 @@ test('schema uses the real publication date, never the period', async () => {
   const res = await runWinbaIndex({
     period: '2026-06', snapshot: SNAP, playerById: PLAYERS, teamById: TEAMS,
     at: PUBLISHED_NOW, force: true, backfill: true, ...h.io
-  });
+  , now: NOW });
   const a = { ...h.articles.get(res.id), entities: [], evidence: [] };
   const ld = newsArticle(a, routeMeta('article', { path: `/news/${a.slug}`, data: a }));
   assert.equal(ld.datePublished, PUBLISHED_NOW);
@@ -152,7 +153,7 @@ test('a tie-order correction is refused without explicit authorisation', async (
   const res = await runWinbaIndex({
     period: '2026-09', snapshot: snap, playerById: PLAYERS, teamById: TEAMS,
     at: PUBLISHED_NOW, force: true, refreeze: true, ...h.io
-  });
+  , now: NOW });
   assert.equal(res.status, 'refreeze_refused');
   assert.equal(res.tie_order_only, true, 'it knows only tied ranks differ');
   assert.match(res.refusal, /needs explicit authorisation/);
@@ -165,13 +166,13 @@ test('an authorised tie-order correction reorders ties and records a revision', 
   h.monthly.set('2026-09', published);
   // Publish first so there is an article with a published_at to preserve.
   h.articles.set('seed', {});
-  const first = await runWinbaIndex({ period: '2026-09', snapshot: snap, playerById: PLAYERS, teamById: TEAMS, at: '2026-09-21T20:48:01.908Z', ...h.io });
+  const first = await runWinbaIndex({ period: '2026-09', snapshot: snap, playerById: PLAYERS, teamById: TEAMS, at: '2026-09-21T20:48:01.908Z', ...h.io , now: NOW });
   const originalPublished = h.articles.get(first.id).published_at;
 
   const res = await runWinbaIndex({
     period: '2026-09', snapshot: snap, playerById: PLAYERS, teamById: TEAMS,
     at: PUBLISHED_NOW, force: true, refreeze: true, acceptRankCorrection: true, ...h.io
-  });
+  , now: NOW });
   assert.notEqual(res.status, 'refreeze_refused');
   const board = h.monthly.get('2026-09');
   assert.deepEqual(board.rows.map((r) => [r.rank, r.player_id]), correct.rows.map((r) => [r.rank, r.player_id]));
@@ -201,7 +202,7 @@ test('an authorised correction still cannot change a score', async () => {
   const res = await runWinbaIndex({
     period: '2026-09', snapshot: moved, playerById: PLAYERS, teamById: TEAMS,
     at: PUBLISHED_NOW, force: true, refreeze: true, acceptRankCorrection: true, ...h.io
-  });
+  , now: NOW });
   assert.equal(res.status, 'refreeze_refused');
   assert.equal(res.tie_order_only, false);
   assert.deepEqual(h.monthly.get('2026-09'), before);

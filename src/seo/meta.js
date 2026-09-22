@@ -105,8 +105,8 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       const modified = a.revised_at && Date.parse(a.revised_at) > Date.parse(a.first_published_at || 0) ? a.revised_at : null;
       return m({
         path: `/news/${a.slug}`,
-        title: `${a.headline} | ${BRAND} WNBA`,
-        description: clip(a.deck, 300),
+        title: a.seo?.title ? `${a.seo.title} | ${BRAND} WNBA` : `${a.headline} | ${BRAND} WNBA`,
+        description: clip(a.seo?.description || a.deck, 300),
         image: articleShareImage(a),
         type: 'article',
         published: a.first_published_at || a.published_at,

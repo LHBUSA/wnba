@@ -84,7 +84,7 @@ export function reviewStory({ card, item, now = Date.now(), regeneration = null,
  * through to `legacy_acceptable` and leaves every listing — which is what
  * happened to the first published edition.
  */
-const SELF_GATED_KINDS = new Set(['winba_index']);
+const SELF_GATED_KINDS = new Set(['winba_index', 'commissioned_feature']);
 
 /** Does a card need (re)review? */
 export const needsReview = (c, { rewrittenIds = new Set() } = {}) => !SELF_GATED_KINDS.has(c?.kind) && !c.superseded_by && !rewrittenIds.has(c.id) && (c.quality_review?.policy !== LEGACY_POLICY_VERSION || Boolean(c.revised_at && Date.parse(c.revised_at) > Date.parse(c.quality_review?.at || 0)));
