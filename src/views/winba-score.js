@@ -99,6 +99,18 @@ export function winbaScoreView({ winba = null, players = null, index = null } = 
       <div class="winba-box-impact"><span>BOX IMPACT</span><strong>PTS + 1.2 × REB + 1.5 × AST</strong><p>Box Impact is the production base used for the per-36 percentile and winning-output share.</p></div>
     </section>
 
+    <section class="winba-authority-section section" id="winba-layers">
+      <span class="eyebrow">WinBA layers</span>
+      <h2>Keep the score clean. Layer richer basketball context around it.</h2>
+      <p class="winba-authority-lead">The canonical WinBA Score stays deterministic and box-score based. Future lineup, on/off, possession and optical-tracking intelligence can sit beside the score as context, but it will never rewrite the WinBA number, rank or frozen historical Index.</p>
+      <div class="winba-reading-grid">
+        <div><b>WinBA Score</b><span>The permanent core: the published v1 formula, qualification rules and historical comparability stay unchanged.</span></div>
+        <div><b>WinBA Context</b><span>An optional non-scoring layer for lineup impact, on/off differentials, possession context and tracking-derived basketball signals.</span></div>
+        <div><b>No hidden adjustment</b><span>Context can explain why a player may be more or less impactful than the box score suggests, but it cannot add or subtract points from WinBA.</span></div>
+        <div><b>Coverage-aware</b><span>Advanced context appears only when the underlying data is reliable. Missing tracking data never changes or suppresses the core WinBA Score.</span></div>
+      </div>
+    </section>
+
     <section class="winba-authority-section section" id="how-to-read-winba">
       <span class="eyebrow">How to read the number</span>
       <h2>What a WinBA Score means — and what it does not</h2>
@@ -131,6 +143,7 @@ export function winbaScoreView({ winba = null, players = null, index = null } = 
       <details><summary>What makes a player qualified or provisional?</summary><p>A player qualifies with at least 10 appearances or 250 minutes. Players below that threshold can receive a provisional score, but they do not move the qualified production benchmark and do not receive a league rank.</p></details>
       <details><summary>How often does WinBA update?</summary><p>PropBetEdge checks the archived final-game index every 10 minutes and rebuilds the season WinBA snapshot only when that archive changes.</p></details>
       <details><summary>Does WinBA predict games or make betting picks?</summary><p>No. WinBA is a season player metric. It is separate from PBE Picks, live game projections and sportsbook market data.</p></details>
+      <details><summary>Will lineup, on/off or optical-tracking data change the WinBA Score?</summary><p>No. Those signals belong to the separate WinBA Context layer. They can add explanation and basketball context, but the canonical WinBA Score, rank and historical Index remain driven only by the published deterministic formula.</p></details>
     </section>
 
     <section class="winba-source-note section"><b>Data note.</b> WinBA v1 is derived from archived regular-season final player box scores in the PropBetEdge WNBA replay layer. The metric itself is PropBetEdge’s calculation; implementation details and related derivations are summarized on the <a href="/methodology">methodology page</a>.</section>
