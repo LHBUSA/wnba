@@ -5,6 +5,7 @@
   "description": "PropBetEdge WNBA publishing edge: server-visible HTML, sitemaps, RSS and share cards (Cloudflare Worker).",
   "dependencies": {
     "@resvg/resvg-wasm": "2.6.2",
-    "satori": "0.12.2"
+    "satori": "0.12.2",
+    "yoga-wasm-web": "0.3.3"
   }
 }
