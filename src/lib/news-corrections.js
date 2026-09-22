@@ -176,10 +176,15 @@ export const articleHasTeam = (card, teamId) => Boolean(card) && (
   || (card.entities || []).some((e) => e?.type === 'team' && String(e.id) === String(teamId))
 );
 
+export const CURRENT_BRIEF_STORY_VERSION = 'wnba-brief-story/1.1.0';
+
 const briefGeneratorVersion = (card) => {
   const direct = String(card?.context?.brief?.story_version || card?.facts?.brief?.story_version || '');
   if (direct) return direct;
   const hash = String(card?.input_hash || '');
+  const nested = hash.match(/wnba-brief-story\/\d+\.\d+\.\d+/);
+  if (nested) return nested[0];
+  // Cards written before the story version became part of the persisted hash.
   if (hash.startsWith('wnba-briefs/3.0.0|')) return 'wnba-brief-story/1.0.0';
   return null;
 };
@@ -187,7 +192,7 @@ const briefGeneratorVersion = (card) => {
 export function isCurrentQualityBrief(card) {
   if (!card || card.kind !== 'brief') return true;
   if (isMilesRecordSlug(card.slug)) return true;
-  return briefGeneratorVersion(card) === 'wnba-brief-story/1.0.0';
+  return briefGeneratorVersion(card) === CURRENT_BRIEF_STORY_VERSION;
 }
 
 export function correctArticleListResponse(res, { playerId = null, teamId = null, archive = false } = {}) {
