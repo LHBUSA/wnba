@@ -22,6 +22,28 @@ export const WINBA_WEIGHTS = Object.freeze({
 });
 export const WINBA_QUALIFICATION = Object.freeze({ min_games: 10, min_minutes: 250 });
 
+// Product contract: advanced basketball context may sit beside WinBA, never
+// inside the canonical score. This protects historical comparability and keeps
+// every WinBA v1 score reproducible from the same final box-score inputs.
+export const WINBA_LAYER_CONTRACT = Object.freeze({
+  core: Object.freeze({
+    name: 'WinBA Score',
+    version: WINBA_VERSION,
+    role: 'canonical_score',
+    inputs: 'final regular-season box scores only',
+    deterministic: true
+  }),
+  context: Object.freeze({
+    name: 'WinBA Context',
+    role: 'non_scoring_context',
+    allowed_inputs: Object.freeze(['on_off', 'lineup_impact', 'possession_context', 'optical_tracking']),
+    affects_score: false,
+    affects_rank: false,
+    affects_historical_snapshots: false,
+    optional: true
+  })
+});
+
 const n = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const round = (v, d = 1) => {
@@ -213,6 +235,7 @@ export function scoreWinbaPlayers(aggregates = [], { season = null, generatedAt 
       weights: WINBA_WEIGHTS,
       qualification: WINBA_QUALIFICATION,
       interpretation: 'A 0-100 PropBetEdge index of box-score production, playing time and how that production is associated with team wins. It is not a causal wins-added metric.'
+      ,layer_contract: WINBA_LAYER_CONTRACT
     },
     rows,
     qualified_count: qualified.length,
