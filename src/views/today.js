@@ -2,7 +2,8 @@
 import { html } from '../lib/dom.js';
 import { gameCard, empty, errorState, gameState } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
-import { articleCard, articleRow } from '../ui/articles.js';
+import { articleCard, articleRow, DESK, headlineText } from '../ui/articles.js';
+import { storyMedia } from '../ui/story-media.js';
 import { fmtCompactDate, fmtDateET, fmtDateTimeET, relTime, fmtTimeET, american, bookName } from '../lib/format.js';
 import logoManifest from '../../data/team-logos.json' with { type: 'json' };
 import { buildTicker } from '../lib/ticker.js';
@@ -212,14 +213,65 @@ function renderHeroMeta(meta, live) {
   </div>`;
 }
 
-function renderEditorialFront(leadStory, secondaryStories) {
+function storyPublishedAt(story) {
+  return story?.first_published_at || story?.published_at || story?.created_at || '';
+}
+
+function renderHomepageLead(story) {
+  if (!story) return html`<div class="card card-pad sports-story-empty"><span class="eyebrow">PBE Newsroom</span><h2 class="sec-title bc">The league desk is current.</h2><p class="note">The next sourced WNBA story will lead this page when it clears the newsroom gate.</p><a class="btn gold" href="/news">Open newsroom</a></div>`;
+  const href = `/news/${story.slug}`;
+  const desk = DESK[story.kind] || story.category || 'WNBA News';
+  const age = storyPublishedAt(story) ? relTime(storyPublishedAt(story)) : '';
+  return html`<article class="home-cover">
+    ${storyMedia(story.media, { slot: 'lead', eager: true, credit: false })}
+    <span class="home-cover-shade" aria-hidden="true"></span>
+    <div class="home-cover-top">
+      <span class="home-cover-badge"><i></i>Top story</span>
+      <span class="home-cover-meta">${desk}${age ? ` · ${age}` : ''}</span>
+    </div>
+    <div class="home-cover-copy">
+      <h1><a href="${href}">${headlineText(story.headline)}</a></h1>
+      ${story.deck ? html`<p>${headlineText(story.deck)}</p>` : ''}
+      <div class="home-cover-actions">
+        <a class="btn gold" href="${href}">Read full story →</a>
+        <a class="home-cover-secondary" href="/news">More WNBA news →</a>
+      </div>
+    </div>
+    <div class="home-cover-brand">
+      <b>PropBetEdge WNBA</b>
+      <span>News · data · model context</span>
+    </div>
+  </article>`;
+}
+
+function renderHeroDeskCard(hero) {
+  const g = hero?.primary;
+  if (!g) return html`<a class="home-desk-card" href="/cast"><span class="eyebrow">WNBA desk</span><b>Open WNBACast</b><small>Live and replay intelligence</small></a>`;
+  const st = gameState(g);
+  const m = g.market;
+  const showScore = g.status?.state === 'in' || g.status?.state === 'post';
+  return html`<section class="home-desk-card" aria-label="${gameStripLabel(hero)}">
+    <div class="home-desk-head">
+      <div><span class="eyebrow">${gameStripLabel(hero)}</span><small>${fmtDateET(g.start_utc, { weekday: 'short', month: 'short', day: 'numeric' })} · ${fmtTimeET(g.start_utc)}</small></div>
+      <span class="home-desk-state">${st.label}</span>
+    </div>
+    <a class="home-desk-matchup" href="/cast/${g.game_id}">
+      <span>${teamLogo(g.away, 34)}<b>${teamAbbr(g.away)}</b>${showScore ? html`<strong>${g.away?.score ?? '—'}</strong>` : ''}</span>
+      <em>${showScore ? '—' : '@'}</em>
+      <span>${teamLogo(g.home, 34)}<b>${teamAbbr(g.home)}</b>${showScore ? html`<strong>${g.home?.score ?? '—'}</strong>` : ''}</span>
+    </a>
+    <div class="home-desk-bottom">
+      <span>${m ? `${teamAbbr(g.home)} ${signed(m.spread?.home_line)} · Total ${m.total?.line ?? '—'}` : 'Market snapshot not published yet'}</span>
+      <a href="/cast/${g.game_id}">${g.status?.state === 'post' ? 'Replay' : 'WNBACast'} →</a>
+    </div>
+  </section>`;
+}
+
+function renderEditorialFront(leadStory, secondaryStories, hero = null) {
   return html`<section class="editorial-front" aria-label="Top WNBA stories">
     <div class="editorial-grid">
       <div class="editorial-lead">
-        ${leadStory ? html`<span class="home-top-story">Top story</span>` : ''}
-        ${leadStory
-          ? articleCard(leadStory, { lead: true, eager: true, leadCta: true })
-          : html`<div class="card card-pad sports-story-empty"><span class="eyebrow">PBE Newsroom</span><h2 class="sec-title bc">The league desk is current.</h2><p class="note">The next sourced WNBA story will lead this page when it clears the newsroom gate.</p><a class="btn gold" href="/news">Open newsroom</a></div>`}
+        ${renderHomepageLead(leadStory)}
       </div>
       <aside class="editorial-rail" aria-label="Latest WNBA stories">
         <div class="editorial-rail-head">
@@ -227,9 +279,9 @@ function renderEditorialFront(leadStory, secondaryStories) {
           <a class="sec-link" href="/news">All news →</a>
         </div>
         ${secondaryStories.length
-          ? html`<div class="srows editorial-rail-stories">${secondaryStories.map((c) => articleRow(c))}</div>`
+          ? html`<div class="srows editorial-rail-stories">${secondaryStories.map((story) => articleRow(story))}</div>`
           : html`<p class="note editorial-rail-empty">No additional stories have cleared the newsroom gate yet.</p>`}
-        <a class="editorial-rail-more" href="/news">Open the newsroom →</a>
+        ${hero ? renderHeroDeskCard(hero) : html`<a class="editorial-rail-more" href="/news">Open the newsroom →</a>`}
       </aside>
     </div>
   </section>`;
@@ -336,7 +388,7 @@ export function todayView({ today, arts, injuries, standings, intl = null, winba
 
     ${live
       ? html`${renderLiveFront(hero, today.meta)}${renderEditorialFront(leadStory, secondaryStories)}`
-      : html`${renderEditorialFront(leadStory, secondaryStories)}${renderGameStrip(hero)}`}
+      : html`${renderEditorialFront(leadStory, secondaryStories, hero)}`}
 
     <nav class="card sports-team-rail" aria-label="WNBA teams">
       ${logoManifest.teams.map((t) => html`<a href="/teams/${t.team_id}" title="${t.name}" style="flex:none;padding:6px;border-radius:10px">${teamLogo({ team_id: t.team_id, name: t.name }, 40)}</a>`)}
