@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { buildTicker, TICKER_CAPS, intlName, startLabel } from '../src/lib/ticker.js';
-import { tickerRail } from '../src/views/today.js';
+import { tickerRail, frontPageEditorialStories } from '../src/views/today.js';
 
 const NOW = Date.parse('2026-09-13T19:20:00Z');
 const wnba = (id, state, o = {}) => ({ game_id: id, start_utc: o.start || '2026-09-13T23:30Z', status: { state, period: o.period ?? 0, clock: o.clock ?? null, short_detail: o.detail ?? null }, away: { abbr: o.away || 'SEA', name: 'Seattle Storm', score: o.as ?? null }, home: { abbr: o.home || 'LV', name: 'Las Vegas Aces', score: o.hs ?? null } });
@@ -87,4 +87,39 @@ test('8 · rail markup: each item links to its own destination, duplicate loop c
   const single = String(tickerRail(buildTicker({ wnbaGames: [wnba('2', 'pre')], now: NOW })));
   assert.match(single, /tk-scroll-in tk-static/, 'one or two items do not scroll');
   assert.doesNotMatch(single, /aria-hidden="true"/);
+});
+
+
+test('9 · Today never promotes historical WinBA backfills, even if their listing card predates the historical_backfill field', () => {
+  const published = (id, kind, at, over = {}) => ({
+    id, kind, status: 'published', headline: id, slug: id,
+    first_published_at: at, published_at: at, ...over
+  });
+
+  const stories = [
+    published('june-backfill', 'winba_index', '2026-09-21T23:30:00Z', { period: '2026-06' }),
+    published('injury-now', 'injury', '2026-09-21T23:20:00Z'),
+    published('september-index', 'winba_index', '2026-09-21T20:48:01Z', { period: '2026-09' })
+  ];
+  const indexFeed = {
+    ok: true,
+    data: {
+      items: [
+        published('june-backfill', 'winba_index', '2026-09-21T23:30:00Z', { period: '2026-06', historical_backfill: true }),
+        published('september-index', 'winba_index', '2026-09-21T20:48:01Z', { period: '2026-09', historical_backfill: false })
+      ]
+    }
+  };
+
+  const front = frontPageEditorialStories(stories, indexFeed);
+  assert.deepEqual(front.map((x) => x.id), ['injury-now', 'september-index']);
+  assert.ok(!front.some((x) => x.id === 'june-backfill'));
+});
+
+test('10 · Today fails closed on WinBA promotion if the current-edition lookup is unavailable', () => {
+  const stories = [
+    { id: 'june', kind: 'winba_index', period: '2026-06', status: 'published', first_published_at: '2026-09-21T23:30:00Z' },
+    { id: 'news', kind: 'injury', status: 'published', first_published_at: '2026-09-21T23:20:00Z' }
+  ];
+  assert.deepEqual(frontPageEditorialStories(stories, null).map((x) => x.id), ['news']);
 });
