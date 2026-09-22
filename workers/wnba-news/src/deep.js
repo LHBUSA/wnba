@@ -378,7 +378,7 @@ export async function previewDeep(ctx) {
             : `${a} at ${h}: ${favN} favored by ${line} in a tighter matchup than the spread suggests`)
       : fav ? `${a} at ${h}: ${favN} favored by ${line}` : `${a} at ${h}: injuries, recent form and the matchup`;
     const deck = fav
-      ? `The ${full(fav.team)} are ${line}-point favorites ${fav === A ? 'on the road' : 'at home'} against the ${full(dog.team)}. ${gd.length ? `${countOf(gd.length, 'player')} across the two teams has an ESPN return estimate on game day, making availability part of the pregame read.` : `Recent form and availability shape the matchup before ${dLong(g.start_utc)}${venue}.`}`
+      ? `The ${full(fav.team)} are ${line}-point favorites ${fav === A ? 'on the road' : 'at home'} against the ${full(dog.team)}. ${gd.length ? `${countOf(gd.length, 'player')} across the two teams ${gd.length === 1 ? 'has' : 'have'} an ESPN return estimate on game day, making availability part of the pregame read.` : `Recent form and availability shape the matchup before ${dLong(g.start_utc)}${venue}.`}`
       : `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}, with recent form and availability driving the early read.`;
     const summary = intel[0] || 'With no stored market for this game, the comparison is the story: form, scoring and rest side by side.';
     const supporting = intel.slice(1);
@@ -920,10 +920,10 @@ export async function resultDeep(ctx) {
       ? (co.length <= 3 ? `${listJoin(coNames)} score ${co.every((x) => x.pts === co[0].pts) ? `${co[0].pts} apiece` : listJoin(co.map((x) => String(x.pts)))} as the ${W} beat the ${L}, ${score}` : `The ${W} beat the ${L}, ${score}, with the scoring lead shared`)
       : top ? (topTeam === winner ? `${poss(top.name)} ${keyLabel(top)} lead the ${W} past the ${L}, ${score}` : `The ${W} beat the ${L} ${score} despite ${poss(top.name)} ${keyLabel(top)}`)
         : `The ${full(winner)} beat the ${full(loser)}, ${score}`;
-    const deck = q1 && q1.w < q1.l
-      ? `The ${W} erased a ${sc(q1.l, q1.w)} first-quarter deficit and finished with a ${margin}-point win${top ? ` behind ${poss(top.name)} ${keyLabel(top)}` : ''}.`
-      : co.length > 1 && headStat === 'pts'
-        ? `${listJoin(coNames)} shared the scoring spotlight as the ${W} won by ${margin}.`
+    const deck = co.length > 1 && headStat === 'pts'
+      ? `${listJoin(coNames)} shared the scoring spotlight as the ${W} ${q1 && q1.w < q1.l ? `erased a ${sc(q1.l, q1.w)} first-quarter deficit and ` : ''}won by ${margin}.`
+      : q1 && q1.w < q1.l
+        ? `The ${W} erased a ${sc(q1.l, q1.w)} first-quarter deficit and finished with a ${margin}-point win${top ? ` behind ${poss(top.name)} ${keyLabel(top)}` : ''}.`
         : top
           ? (topTeam === winner ? `${top.name} set the pace with ${keyLabel(top)} in a ${margin}-point ${W} win.` : `${top.name} posted ${keyLabel(top)} in the loss, but the ${W} finished with a ${margin}-point win.`)
           : `The ${W} beat the ${L} by ${margin} on ${dLong(g.start_utc)}.`;
