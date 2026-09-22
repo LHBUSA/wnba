@@ -176,7 +176,7 @@ function composeReese(ctx) {
   w.p(
     `WinBA v1 uses four inputs. Its production term is a simple per-36 box-score index — points plus 1.2 times rebounds plus 1.5 times assists — converted to a percentile against qualified players and weighted at 45%. Win rate is 25%, the share of a player's production that came in wins is 20%, and court share is 10%.`,
     `For ${subject.name}, the frozen ${winbaPeriodLabel(sept.period)} row is ${one(comps.production_percentile)} for production percentile, ${pct(comps.win_rate)} win rate, ${pct(comps.winning_output_share)} production in wins and ${pct(comps.court_share)} court share. Her production term is near the league ceiling; the two winning-context inputs are positive but lower, which is why the overall score sits below the two players ahead of her.`,
-    `The limits are equally important. The production term does not include shooting efficiency or turnovers, and WinBA does not directly measure defence, shot quality, lineup context or role. It is an association-with-winning index built from completed games in PropBetEdge's 2026 archive, not a causal estimate of wins added.`
+    `The limits are equally important. The production term does not include shooting efficiency or turnovers, and WinBA does not directly measure defence, shot quality, lineup context or role. It is an association-with-winning index built from completed games in PropBetEdge's 2026 archive, which is close to but not identical with the official regular-season record. It is not a causal estimate of wins added.`
   );
 
   w.section('The “empty stats” question', { key: 'empty_stats' });
