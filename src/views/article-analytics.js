@@ -129,6 +129,8 @@ function trendNextLine(a) {
   const total = num(market.total);
   const spread = num(market.spread);
   const books = num(market.books);
+  const showTotal = a.market_type === 'total' && total !== null;
+  const showSpread = a.market_type === 'spread' && spread !== null;
 
   return html`<a class="aa-next-line" href="${a?.context?.next_game?.game_id ? `/matchups/${a.context.next_game.game_id}` : '/matchups'}">
     <div>
@@ -137,8 +139,8 @@ function trendNextLine(a) {
       <small>${books !== null ? `${books} books · ` : ''}stored PropBetEdge snapshot</small>
     </div>
     <div class="aa-next-prices">
-      ${spread !== null ? html`<span><small>Spread</small><b>${signed(spread)}</b></span>` : ''}
-      ${total !== null ? html`<span><small>Total</small><b>${f1(total)}</b></span>` : ''}
+      ${showSpread ? html`<span><small>Home spread</small><b>${signed(spread)}</b></span>` : ''}
+      ${showTotal ? html`<span><small>Total</small><b>${f1(total)}</b></span>` : ''}
       <em>View matchup →</em>
     </div>
   </a>`;
