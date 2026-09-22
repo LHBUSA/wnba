@@ -52,6 +52,9 @@ for (const [name, path] of PAGES) {
         for (const el of fig.querySelectorAll('text, .pv-bar-value, .pv-bar-label, .pv-rc-score, .pv-rc-name, .pv-honours b, .pv-honours span, .pv-line-stats dd, .pv-caption, .pv-title')) {
           const t = (el.textContent || '').trim();
           if (!t) continue;
+          // A label the stylesheet hides at this width (the full month names on
+          // a phone) is not a legibility problem.
+          if (getComputedStyle(el).display === 'none') continue;
           const r = el.getBoundingClientRect();
           // Rendered cap height is a good proxy for perceived size on SVG text.
           const css = parseFloat(getComputedStyle(el).fontSize);
