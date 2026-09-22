@@ -842,6 +842,12 @@
     "identity_evidence": "name+dob exact match (ESPN 2002-05-06); wikidata Q111698612; commons title/description contains surname; commons category: Angel Reese",
     "verified_at": "2026-09-11T17:55:15Z",
     "review_status": "approved"
+   },
+   "upgrade_review": {
+    "reason": "approved photo shows a Chicago Sky uniform; she plays for the Atlanta Dream, so a former team's kit is the wrong visual identity for a feature hero and for a WinBA ranking card",
+    "raised_at": "2026-09-22T00:45:00Z",
+    "raised_by": "commissioned-feature QA (angel-reese-winba-empty-stats)",
+    "holds": "the current approved file stays live until a replacement passes the same identity, license, face and crop review; no rule is relaxed to find one"
    }
   },
   {
