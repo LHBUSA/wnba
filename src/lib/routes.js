@@ -16,8 +16,6 @@ export const ROUTE_TABLE = [
   { id: 'news-cat', re: /^\/news\/c\/([a-z]+)$/, keys: ['kind'] },
   { id: 'news-team', re: /^\/news\/teams\/(\d{1,8})$/, keys: ['teamId'] },
   { id: 'story', re: /^\/news\/story\/(pbe_[a-f0-9]{18})$/, keys: ['storyId'] },
-  // Preview-only Vercel path: uses the normal article page but bypasses the publishing Worker.
-  { id: 'article', re: /^\/preview\/article\/([a-z0-9-]+-[a-f0-9]{6})$/, keys: ['slug'] },
   { id: 'article', re: /^\/news\/([a-z0-9-]+-[a-f0-9]{6})$/, keys: ['slug'] },
   { id: 'history', re: /^\/history$/ },
   { id: 'standings', re: /^\/standings$/ },
