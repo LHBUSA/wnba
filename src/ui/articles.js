@@ -65,7 +65,7 @@ const sourcesOf = (c) => [...new Set((c.sources || []).map(srcLabel))].slice(0, 
 export const headlineText = (t) => String(t ?? '').split(/(\d[\d.]*[-–][\w.]+)/).map((s, i) => (i % 2 ? html`<span class="nobr">${s}</span>` : s));
 
 /** Standard story card. size: 'lead' | 'feature' | 'card' | 'compact'. */
-export function articleCard(c, { lead = false, size = null, eager = false, timeLabel = null } = {}) {
+export function articleCard(c, { lead = false, size = null, eager = false, timeLabel = null, leadCta = false } = {}) {
   const sz = size || (lead ? 'lead' : 'card');
   const href = `/news/${c.slug}`;
   const slot = sz === 'lead' ? 'lead' : sz === 'compact' ? 'small' : 'card';
@@ -83,6 +83,7 @@ export function articleCard(c, { lead = false, size = null, eager = false, timeL
     ${sz === 'lead' ? html`<div class="scard-foot">
       ${c.bettor_snippet && (c.intelligence ? c.intelligence.market_relevance === 'actionable' : c.has_market) ? html`<p class="angle"><b>Why it matters for bettors</b>${c.bettor_snippet}</p>` : ''}
       <div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>
+      ${leadCta ? html`<a class="scard-cta" href="${href}">Read full story →</a>` : ''}
     </div>` : ''}
   </article>`;
 }
