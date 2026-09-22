@@ -26,7 +26,9 @@ export { injuryDeep as injuryArticles, transactionDeep as transactionArticles, r
 // moves and the next game.
 // 1.4.0: preview Market is facts only, analysis moves to additive Intelligence; trends are materiality-gated and carry
 // market-now, persistence and opponent context; the legacy upgrade pass rebuilds stories whose records are still in reach.
-export const ARTICLE_VERSION = 'wnba-articles/1.4.0';
+// 1.5.0: editorial voice pass — event-first ledes, shorter headlines/decks and sports-desk section language replace
+// audit/memo phrasing while every number, source boundary and deterministic gate remains unchanged.
+export const ARTICLE_VERSION = 'wnba-articles/1.5.0';
 
 // ------------------------------------------------------------ formatting
 
