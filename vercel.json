@@ -63,7 +63,7 @@
     },
     {
       "source": "/",
-      "destination": "https://wnba-web.sales-fd3.workers.dev/"
+      "destination": "/app-shell.html"
     },
     {
       "source": "/:path*",
