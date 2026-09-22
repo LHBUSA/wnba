@@ -68,20 +68,20 @@ export function storyCraftFailures(a) {
   // sports vocabulary in general.
   const memoSections = sections.filter((s) => MEMO_SECTION.test(String(s?.title || '')));
   if (memoSections.length) {
-    out.push(`storycraft: memo-style section heading "${memoSections[0].title}" is reader-facing`);
+    out.push(`storycraft-style: memo-style section heading "${memoSections[0].title}" is reader-facing`);
   }
   for (const [label, re] of MEMO_VOICE) {
-    if (re.test(headline) || re.test(deck) || re.test(bodyText)) out.push(`storycraft: ${label} makes the story read generated`);
+    if (re.test(headline) || re.test(deck) || re.test(bodyText)) out.push(`storycraft-style: ${label} makes the story read generated`);
   }
 
   // Headlines/decks should do journalism, not carry the whole fact table.
-  if (words(headline) > 24) out.push(`storycraft: headline is ${words(headline)} words; tighten the news angle`);
-  if (words(deck) > 62) out.push(`storycraft: deck is ${words(deck)} words; tighten the summary`);
+  if (words(headline) > 24) out.push(`storycraft-style: headline is ${words(headline)} words; tighten the news angle`);
+  if (words(deck) > 62) out.push(`storycraft-style: deck is ${words(deck)} words; tighten the summary`);
 
   // Repetitive sentence openings are another deterministic template tell.
   const firstFive = body.slice(0, 5);
   if (firstFive.length >= 4 && firstFive.filter((p) => /^The\b/i.test(p)).length >= 4) {
-    out.push('storycraft: first paragraphs repeat the same "The …" sentence opening');
+    out.push('storycraft-style: first paragraphs repeat the same "The …" sentence opening');
   }
 
   // Internal audit/process language belongs in the collapsed evidence layer.
