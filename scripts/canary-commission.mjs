@@ -6,6 +6,7 @@
 
 import crypto from 'node:crypto';
 import { valuesHash, visualIntact } from '../src/lib/visuals.js';
+import { COMMISSION_MIN_WORDS } from '../workers/wnba-news/src/commission.js';
 
 const args = process.argv.slice(2);
 const opt = (k, d) => (args.find((a) => a.startsWith(`--${k}=`)) || '').split('=')[1] || d;
@@ -56,7 +57,7 @@ for (const card of features) {
   ok(`${P}: page shows the commissioned chip and the reason`, /commission-chip/.test(h) && /Why we commissioned this/.test(h));
   ok(`${P}: listed as a feature, not as autopilot desk output`, card.series === 'PropBetEdge Features' && card.kind === 'commissioned_feature');
   ok(`${P}: quality state is current`, card.quality_state === 'current_quality', card.quality_state);
-  ok(`${P}: word count is feature length`, a.words >= 800, `${a.words} words`);
+  ok(`${P}: word count is feature length`, a.words >= COMMISSION_MIN_WORDS, `${a.words} words (min ${COMMISSION_MIN_WORDS})`);
 
   // ---- the visual contract
   ok(`${P}: carries visuals`, (a.visuals || []).length >= 2, `${(a.visuals || []).length}`);
