@@ -5,6 +5,7 @@ import {
   WINBA_VERSION,
   WINBA_WEIGHTS,
   WINBA_QUALIFICATION,
+  WINBA_LAYER_CONTRACT,
   winbaBoxImpact,
   aggregateWinbaArchives,
   scoreWinbaPlayers,
@@ -21,6 +22,20 @@ test('WinBA v1 constants and Box Impact are frozen', () => {
   });
   assert.deepEqual(WINBA_QUALIFICATION, { min_games: 10, min_minutes: 250 });
   assert.equal(winbaBoxImpact({ pts: 20, reb: 10, ast: 5 }), 39.5);
+});
+
+test('advanced context is contractually non-scoring and cannot redefine WinBA v1', () => {
+  assert.equal(WINBA_LAYER_CONTRACT.core.version, 'winba/1.0.0');
+  assert.equal(WINBA_LAYER_CONTRACT.core.deterministic, true);
+  assert.equal(WINBA_LAYER_CONTRACT.context.affects_score, false);
+  assert.equal(WINBA_LAYER_CONTRACT.context.affects_rank, false);
+  assert.equal(WINBA_LAYER_CONTRACT.context.affects_historical_snapshots, false);
+  assert.deepEqual(WINBA_LAYER_CONTRACT.context.allowed_inputs, [
+    'on_off',
+    'lineup_impact',
+    'possession_context',
+    'optical_tracking'
+  ]);
 });
 
 test('WinBA exact scoring and ranking are deterministic', () => {
