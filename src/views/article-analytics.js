@@ -75,6 +75,75 @@ function trendTotalChart(a) {
   </div>`;
 }
 
+
+function trendDriverPanel(a) {
+  const f = a?.facts || {};
+  const d = f.derived || {};
+  const st = f.standing || null;
+  if (a.market_type !== 'total' || !st) return '';
+
+  const teamNow = num(d.avg_pts);
+  const oppNow = num(d.avg_opp_pts);
+  const teamSeason = num(st.points_for_avg);
+  const oppSeason = num(st.points_against_avg);
+  if ([teamNow, oppNow, teamSeason, oppSeason].some((v) => v === null)) return '';
+
+  const teamDelta = teamNow - teamSeason;
+  const oppDelta = oppNow - oppSeason;
+  const teamIsDriver = Math.abs(teamDelta) >= Math.abs(oppDelta);
+  const driverLabel = teamIsDriver ? 'Team scoring' : 'Opponent scoring';
+  const driverDelta = teamIsDriver ? teamDelta : oppDelta;
+  const driverCopy = teamIsDriver
+    ? `${f1(Math.abs(teamDelta))} points ${teamDelta < 0 ? 'below' : 'above'} the team’s season scoring average`
+    : `${f1(Math.abs(oppDelta))} points ${oppDelta < 0 ? 'below' : 'above'} the team’s season defensive average`;
+
+  const maxDelta = Math.max(1, Math.abs(teamDelta), Math.abs(oppDelta));
+  const row = (label, now, season, delta) => {
+    const w = Math.max(8, Math.abs(delta) / maxDelta * 100);
+    return html`<div class="aa-driver-row">
+      <div><b>${label}</b><span>${f1(now)} during run · ${f1(season)} season</span></div>
+      <div class="aa-driver-track"><i></i><span class="${delta >= 0 ? 'is-up' : 'is-down'}" style="--aa-driver:${w.toFixed(1)}%"></span></div>
+      <strong class="${delta >= 0 ? 'is-up' : 'is-down'}">${signed(delta)}</strong>
+    </div>`;
+  };
+
+  return html`<div class="aa-driver">
+    <div class="aa-driver-callout">
+      <span class="aa-driver-icon">↳</span>
+      <div><small>Biggest driver</small><b>${driverLabel}</b><p>${driverCopy}</p></div>
+    </div>
+    <div class="aa-driver-rows">
+      ${row('Team scoring', teamNow, teamSeason, teamDelta)}
+      ${row('Opponent scoring', oppNow, oppSeason, oppDelta)}
+    </div>
+  </div>`;
+}
+
+function trendNextLine(a) {
+  const f = a?.facts || {};
+  const next = f.next || null;
+  const market = next?.market || null;
+  if (!next || !market) return '';
+  const opponent = next.opponent || 'next opponent';
+  const start = next.start_utc ? safeDate(next.start_utc) : '';
+  const total = num(market.total);
+  const spread = num(market.spread);
+  const books = num(market.books);
+
+  return html`<a class="aa-next-line" href="${a?.context?.next_game?.game_id ? `/matchups/${a.context.next_game.game_id}` : '/matchups'}">
+    <div>
+      <span class="aa-kicker">Next market</span>
+      <b>${opponent}${start ? ` · ${start}` : ''}</b>
+      <small>${books !== null ? `${books} books · ` : ''}stored PropBetEdge snapshot</small>
+    </div>
+    <div class="aa-next-prices">
+      ${spread !== null ? html`<span><small>Spread</small><b>${signed(spread)}</b></span>` : ''}
+      ${total !== null ? html`<span><small>Total</small><b>${f1(total)}</b></span>` : ''}
+      <em>View matchup →</em>
+    </div>
+  </a>`;
+}
+
 function trendSpreadChart(a) {
   const rows = [...(a?.facts?.rows || [])].reverse();
   if (!rows.length) return '';
@@ -126,7 +195,9 @@ function trendAnalytics(a) {
         : metricCard(String(d.big_cover ?? 0), 'double-digit line results', '10+ points beyond the spread')}
     </div>
     ${trendOutcomeStrip(a)}
+    ${total ? trendDriverPanel(a) : ''}
     ${total ? trendTotalChart(a) : trendSpreadChart(a)}
+    ${trendNextLine(a)}
   </section>`;
 }
 
