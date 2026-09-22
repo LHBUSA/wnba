@@ -316,20 +316,20 @@ export async function previewDeep(ctx) {
       const favPct = fav === H ? D.home_no_vig_pct : D.away_no_vig_pct;
       const sb = mk.spread || {};
       const prices = sb.home_best?.price !== undefined && sb.away_best?.price !== undefined ? ` The best spread prices in that capture are ${nick(H.team)} ${am(sb.home_best.price)} at ${book(sb.home_best.book)} and ${nick(A.team)} ${am(sb.away_best.price)} at ${book(sb.away_best.book)}.` : '';
-      mkt.push(`PropBetEdge’s latest capture (${dShort(mk.captured_at)} at ${tET(mk.captured_at)}, ${mk.books} books, The Odds API) has the ${nick(fav.team)} as ${line}-point favorites and the total at ${mk.total?.line}.${prices}${favPct !== null ? ` With the bookmaker margin removed, the moneylines imply ${aan(f1(favPct))} ${f1(favPct)}% chance for the ${nick(fav.team)}${mk.moneyline?.consensus_books ? ` (${mk.moneyline.consensus_books}-book consensus)` : ''}.` : ''} These are market numbers, not a PropBetEdge projection; no WNBA model is published.`);
+      mkt.push(`The latest market snapshot (${dShort(mk.captured_at)} at ${tET(mk.captured_at)}, ${mk.books} books) has the ${nick(fav.team)} favored by ${line}, with a total of ${mk.total?.line}.${prices}${favPct !== null ? ` Removing the bookmaker margin, the moneylines work out to a ${f1(favPct)}% consensus probability for the ${nick(fav.team)}${mk.moneyline?.consensus_books ? ` across ${mk.moneyline.consensus_books} books` : ''}.` : ''}`);
       if (hist.length >= 2) {
         const h0 = hist[0]; const h1 = hist.at(-1);
         const moved = (x, y) => Number.isFinite(x) && Number.isFinite(y) && x !== y;
         mkt.push(`Across ${countOf(hist.length, 'stored capture')} since ${dShort(h0.at)}, the consensus home spread ${moved(h0.spread, h1.spread) ? `moved from ${sgn(h0.spread)} to ${sgn(h1.spread)}` : `has held at ${sgn(h1.spread)}`} and the total ${moved(h0.total, h1.total) ? `moved from ${h0.total} to ${h1.total}` : `has held at ${h1.total}`}.`);
       }
-      if (updatesAfter.length) mkt.push(`Freshness: the capture predates ESPN’s latest feed update on ${listJoin(updatesAfter.map((x) => `${x.name} (${dShort(x.source_updated_at)}, ${tET(x.source_updated_at)})`))}, so it cannot reflect that change.`);
+      if (updatesAfter.length) mkt.push(`That snapshot came before ESPN’s latest availability update for ${listJoin(updatesAfter.map((x) => `${x.name} (${dShort(x.source_updated_at)}, ${tET(x.source_updated_at)})`))}, so the line may not reflect the newest status.`);
       // PropBetEdge Intelligence: how the records compare with what is priced.
       if (seasonGap !== null && recentGap !== null) {
         const hi = Math.max(seasonGap, recentGap); const lo = Math.min(seasonGap, recentGap);
         const where = line > hi ? 'above both' : line < lo ? 'below both' : `between them, closer to the ${Math.abs(line - seasonGap) <= Math.abs(line - recentGap) ? 'season' : 'recent'} figure`;
-        intel.push(`Where the price sits: the ${line}-point spread is ${where} of two record-based gaps between these teams — ${f1(Math.abs(seasonGap))} points in season differential and ${f1(Math.abs(recentGap))} in average margin over the last 10${seasonGap < 0 || recentGap < 0 ? ' (in the underdog’s favor on at least one)' : ''}. Neither gap adjusts for home court or schedule strength.`);
+        intel.push(`The ${line}-point spread sits ${where} two simple team gaps: ${f1(Math.abs(seasonGap))} points in season differential and ${f1(Math.abs(recentGap))} in average margin over the last 10${seasonGap < 0 || recentGap < 0 ? ', with at least one of those measures leaning toward the underdog' : ''}. Those comparisons do not adjust for home court or schedule strength.`);
       }
-      if (threshold !== null) intel.push(`The strongest record support for the price: the ${nick(fav.team)} won by ${threshold} or more in ${wordN(favBigWins.length)} of their last ${fav.form.sample}${favBigWins.length ? ` (${favBigWins.slice(0, 4).map((x) => `${sc(x.pts, x.opp_pts)} ${x.home_away === 'home' ? 'against' : 'at'} ${tn(x.opponent)}`).join(', ')})` : ''}, and the ${nick(dog.team)} lost by ${threshold} or more in ${wordN(dogBigLosses.length)} of theirs.`);
+      if (threshold !== null) intel.push(`In the recent sample, the ${nick(fav.team)} won by ${threshold} or more in ${wordN(favBigWins.length)} of their last ${fav.form.sample}${favBigWins.length ? ` (${favBigWins.slice(0, 4).map((x) => `${sc(x.pts, x.opp_pts)} ${x.home_away === 'home' ? 'against' : 'at'} ${tn(x.opponent)}`).join(', ')})` : ''}. The ${nick(dog.team)} lost by that margin or more in ${wordN(dogBigLosses.length)} of theirs.`);
       const tot = mk.total?.line;
       if (Number.isFinite(tot) && Number.isFinite(D.combined_season_ppg)) {
         D.total_minus_season_ppg = tot - D.combined_season_ppg;
@@ -340,19 +340,19 @@ export async function previewDeep(ctx) {
       const dogAv = dog === H ? av.h : av.a;
       if (dogAv.gameDay.length) counter.push(`ESPN’s feed gives ${countOf(dogAv.gameDay.length, `${nick(dog.team)} player`, `${nick(dog.team)} players`)} an estimated return date of game day (feed updated ${listJoin([...new Set(dogAv.gameDay.map((x) => dShort(x.source_updated_at)))])}), and the capture could not know whether they play`);
     } else if (mk) {
-      mkt.push(`The market consensus in PropBetEdge’s capture of ${dShort(mk.captured_at)} (${mk.books} books, The Odds API) has no favorite on the spread${mk.total?.line ? ` and a total of ${mk.total.line}` : ''}. That is the market’s number, not a PropBetEdge projection.`);
+      mkt.push(`The latest ${mk.books}-book snapshot from ${dShort(mk.captured_at)} has the spread at pick’em${mk.total?.line ? ` with a total of ${mk.total.line}` : ''}.`);
     } else {
       mkt.push(historical ? 'No PropBetEdge market capture exists for this game; PropBetEdge began storing captures on September 11, 2026.' : 'No market snapshot exists for this game yet. Snapshots run at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET.');
     }
-    const counterCase = counter.length ? `The case against the ${line}-point spread: ${counter.join('; ')}.` : null;
+    const counterCase = counter.length ? `Reasons to be careful with the ${line}-point spread: ${counter.join('; ')}.` : null;
 
     // --- what matters next
     const next = [];
     if (gd.length) next.push(`ESPN’s estimated return date for ${listJoin(gd.map((x) => x.name))} is game day (feed updated ${listJoin([...new Set(gd.map((x) => dShort(x.source_updated_at)))])}); none is a confirmation, and each confirmed return or scratch changes the rotation described above.`);
     const openStarts = [...lostLongA, ...lostLongH].filter((r) => r.starts >= Math.ceil((r.games || 5) / 2) && r.appearances === r.games);
-    if (openStarts.length) next.push(`Who starts in place of ${listJoin(openStarts.map((r) => r.name))}; the first box score without ${openStarts.length === 1 ? 'her' : 'them'} is the first real evidence of the redistribution.`);
-    if (!historical) next.push(mk?.props?.available ? `Player props are captured for this game (${mk.props.players} players); they are where a minutes change shows first.` : 'Player props, which PropBetEdge captures only inside 36 hours of tip; they are where a minutes change shows first.');
-    if (mk) next.push(`Movement against this capture (${fav ? `${nick(fav.team)} −${line}, ` : ''}total ${mk.total?.line}) in the 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET captures before tip.`);
+    if (openStarts.length) next.push(`The starting lineup will show who replaces ${listJoin(openStarts.map((r) => r.name))}; the first full game without ${openStarts.length === 1 ? 'her' : 'them'} will show how the minutes actually move.`);
+    if (!historical) next.push(mk?.props?.available ? `Player props are already posted for ${mk.props.players} players, so any minutes adjustment should start showing there.` : 'Player props enter the board inside 36 hours of tip, which is usually where a minutes change becomes visible first.');
+    if (mk) next.push(`Watch the next snapshots at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET for movement from ${fav ? `${nick(fav.team)} −${line} and ` : ''}the ${mk.total?.line} total.`);
 
     // --- the read
     let thesis;
@@ -364,22 +364,22 @@ export async function previewDeep(ctx) {
       if (gd.length) qs.push(`who is actually available — ESPN’s feed gives ${countOf(gd.length, 'player')} across the two teams an estimated return date of game day (feed updated ${listJoin([...new Set(gd.map((x) => dShort(x.source_updated_at)))])})`);
       const dogAv = dog === H ? av.h : av.a; const favAv = fav === H ? av.h : av.a;
       if (!qs.length && (dogAv.long.length || favAv.long.length)) qs.push(`how the ${nick((dogAv.long.length ? dog : fav).team)} replace the minutes ESPN’s feed has ruled out long-term`);
-      thesis = `The market consensus makes the ${full(fav.team)} ${line}-point favorites ${fav === A ? 'on the road' : 'at home'} against the ${full(dog.team)} on ${dLong(g.start_utc)}${venue}. ${read}.${qs.length ? ` What could make the price wrong comes down to ${qs.length === 1 ? 'one question' : 'two questions'} the records cannot settle yet: ${qs.join('; and ')}.` : ''}`;
+      thesis = `The ${full(fav.team)} enter as ${line}-point favorites ${fav === A ? 'on the road' : 'at home'} against the ${full(dog.team)} on ${dLong(g.start_utc)}${venue}. ${read}.${qs.length ? ` The open ${qs.length === 1 ? 'question is' : 'questions are'} ${qs.join('; and ')}.` : ''}`;
     } else {
-      thesis = `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}. ${mk ? '' : historical ? 'No PropBetEdge market capture is stored for this date, ' : 'No market capture exists yet, '}so this preview compares the two teams on the records alone: form, scoring, rest and the season series side by side.`.replace('. so this', '. So this');
+      thesis = `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}. ${mk ? 'With no clear favorite, the matchup comes down to recent form, scoring, rest and availability.' : historical ? 'There is no stored market snapshot for this date, so the matchup is framed by form, scoring, rest and the season series.' : 'The first market snapshot is not posted yet, so the early read is form, scoring, rest and availability.'}`;
     }
 
-    const { body, sections } = assemble([['Game outlook', [thesis]], ['Availability', availParas], ['How they match up', cmp], ['The line', mkt], ['Before tip', next.length ? [next.join(' ')] : []]]);
+    const { body, sections } = assemble([['Game outlook', [thesis]], ['Availability', availParas], ['How they match up', cmp], ['The line', mkt], ['Before tip', next]]);
     const favN = fav ? nick(fav.team) : null;
     const headline = fav && seasonGap !== null && recentGap !== null
-      ? (seasonGap >= line && recentGap >= line ? `${a} at ${h}: the ${favN} lay ${line}, and the season and the last 10 both back it`
-        : seasonGap >= line ? `${a} at ${h}: the ${favN} lay ${line} on their season, not their last 10`
-          : recentGap >= line ? `${a} at ${h}: the ${favN} lay ${line} on recent form more than on their season`
-            : `${a} at ${h}: the ${favN} lay ${line}, more than the season or the last 10 alone shows`)
-      : fav ? `${a} at ${h}: the ${favN} lay ${line}` : `${a} at ${h}: form, scoring and rest, side by side`;
-    const deck = fav && seasonGap !== null && recentGap !== null
-      ? `The ${full(fav.team)} are ${line}-point favorites ${fav === A ? 'on the road' : 'at home'}: ${seasonGap >= line && recentGap >= line ? 'the season record and recent form both support the price' : seasonGap >= line ? 'the season record supports the price more than recent form' : recentGap >= line ? 'recent form supports the price more than the season record' : 'neither the season nor the last 10 reaches it alone'}${gd.length ? `, and ESPN’s feed gives ${countOf(gd.length, 'player')} an estimated return date of game day (feed updated ${listJoin([...new Set(gd.map((x) => dShort(x.source_updated_at)))])})` : ''}. ${dLong(g.start_utc)}${venue}.`
-      : `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}.`;
+      ? (seasonGap >= line && recentGap >= line ? `${a} at ${h}: ${favN} favored by ${line} with form on their side`
+        : seasonGap >= line ? `${a} at ${h}: ${favN} favored by ${line}, with the season edge stronger than recent form`
+          : recentGap >= line ? `${a} at ${h}: ${favN} favored by ${line} as recent form improves`
+            : `${a} at ${h}: ${favN} favored by ${line} in a tighter matchup than the spread suggests`)
+      : fav ? `${a} at ${h}: ${favN} favored by ${line}` : `${a} at ${h}: injuries, recent form and the matchup`;
+    const deck = fav
+      ? `The ${full(fav.team)} are ${line}-point favorites ${fav === A ? 'on the road' : 'at home'} against the ${full(dog.team)}. ${gd.length ? `${countOf(gd.length, 'player')} across the two teams has an ESPN return estimate on game day, making availability part of the pregame read.` : `Recent form and availability shape the matchup before ${dLong(g.start_utc)}${venue}.`}`
+      : `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}, with recent form and availability driving the early read.`;
     const summary = intel[0] || 'With no stored market for this game, the comparison is the story: form, scoring and rest side by side.';
     const supporting = intel.slice(1);
     const against = [];
@@ -678,18 +678,18 @@ export async function transactionDeep(ctx) {
         : curMover
           ? `${curMover.name} has averaged ${f1(curMover.current.min)} minutes this season, so the move touches the end of the bench rather than the rotation’s core.`
           : 'Nothing in the records points to a top-of-rotation role; its betting relevance runs through the end of the bench.';
-    const thesis = `Per ESPN’s WNBA transactions log, the ${full(team)} ${moveText} (${dShort(g.date)}). ${readTail}`;
+    const thesis = `The ${full(team)} ${moveText}, according to ESPN’s WNBA transactions log dated ${dShort(g.date)}. ${readTail}`;
     const oppNext = ng ? (ng.home.team_id === team.team_id ? ng.away : ng.home) : null;
     const oppSt = oppNext && !historical ? ctx.standingsById?.get(oppNext.team_id) || null : null;
     const movesParas = teamMoves.length ? [`It is not the ${poss(n)} only recent roster change. Earlier moves in the transactions log over the previous 30 days: ${teamMoves.map((t) => `${dShort(t.date)} — ${String(t.description).replace(/\.$/, '')}`).join('; ')}.`] : [];
     const nextParas = ng ? [`The ${n} next play ${ng.home.team_id === team.team_id ? `the ${full(oppNext)} at home` : `at the ${full(oppNext)}`} on ${dLong(ng.start_utc)}${oppSt ? `; the ${nick(oppNext)} are ${recWL(oppSt.wins, oppSt.losses)} and ${oppSt.last_ten} over their last 10` : ''}. The first box score after the move is the first record of how the minutes are actually used.`] : [];
     const { body, sections } = assemble([['What happened', [thesis]], ['The players involved', sProfiles], ['How it fits', ctxParas], ['Recent moves', movesParas], ['The line', mkt], ['Next up', nextParas]]);
-    const headline = `Roster move: the ${n} ${moveText}`.replace(/\s+/g, ' ');
+    const headline = `The ${n} ${moveText}`.replace(/\s+/g, ' ');
     const deck = recentLong.length && signing
-      ? `Dated ${dShort(g.date)}, ${D.days_after_listing === 0 ? 'the same day as' : `${countOf(D.days_after_listing, 'day')} after`} an ESPN injury-feed update that lists ${listingPhrase(recentLong[0], year)}. Per ESPN’s transactions log.`
+      ? `The move came ${D.days_after_listing === 0 ? 'the same day as' : `${countOf(D.days_after_listing, 'day')} after`} an ESPN injury update for ${recentLong[0].name}. The transactions log is dated ${dShort(g.date)}.`
       : curMover
         ? `${curMover.name} brings ${f1(curMover.current.pts)} points in ${f1(curMover.current.min)} minutes a game across ${curMover.current.games} games this season${st ? ` to a ${full(team)} team at ${recWL(st.wins, st.losses)}` : ''}${ng ? `, before the ${nick(oppNext)} on ${dShort(ng.start_utc)}` : ''}. Per ESPN’s transactions log, dated ${dShort(g.date)}.`
-        : `A roster move dated ${dShort(g.date)} from ESPN’s WNBA transactions log.`;
+        : `ESPN’s WNBA transactions log records the move on ${dShort(g.date)}.`;
     const bettor = [curMover && curMover.current.min >= 15 ? `${poss(curMover.name)} ${f1(curMover.current.min)} minutes a game are rotation minutes: the move is relevant to player-prop eligibility and minutes for the ${poss(n)} regulars, not only the end of the bench.` : `A depth move: it changes who fills the last minutes of the ${poss(n)} rotation, which touches player-prop eligibility rather than game lines.`, ng ? `Next up: ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}.` : 'No upcoming game is on the published schedule.'];
     const against = [...(profiles.some((p) => !p.current?.games && p.prior?.games) ? [`The incoming player has no ${year} games in the source log; her last regular season is the only baseline, and it was with a different team.`] : []), 'Depth moves rarely move a game line on their own.'];
     const unknown = ['How many minutes the incoming player receives — there is no box score for the new role yet.'];
@@ -808,12 +808,12 @@ export async function resultDeep(ctx) {
       let base = '';
       if (ent && Number.isFinite(ent[key]) && ent.games >= 3) {
         c.above = r[key] - ent[key];
-        base = ` She came into the game averaging ${f1(ent[key])} ${label} over ${ent.games} games of the ${year} regular season, so this was ${f1(Math.abs(c.above))} ${c.above >= 0 ? 'above' : 'below'} it`;
+        base = ` She entered averaging ${f1(ent[key])} ${label} this season; this finish was ${f1(Math.abs(c.above))} ${c.above >= 0 ? 'above' : 'below'} that mark`;
         if (ent.last10 && ent.last10.games >= 5) {
           c.above_l10 = r[key] - ent.last10[key];
           const rising = ent.last10[key] - ent[key] >= 2;
           if (rising) c.l10_minus_season = ent.last10[key] - ent[key];
-          base += ` and ${f1(Math.abs(c.above_l10))} ${c.above_l10 >= 0 ? 'above' : 'below'} her ${f1(ent.last10[key])} over the previous ${ent.last10.games}${rising ? ` — her recent baseline was already running ${f1(c.l10_minus_season)} above her season, so this is less of an outlier than the season number makes it look` : ''}`;
+          base += `. She had averaged ${f1(ent.last10[key])} over her previous ${ent.last10.games}, putting this game ${f1(Math.abs(c.above_l10))} ${c.above_l10 >= 0 ? 'above' : 'below'} that recent pace${rising ? `; that recent average was already ${f1(c.l10_minus_season)} above her season mark` : ''}`;
         }
         base += '.';
       }
@@ -861,7 +861,7 @@ export async function resultDeep(ctx) {
       thesis = `${listJoin(coNames)} ${same ? `scored ${pts[0]} apiece` : `scored ${listJoin(pts.map(String))}`} as the ${full(winner)} beat the ${full(loser)} ${score} on ${dLong(g.start_utc)}${coSameTeam ? ` — ${D.pair_pts} of the ${poss(nick(co[0].team_id === winner.team_id ? winner : loser))} ${co[0].team_id === winner.team_id ? winner.score : loser.score} points, ${f1(D.pair_share)}% of the team’s scoring` : ''}.`;
     } else if (top) thesis = `${top.name} ${topTeam === winner ? 'led' : 'could not save'} the ${nick(topTeam)} with ${statLine(top)} as the ${full(winner)} beat the ${full(loser)} ${score} on ${dLong(g.start_utc)}.`;
     else thesis = `The ${full(winner)} beat the ${full(loser)} ${score}${ot ? ` in ${ls.length - 4 === 1 ? 'overtime' : `${ls.length - 4} overtimes`}` : ''} on ${dLong(g.start_utc)}.`;
-    if (ats && pc.over_under !== null) thesis += ` Against ${poss(pc.provider)} line, relayed by ESPN, the ${nick(favTeam)} were favored by ${Math.abs(ats.home_spread)}; ${coverTeam ? `${coverTeam === favTeam ? 'they' : `the ${nick(coverTeam)}`} covered by ${f1(D.cover_by)}` : 'the spread pushed'}, and the game went ${ats.total_result} the ${pc.over_under} total by ${f1(D.total_by)}. The question for the next slate is how much of that ${stars.length ? 'scoring' : 'margin'} repeats.`;
+    if (ats && pc.over_under !== null) { /* market grading stays in PropBetEdge Intelligence below; keep the game-story lede about basketball */ }
 
     const how = [];
     if (q1 && half && best) {
@@ -885,7 +885,7 @@ export async function resultDeep(ctx) {
       const rankAllowed = [...allStandings].sort((x, y) => y.points_against_avg - x.points_against_avg).findIndex((e) => e.team_id === loser.team_id) + 1;
       D.loser_allowed_rank = rankAllowed; D.league_teams = allStandings.length; D.loser_allowed = sl.points_against_avg;
       const rk = rankAllowed <= 3 ? `the ${MOSTS[rankAllowed]} of ${D.league_teams} teams` : `${ordinalN(rankAllowed)}-most of ${D.league_teams}`;
-      ctxParas.push(rankAllowed <= 4 ? `Context cuts against reading too much into it: the ${L} allow ${f1(sl.points_against_avg)} points a game on the season (${asOfLabel}), ${rk}.` : `The opponent does not explain it away: the ${L} allow ${f1(sl.points_against_avg)} points a game on the season (${asOfLabel}), ${rk} — a middle-of-the-table defense.`);
+      ctxParas.push(rankAllowed <= 4 ? `One piece of context: the ${L} allow ${f1(sl.points_against_avg)} points a game this season (${asOfLabel}), ${rk}.` : `This did not come against one of the league’s softest defenses: the ${L} allow ${f1(sl.points_against_avg)} points a game (${asOfLabel}), ${rk}.`);
     }
     const ngW = ctx.historical ? null : nextGame(schedule, winner.team_id);
     const ngL = ctx.historical ? null : nextGame(schedule, loser.team_id);
@@ -906,21 +906,27 @@ export async function resultDeep(ctx) {
         nextBits[0] += ` — and the ${nick(nOpp)} allow ${f1(so.points_against_avg)} a game, ${r2 <= 3 ? `the ${MOSTS[r2]} in the league` : `${ordinalN(r2)}-most of ${allStandings.length}`}`;
       }
     }
-    if (nextBits.length) ctxParas.push(`Next: ${nextBits.join('; ')}. Prop lines for ${stars.length ? listJoin(stars.slice(0, 2).map((r) => r.name)) : 'either team'} are captured only inside 36 hours of tip, and they are the market that has to digest ${stars.length ? 'these performances' : 'this result'}.`);
+    if (nextBits.length) ctxParas.push(`Next up: ${nextBits.join('; ')}. Player props enter the board inside 36 hours of tip.`);
 
     const counter = [];
     const risers = comparisons.filter((c) => Number.isFinite(c.l10_minus_season));
     if (risers.length) counter.push(`${listJoin(risers.map((c) => `${poss(c.name)} previous-${c.entering.last10_games} average (${f1(c.entering.last10)}) already sat ${f1(c.l10_minus_season)} above her season mark`))}, so against recent form ${risers.length === 1 ? 'the game is a smaller outlier' : 'these are smaller outliers'} than the season averages make ${risers.length === 1 ? 'it' : 'them'} look`);
     if (sl && topTeam === winner && D.loser_allowed_rank <= 4) counter.push(`the ${L} allow ${f1(sl.points_against_avg)} a game, so part of the scoring is the opponent`);
     if (tl.turnoverPoints && tw.turnoverPoints && Number(tl.turnoverPoints) > Number(tw.turnoverPoints)) counter.push(`the ${W} gave up more points off turnovers than they scored, ${sc(tl.turnoverPoints, tw.turnoverPoints)}`);
-    const counterPara = counter.length ? `The case against reading it forward: ${counter.join('; ')}. One game is a sample of one.` : null;
+    const counterPara = counter.length ? `A reason to be cautious about carrying this game forward: ${counter.join('; ')}. One game is still one game.` : null;
 
     const { body, sections } = assemble([['Game story', [thesis]], ['Who stood out', starParas], ['How it happened', how], ['What it means', [...(counterPara ? [counterPara] : []), ...ctxParas]]]);
     const headline = co.length > 1 && headStat === 'pts'
       ? (co.length <= 3 ? `${listJoin(coNames)} score ${co.every((x) => x.pts === co[0].pts) ? `${co[0].pts} apiece` : listJoin(co.map((x) => String(x.pts)))} as the ${W} beat the ${L}, ${score}` : `The ${W} beat the ${L}, ${score}, with the scoring lead shared`)
       : top ? (topTeam === winner ? `${poss(top.name)} ${keyLabel(top)} lead the ${W} past the ${L}, ${score}` : `The ${W} beat the ${L} ${score} despite ${poss(top.name)} ${keyLabel(top)}`)
         : `The ${full(winner)} beat the ${full(loser)}, ${score}`;
-    const deck = `${ats && coverTeam ? `The ${nick(coverTeam)} covered ${poss(pc.provider)} ${Math.abs(ats.home_spread)}-point line` : `Final from ${dLong(g.start_utc)}`}${ats?.total_result && ats.total_result !== 'push' ? ` and the game ${ats.total_result === 'over' ? 'cleared' : 'stayed under'} ${pc.over_under} by ${f1(D.total_by)}` : ''}.${q1 && q1.w < q1.l ? ` The ${W} trailed ${sc(q1.l, q1.w)} after one quarter.` : ''}`;
+    const deck = q1 && q1.w < q1.l
+      ? `The ${W} erased a ${sc(q1.l, q1.w)} first-quarter deficit and finished with a ${margin}-point win${top ? ` behind ${poss(top.name)} ${keyLabel(top)}` : ''}.`
+      : co.length > 1 && headStat === 'pts'
+        ? `${listJoin(coNames)} shared the scoring spotlight as the ${W} won by ${margin}.`
+        : top
+          ? (topTeam === winner ? `${top.name} set the pace with ${keyLabel(top)} in a ${margin}-point ${W} win.` : `${top.name} posted ${keyLabel(top)} in the loss, but the ${W} finished with a ${margin}-point win.`)
+          : `The ${W} beat the ${L} by ${margin} on ${dLong(g.start_utc)}.`;
     const bettor = [];
     if (ats) bettor.push(`On the spread: ${poss(pc.provider)} line, relayed by ESPN, had the ${nick(favTeam)} favored by ${Math.abs(ats.home_spread)}; the ${margin}-point margin put ${coverTeam ? `the ${nick(coverTeam)} on the right side of the spread` : 'the spread at a push'}. The ${ats.total_points} combined points went ${ats.total_result} the ${ats.over_under} total.`);
     else bettor.push('No closing line is available in the source record for this game, so this result carries no market grade.');
@@ -1053,7 +1059,7 @@ export async function trendDeep(ctx) {
       const ptWord = (v) => (Math.abs(Math.abs(v) - 1) < 0.05 ? 'point' : 'points');
       headline = `${unders ? 'Unders' : 'Overs'} in ${Math.max(ov, un)} of the ${poss(T)} last ${n}: ${driver === 'own' ? `the ${poss(T)} own scoring is the bigger part` : driver === 'opp' ? 'their opponents’ scoring is the bigger part' : 'a pricing run, measured'}`;
       deck = `The ${poss(T)} last ${n} games averaged ${f1(D.avg_total)} points against an average ${provider} total of ${f1(D.avg_line)} — ${f1(Math.abs(D.avg_miss))} ${dir} per game, ${wordN(bigMiss.length)} of them by 10 or more.${nm?.total?.line ? ` The next consensus total is ${nm.total.line}.` : ''}`;
-      thesis = `The ${poss(full(t))} last ${n} completed games with a line in the source record went ${dir} the total ${Math.max(ov, un)} times. The misses were not marginal: the games averaged ${f1(D.avg_total)} points against an average total of ${f1(D.avg_line)}, and ${wordN(bigMiss.length)} of them landed 10 or more points ${dir}.${st ? ` The source of the gap matters for whether it lasts: the ${T} averaged ${f1(D.avg_pts)} points in those games, ${f1(Math.abs(D.pts_vs_season))} ${ptWord(D.pts_vs_season)} ${D.pts_vs_season < 0 ? 'below' : 'above'} their season average of ${f1(st.points_for_avg)}, while their opponents averaged ${f1(D.avg_opp_pts)}, ${f1(Math.abs(D.opp_vs_season))} ${ptWord(D.opp_vs_season)} ${D.opp_vs_season < 0 ? 'below' : 'above'} the ${f1(st.points_against_avg)} they allow on the season. ${driver === 'own' ? `Most of the ${dir} run is the ${poss(T)} own offense ${D.pts_vs_season < 0 ? 'falling short' : 'running hot'}.` : `More of it is the opponents’ scoring than the ${poss(T)} own.`}` : ''}`;
+      thesis = `The ${poss(full(t))} last ${n} games with a posted line went ${dir} the total ${Math.max(ov, un)} times. The misses were not marginal: the games averaged ${f1(D.avg_total)} points against an average total of ${f1(D.avg_line)}, and ${wordN(bigMiss.length)} of them landed 10 or more points ${dir}.${st ? ` The source of the gap matters for whether it lasts: the ${T} averaged ${f1(D.avg_pts)} points in those games, ${f1(Math.abs(D.pts_vs_season))} ${ptWord(D.pts_vs_season)} ${D.pts_vs_season < 0 ? 'below' : 'above'} their season average of ${f1(st.points_for_avg)}, while their opponents averaged ${f1(D.avg_opp_pts)}, ${f1(Math.abs(D.opp_vs_season))} ${ptWord(D.opp_vs_season)} ${D.opp_vs_season < 0 ? 'below' : 'above'} the ${f1(st.points_against_avg)} they allow on the season. ${driver === 'own' ? `Most of the ${dir} run is the ${poss(T)} own offense ${D.pts_vs_season < 0 ? 'falling short' : 'running hot'}.` : `More of it is the opponents’ scoring than the ${poss(T)} own.`}` : ''}`;
       evidence.push(`Does it persist across the window? The ${wordN(older.length)} older games went ${dir} ${wordN(D.older_hits)} times and the ${wordN(newer.length)} most recent ${wordN(D.newer_hits)} times; the average total was ${f1(D.older_avg_line)} on the older games and ${f1(D.newer_avg_line)} on the recent ones.`);
       const exceptions = rows.filter((r) => r.ou === (unders ? 'O' : 'U'));
       if (exceptions.length) D.max_exception = Math.max(...exceptions.map((r) => Math.abs(r.total - r.total_line)));
@@ -1074,7 +1080,7 @@ export async function trendDeep(ctx) {
           teamCtx.push(pulls ? `The opponent pulls the same way: the ${poss(nick(nOpp))} last 10 games averaged ${f1(oTot)} total points, so a low number for that game is not only an adjustment to the ${T}.` : `The opponent does not explain it: the ${poss(nick(nOpp))} last 10 games averaged ${f1(oTot)} total points.`);
         }
       }
-      counterPara = `The case against the run: ${n} games against one sportsbook’s totals is a small sample${exceptions.length ? `, and ${wordN(exceptions.length)} of them went ${unders ? 'over' : 'under'}, one by ${f1(D.max_exception)}` : ''}. Totals are set against both teams, so the next opponent changes the baseline, and the run describes past pricing rather than forecasting the next game.`;
+      counterPara = `A reason to be careful with the run: ${n} games against one sportsbook’s totals is a small sample${exceptions.length ? `, and ${wordN(exceptions.length)} of them went ${unders ? 'over' : 'under'}, one by ${f1(D.max_exception)}` : ''}. Totals are set against both teams, so the next opponent changes the baseline, and the run describes past pricing rather than forecasting the next game.`;
       bettor = [`The ${dir} run is ${f1(Math.abs(D.avg_miss))} points a game against ${poss(provider)} totals over ${n} games; ${driver === 'own' ? `it tracks the ${poss(T)} own scoring, which is the part to watch` : 'it tracks opponents’ scoring as much as the team’s own'}.`];
       if (Number.isFinite(D.next_vs_window) && Number.isFinite(D.newer_avg_line)) bettor.push(`Whether the market has caught up: the recent average total was ${f1(D.newer_avg_line)}, and the next consensus total sits ${f1(Math.abs(D.next_vs_recent = nm.total.line - D.newer_avg_line))} ${nm.total.line < D.newer_avg_line ? 'below' : 'above'} it${(D.newer_avg_line < D.older_avg_line) === unders ? ', so the price has moved in the direction of the run' : ', so the price has not followed the run'}.`);
       against = [`A ${n}-game run against one sportsbook’s totals is fragile${exceptions.length ? `, and ${wordN(exceptions.length)} of the games went the other way, one by ${f1(D.max_exception)}` : ''}.`, 'Totals are set against both teams; the next opponent’s scoring changes the baseline.'];
@@ -1087,7 +1093,7 @@ export async function trendDeep(ctx) {
       D.newer_hits = newer.filter((r) => r.ats === (covers ? 'W' : 'L')).length; D.older_hits = older.filter((r) => r.ats === (covers ? 'W' : 'L')).length;
       headline = `The ${T} are ${rec} against the spread in their last ${n}: ${covers ? 'the lines have undersold them' : 'the lines have oversold them'} by ${f1(Math.abs(D.edge))} a game`;
       deck = `Against ${poss(provider)} spreads relayed by ESPN: an average spread of ${sgn(D.avg_spread)} against an average margin of ${sgn(D.avg_margin)}, ${wordN(D.big_cover)} of the ${n} results beating the line by 10 or more.`;
-      thesis = `Over their last ${n} completed games with a line in the source record, the ${full(t)} went ${rec} against the spread. On average they were ${D.avg_spread > 0 ? `${f1(D.avg_spread)}-point underdogs` : `${f1(-D.avg_spread)}-point favorites`} and finished at ${sgn(D.avg_margin)} — ${f1(Math.abs(D.edge))} points a game ${covers ? 'better' : 'worse'} than the spread. ${cap(wordN(D.big_cover))} of the ${n} ${covers ? 'covers' : 'misses'} came by 10 or more.`;
+      thesis = `Over their last ${n} games with a posted line, the ${full(t)} went ${rec} against the spread. On average they were ${D.avg_spread > 0 ? `${f1(D.avg_spread)}-point underdogs` : `${f1(-D.avg_spread)}-point favorites`} and finished at ${sgn(D.avg_margin)} — ${f1(Math.abs(D.edge))} points a game ${covers ? 'better' : 'worse'} than the spread. ${cap(wordN(D.big_cover))} of the ${n} ${covers ? 'covers' : 'misses'} came by 10 or more.`;
       evidence.push(`Does it persist across the window? The ${wordN(older.length)} older games produced ${wordN(D.older_hits)} ${covers ? 'covers' : 'misses'} and the ${wordN(newer.length)} most recent ${wordN(D.newer_hits)}; the average spread was ${sgn(D.older_avg_spread)} on the older games and ${sgn(D.newer_avg_spread)} on the recent ones.`);
       evidence.push(`Game by game: ${rows.map((r) => `${dShort(r.date)} ${r.home ? 'vs' : 'at'} ${r.opp} ${sc(r.pts, r.opp_pts)} (${sgn(r.spread)}, ${r.ats === 'W' ? 'covered' : r.ats === 'L' ? 'failed to cover' : 'push'})`).join('; ')}.`);
       evidence.push(`For the record, totals in the same games went ${ov}-${un}.`);
@@ -1096,13 +1102,13 @@ export async function trendDeep(ctx) {
         marketNow.push(`The market now: PropBetEdge’s capture of ${dShort(nm.captured_at)} (${nm.books} books, The Odds API) has the ${T} at ${sgn(D.next_spread)} for ${ng.away.abbr} at ${ng.home.abbr} on ${dShort(ng.start_utc)}.`);
         if (hist.length >= 2) marketNow.push(`Across ${countOf(hist.length, 'stored capture')} since ${dShort(hist[0].at)}, the consensus home spread ${moved(hist[0].spread, hist.at(-1).spread) ? `moved from ${sgn(hist[0].spread)} to ${sgn(hist.at(-1).spread)}` : `has held at ${sgn(hist.at(-1).spread)}`}.`);
       }
-      counterPara = `The case against the run: ${n} games against one sportsbook’s spreads is a small sample, and a market that has already adjusted leaves nothing of the run in the next spread.`;
+      counterPara = `A reason to be careful with the run: ${n} games against one sportsbook’s spreads is a small sample, and a market that has already adjusted leaves nothing of the run in the next spread.`;
       bettor = [`Read against the pricing: over these ${n} games the spreads ${covers ? 'undersold' : 'oversold'} the ${T} by ${f1(Math.abs(D.edge))} points a game.`];
       if (Number.isFinite(D.next_spread)) bettor.push(`The recent average spread was ${sgn(D.newer_avg_spread)} against ${sgn(D.older_avg_spread)} earlier in the window; the next consensus spread of ${sgn(D.next_spread)} is the market’s current answer.`);
       against = [`Sample size is ${n}, against one sportsbook’s spreads.`, 'A market that has already adjusted leaves nothing of the run in the next spread.'];
       unknown = ['Whether the next spread has fully adjusted.'];
     }
-    const nextParas = ng ? [`What comes next: ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}, the first game that tests whether the run continues against a multi-book price.`] : [];
+    const nextParas = ng ? [`Next up is ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}. It is the first chance to see whether the run holds against the current multi-book line.`] : [];
     const { body, sections } = assemble([['The run', [thesis]], ['The numbers', evidence], ['The next line', marketNow], ['Next matchup', teamCtx], ['What could break the trend', [counterPara]], ['Next up', nextParas]]);
     const id = await hashId(['trend', t.team_id, new Date(now).toISOString().slice(0, 10)]);
     const a0 = finalize({
