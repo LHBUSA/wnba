@@ -107,7 +107,7 @@ test('5 · a trend with enough evidence passes, and says what it cannot show', a
   assert.equal(xs.decisions[0].decision, 'standalone');
   assert.match(xs.decisions[0].reason, /8 of 10 unders, 7\.5 points a game, 4 by 10 or more/);
   const titles = S.sky.sections.map((s) => s.title);
-  for (const t of ['The read', 'The evidence', 'The market now', 'The team and the opponent', 'The counter-case']) assert.ok(titles.includes(t), t);
+  for (const t of ['The run', 'The numbers', 'The next line', 'Next matchup', 'What could break the trend']) assert.ok(titles.includes(t), t);
   const text = S.sky.body.join(' ');
   assert.match(text, /Does it persist across the window\?/);
   assert.match(text, /small sample/);
@@ -123,13 +123,14 @@ test('6 · preview Market (facts) and Intelligence (analysis) cannot duplicate o
   const games = FX.api[`/v1/schedule?from=${add('20260911', -14)}&to=${add('20260911', 7)}`].games;
   const injuries = FX.api['/v1/injuries'].items;
   const [p] = await previewArticles({ api: async (x) => FX.api[x] ?? null, upcoming: games.filter((g) => String(g.game_id) === '401857194'), injuries, now: Date.parse(FX.as_of), teams: [] });
-  const market = p.body.slice(p.sections.find((s) => s.title === 'The market').first, p.sections.find((s) => s.title === 'The market').first + p.sections.find((s) => s.title === 'The market').count);
+  const lineSection = p.sections.find((s) => s.title === 'The line');
+  const market = p.body.slice(lineSection.first, lineSection.first + lineSection.count);
   assert.ok(market.length >= 1);
-  assert.doesNotMatch(market.join(' '), /Where the price sits|strongest record support|Set against the evidence|combined season scoring|case against/i, 'no analysis in The market');
-  assert.match(market.join(' '), /PropBetEdge’s latest capture \(Sep \d+ at [\d:]+ [AP]M ET, \d+ books, The Odds API\)/);
+  assert.doesNotMatch(market.join(' '), /record-based gaps|recent sample|combined season scoring|Reasons to be careful/i, 'no analysis in The line');
+  assert.match(market.join(' '), /The latest market snapshot \(Sep \d+ at [\d:]+ [AP]M ET, \d+ books\)/);
   const intel = intelligenceOf(p);
   assert.equal(intel.render.intelligence, true);
-  assert.match(intel.copy.summary, /^Where the price sits: the 8\.5-point spread is/);
+  assert.match(intel.copy.summary, /^The 8\.5-point spread sits/);
   assert.deepEqual(duplicatedIdeas([intel.copy.summary, ...intel.copy.supporting], [p.headline, p.deck, ...p.body]), [], 'Intelligence adds to the body');
   assert.deepEqual(p.market_watch.text, [], 'the market module does not restate the capture');
   const html = String(articleView({ article: { ...p, slug: 'x-03dcc7', first_published_at: FX.as_of, media: null }, related: [] }));
