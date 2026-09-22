@@ -15,6 +15,7 @@ import { gameHighlights } from '../ui/video.js';
 import { winbaSeriesNav, winbaSeriesNavView, winbaIndexCards, WINBA_INDEX_KIND } from './winba-index.js';
 import { winbaIndexLeaderboard, winbaTeamDepth, winbaIndexAside } from './winba-leaderboard.js';
 import { sectionVisual } from './visuals.js';
+import { articleAnalytics, suppressVisualizedParagraph } from './article-analytics.js';
 
 // A `metric` entity carries no id-based route: it is the canonical explainer
 // for a PropBetEdge statistic. Routing it here lets the generator keep URLs out
@@ -241,8 +242,8 @@ export function articleView({ article: a, related = [], series = [] }) {
       <div class="story-layout ${indexAside ? 'story-layout--index' : ''}">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? html`${a.body.slice(0, a.sections[0].first).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : indexDepth && s.render === 'winba_team_depth' ? indexDepth : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${sectionVisual(a, s)}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
-            : a.body.map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
+            ? html`${a.body.slice(0, a.sections[0].first).filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : indexDepth && s.render === 'winba_team_depth' ? indexDepth : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${sectionVisual(a, s)}${articleAnalytics(a, { afterSection: i })}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
+            : a.body.filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">
           ${players.length ? html`<section><h2 class="aside-title">In this story</h2>
