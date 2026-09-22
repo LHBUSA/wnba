@@ -6,7 +6,7 @@
 
 import { dLong, dMonth, tET, f1, nick, poss, wordN, listJoin } from './prose.js';
 
-export const BRIEF_STORY_VERSION = 'wnba-brief-story/1.0.0';
+export const BRIEF_STORY_VERSION = 'wnba-brief-story/1.1.0';
 
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -130,23 +130,23 @@ function injuryStory({ source, sourceAt, others, player, v, type }) {
   const status = v.injury?.status || (type === 'availability' ? 'an updated availability status' : 'an injury update');
   const part = v.injury?.body_part ? ` with a ${String(v.injury.body_part).toLowerCase()} issue` : '';
   const minutes = Number.isFinite(v.role?.min) ? f1(v.role.min) : Number.isFinite(v.season?.min) ? f1(v.season.min) : null;
-  const headline = `${pn} listed ${String(status).toLowerCase()} for the ${tn}${minutes ? `: ${minutes} minutes a game at stake` : ''}`;
+  const headline = minutes ? `${pn} listed ${String(status).toLowerCase()}; the ${tn} may need to cover ${minutes} minutes` : `${pn} listed ${String(status).toLowerCase()} for the ${tn}`;
   const deck = v.season
-    ? `${pn} is averaging ${f1(v.season.pts)} points in ${f1(v.season.min)} minutes this season as the ${tn} work through her latest availability update.`
-    : `The ${tn} have a new availability question around ${pn}.`;
+    ? `${pn} is averaging ${f1(v.season.pts)} points in ${f1(v.season.min)} minutes this season. If she sits, those minutes have to move elsewhere in the ${tn} rotation.`
+    : `${pn} has a new availability update ahead of the ${tn}’s next game.`;
 
   add(`${pn.split(' ').at(-1)}’s status`, 'change', [
     v.injury
       ? `${pn} is listed ${String(status).toLowerCase()}${part} on ESPN’s WNBA injury feed${v.injury?.source_updated_at ? `, updated ${dLong(v.injury.source_updated_at)}` : ''}.`
-      : `${pn} is at the center of a new injury report for the ${tn}, creating an immediate availability question for the club.`,
+      : `${pn} is at the center of a new injury report for the ${tn}, putting her status for the next game in doubt.`,
     reportSentence(source, sourceAt, others, `injury update involving ${pn}`),
     !v.injury
-      ? `Until the team reaches its next game, the basketball question is straightforward: whether ${pn} is available and, if she is not, how the ${tn} redistribute the minutes normally attached to her role.`
+      ? `The next thing to watch is whether ${pn} plays. If she does not, the ${tn} will have to redistribute the minutes that normally come with her role.`
       : null
   ]);
-  add('Her role in the rotation', 'records', [seasonSentence(pn, tn, v.season), roleSentence(pn, tn, v)]);
-  add(`What it changes for ${nick(v.team || { name: tn })}`, 'why', [
-    v.role && minutes ? `${pn} has been carrying roughly ${minutes} minutes a night in the observed rotation, so any absence would redistribute a meaningful block of playing time.` : null,
+  add('Her role', 'records', [seasonSentence(pn, tn, v.season), roleSentence(pn, tn, v)]);
+  add('Who could pick up the minutes', 'why', [
+    v.role && minutes ? `${pn} has been playing roughly ${minutes} minutes a night recently. If she is unavailable, that is a meaningful chunk of the rotation for the ${tn} to replace.` : null,
     standingSentence(tn, v.standing)
   ]);
   add('Next game', 'next', [nextGameSentence(tn, v.next_game)]);
@@ -160,31 +160,31 @@ function transactionStory({ source, sourceAt, others, player, v, type }) {
   const headline = type === 'trade'
     ? `${pn} trade reshapes the ${tn} rotation`
     : type === 'signing'
-      ? `${tn} sign ${pn}: the role she enters`
+      ? `${tn} sign ${pn}, adding another option to the rotation`
       : type === 'waiver'
-        ? `${tn} waive ${pn}: what leaves the rotation`
+        ? `${tn} waive ${pn}, opening a spot in the rotation`
         : `${tn} make roster move involving ${pn}`;
   const deck = v.season
-    ? `${pn} brings ${f1(v.season.pts)} points and ${f1(v.season.min)} minutes per game into a roster move that changes the ${tn} depth chart.`
-    : `The ${tn} have a roster move involving ${pn}, with the next rotation now the key basketball question.`;
+    ? `${pn} is averaging ${f1(v.season.pts)} points in ${f1(v.season.min)} minutes per game, giving the ${tn} a clear recent baseline for the move.`
+    : `${pn} is part of a new ${tn} roster move. Her actual role will become clearer once the next rotation takes the floor.`;
 
   add('The move', 'change', [
     v.transaction
       ? `ESPN’s WNBA transactions log records the move on ${dMonth(v.transaction.date)}: ${String(v.transaction.description).replace(/\.$/, '')}.`
-      : `The ${tn} are involved in a reported roster move with ${pn}, a personnel change that puts her place in the rotation immediately in focus.`,
+      : `${pn} is part of a reported roster move involving the ${tn}. The next question is simply where she fits in the rotation.`,
     reportSentence(source, sourceAt, others, `roster move involving ${pn}`),
     !v.transaction && !v.season
-      ? `The move establishes the roster change, but the on-court role is still unwritten: minutes, lineup position and usage will only become clear once ${pn} enters the ${tn} rotation.`
+      ? `The move is official in the reporting, but the basketball role is still open. Minutes, lineup position and usage will become clearer once ${pn} enters the ${tn} rotation.`
       : null
   ]);
-  add(`${pn.split(' ').at(-1)}’s role`, 'records', [seasonSentence(pn, tn, v.season), recentSentence(pn, v.season), roleSentence(pn, tn, v)]);
+  add('Where she fits', 'records', [seasonSentence(pn, tn, v.season), recentSentence(pn, v.season), roleSentence(pn, tn, v)]);
   add(`The ${nick(v.team || { name: tn })} context`, 'team', [
     standingSentence(tn, v.standing),
-    v.role ? `${pn} has been part of a defined recent workload, so the roster move has a direct rotation consequence rather than reading as a transaction in isolation.` : null
+    v.role ? `${pn} has had a real recent workload, so this move is likely to be felt in the rotation rather than only at the end of the bench.` : null
   ]);
   add('Next game', 'next', [
     nextGameSentence(tn, v.next_game),
-    v.next_game ? `That matchup is the next scheduled look at whether the reported move changes ${pn}’s place in the ${nick(v.team || { name: tn })} rotation.` : null
+    v.next_game ? `That game should give the first useful look at ${pn}’s place in the ${nick(v.team || { name: tn })} rotation.` : null
   ]);
   return { headline, deck, body, sections };
 }
@@ -294,10 +294,10 @@ function leagueStory({ source, sourceAt, others, team, v, type, leagueTeams }) {
   const headline = tn ? `${tn} at the center of a new ${label} development` : `${label}: the latest confirmed development`;
   const deck = tn && v.standing
     ? `The ${tn} are ${v.standing.wins}–${v.standing.losses} as a new off-court development reaches the team.`
-    : others.length ? `Multiple independent publishers are reporting the same ${label.toLowerCase()} development, making it a league-level story rather than a single-outlet item.` : `A new ${label.toLowerCase()} development has been reported.`;
+    : others.length ? `Multiple independent publishers are reporting the same ${label.toLowerCase()} development, making it a league-wide development.` : `A new ${label.toLowerCase()} development has been reported.`;
   add('What changed', 'change', [
     tn
-      ? `A new ${label.toLowerCase()} development involves the ${tn}, adding an off-court change to the team’s current season picture.`
+      ? `A new ${label.toLowerCase()} development involves the ${tn}, changing the team’s off-court picture.`
       : `A new ${label.toLowerCase()} development is moving across the WNBA, with the available reporting describing a league-level change rather than a player-specific basketball event.`,
     reportSentence(source, sourceAt, others, `${label.toLowerCase()} development`)
   ]);
@@ -305,7 +305,7 @@ function leagueStory({ source, sourceAt, others, team, v, type, leagueTeams }) {
     tn ? standingSentence(tn, v.standing) : null,
     ['cba', 'expansion'].includes(type) && leagueTeams ? `The current WNBA standings cover ${leagueTeams} teams, so the development reaches a league structure that spans every active club.` : null,
     !tn
-      ? `The immediate basketball effect is not tied to one roster, one game or one player. It is a league-wide development, and the practical effect will become clearer as the change reaches teams and future competition.`
+      ? `The immediate basketball effect is not tied to one roster, one game or one player. It is a league-wide development, and the basketball impact will become clearer as teams respond.`
       : null,
     type === 'business'
       ? `The filing or business action is the event itself. Competitive, financial or legal outcomes are not inferred beyond what the reported development establishes.`
