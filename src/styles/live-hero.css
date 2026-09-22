@@ -667,3 +667,243 @@
     font-size: clamp(31px, 10vw, 46px);
   }
 }
+
+
+/* Preview homepage masthead — product value first, editorial/news immediately below. */
+.home-masthead {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(290px, .65fr);
+  gap: 18px;
+  margin-top: 16px;
+  padding: clamp(22px, 3vw, 38px);
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 22px;
+  background:
+    radial-gradient(780px 360px at 78% 8%, rgba(212,175,55,.13), transparent 72%),
+    radial-gradient(520px 260px at 15% 100%, rgba(255,122,47,.07), transparent 72%),
+    linear-gradient(180deg, rgba(24,21,17,.99), rgba(12,11,10,.995));
+  box-shadow: 0 28px 76px rgba(0,0,0,.3);
+}
+.home-masthead::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(var(--gold), var(--orange));
+}
+.home-masthead::after {
+  content: '';
+  position: absolute;
+  right: -90px;
+  top: -120px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(212,175,55,.11), rgba(212,175,55,0) 68%);
+}
+.home-masthead-copy,
+.home-masthead-now,
+.home-capabilities { position: relative; z-index: 1; }
+.home-masthead-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--gold);
+  font: 800 10px/1 var(--f-data);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.home-masthead-kicker i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 4px rgba(212,175,55,.12);
+}
+.home-masthead h1 {
+  max-width: 12ch;
+  margin-top: 15px;
+  font: 700 clamp(48px, 6.2vw, 86px)/.92 var(--f-editorial);
+  letter-spacing: -.04em;
+  color: var(--paper);
+}
+.home-masthead h1 em {
+  display: block;
+  color: var(--gold);
+  font-style: normal;
+}
+.home-masthead-copy > p {
+  max-width: 66ch;
+  margin-top: 16px;
+  color: var(--paper-2);
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.5;
+}
+.home-masthead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 22px;
+}
+.home-masthead-actions .btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-masthead-pro {
+  color: var(--gold);
+  font: 800 10px/1 var(--f-data);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  padding: 12px 4px;
+}
+.home-masthead-pro:hover,
+.home-masthead-pro:focus-visible { color: var(--paper); }
+
+.home-masthead-now {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--line));
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(13,12,10,.82), rgba(9,9,8,.94));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+}
+.home-now-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line);
+}
+.home-now-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--paper-2);
+  font: 800 9px/1 var(--f-data);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.home-now-presence i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pos);
+  box-shadow: 0 0 0 3px var(--pos-soft);
+}
+.home-now-game {
+  display: block;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.home-now-game b,
+.home-now-game span,
+.home-now-game small { display: block; }
+.home-now-game b {
+  color: var(--paper);
+  font: 800 clamp(26px, 2.8vw, 38px)/.96 var(--f-display);
+  text-transform: uppercase;
+  letter-spacing: -.02em;
+}
+.home-now-game span {
+  margin-top: 9px;
+  color: var(--paper-2);
+  font: 750 11px/1.25 var(--f-data);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.home-now-game small {
+  margin-top: 5px;
+  color: var(--faint);
+  font: 600 10px/1.25 var(--f-data);
+  text-transform: uppercase;
+}
+.home-now-market {
+  margin-top: auto;
+  padding-top: 16px;
+}
+.home-now-market span,
+.home-now-market b { display: block; }
+.home-now-market span {
+  color: var(--market);
+  font: 800 9px/1 var(--f-data);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.home-now-market b {
+  margin-top: 7px;
+  color: var(--paper);
+  font: 700 13px/1.35 var(--f-data);
+}
+
+.home-capabilities {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+  margin-top: 2px;
+}
+.home-capabilities a {
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(0,0,0,.14);
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.home-capabilities a:hover,
+.home-capabilities a:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--gold-line);
+  background: rgba(212,175,55,.055);
+}
+.home-capabilities b,
+.home-capabilities span { display: block; }
+.home-capabilities b {
+  color: var(--paper);
+  font: 800 12px/1.15 var(--f-data);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.home-capabilities span {
+  margin-top: 5px;
+  color: var(--faint);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.home-masthead + .editorial-front {
+  margin-top: 24px;
+}
+
+@media (max-width: 980px) {
+  .home-masthead { grid-template-columns: minmax(0,1fr); }
+  .home-masthead h1 { max-width: 11ch; }
+  .home-capabilities { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 620px) {
+  .home-masthead {
+    margin-top: 10px;
+    padding: 18px;
+    border-radius: 16px;
+  }
+  .home-masthead h1 {
+    max-width: 10ch;
+    font-size: clamp(42px, 13vw, 62px);
+  }
+  .home-masthead-copy > p { font-size: 15.5px; }
+  .home-masthead-actions .btn { width: 100%; }
+  .home-masthead-pro { width: 100%; text-align: center; }
+  .home-capabilities { grid-template-columns: minmax(0,1fr); }
+  .home-masthead-now { padding: 15px; }
+  .home-now-game b { font-size: 30px; }
+}
