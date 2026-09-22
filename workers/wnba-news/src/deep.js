@@ -369,7 +369,7 @@ export async function previewDeep(ctx) {
       thesis = `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}. ${mk ? '' : historical ? 'No PropBetEdge market capture is stored for this date, ' : 'No market capture exists yet, '}so this preview compares the two teams on the records alone: form, scoring, rest and the season series side by side.`.replace('. so this', '. So this');
     }
 
-    const { body, sections } = assemble([['The read', [thesis]], ['Availability', availParas], ['The matchup', cmp], ['The market', mkt], ['What matters next', next.length ? [`Before tip: ${next.join(' ')}`] : []]]);
+    const { body, sections } = assemble([['Game outlook', [thesis]], ['Availability', availParas], ['How they match up', cmp], ['The line', mkt], ['Before tip', next.length ? [next.join(' ')] : []]]);
     const favN = fav ? nick(fav.team) : null;
     const headline = fav && seasonGap !== null && recentGap !== null
       ? (seasonGap >= line && recentGap >= line ? `${a} at ${h}: the ${favN} lay ${line}, and the season and the last 10 both back it`
@@ -476,25 +476,25 @@ export async function injuryDeep(ctx) {
     const status = `${inj.status}${nir ? ' (not injury related)' : part ? ` (${part})` : ''}`;
 
     let thesis;
-    if (mode === 'long') thesis = `ESPN’s injury feed now lists ${p.name} as ${status}${ofs ? ' for the rest of the season' : ''}, but the ${full(team)} are not adjusting to a new absence: her last game in the ESPN game log was ${dMonth(cur.last_date)}, and the ${n} have played ${since.n} games since, going ${recWL(since.w, since.l)}. For the betting markets the listing formalizes an absence the prices have had ${since.n} games to absorb; what it settles is whether she returns this season, and per ESPN’s feed she does not.`;
-    else if (mode === 'intermittent') thesis = `ESPN’s injury feed now lists ${p.name} as ${status}${ofs ? ' for the rest of the season' : ''}. The listing makes permanent what the ${poss(n)} recent box scores already showed: she played in ${wordN(obs.window - obs.missed)} of their last ${wordN(obs.window)} games, and the ${n} went ${recWL(missedRec.w, missedRec.l)} in the ${wordN(obs.missed)} she missed.${splitTxt ? ` Across the season ${splitTxt} — a wide gap, though a split like that also mixes opponents, dates and every other lineup change.` : ''}`;
-    else if (mode === 'fresh') thesis = `${p.name} played every one of the ${poss(n)} last ${wordN(rot.sample)} games — ${f1(me.min)} minutes a night, ${me.starts ? countOf(me.starts, 'start') : 'no starts'} — so ESPN’s ${status} listing removes a role the ${n} have not yet had to replace in the window we can observe. The betting question is who takes those minutes, and no box score answers it yet.`;
-    else thesis = `ESPN’s injury feed lists ${p.name} as ${status}. She has averaged ${f1(minutes)} minutes across ${cur.games} games this season, and the ${n} have already played one recent game without her — the only direct evidence of how the minutes move.`;
+    if (mode === 'long') thesis = `${p.name} has not played since ${dMonth(cur.last_date)}, and the ${n} have gone ${recWL(since.w, since.l)} over ${since.n} games without her. ESPN now lists her as ${status}${ofs ? ' for the rest of the season' : ''}, so this is confirmation that the absence continues rather than a brand-new rotation problem.`;
+    else if (mode === 'intermittent') thesis = `${p.name} has already been in and out of the ${n} lineup, playing ${wordN(obs.window - obs.missed)} of their last ${wordN(obs.window)} games. The ${n} went ${recWL(missedRec.w, missedRec.l)} in the ${wordN(obs.missed)} she missed, and ESPN now lists her as ${status}${ofs ? ' for the rest of the season' : ''}.${splitTxt ? ` For the full season, ${splitTxt}; that split is context, not a clean measure of her individual impact.` : ''}`;
+    else if (mode === 'fresh') thesis = `${p.name} played every one of the ${poss(n)} last ${wordN(rot.sample)} games, averaging ${f1(me.min)} minutes with ${me.starts ? countOf(me.starts, 'start') : 'no starts'}. ESPN now lists her as ${status}, leaving the ${n} to cover a role this recent rotation has not had to replace. The immediate question is where those minutes go.`;
+    else thesis = `ESPN lists ${p.name} as ${status}. She has averaged ${f1(minutes)} minutes across ${cur.games} games this season, and the ${n} have one recent game without her to use as a clue for how the rotation may shift.`;
 
-    const statusParas = [`The listing: ESPN’s WNBA injury feed carries ${p.name} as ${inj.status}${nir ? ', listed as not injury related' : part ? ` with a ${part} injury` : ''}, last updated ${dShort(inj.source_updated_at)} at ${tET(inj.source_updated_at)}${ofs ? ', marked out for the rest of the season' : inj.source_return_date ? `, with ESPN’s estimated return date of ${rdText(inj, year)} (an estimate, not a confirmation; feed updated ${dShort(inj.source_updated_at)})` : ''}. That is ESPN’s status, not the league’s official injury report.${reports.length ? ` Publisher coverage of her injury in the source wire: ${listJoin(reports.slice(0, 2).map((r) => `${r.source_name} on ${dShort(r.published_at)} (“${r.headline}”)`))}.` : ''}`];
-    if (mode === 'long') statusParas.push(`What the records do not show is why she had not played since ${dMonth(cur.last_date)}, or when the injury itself occurred; neither ESPN’s structured feed nor the game log carries that, so this story does not assume it.`);
+    const statusParas = [`ESPN’s WNBA injury feed lists ${p.name} as ${inj.status}${nir ? ' (not injury related)' : part ? ` with a ${part} injury` : ''}, updated ${dShort(inj.source_updated_at)} at ${tET(inj.source_updated_at)}${ofs ? ', and marks her out for the rest of the season' : inj.source_return_date ? `, with an estimated return date of ${rdText(inj, year)}` : ''}. The league’s official game-day report is separate.${reports.length ? ` The injury has also been covered by ${listJoin([...new Set(reports.slice(0, 2).map((r) => r.source_name))])}.` : ''}`];
+    if (mode === 'long') statusParas.push(`The available data does not say why she had already been out since ${dMonth(cur.last_date)} or when the injury began.`);
 
     const role = [];
-    role.push(`Her ${year} regular season in the ESPN game log: ${countOf(cur.games, 'game')}, ${statAvg(cur.pts, 'point')}, ${statAvg(cur.reb, 'rebound')} and ${statAvg(cur.ast, 'assist')} in ${statAvg(cur.min, 'minute')}.${cur.last10 ? ` Over her last ${cur.last10.games} of those games she averaged ${f1(cur.last10.pts)} points in ${f1(cur.last10.min)} minutes.` : ''}${mode === 'intermittent' ? ` Her last appearance was ${dMonth(cur.last_date)}${me?.appearances ? ` (${me.min} minutes)` : ''}.` : ''}`);
+    role.push(`${p.name} has played ${cur.games} games this season, averaging ${f1(cur.pts)} points, ${f1(cur.reb)} rebounds and ${f1(cur.ast)} assists in ${f1(cur.min)} minutes.${cur.last10 ? ` Over her last ${cur.last10.games}, she averaged ${f1(cur.last10.pts)} points in ${f1(cur.last10.min)} minutes.` : ''}${mode === 'intermittent' ? ` Her last appearance was ${dMonth(cur.last_date)}${me?.appearances ? ` (${me.min} minutes)` : ''}.` : ''}`);
     if (splitTxt && mode !== 'intermittent') role.push(`${cap(splitTxt)}${mode === 'long' ? `, including ${recWL(since.w, since.l)} since ${dMonth(cur.last_date)}` : ''}. A split like that mixes opponents, dates and every other lineup change, so it describes the season rather than measuring her.`);
     const pos = /G/.test(p.position || me?.position || '') ? 'G' : 'FC';
     const feedTeam = feedFor(injuries, team.team_id);
     const samePos = (rot?.rows || []).filter((r) => r.athlete_id !== inj.athlete_id && r.appearances > 0 && !feedTeam.some((x) => x.athlete_id === r.athlete_id) && (pos === 'G' ? /G/.test(r.position || '') : /[FC]/.test(r.position || ''))).slice(0, 4);
     if ((mode === 'long' || mode === 'intermittent') && rot?.rows?.length) {
-      role.push(`${mode === 'long' ? `The ${poss(n)} last ${wordN(rot.sample)} games — the observed rotation window — were all played without her` : `She played in only ${wordN(obs.window - obs.missed)} of the last ${wordN(obs.window)}`}, so the current rotation already reflects her absence.${samePos.length ? ` Its healthy ${pos === 'G' ? 'guards' : 'forwards and centers'} by minutes: ${listJoin(samePos.map((r) => `${r.name} (${f1(r.min)} min, ${f1(r.pts)} pts)`))}.` : ''}`);
+      role.push(`${mode === 'long' ? `The ${poss(n)} last ${wordN(rot.sample)} games — the recent rotation — were all played without her` : `She played in only ${wordN(obs.window - obs.missed)} of the last ${wordN(obs.window)}`}, so the current rotation already reflects her absence.${samePos.length ? ` Its healthy ${pos === 'G' ? 'guards' : 'forwards and centers'} by minutes: ${listJoin(samePos.map((r) => `${r.name} (${f1(r.min)} min, ${f1(r.pts)} pts)`))}.` : ''}`);
     } else if (obs) {
       const s1 = absenceSentence(obs, n, D, 'self');
-      role.push(s1 || 'The downstream effect of her absence is not established by the box scores in the observed window.');
+      role.push(s1 || 'There is not enough recent game evidence to say exactly how the rotation changes.');
     } else if (me && rot?.sample) {
       const outIds = new Set(feedTeam.map((x) => x.athlete_id));
       const heirs = rot.rows.filter((r) => r.athlete_id !== inj.athlete_id && !outIds.has(r.athlete_id) && r.appearances > 0).slice(0, 3);
@@ -517,23 +517,23 @@ export async function injuryDeep(ctx) {
       const capTxt = `That capture (${dShort(cap0)}, ${tET(cap0)}, ${ng.market.books} books)`;
       if (Date.parse(inj.source_updated_at) < Date.parse(cap0)) { D.capture_days_after_update = etDays(inj.source_updated_at, cap0); mkt.push(`${capTxt} was taken ${D.capture_days_after_update === 0 ? 'later the same day as' : `${countOf(D.capture_days_after_update, 'day')} after`} the feed’s update, so the listing was public when the price was set.`); }
       else if (earliestReport && Date.parse(earliestReport) < Date.parse(cap0)) { D.capture_days_after_report = etDays(earliestReport, cap0); mkt.push(`${capTxt} predates the feed’s latest update, but publisher coverage of the injury ran ${D.capture_days_after_report === 0 ? 'earlier the same day' : `${countOf(D.capture_days_after_report, 'day')} before it`}, so the injury was public when the price was set.`); }
-      else mkt.push(`${capTxt} predates the feed’s update, so it may not reflect this listing; the next captures are the first test.`);
+      else mkt.push(`${capTxt} predates the feed’s update, so it may not reflect this listing; the next captures are the next read.`);
       if (mode === 'long') mkt.push(`Because the ${n} have played ${since.n} games without her, a spread or total move tied to this listing would be hard to justify from the records; if one appears, the availability desk is where to look for another cause.`);
       if (mode === 'intermittent') mkt.push(`Because she missed ${wordN(obs.missed)} of the last ${wordN(obs.window)} games, recent prices were already set on a rotation mostly without her; the season-long listing changes the long view more than the next line.`);
     } else mkt.push(ng ? `No market snapshot exists yet for the ${poss(n)} next game (${dShort(ng.start_utc)}). Snapshots run at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET.` : 'No upcoming game is on the published schedule.');
 
     const withBetter = Number.isFinite(D.without_w) && cur.wins / Math.max(1, cur.games) > D.without_w / Math.max(1, D.without_n);
-    const counterPara = (mode === 'long' || mode === 'intermittent') && withBetter ? `The case against dismissing it: the ${n} won a higher share of games with her (${recWL(cur.wins, cur.losses)}) than without (${recWL(D.without_w, D.without_l)}). Her absence is not nothing — it is simply not new.` : null;
-    const next = `What to watch: ${ng ? `the ${poss(n)} next game, ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}; ` : ''}${mode === 'long' || mode === 'intermittent' ? 'the starting lineup, which the observed window suggests is already set without her' : 'the first box score without her, which is the first real evidence of who takes her minutes'}; and player-prop lines, captured only inside 36 hours of tip.`;
+    const counterPara = (mode === 'long' || mode === 'intermittent') && withBetter ? `One reason not to shrug off the absence: the ${n} have won a higher share of games with her (${recWL(cur.wins, cur.losses)}) than without (${recWL(D.without_w, D.without_l)}). The absence may be familiar, but it still matters.` : null;
+    const next = `${ng ? `Next up is ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}. ` : ''}${mode === 'long' || mode === 'intermittent' ? 'The starting lineup should show whether the existing rotation stays intact.' : 'The first box score without her will show who actually gets the minutes.'} Player props enter the PropBetEdge capture window inside 36 hours of tip.`;
 
-    const { body, sections } = assemble([['The read', [thesis]], ['The listing', statusParas], ['Her role and the rotation', role], ['The team around her', teamParas], ['The market', mkt], ['The counter-case', [counterPara]], ['What matters next', [next]]]);
-    const headline = mode === 'long' ? `${p.name} out for the season, per ESPN’s injury feed — the ${n} have already played ${since.n} games without her`
-      : mode === 'intermittent' ? `${p.name} ${ofs ? 'out for the season' : `listed ${inj.status.toLowerCase()}`}, per ESPN’s injury feed — she had played ${wordN(obs.window - obs.missed)} of the ${poss(n)} last ${wordN(obs.window)}`
-        : ofs ? `${p.name} out for the season, per ESPN’s injury feed: the ${f1(minutes)} minutes the ${n} have to replace`
-          : dtd ? `${p.name} listed day-to-day: the ${f1(minutes)} minutes the ${n} have to cover` : `${p.name} listed out for the ${n}: the ${f1(minutes)} minutes and who takes them`;
-    const deck = mode === 'long' ? `Her last game in the ESPN game log was ${dMonth(cur.last_date)}; the ${full(team)} are ${recWL(since.w, since.l)} since.${reports.length ? ` Publisher coverage: ${listJoin([...new Set(reports.map((r) => r.source_name))])}, ${dShort(reports.map((r) => r.published_at).sort()[0])}.` : ''}`
-      : mode === 'intermittent' ? `The ${full(team)} are ${recWL(cur.wins, cur.losses)} with her this season and ${recWL(D.without_w, D.without_l)} without; she averaged ${f1(cur.pts)} points in ${f1(cur.min)} minutes across ${cur.games} games.`
-        : `The ${full(team)} lose a player who has averaged ${f1(cur.pts)} points in ${f1(cur.min)} minutes across ${cur.games} games this season.`;
+    const { body, sections } = assemble([['The latest', [thesis, ...statusParas]], ['Who picks up the minutes', role], ['Team context', teamParas], ['The line', mkt], ['Next up', [counterPara, next]]]);
+    const headline = mode === 'long' ? `${p.name} remains out as the ${n} keep rolling without her`
+      : mode === 'intermittent' ? `${p.name} listed ${ofs ? 'out for the season' : inj.status.toLowerCase()} after an uneven recent stretch`
+        : ofs ? `${p.name} out for the season; the ${n} turn to the rotation behind her`
+          : dtd ? `${p.name} day-to-day as the ${n} prepare to cover ${f1(minutes)} minutes` : `${p.name} listed out; the ${n} have ${f1(minutes)} minutes to replace`;
+    const deck = mode === 'long' ? `${p.name} has not played since ${dMonth(cur.last_date)}. The ${full(team)} are ${recWL(since.w, since.l)} over ${since.n} games since.`
+      : mode === 'intermittent' ? `She has been in and out lately, but her ${f1(cur.pts)} points in ${f1(cur.min)} minutes per game still leave a real role to cover.`
+        : `${p.name} is averaging ${f1(cur.pts)} points in ${f1(cur.min)} minutes this season. Those minutes now have to go somewhere else in the ${n} rotation.`;
     const bettor = mode === 'long' ? [`The listing formalizes an absence the ${n} have played ${since.n} games through (${recWL(since.w, since.l)}); it settles her season more than it moves the next spread or total.`, 'Player-prop lines for the next game are captured only inside 36 hours of tip.']
       : mode === 'intermittent' ? [`The ${n} have mostly played without ${p.name} already (${wordN(obs.missed)} of the last ${wordN(obs.window)}); the listing turns a recurring absence into a certain one, which matters more for the season-long picture than for the next line.`, 'Player-prop lines for the next game are captured only inside 36 hours of tip.']
         : [`${poss(p.name)} ${f1(minutes)} minutes a night now go to someone else, and ${obs ? 'the one box score without her is the only evidence of where' : 'no box score yet shows where'}.`, 'Player-prop lines for the next game are captured only inside 36 hours of tip; that is where a minutes shift shows up first.'];
@@ -683,7 +683,7 @@ export async function transactionDeep(ctx) {
     const oppSt = oppNext && !historical ? ctx.standingsById?.get(oppNext.team_id) || null : null;
     const movesParas = teamMoves.length ? [`It is not the ${poss(n)} only recent roster change. Earlier moves in the transactions log over the previous 30 days: ${teamMoves.map((t) => `${dShort(t.date)} — ${String(t.description).replace(/\.$/, '')}`).join('; ')}.`] : [];
     const nextParas = ng ? [`The ${n} next play ${ng.home.team_id === team.team_id ? `the ${full(oppNext)} at home` : `at the ${full(oppNext)}`} on ${dLong(ng.start_utc)}${oppSt ? `; the ${nick(oppNext)} are ${recWL(oppSt.wins, oppSt.losses)} and ${oppSt.last_ten} over their last 10` : ''}. The first box score after the move is the first record of how the minutes are actually used.`] : [];
-    const { body, sections } = assemble([['The read', [thesis]], ['The move', sProfiles], ['The roster it lands in', ctxParas], ['Recent moves', movesParas], ['The market', mkt], ['What comes next', nextParas]]);
+    const { body, sections } = assemble([['What happened', [thesis]], ['The players involved', sProfiles], ['How it fits', ctxParas], ['Recent moves', movesParas], ['The line', mkt], ['Next up', nextParas]]);
     const headline = `Roster move: the ${n} ${moveText}`.replace(/\s+/g, ' ');
     const deck = recentLong.length && signing
       ? `Dated ${dShort(g.date)}, ${D.days_after_listing === 0 ? 'the same day as' : `${countOf(D.days_after_listing, 'day')} after`} an ESPN injury-feed update that lists ${listingPhrase(recentLong[0], year)}. Per ESPN’s transactions log.`
@@ -915,7 +915,7 @@ export async function resultDeep(ctx) {
     if (tl.turnoverPoints && tw.turnoverPoints && Number(tl.turnoverPoints) > Number(tw.turnoverPoints)) counter.push(`the ${W} gave up more points off turnovers than they scored, ${sc(tl.turnoverPoints, tw.turnoverPoints)}`);
     const counterPara = counter.length ? `The case against reading it forward: ${counter.join('; ')}. One game is a sample of one.` : null;
 
-    const { body, sections } = assemble([['The read', [thesis]], ['The performances', starParas], ['How it happened', how], ['The counter-case', [counterPara]], ['What matters next', ctxParas]]);
+    const { body, sections } = assemble([['Game story', [thesis]], ['Who stood out', starParas], ['How it happened', how], ['What it means', [...(counterPara ? [counterPara] : []), ...ctxParas]]]);
     const headline = co.length > 1 && headStat === 'pts'
       ? (co.length <= 3 ? `${listJoin(coNames)} score ${co.every((x) => x.pts === co[0].pts) ? `${co[0].pts} apiece` : listJoin(co.map((x) => String(x.pts)))} as the ${W} beat the ${L}, ${score}` : `The ${W} beat the ${L}, ${score}, with the scoring lead shared`)
       : top ? (topTeam === winner ? `${poss(top.name)} ${keyLabel(top)} lead the ${W} past the ${L}, ${score}` : `The ${W} beat the ${L} ${score} despite ${poss(top.name)} ${keyLabel(top)}`)
@@ -1103,7 +1103,7 @@ export async function trendDeep(ctx) {
       unknown = ['Whether the next spread has fully adjusted.'];
     }
     const nextParas = ng ? [`What comes next: ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}, the first game that tests whether the run continues against a multi-book price.`] : [];
-    const { body, sections } = assemble([['The read', [thesis]], ['The evidence', evidence], ['The market now', marketNow], ['The team and the opponent', teamCtx], ['The counter-case', [counterPara]], ['What comes next', nextParas]]);
+    const { body, sections } = assemble([['The run', [thesis]], ['The numbers', evidence], ['The next line', marketNow], ['Next matchup', teamCtx], ['What could break the trend', [counterPara]], ['Next up', nextParas]]);
     const id = await hashId(['trend', t.team_id, new Date(now).toISOString().slice(0, 10)]);
     const a0 = finalize({
       id, kind: 'trend', category: 'Team trends', structure: 0, headline, deck, body, sections, market_type: marketType, bettor, against, unknown,
