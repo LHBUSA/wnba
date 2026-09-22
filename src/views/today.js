@@ -293,10 +293,14 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
   const freshStories = [...stories].sort((a, b) =>
     String(b.first_published_at || b.published_at || '').localeCompare(String(a.first_published_at || a.published_at || ''))
   );
-  const leadStory = freshStories[0];
-  const secondaryStories = freshStories.filter((c) => c.id !== leadStory?.id).slice(0, 3);
+  // Historical WinBA backfills belong in the newsroom archive and series pages,
+  // not in the live Today/front-page news stack. They are newly published records
+  // of older periods, so sorting by publication time must not make them headline news.
+  const frontPageStories = freshStories.filter((a) => a?.historical_backfill !== true);
+  const leadStory = frontPageStories[0];
+  const secondaryStories = frontPageStories.filter((c) => c.id !== leadStory?.id).slice(0, 3);
   const heroStoryIds = new Set([leadStory?.id, ...secondaryStories.map((c) => c.id)].filter(Boolean));
-  const moreStories = freshStories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
+  const moreStories = frontPageStories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
   const changes = (injuries.ok ? injuries.data.changes : []) || [];
   const lastResults = d.last_results?.games || [];
   const seeds = standings.ok ? standings.data.groups.map((g) => ({ name: g.name, top: g.entries.slice(0, 4) })) : [];
@@ -307,7 +311,7 @@ export function todayView({ today, arts, injuries, standings, intl = null }) {
     intlLive: I?.live || [],
     intlUpcoming: (I?.competitions || []).flatMap((c) => c.next_games || []),
     intlRecent: I?.recent || [],
-    stories
+    stories: frontPageStories
   });
   const intlLive = ticker.items.some((x) => x.sport_scope === 'international' && x.item_type === 'live_game');
 
