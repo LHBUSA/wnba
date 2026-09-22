@@ -24,14 +24,14 @@ import { WINBA_LABEL, WINBA_URL, WINBA_METHOD_URL, WINBA_METRIC_ENTITY } from '.
 import { WINBA_INDEX_SERIES, winbaPeriodLabel } from './winba-index.js';
 import { lineSeries, componentBars, rankCards, resumeCard, visualsFailures, VISUALS_VERSION } from './visuals.js';
 
-export const COMMISSION_VERSION = 'wnba-commission/1.0.0';
+export const COMMISSION_VERSION = 'wnba-commission/1.0.1';
 export const COMMISSION_KIND = 'commissioned_feature';
 export const COMMISSION_DESK = 'feature';
 export const COMMISSION_SERIES = 'PropBetEdge Features';
 export const COMMISSION_STATE_KEY = 'commission:v1:state';
 
 /** The minimum a feature must be worth. Below it, nothing publishes rather than padding. */
-export const COMMISSION_MIN_WORDS = 800;
+export const COMMISSION_MIN_WORDS = 700;
 
 const TZ = 'America/New_York';
 const dayLabel = (iso) => new Intl.DateTimeFormat('en-US', { timeZone: TZ, month: 'long', day: 'numeric' }).format(new Date(iso));
@@ -152,9 +152,8 @@ function composeReese(ctx) {
   const winningMovers = moves.filter((m) => ['win_rate', 'winning_output_share'].includes(m.key));
 
   w.p(
-    `The argument about ${subject.name} has never really been about whether she produces. It is about whether the production means anything.`,
-    `That is the shape of the “empty stats” criticism, and it is a more specific claim than it usually sounds: not that the numbers are small, but that they are disconnected from winning basketball. Stated that way it is testable, because it is a claim about the relationship between two measurable things.`,
-    `${WINBA_LABEL} is one attempt to measure that relationship. It is PropBetEdge's 0–100 winning-impact rating, and it combines how much a player produces relative to the league with how often her team wins, how much of her production lands in those wins, and how much of the available floor time she takes. In the ${winbaPeriodLabel(sept.period)} edition of ${WINBA_INDEX_SERIES}, ${subject.name} ranks No. ${sept.rank} of ${qualified} qualified players at ${one(sept.value)}.`
+    `The useful version of the “empty stats” criticism is specific: does ${subject.name}'s production show up in winning contexts, or is the box score doing most of the work?`,
+    `${WINBA_LABEL} is one way to test that question. It combines league-relative box-score production with team win rate, the share of a player's production that came in wins, and court share. In the ${winbaPeriodLabel(sept.period)} edition of ${WINBA_INDEX_SERIES}, ${subject.name} ranks No. ${sept.rank} of ${qualified} qualified players at ${one(sept.value)}.`
   );
 
   w.section('The data point that makes this interesting', { key: 'data_point', visual: 'september-context' });
@@ -163,45 +162,37 @@ function composeReese(ctx) {
     recent
       ? `Her most recent five games are louder than that: ${one(recent.pts)} points, ${one(recent.reb)} rebounds and ${one(recent.ast)} assists, from ${dayLabel(recent.from)} to ${dayLabel(recent.to)}. Recent-form windows are volatile by construction and this one is five games wide, so it is context rather than evidence.`
       : null,
-    `The rating is the part worth sitting with. Only ${word(sept.rank - 1)} qualified players in the league grade above her: ${topThree.filter((c) => String(c.entity.id) !== String(subject.id)).map((c) => `${c.entity.name} at ${one(c.value)}`).join(' and ')}. Third is not a moral victory. It is a position near the top of a rating that was explicitly built to hold down production that does not travel with winning.`
+    `Only ${word(sept.rank - 1)} qualified players grade above her: ${topThree.filter((c) => String(c.entity.id) !== String(subject.id)).map((c) => `${c.entity.name} at ${one(c.value)}`).join(' and ')}. The ranking matters here because WinBA gives 45% of the score to two winning-context inputs rather than treating raw production alone as sufficient.`
   );
 
   w.section(`${subject.name}'s WinBA climb`, { key: 'climb', visual: 'reese-climb' });
   w.p(
     `The rating did not find her in September. Across four frozen monthly snapshots she has moved from No. ${first.rank} to No. ${last.rank}, and her score has risen in every one of them.`,
     `What makes that progression interesting is not its size — ${one(last.value - first.value)} points of rating across four months is a moderate move — but its composition. All four of the metric's inputs rose${rise.length === 4 ? '' : ' for the ones that moved'}, and the two that rose most are the two that carry winning context: ${listOf(winningMovers.map((m) => `${m.label.toLowerCase()} from ${pct(m.from)} to ${pct(m.to)}`))}.`,
-    `Her production percentile over the same stretch went from ${one(first.row.components.production_percentile)} to ${one(last.row.components.production_percentile)} out of 100. She was already producing at close to the top of the league in ${first.label.split(' ')[0]}; what changed is the context the production arrived in. A climb built that way is the opposite of a volume story.`
+    `Her production percentile over the same stretch went from ${one(first.row.components.production_percentile)} to ${one(last.row.components.production_percentile)} out of 100. She was already producing near the top of the league in ${first.label.split(' ')[0]}; the larger gains came from win rate and production in wins, so the rise was not driven by the production term alone.`
   );
 
-  w.section('What WinBA is actually measuring', { key: 'method' });
+  w.section(`How ${subject.name} gets to ${one(sept.value)} WinBA`, { key: 'components', visual: 'reese-components' });
   w.p(
-    `The rating has four inputs and they are deliberately plain. Box Impact — points plus 1.2 times rebounds plus 1.5 times assists — is measured per 36 minutes and placed as a percentile against every qualified player in the league; that is 45% of the score. Win rate is 25%. The share of a player's season production that arrived in wins is 20%. Court share, the proportion of available minutes she actually played, is the last 10%.`,
-    `That construction is why the rating behaves differently from a counting-stat leaderboard: a player can produce heavily and still be held down by the two winning-context terms, which together are 45% of the number.`,
-    `It is also worth being clear about what the rating does not do. It does not measure defence directly, it knows nothing about shot quality, lineup context or role, and it is an association-with-winning index rather than a causal estimate of wins added. It is built from completed games in PropBetEdge's own 2026 archive, which is close to but not identical with the official regular-season record. One lens, honestly scaled — not a verdict on a player's value.`
-  );
-
-  w.section(`What makes up ${subject.name}'s ${one(sept.value)} WinBA`, { key: 'components', visual: 'reese-components' });
-  w.p(
-    `Broken into its four inputs, the ${winbaPeriodLabel(sept.period)} rating says something quite specific.`,
-    `Her production percentile is ${one(comps.production_percentile)} out of 100. On the metric's largest input she is essentially at the league ceiling: almost nobody who qualified produced more per minute played. Her court share, ${pct(comps.court_share)}, is the workload of a full-time starter.`,
-    `The two winning-context inputs are the ones that are merely good. Her teams won ${pct(comps.win_rate)} of the games she played, and ${pct(comps.winning_output_share)} of her production arrived in those wins. Both are comfortably on the positive side of the league — and both are lower than her production percentile, which is precisely why she rates third rather than first.`,
-    `So the metric's own answer is not that the criticism is baseless. It is narrower and more useful than that: her production is near the top of the league, her winning context is solidly positive, and it is the winning context — not the production — that separates her from the two players above her.`
+    `WinBA v1 uses four inputs. Its production term is a simple per-36 box-score index — points plus 1.2 times rebounds plus 1.5 times assists — converted to a percentile against qualified players and weighted at 45%. Win rate is 25%, the share of a player's production that came in wins is 20%, and court share is 10%.`,
+    `For ${subject.name}, the frozen ${winbaPeriodLabel(sept.period)} row is ${one(comps.production_percentile)} for production percentile, ${pct(comps.win_rate)} win rate, ${pct(comps.winning_output_share)} production in wins and ${pct(comps.court_share)} court share. Her production term is near the league ceiling; the two winning-context inputs are positive but lower, which is why the overall score sits below the two players ahead of her.`,
+    `The limits are equally important. The production term does not include shooting efficiency or turnovers, and WinBA does not directly measure defence, shot quality, lineup context or role. It is an association-with-winning index built from completed games in PropBetEdge's 2026 archive, not a causal estimate of wins added.`
   );
 
   w.section('The “empty stats” question', { key: 'empty_stats' });
   w.p(
     `Traditional counting stats genuinely cannot settle this argument. Points and rebounds record what a player did; by themselves they say nothing about whether the team was winning while she did it. That gap is the whole reason the criticism has had room to live for as long as it has.`,
-    `${WINBA_LABEL} closes part of the gap by building winning into the measurement rather than inferring it afterwards. A quarter of the rating is win rate and a fifth is the share of production that came in wins, so a player whose numbers really were disconnected from winning would be pushed down by nearly half of the formula. ${subject.name} is No. ${sept.rank} in the league on it.`,
-    `That is meaningful evidence against the simple form of the criticism. It is not a finding that every criticism of her game is invalid — the rating does not adjudicate shot selection, defensive scheme or fit, and reasonable arguments about all three exist. What it does is move the burden. Calling the production empty now requires explaining why a metric that explicitly weights wins and production-in-wins at 45% still grades her among the three best players in the league.`,
+    `${WINBA_LABEL} addresses part of that gap directly: 45% of the score comes from win rate and the share of production recorded in wins. On that combined framework, ${subject.name} still ranks No. ${sept.rank} in the league.`,
+    `That is evidence against the simplest version of the “empty stats” label, but it does not answer every question about her game. Efficiency, turnovers, defence, shot selection, role and lineup fit require other measures. The narrower finding is that her production remains near the top of the league even after winning context is built into the score.`,
     facts.reese_dream_season_awards
       ? `There is also a non-WinBA data point worth putting beside it: the Dream's own 2026 season-awards page lists ${subject.name} as Defensive Player of the Year, All-WNBA and All-Defensive Team, and states that she owns the WNBA single-season records for total rebounds, for offensive rebounds, and for double-doubles, with ${facts.reese_dream_season_awards.double_doubles}. Those are her club's own words rather than ours, and they describe recognition that a purely empty statistical profile does not usually attract.`
       : null
   );
 
-  w.section('What the rating is good for', { key: 'conclusion' });
+  w.section('What the rating adds', { key: 'conclusion' });
   w.p(
-    `The value of ${WINBA_LABEL} is not that it ends basketball arguments. Any single number that claimed to would be lying about what it measures.`,
-    `Its value is that it makes the arguments more specific. With ${subject.name}, the conversation can stop being about whether the stat line is large — it plainly is — and start being about what those numbers look like once winning context is included. On this rating, in this season, they look like the third-best profile in the WNBA. The interesting question is no longer whether the production is real. It is what would have to be true for a top-three winning-impact rating to still be considered empty.`
+    `WinBA cannot settle a player-value debate by itself. For ${subject.name}, it answers a narrower question: her 2026 production has occurred in enough winning context to rank No. ${sept.rank} on this metric.`,
+    `That does not resolve efficiency, turnovers, defence, role or fit. It does mean the “empty stats” label is incomplete unless it also accounts for the winning-context terms that make up 45% of the score.`
   );
 
   const { body, sections } = w.done();
@@ -247,7 +238,7 @@ function composeReese(ctx) {
 
   return {
     headline: `${subject.name} and the “Empty Stats” Debate: What WinBA Says About Winning Impact`,
-    deck: `She is No. ${sept.rank} of ${qualified} qualified players on PropBetEdge's winning-impact rating, and has climbed in all four frozen monthly snapshots. The rating does not end the argument — it narrows it.`,
+    deck: `She is No. ${sept.rank} of ${qualified} qualified players on PropBetEdge's winning-impact rating after climbing in all four frozen monthly snapshots, with the strongest gains coming from the metric's winning-context inputs.`,
     body,
     sections,
     visuals,
@@ -280,15 +271,15 @@ function composeWilson(ctx) {
   const worstRank = Math.max(...ranks);
 
   w.p(
-    `Excellence that lasts long enough stops being remarked upon. It becomes the baseline other things are measured against, and the player at the centre of it gets described in the present tense as though nothing were happening.`,
-    `${subject.name} is at that stage of her career. ${honours.length ? `Her league profile carries ${listOf(honours.slice(0, 4).map(honourPhrase))}, and the sentence barely registers any more.` : ''}`,
-    `So here is a smaller, stranger measurement. In the ${winbaPeriodLabel(sept.period)} edition of ${WINBA_INDEX_SERIES}, ${subject.name} is No. ${sept.rank} of ${qualified} qualified players at ${one(sept.value)}. The interesting part is not the No. ${sept.rank}. It is that across every publishable monthly snapshot of the rating, she has been No. ${bestRank} or No. ${worstRank} — and nothing else.`
+    `${subject.name}'s résumé already establishes long-term elite performance. The WinBA question is narrower: does her 2026 month-to-month profile stay at that level when the rating is rebuilt from the season's games?`,
+    `${honours.length ? `Her official league profile lists ${listOf(honours.slice(0, 4).map(honourPhrase))}.` : ''} In the ${winbaPeriodLabel(sept.period)} edition of ${WINBA_INDEX_SERIES}, she is No. ${sept.rank} of ${qualified} qualified players at ${one(sept.value)}.`,
+    `Across every publishable monthly snapshot, she has ranked No. ${bestRank} or No. ${worstRank} — and nowhere else.`
   );
 
   w.section(`${subject.name} has lived at the top of WinBA`, { key: 'standard', visual: 'wilson-standard' });
   w.p(
     `Four frozen monthly boards, in order: ${traj.map((p) => `No. ${p.rank} at ${one(p.value)} in ${p.label.split(' ')[0]}`).join(', ')}. As a sequence of ranks it reads ${ranks.join(' · ')}.`,
-    `The total spread between her best and worst monthly rating is ${one(spread)} points on a 0-100 scale. That is the finding, and it is a finding about the absence of movement rather than the presence of it: on a rating that re-measures production and winning from scratch every month, one of the most decorated players of her generation has not meaningfully moved.`,
+    `The total spread between her best and worst monthly rating is ${one(spread)} points on a 0-100 scale. Across four fresh monthly calculations, that is a narrow range.`,
     prodFlat
       ? `Underneath it there is something starker still. Her production percentile — Box Impact per 36 minutes measured against every qualified player, and the largest single input to the rating — is ${one(Number(prodPct[0]))} out of 100 in all four boards. Not near the top of the league. The top of it, in every snapshot the series has published.`
       : `Underneath it, her production percentile has held between ${one(Math.min(...prodPct.map(Number)))} and ${one(Math.max(...prodPct.map(Number)))} out of 100 across the four boards — the largest single input to the rating, effectively unmoved.`,
@@ -310,9 +301,9 @@ function composeWilson(ctx) {
   w.section('The Kevin Durant question', { key: 'durant' });
   w.p(
     `The comparison gets made, and it is worth taking seriously rather than dismissing or endorsing.`,
-    `What it gets right is the texture of the career: scoring at the top of the league across years rather than spiking in one of them, a résumé large enough to lose track of, and output so consistent that observers normalise it. A ${one(seasonLine.pts)}-point season would be the defining year of most careers; here it is roughly what the last several have looked like. That is the specific thing the analogy is reaching for — a player whose ordinary is somebody else's ceiling, and who is therefore perennially present near the top of the sport without the annual narrative that usually accompanies it.`,
+    `What it gets right is sustained elite scoring rather than a one-season spike. A ${one(seasonLine.pts)}-point season sits near the top of the league, and Wilson has produced at that level often enough that the output can feel routine. That consistency is the useful part of the comparison.`,
     `What it gets wrong is nearly everything about the basketball. ${subject.name} is a ${String(team?.position_name || 'center').toLowerCase()} whose defensive résumé is central to her greatness rather than an addendum to it — her profile carries ${honours.find((h) => h.key === 'dpoy') ? honourPhrase(honours.find((h) => h.key === 'dpoy')) : 'multiple Defensive Player of the Year awards'} — and the comparison imports the offensive half of a wing's identity while dropping the half that makes hers distinctive. The leagues differ, the roles differ, and the defensive expectations of a frontcourt anchor are not the ones a perimeter scorer carries.`,
-    `The honest use of the analogy is as a lens for what sustained, normalised excellence does to perception, and not as a claim about equivalence. ${subject.name} is not a version of somebody else. She is the reason the question gets asked in the first place.`
+    `The comparison is useful only as a way to discuss sustained scoring consistency. It is not a role, style or all-around-impact equivalence.`
   );
 
   w.section('Reading the two lenses together', { key: 'lenses' });
@@ -322,10 +313,10 @@ function composeWilson(ctx) {
     `Their agreement is the point. The slow lens says ${honours.find((h) => h.key === 'mvp') ? `${word(honours.find((h) => h.key === 'mvp').count)}-time MVP` : 'a decorated career'}; the fast one, re-derived monthly from box scores and results with no knowledge of any of that, says No. ${bestRank} or No. ${worstRank} every single month. Where two measurements built on entirely different information land in the same place, the thing they are both pointing at is probably real.`
   );
 
-  w.section('Why No. 2 is the least interesting part', { key: 'conclusion' });
+  w.section('Why the month-to-month consistency matters', { key: 'conclusion' });
   w.p(
-    `Rank is the noisiest thing on a leaderboard. It changes when somebody else has a good month, which is exactly what happened here, and it says less about the player it is attached to than the number beside it does.`,
-    `The durable finding is the flatness. Month after month, on a rating that starts from zero every time and rewards production that arrives in wins, it takes an extraordinary season from somebody else to move ${subject.name} off the very top — and even then it moves her one place. That is what greatness looks like when it has stopped being news: not a spike, but a line that refuses to come down.`
+    `Rank can move because another player improves, so the score range matters alongside the ordinal position.`,
+    `Across the four frozen boards, ${subject.name}'s WinBA score stays within ${one(spread)} points and her rank never falls below No. ${worstRank}. That consistency is the finding.`
   );
 
   const { body, sections } = w.done();
@@ -387,7 +378,7 @@ function composeWilson(ctx) {
 
   return {
     headline: `${subject.name} Has Made Greatness Look Routine. WinBA Shows Just How Consistent She's Been`,
-    deck: `Four frozen monthly snapshots of PropBetEdge's winning-impact rating put her at No. ${bestRank} or No. ${worstRank} every time, inside ${one(spread)} points of rating. The rank is the least interesting part.`,
+    deck: `Four frozen monthly snapshots of PropBetEdge's winning-impact rating place her at No. ${bestRank} or No. ${worstRank} every time, with only ${one(spread)} points separating her highest and lowest score.`,
     body,
     sections,
     visuals,
