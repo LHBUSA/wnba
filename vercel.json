@@ -62,12 +62,16 @@
       "destination": "/app-shell.html"
     },
     {
-      "source": "/",
+      "source": "/preview/article/:slug",
       "destination": "/app-shell.html"
     },
     {
+      "source": "/",
+      "destination": "https://wnba-web.sales-fd3.workers.dev/"
+    },
+    {
       "source": "/:path*",
-      "destination": "/app-shell.html"
+      "destination": "https://wnba-web.sales-fd3.workers.dev/:path*"
     }
   ],
   "headers": [
