@@ -151,7 +151,7 @@ test('public correction is a focused Olivia Miles record story with the verified
 
 test('legacy source briefs are quarantined from live collections but preserved in archive', () => {
   const legacy = { id: 'legacy-brief', slug: 'old-brief-a1b2c3', kind: 'brief', input_hash: 'wnba-briefs/2.2.0|x' };
-  const current = { id: 'current-brief', slug: 'new-brief-d4e5f6', kind: 'brief', input_hash: 'wnba-briefs/3.0.0|x' };
+  const current = { id: 'current-brief', slug: 'new-brief-d4e5f6', kind: 'brief', input_hash: 'wnba-briefs/3.0.0|wnba-brief-story/1.1.0|x' };
   const structured = { id: 'injury-1', slug: 'injury-story-abcdef', kind: 'injury' };
   const live = correctArticleListResponse({ ok: true, data: { items: [legacy, current, structured] } });
   assert.deepEqual(live.data.items.map((x) => x.id), ['current-brief', 'injury-1']);

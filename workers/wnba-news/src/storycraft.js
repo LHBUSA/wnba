@@ -8,7 +8,7 @@
 // vulnerable to turning source metadata, verification notes and internal audit
 // language into reader-facing copy.
 
-export const STORYCRAFT_VERSION = 'wnba-storycraft/1.0.0';
+export const STORYCRAFT_VERSION = 'wnba-storycraft/1.1.0';
 
 const words = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
 const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim();
@@ -22,6 +22,13 @@ const INTERNAL_PROCESS = [
 
 const GENERIC_SECTION = /^(?:The development|What PropBetEdge(?:’s|'s) records show|What PropBetEdge can verify|Where the team stands|What remains unresolved|What mechanically changes|What comes next|What the record does not decide|Correction)$/i;
 const PROCESS_SECTION = /^(?:Evidence|Methodology|Correction|What PropBetEdge can verify)$/i;
+
+const MEMO_SECTION = /^(?:The read|The listing|The team around her|The roster it lands in|The counter-case|What matters next|The evidence|The market now|The team and the opponent)$/i;
+
+const MEMO_VOICE = [
+  ['research-memo phrasing', /\b(?:observed rotation window|observed window|the betting question is|what the records do not show|this story does not assume|the first test|the case against dismissing it|formalizes an absence|the listing makes permanent)\b/i],
+  ['machine-like framing', /\b(?:the practical effect will become clearer|a personnel change that puts .{0,80} immediately in focus|the record that would confirm|read it as a description of the pricing, not a forecast)\b/i]
+];
 
 function publisherNames(a) {
   return [...new Set((a?.evidence || [])
@@ -54,6 +61,27 @@ export function storyCraftFailures(a) {
   // Corrections are publication metadata, not a giant article section.
   if (sections.some((s) => PROCESS_SECTION.test(String(s?.title || '')))) {
     out.push('storycraft: internal process/correction section is reader-facing');
+  }
+
+  // Sports copy should read like a desk wrote it, not like a research memo was
+  // turned into paragraphs. These are legacy generator tells, not forbidden
+  // sports vocabulary in general.
+  const memoSections = sections.filter((s) => MEMO_SECTION.test(String(s?.title || '')));
+  if (memoSections.length) {
+    out.push(`storycraft-style: memo-style section heading "${memoSections[0].title}" is reader-facing`);
+  }
+  for (const [label, re] of MEMO_VOICE) {
+    if (re.test(headline) || re.test(deck) || re.test(bodyText)) out.push(`storycraft-style: ${label} makes the story read generated`);
+  }
+
+  // Headlines/decks should do journalism, not carry the whole fact table.
+  if (words(headline) > 24) out.push(`storycraft-style: headline is ${words(headline)} words; tighten the news angle`);
+  if (words(deck) > 62) out.push(`storycraft-style: deck is ${words(deck)} words; tighten the summary`);
+
+  // Repetitive sentence openings are another deterministic template tell.
+  const firstFive = body.slice(0, 5);
+  if (firstFive.length >= 4 && firstFive.filter((p) => /^The\b/i.test(p)).length >= 4) {
+    out.push('storycraft-style: first paragraphs repeat the same "The …" sentence opening');
   }
 
   // Internal audit/process language belongs in the collapsed evidence layer.

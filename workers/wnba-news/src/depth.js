@@ -63,13 +63,20 @@ export function contractOf(a) {
 
 // Section titles written by the generators, mapped to the element they carry. Sections may also carry `key`.
 const TITLE_KEY = {
+  // Current sports-desk labels.
+  'The latest': 'change', 'Who picks up the minutes': 'role', 'Team context': 'team', 'The line': 'market', 'Next up': 'next',
+  'Game outlook': 'lede', Availability: 'availability', 'How they match up': 'matchup', 'Before tip': 'next',
+  'What happened': 'change', 'The players involved': 'move', 'How it fits': 'roster', 'Recent moves': 'moves',
+  'Game story': 'lede', 'Who stood out': 'performers', 'How it happened': 'flow', 'What it means': 'context',
+  'The run': 'lede', 'The numbers': 'evidence', 'The next line': 'market', 'Next matchup': 'team', 'What could break the trend': 'counter',
+  // Legacy labels remain readable for archived stories and migration audits.
   'The read': 'lede', 'The listing': 'change', 'Her role and the rotation': 'role', 'Her role': 'role', 'The rotation without her': 'rotation',
   'The market': 'market', 'The counter-case': 'counter', 'What matters next': 'next', 'What comes next': 'next',
-  Availability: 'availability', 'The matchup': 'matchup', 'The move': 'move', 'The player': 'move', 'The roster it lands in': 'roster',
-  'The performances': 'performers', 'Who delivered': 'performers', 'How it happened': 'flow', 'How the game unfolded': 'flow',
-  'Why it went this way': 'why', 'The evidence': 'evidence', 'What happened': 'change', 'The development': 'change',
+  'The matchup': 'matchup', 'The move': 'move', 'The player': 'move', 'The roster it lands in': 'roster',
+  'The performances': 'performers', 'Who delivered': 'performers', 'How the game unfolded': 'flow',
+  'Why it went this way': 'why', 'The evidence': 'evidence', 'The development': 'change',
   'What PropBetEdge can verify': 'records', 'What PropBetEdge’s records show': 'records', 'Why it matters': 'why',
-  'The team around her': 'team', 'Where the team stands': 'team', 'The standings picture': 'team', 'Recent moves': 'moves',
+  'The team around her': 'team', 'Where the team stands': 'team', 'The standings picture': 'team',
   'The stretch that decided it': 'decisive', 'WNBA connection': 'wnba'
 };
 export function sectionKey(s, i = 0) {
@@ -233,7 +240,7 @@ function elementsFor(contract, a, cls) {
       el('both_teams', names.length, (f.box_lines || []).some((x) => String(x.team_id) !== String(a.lead_team_id) && all.includes(x.name)) || S('opponent').length > 0);
       el('lead_changes', f.lead, /lead change|never trailed|led wire to wire/i.test(all));
       el('team_context', f.after?.w, recordIn(all, f.after?.w?.w, f.after?.w?.l), true);
-      el('next', (f.next || []).length, S('next').length >= 1 || /\bNext:/.test(all), true);
+      el('next', (f.next || []).length, S('next').length >= 1 || /\bNext(?: up)?:/.test(all), true);
       break;
     }
     case 'injury': {

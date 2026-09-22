@@ -144,9 +144,9 @@ export function intelligenceView(a) {
   const ng = a.context?.next_game || a.context?.game || null;
   const gameForStrip = ng ? { home: ng.home, away: ng.away } : null;
   const actionable = intel.market_relevance === 'actionable';
-  // When the article body carries its own "The market" section, the capture is already reported there: the module
-  // attaches the market without restating it.
-  const bodyMarket = (a.sections || []).some((x) => /^The market$/i.test(x.title || ''));
+  // When the article body already carries a market-facts section, the capture is reported there. The Intelligence
+  // module may add analysis, but it must not render the same snapshot a second time.
+  const bodyMarket = (a.sections || []).some((x) => /^(?:The market|The line|The next line)$/i.test(x.title || ''));
   const evidence = actionable && intel.render.market_evidence && !bodyMarket && ((mw.text || []).length || (mw.market && gameForStrip));
   return html`<section class="pbe-intel" data-relevance="${intel.market_relevance}">
     <div class="pbe-intel-head"><span class="module-kicker">PropBetEdge Intelligence</span><h2>${intel.label}</h2></div>

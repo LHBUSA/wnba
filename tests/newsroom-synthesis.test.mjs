@@ -96,7 +96,8 @@ test('a long-running absence is never described as minutes that "have to be abso
   assert.ok(a.facts.absence.games_since >= 3);
   const t = prose(a);
   assert.doesNotMatch(t, /have to be absorbed|has to be absorbed|have to replace|go somewhere/i);
-  assert.match(a.headline, /already played \d+ games without her/);
+  assert.match(a.headline, /remains out/);
+  assert.match(t, /played since|games without her/i);
   assert.match(t, /June 23/); // her last logged game
 });
 test('a fresh absence still states the minutes at stake, and says the redistribution is unobserved (Magbegor)', () => {
@@ -272,10 +273,9 @@ test('one structure per class: the same inputs produce byte-identical prose', as
   assert.deepEqual(again.body, stories.preview.body);
   assert.equal(again.headline, stories.preview.headline);
   assert.equal(again.structure, 0);
-  // The counter-case is analysis of the price, so it lives in PropBetEdge Intelligence ("What argues against it"); the body's
-  // "The market" section carries only market facts.
-  assert.deepEqual(again.sections.map((s) => s.title), ['The read', 'Availability', 'The matchup', 'The market', 'What matters next']);
-  assert.ok(again.bettor_angle.against.some((x) => /^The case against the 8.5-point spread:/.test(x)));
+  // The cautionary read stays in PropBetEdge Intelligence; the article body keeps a clean sports-desk structure.
+  assert.deepEqual(again.sections.map((s) => s.title), ['Game outlook', 'Availability', 'How they match up', 'The line', 'Before tip']);
+  assert.ok(again.bettor_angle.against.some((x) => /^Reasons to be careful with the 8.5-point spread:/.test(x)));
 });
 
 // ---------------------------------------------------------------- 11. historical runs borrow nothing from today

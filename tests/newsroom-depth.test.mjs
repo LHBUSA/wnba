@@ -277,9 +277,9 @@ test('13 · a repetitive 900-word story fails', async () => {
 test('14 · desk-specific substance contracts', async () => {
   const s = await desks();
   const drop = (a, key) => { const out = structuredClone(a); const i = out.sections.findIndex((x) => x.title === key); const sec = out.sections[i]; out.body.splice(sec.first, sec.count); out.sections.splice(i, 1); for (const x of out.sections.slice(i)) x.first -= sec.count; return out; };
-  const inj = assessDepth(drop(s.injury, 'The listing'), { now });
+  const inj = assessDepth(drop(s.injury, 'The latest'), { now });
   assert.ok(inj.unmet.includes('what_changed'), inj.unmet.join(','));
-  const tx = assessDepth(drop(s.transaction, 'The roster it lands in'), { now });
+  const tx = assessDepth(drop(s.transaction, 'How it fits'), { now });
   assert.ok(tx.unmet.includes('roster_context'), tx.unmet.join(','));
   const pv = assessDepth(drop(s.preview, 'Availability'), { now });
   assert.ok(pv.unmet.includes('availability') && !pv.pass);
