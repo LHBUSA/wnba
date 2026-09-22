@@ -167,12 +167,12 @@ const carlaSigning = item({
 test('a material brief is a reader-first PBE article with grounded basketball context', async () => {
   const [a] = await briefArticles({ externalItems: [carlaSigning], structured: [], now: NOW, ctx: carlaCtx });
   assert.equal(a.status, 'published', a.gate.failures.join('\n'));
-  assert.equal(a.headline, 'Portland Fire sign Carla Leite: the role she enters');
+  assert.equal(a.headline, 'Portland Fire sign Carla Leite, adding another option to the rotation');
   assert.doesNotMatch(a.headline, /^Swish Appeal:|the report and/);
-  assert.match(a.deck, /^Carla Leite brings 16\.4 points and 27\.4 minutes per game into a roster move/);
-  assert.deepEqual(a.sections.map((x) => x.title), ['The move', 'Leite’s role', 'The Portland Fire context', 'Next game']);
+  assert.match(a.deck, /^Carla Leite is averaging 16\.4 points in 27\.4 minutes per game/);
+  assert.deepEqual(a.sections.map((x) => x.title), ['The move', 'Where she fits', 'The Fire context', 'Next game']);
   const text = a.body.join('\n');
-  assert.match(text, /Portland Fire are involved in a reported roster move with Carla Leite/);
+  assert.match(text, /Carla Leite is part of a reported roster move involving the Portland Fire/);
   assert.match(text, /Carla Leite has averaged 16\.4 points, 2 rebounds and 6 assists in 27\.4 minutes across 7 games/);
   assert.match(text, /last five games.*18\.6 points in 29\.2 minutes.*2\.2 above her season scoring average/);
   assert.match(text, /Portland Fire are 14–22, No\. 9 in the Western Conference/);
