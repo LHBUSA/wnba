@@ -214,18 +214,18 @@ function renderHeroMeta(meta, live) {
 
 function renderEditorialFront(leadStory, secondaryStories) {
   return html`<section class="editorial-front" aria-label="Top WNBA stories">
-    <div class="sec-head sports-front-head">
-      <div><span class="eyebrow">PBE Newsroom</span><h2 class="sec-title bc">WNBA Today</h2></div>
-      <a class="sec-link" href="/news">All news →</a>
-    </div>
     <div class="editorial-grid">
       <div class="editorial-lead">
+        ${leadStory ? html`<span class="home-top-story">Top story</span>` : ''}
         ${leadStory
           ? articleCard(leadStory, { lead: true, eager: true, leadCta: true })
           : html`<div class="card card-pad sports-story-empty"><span class="eyebrow">PBE Newsroom</span><h2 class="sec-title bc">The league desk is current.</h2><p class="note">The next sourced WNBA story will lead this page when it clears the newsroom gate.</p><a class="btn gold" href="/news">Open newsroom</a></div>`}
       </div>
       <aside class="editorial-rail" aria-label="Latest WNBA stories">
-        <div class="editorial-rail-head"><span class="eyebrow">Latest</span><span class="note">Fresh from the PBE newsroom</span></div>
+        <div class="editorial-rail-head">
+          <div><span class="eyebrow">Latest news</span><span class="note">Fresh from the PBE newsroom</span></div>
+          <a class="sec-link" href="/news">All news →</a>
+        </div>
         ${secondaryStories.length
           ? html`<div class="srows editorial-rail-stories">${secondaryStories.map((c) => articleRow(c))}</div>`
           : html`<p class="note editorial-rail-empty">No additional stories have cleared the newsroom gate yet.</p>`}
@@ -314,7 +314,7 @@ export function todayView({ today, arts, injuries, standings, intl = null, winba
   // Historical WinBA backfills are publication-history records, not current news.
   const frontPageStories = frontPageEditorialStories(stories, winbaIndexes);
   const leadStory = frontPageStories[0];
-  const secondaryStories = frontPageStories.filter((c) => c.id !== leadStory?.id).slice(0, 3);
+  const secondaryStories = frontPageStories.filter((c) => c.id !== leadStory?.id).slice(0, 4);
   const heroStoryIds = new Set([leadStory?.id, ...secondaryStories.map((c) => c.id)].filter(Boolean));
   const moreStories = frontPageStories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
   const changes = (injuries.ok ? injuries.data.changes : []) || [];
