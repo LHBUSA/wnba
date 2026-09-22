@@ -153,7 +153,8 @@ function lineSeriesFigure(spec) {
         <circle class="pv-dot" cx="${c.cx.toFixed(1)}" cy="${c.cy.toFixed(1)}" r="${last ? 8 : 6}"/>
         <text class="pv-value" x="${c.cx.toFixed(1)}" y="${valueY.toFixed(1)}" text-anchor="${c.anchor}">${f1(c.value)}</text>
         ${c.annotation ? html`<text class="pv-rank" x="${c.cx.toFixed(1)}" y="${rankY.toFixed(1)}" text-anchor="${c.anchor}">${c.annotation}</text>` : ''}
-        <text class="pv-xlabel" x="${c.cx.toFixed(1)}" y="${(padT + plotH + 34).toFixed(1)}" text-anchor="${c.anchor}">${c.short_label}</text>
+        <text class="pv-xlabel pv-xlabel--full" x="${c.cx.toFixed(1)}" y="${(padT + plotH + 34).toFixed(1)}" text-anchor="${c.anchor}">${c.short_label}</text>
+        <text class="pv-xlabel pv-xlabel--abbr" x="${c.cx.toFixed(1)}" y="${(padT + plotH + 34).toFixed(1)}" text-anchor="${c.anchor}">${String(c.short_label).slice(0, 3)}</text>
       </g>`;
     })}
     <text class="pv-unit" x="${padL}" y="${padT - 28}" text-anchor="start">${VISUAL_UNITS[spec.unit]?.label || ''}</text>
