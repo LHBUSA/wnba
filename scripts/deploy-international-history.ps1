@@ -41,6 +41,8 @@ try {
 
 Push-Location (Join-Path $repo 'workers/wnba-web')
 try {
+  npm ci
+  if ($LASTEXITCODE -ne 0) { throw 'wnba-web npm ci failed.' }
   npx wrangler@latest deploy
   if ($LASTEXITCODE -ne 0) { throw 'wnba-web deploy failed.' }
 } finally {
