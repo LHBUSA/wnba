@@ -135,11 +135,13 @@ function lineSeriesFigure(spec) {
     <path class="pv-area" d="${area}" fill="url(#${gid})"/>
     <path class="pv-line" d="${line}"/>
     ${coords.map((c, i) => {
-      // Value above, rank below — unless the point sits low in the frame, where
-      // the rank chip would collide with the axis.
-      const low = (c.cy - padT) / plotH > 0.72;
-      const valueY = low ? c.cy + 34 : c.cy - 26;
-      const rankY = low ? c.cy - 22 : c.cy + 40;
+      // Value above the point, rank below it. The offsets are sized for the
+      // larger type the stylesheet uses at phone width, so one geometry reads
+      // at both widths; the anti-truncation rule keeps every point in the
+      // middle band of the frame, well clear of the axis labels.
+      const low = (c.cy - padT) / plotH > 0.78;
+      const valueY = low ? c.cy + 44 : c.cy - 32;
+      const rankY = low ? c.cy - 30 : c.cy + 50;
       const last = i === coords.length - 1;
       return html`<g class="pv-pt ${last ? 'is-last' : ''}">
         <line class="pv-stem" x1="${c.cx.toFixed(1)}" y1="${c.cy.toFixed(1)}" x2="${c.cx.toFixed(1)}" y2="${(padT + plotH).toFixed(1)}"/>

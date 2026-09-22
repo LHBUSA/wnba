@@ -39,18 +39,18 @@
 /* ---- line series */
 .pv-chart { display: block; width: 100%; height: auto; overflow: visible; }
 .pv-grid line { stroke: var(--line); stroke-width: 1; }
-.pv-tick { fill: var(--subtle); font: 600 19px/1 var(--f-data); }
-.pv-unit { fill: var(--faint); font: 600 17px/1 var(--f-data); letter-spacing: .06em; text-transform: uppercase; }
+.pv-tick { fill: var(--subtle); font: 600 15px/1 var(--f-data); }
+.pv-unit { fill: var(--faint); font: 600 13px/1 var(--f-data); letter-spacing: .06em; text-transform: uppercase; }
 .pv-area { stroke: none; }
 .pv-line { fill: none; stroke: var(--pv-accent); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
 .pv-stem { stroke: var(--line-2); stroke-width: 1; stroke-dasharray: 3 5; }
 .pv-dot { fill: var(--ink-1); stroke: var(--pv-accent); stroke-width: 3.2; }
 .pv-dot-halo { fill: var(--gold-soft); }
 .pv-pt.is-last .pv-dot { fill: var(--pv-accent); }
-.pv-value { fill: var(--paper); font: 700 28px/1 var(--f-data); }
+.pv-value { fill: var(--paper); font: 700 23px/1 var(--f-data); }
 .pv-pt.is-last .pv-value { fill: var(--gold-bright); }
-.pv-rank { fill: var(--faint); font: 600 20px/1 var(--f-data); letter-spacing: .04em; }
-.pv-xlabel { fill: var(--paper-2); font: 600 21px/1 var(--f-data); letter-spacing: .06em; text-transform: uppercase; }
+.pv-rank { fill: var(--faint); font: 600 15px/1 var(--f-data); letter-spacing: .04em; }
+.pv-xlabel { fill: var(--paper-2); font: 600 16px/1 var(--f-data); letter-spacing: .06em; text-transform: uppercase; }
 
 /* ---- component bars */
 .pv-bars-wrap { display: grid; gap: 16px; }
@@ -103,6 +103,14 @@
 
 @media (max-width: 760px) {
   .pv-figure { margin: 24px 0 28px; padding: 16px 14px 2px; border-radius: 12px; }
+  /* The chart is drawn in a fixed viewBox, so at phone width every SVG label is
+     scaled down by roughly half. These are the user-unit sizes that land back
+     above a legible 12px on the device. */
+  .pv-tick { font-size: 26px; }
+  .pv-unit { font-size: 24px; }
+  .pv-value { font-size: 40px; }
+  .pv-rank { font-size: 27px; }
+  .pv-xlabel { font-size: 28px; }
   .pv-rankcards { grid-template-columns: 1fr; gap: 9px; }
   .pv-rankcard > a:first-child { display: flex; align-items: center; gap: 12px; padding: 11px 13px; }
   .pv-rc-rank { flex: none; min-width: 46px; }

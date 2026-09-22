@@ -318,6 +318,7 @@ function composeWilson(ctx) {
   w.section('Reading the two lenses together', { key: 'lenses' });
   w.p(
     `A résumé and a rating fail in different directions. Awards are retrospective, voted, and slow to update; they can lag a decline by a season and they cannot tell you anything about a player who has not yet been recognised. A monthly rating is fast and blind: it re-measures from the games alone and has no memory of what anybody won last year.`,
+    `Both lenses have limits worth stating. ${WINBA_LABEL} does not measure defence directly and knows nothing about role or lineup context, and it is built from completed games in PropBetEdge's own 2026 archive, which is close to but not identical with the official regular-season record. It is an association-with-winning index, not a causal estimate of wins added — which is why the conventional line printed above comes from our season aggregate, reconciled against her official profile, rather than from the metric's own window.`,
     `Their agreement is the point. The slow lens says ${honours.find((h) => h.key === 'mvp') ? `${word(honours.find((h) => h.key === 'mvp').count)}-time MVP` : 'a decorated career'}; the fast one, re-derived monthly from box scores and results with no knowledge of any of that, says No. ${bestRank} or No. ${worstRank} every single month. Where two measurements built on entirely different information land in the same place, the thing they are both pointing at is probably real.`
   );
 
