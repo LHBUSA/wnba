@@ -133,6 +133,27 @@ test('the two features are different arguments, not one template', async () => {
   assert.ok(wilson.article.visuals.some((v) => v.type === 'resume_card'));
 });
 
+test('Reese feature explains WinBA once, names the v1 limits, and avoids duplicate methodology sections', async () => {
+  const { res } = await run('reese-winba-empty-stats');
+  const a = res.article;
+  const keys = a.sections.map((s) => s.key);
+  assert.ok(keys.includes('components'));
+  assert.ok(!keys.includes('method'), 'methodology is integrated with the component section instead of repeated');
+  const text = a.body.join(' ');
+  assert.match(text, /shooting efficiency or turnovers/);
+  assert.match(text, /does not directly measure defence/);
+  assert.doesNotMatch(text, /Third is not a moral victory/);
+  assert.doesNotMatch(text, /opposite of a volume story/);
+  assert.doesNotMatch(a.deck, /does not end the argument/);
+});
+
+test('Wilson comparison stays about consistency rather than player equivalence', async () => {
+  const { res } = await run('wilson-winba-consistency');
+  const text = res.article.body.join(' ');
+  assert.match(text, /sustained elite scoring/);
+  assert.match(text, /not a role, style or all-around-impact equivalence/);
+});
+
 test('every plotted value comes from a frozen board, hash and all', async () => {
   const { res } = await run('reese-winba-empty-stats');
   const climb = res.article.visuals.find((v) => v.id === 'reese-climb');
