@@ -23,12 +23,15 @@ import { mountShell } from './ui/shell.js';
 import { installPhotoFallback } from './ui/photo.js';
 import { enhanceProMore } from './ui/pro-more.js';
 import { createRouter } from './lib/router.js';
+import { initAnalytics, trackPageView } from './analytics.js';
 
+initAnalytics();
 installPhotoFallback();
 const shell = mountShell(document.getElementById('app'));
 enhanceProMore(document);
 const router = createRouter({
   outlet: shell.outlet,
-  onRoute: (id) => shell.setActive(id)
+  onRoute: (id) => shell.setActive(id),
+  onMounted: ({ routeId, path }) => trackPageView({ routeId, path })
 });
 router.mount();
