@@ -308,6 +308,7 @@ export async function runCommissionPass(env, { key, apiGet, at = new Date().toIS
     return { key, status: 'live_context_not_ready', ...(liveContext || { reason: 'missing_live_context' }) };
   }
 
+  let writtenArticle = null;
   const result = await runCommission({
     key,
     editions,
@@ -325,17 +326,18 @@ export async function runCommissionPass(env, { key, apiGet, at = new Date().toIS
       const media = mediaFor ? mediaFor(a) : null;
       const rows = (editions.at(-1)?.board?.rows || []).slice(0, 3);
       const boardMedia = winbaBoardMedia ? winbaBoardMedia(rows) : null;
-      const decorated = withCardPhotos({ ...a, ...(media ? { media } : {}) }, boardMedia);
-      await env.NEWS_KV.put(ITEM(a.id), JSON.stringify(decorated), ITEM_TTL);
+      writtenArticle = withCardPhotos({ ...a, ...(media ? { media } : {}) }, boardMedia);
+      await env.NEWS_KV.put(ITEM(a.id), JSON.stringify(writtenArticle), ITEM_TTL);
+      return writtenArticle;
     }
   });
 
   // A published feature joins the newsroom index so it is listed, linked and fed
-  // like any other story.
+  // like any other story. Use the exact article we just wrote instead of
+  // immediately rereading eventually-consistent Workers KV.
   if ((result.status === 'published' || result.status === 'regenerated') && result.article) {
-    const stored = await env.NEWS_KV.get(ITEM(result.id), 'json');
     const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
-    const card = cardForCommission(stored || result.article);
+    const card = cardForCommission(writtenArticle || result.article);
     const next = index.some((c) => c.id === card.id)
       ? index.map((c) => (c.id === card.id ? { ...c, ...card } : c))
       : [card, ...index];
@@ -345,6 +347,10 @@ export async function runCommissionPass(env, { key, apiGet, at = new Date().toIS
   const { article, ...rest } = result;
   return {
     ...rest,
+    // This endpoint is admin-authenticated and explicitly invoked. Returning the
+    // exact freshly-written article lets the release command verify publication
+    // without racing Workers KV propagation through a second edge read.
+    article: writtenArticle || article || null,
     version: COMMISSION_VERSION,
     boards: editions.map((e) => ({ period: e.period, hash: e.hash, rows: (e.board.rows || []).length })),
     season_line: seasonLine,
