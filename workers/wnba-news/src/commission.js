@@ -555,6 +555,7 @@ export const COMMISSIONS = Object.freeze({
     periods: ['2026-06', '2026-07', '2026-08', '2026-09'],
     facts: [],
     live_context: 'availability_loss_stress_test',
+    event_date_et: '2026-09-22',
     compose: composeMilesAbsence,
     required_visuals: ['miles-winba-trajectory', 'miles-winba-components']
   },
