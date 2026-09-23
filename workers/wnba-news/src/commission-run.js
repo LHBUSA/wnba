@@ -100,19 +100,25 @@ async function availabilityStressContext(apiGet, spec, subjectRecord, at) {
 
   let currentInjuries;
   let today;
+  let datedSchedule = null;
   try {
-    [currentInjuries, today] = await Promise.all([
+    const compact = String(spec.event_date_et || '').replaceAll('-', '');
+    [currentInjuries, today, datedSchedule] = await Promise.all([
       apiGet('/v1/injuries').catch(() => null),
-      apiGet('/v1/today')
+      apiGet('/v1/today'),
+      compact ? apiGet(`/v1/schedule?from=${compact}&to=${compact}`).catch(() => null) : Promise.resolve(null)
     ]);
   } catch (e) {
     return { ready: false, reason: 'live_sources_unavailable', error: String(e.message || e).slice(0, 160) };
   }
 
   const games = [
+    ...((datedSchedule?.games || []).filter(Boolean)),
     ...((today?.slate?.games || []).filter(Boolean)),
     ...((today?.last_results?.games || []).filter(Boolean))
-  ].filter((g) => [g?.home?.team_id, g?.away?.team_id].some((id) => String(id || '') === teamId));
+  ]
+    .filter((g, i, all) => all.findIndex((x) => String(x?.game_id || '') === String(g?.game_id || '')) === i)
+    .filter((g) => [g?.home?.team_id, g?.away?.team_id].some((id) => String(id || '') === teamId));
 
   // Prefer the most recent completed game. This prevents a later rematch on the
   // slate from replacing the final this feature was commissioned around.
