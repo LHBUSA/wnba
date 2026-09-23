@@ -118,7 +118,7 @@ export async function cardModel(kind, key, api) {
     // approved photograph: the frozen rank and rating, and the monthly rank motif
     // read straight off the article's own frozen chart payload. The text sits in
     // the card's dark left panel, so it never covers the subject.
-    if (a.kind === 'commissioned_feature' && a.winba_reference) {
+    if (a.kind === 'commissioned_feature' && a.winba_reference && a.commission?.presentation !== 'natural_news') {
       const ref = a.winba_reference;
       const climb = (a.visuals || []).find((v) => v.type === 'line_series');
       const ranks = (climb?.series || []).map((pt) => pt.rank).filter((r) => r !== null && r !== undefined);
@@ -137,8 +137,9 @@ export async function cardModel(kind, key, api) {
     }
     const photoPath = a.media?.og || null;
     const teams = (a.media?.teams || []).map((t) => teamColors({ team_id: t }).color);
+    const naturalNews = a.commission?.presentation === 'natural_news';
     return {
-      kicker: `${DESKS[deskOf(a.kind)] || 'Newsroom'}`,
+      kicker: naturalNews ? (a.category || 'Game Analysis') : `${DESKS[deskOf(a.kind)] || 'Newsroom'}`,
       title: clip(a.headline, 150),
       footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
       photoPath,
