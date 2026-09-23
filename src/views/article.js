@@ -167,6 +167,7 @@ export function intelligenceView(a) {
 }
 
 export function articleView({ article: a, related = [], series = [] }) {
+  const naturalNews = a.commission?.presentation === 'natural_news';
   const teams = (a.entities || []).filter((e) => e && e.type === 'team');
   const players = (a.entities || []).filter((e) => e && e.type === 'player');
   const games = (a.entities || []).filter((e) => e && e.type === 'game');
@@ -174,7 +175,7 @@ export function articleView({ article: a, related = [], series = [] }) {
   const mw = a.market_watch || {};
   const ng = a.context?.next_game || a.context?.game || null;
   const intel = intelligenceOf(a);
-  const deskKind = a.kind === 'result' ? 'performance' : a.kind;
+  const deskKind = naturalNews ? 'performance' : (a.kind === 'result' ? 'performance' : a.kind);
   const pictured = new Set((a.media?.subjects || []).map((s) => s.player_id));
   const photoOf = (p) => (a.media?.subjects || []).find((s) => s.player_id === String(p.id));
   const { published, revised, observed } = storyClock(a);
@@ -217,8 +218,8 @@ export function articleView({ article: a, related = [], series = [] }) {
       ${a.external_coverage ? html`<aside class="coverage-note" role="note"><b>Moved to external coverage.</b> This item was a note on another publisher’s feature rather than a newsroom event, so it is no longer listed in the PropBetEdge newsroom. ${a.external_coverage.source_url ? html`Read <a href="${a.external_coverage.source_url}" rel="noopener" target="_blank">${a.external_coverage.source_name || 'the original report'} ↗</a>. ` : ''}The record below is kept for transparency.</aside>` : ''}
       <header class="story-head">
         <div class="story-kicker">
-          <a class="cat" href="${a.commission ? '/news' : `/news/c/${deskKind}`}">${DESK[a.kind] || KIND_LABEL[a.kind] || a.category}</a>
-          ${a.commission ? html`<span class="commission-chip">Commissioned feature</span>` : ''}
+          <a class="cat" href="${naturalNews ? '/news/c/performance' : (a.commission ? '/news' : `/news/c/${deskKind}`)}">${naturalNews ? (a.category || 'Game Analysis') : (DESK[a.kind] || KIND_LABEL[a.kind] || a.category)}</a>
+          ${a.commission && !naturalNews ? html`<span class="commission-chip">Commissioned feature</span>` : ''}
           <span class="story-teams">${teams.slice(0, 2).map((t) => html`<a href="/teams/${t.id}" aria-label="${t.name}">${teamLogo({ team_id: t.id, name: t.name }, 26)}</a>`)}</span>
         </div>
         <h1>${headlineText(a.headline)}</h1>
@@ -236,7 +237,7 @@ export function articleView({ article: a, related = [], series = [] }) {
           ${winba ? html`<a href="${METRIC_HREF.winba}" title="WinBA Score — PropBetEdge overall WNBA player rating">WinBA ${Math.round(winba.score)}</a>` : ''}
         </nav>` : ''}
         ${seriesNav ? winbaSeriesNavView(seriesNav) : ''}
-        ${a.commission?.note ? html`<p class="commission-note"><b>Why we commissioned this.</b> ${a.commission.note}</p>` : ''}
+        ${a.commission?.note && !naturalNews ? html`<p class="commission-note"><b>Why we commissioned this.</b> ${a.commission.note}</p>` : ''}
       </header>
 
       <div class="story-layout ${indexAside ? 'story-layout--index' : ''}">
@@ -253,7 +254,7 @@ export function articleView({ article: a, related = [], series = [] }) {
           ${gameLinks.length ? html`<section><h2 class="aside-title">Game</h2>${gameLinks.map((g) => html`<a class="aside-row" href="/matchups/${g.id}"><b>${g.name}</b><span class="note">${g.start_utc ? `${fmtDateET(g.start_utc, { month: 'short', day: 'numeric' })} · ` : ''}Matchup research →</span></a><a class="aside-row" href="/cast/${g.id}"><b>WNBACast</b><span class="note">Live game &amp; replay →</span></a>`)}</section>` : ''}
           ${intl.length ? html`<section><h2 class="aside-title">International</h2>${intl.map((e) => html`<a class="aside-row" href="${e.type === 'intl_team' ? `/international/teams/${e.id}` : `/international/games/${e.id}`}"><b>${e.name}</b><span class="note">${e.type === 'intl_team' ? 'National team →' : 'Box score & play-by-play →'}</span></a>`)}</section>` : ''}
           <section><h2 class="aside-title">Keep reading</h2>
-            ${(DESK_LINKS[a.kind] || []).map(([href, label]) => html`<a class="aside-row" href="${href}"><b>${label}</b></a>`)}
+            ${(naturalNews ? DESK_LINKS.performance : (DESK_LINKS[a.kind] || [])).map(([href, label]) => html`<a class="aside-row" href="${href}"><b>${label}</b></a>`)}
             <a class="aside-row" href="/news"><b>WNBA newsroom front page</b></a>
           </section>
         </aside>
