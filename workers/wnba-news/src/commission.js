@@ -390,12 +390,11 @@ function composeWilson(ctx) {
 }
 
 /**
- * OLIVIA MILES — a live availability stress test for WinBA.
+ * OLIVIA MILES — a completed-game absence stress test for WinBA.
  *
- * This feature is deliberately framed as a test, not a victory lap. The player
- * was unavailable and the team had a bad first half at the same time; that is
- * a useful observation, not a counterfactual proof of what would have happened
- * with her on the floor.
+ * The ranking existed before the absence and before the result. That ordering
+ * makes the game useful as evidence without turning one loss into a causal
+ * claim the metric cannot support.
  */
 function composeMilesAbsence(ctx) {
   const { subject, team, traj, sept, seasonLine, recent, topThree, qualified, liveContext } = ctx;
@@ -405,11 +404,21 @@ function composeMilesAbsence(ctx) {
   const injury = liveContext?.injury || {};
   const game = liveContext?.game || {};
   const half = liveContext?.halftime || {};
+  const three = liveContext?.after_three || {};
+  const final = liveContext?.final || {};
   const opponent = game.opponent?.name || game.opponent?.short_name || game.opponent?.abbr || 'the opponent';
   const teamName = team?.name || game.subject_team?.name || 'Minnesota Lynx';
   const teamHalf = Number(half.subject_team_score);
   const oppHalf = Number(half.opponent_score);
-  const deficit = Math.abs(Number(half.margin));
+  const halfDeficit = Math.abs(Number(half.margin));
+  const teamThree = Number(three.subject_team_score);
+  const oppThree = Number(three.opponent_score);
+  const threeDeficit = Number.isFinite(Number(three.margin)) ? Math.abs(Number(three.margin)) : null;
+  const teamFinal = Number(final.subject_team_score);
+  const oppFinal = Number(final.opponent_score);
+  const finalDeficit = Math.abs(Number(final.margin));
+  const subjectQ = final.subject_quarters || [];
+  const opponentQ = final.opponent_quarters || [];
   const bodyPart = injury.body_part ? ` with a ${injury.body_part} issue` : '';
   const rankedPeers = topThree
     .filter((c) => String(c.entity.id) !== String(subject.id))
@@ -417,50 +426,61 @@ function composeMilesAbsence(ctx) {
     .join(' and ');
 
   w.p(
-    `${subject.name} was listed out${bodyPart} before the ${teamName}'s game against ${opponent}. At halftime, Minnesota trailed ${oppHalf}–${teamHalf}, a ${deficit}-point gap.`,
-    `That timing is impossible to ignore because ${subject.name} entered the night as the No. ${sept.rank} player in the frozen ${winbaPeriodLabel(sept.period)} edition of ${WINBA_INDEX_SERIES}, with an ${one(sept.value)} ${WINBA_LABEL}. But it is just as important not to overstate what one half of basketball can prove.`
+    `${subject.name} was listed out${bodyPart} before the ${teamName}'s game against ${opponent}. Minnesota did not just fall behind without her; it finished the night with a ${oppFinal}–${teamFinal} loss.`,
+    `That result matters because ${subject.name} entered the game as the No. ${sept.rank} player on the frozen ${winbaPeriodLabel(sept.period)} edition of ${WINBA_INDEX_SERIES}, at ${one(sept.value)} ${WINBA_LABEL}. The ranking existed before the scratch and before the final score. That makes this a legitimate stress test of the metric's premise — not proof that her absence caused the loss.`
   );
 
-  w.section('The halftime snapshot', { key: 'halftime_snapshot' });
+  w.section('The full-game arc', { key: 'game_arc' });
   w.p(
-    `The facts are narrow and clean. The availability feed listed ${subject.name} as ${injury.status || 'Out'}, and the game record shows the ${teamName} at ${teamHalf} points and ${opponent} at ${oppHalf} through two quarters. Those are separate source records captured in the same game window.`,
-    `The score does not tell us that ${subject.name}'s absence caused a ${deficit}-point halftime deficit. It tells us that the team was being outscored badly in the first half while its highest-rated player by ${WINBA_LABEL} was unavailable. That distinction is the difference between a useful stress test and a causal claim the data cannot support.`,
-    `There are dozens of reasons a team can lose a half: shooting variance, turnovers, foul trouble, matchup problems, opponent shot-making, lineup combinations and simple game-to-game noise. None of those disappear because a proprietary rating happens to have its No. 1 player sitting out.`
+    `The first half was the shock: Minnesota trailed ${oppHalf}–${teamHalf} after two quarters, a ${halfDeficit}-point deficit. The quarter line shows ${opponent} winning the first ${opponentQ[0]}–${subjectQ[0]} and the second ${opponentQ[1]}–${subjectQ[1]}.`,
+    Number.isFinite(teamThree) && Number.isFinite(oppThree)
+      ? `Then Minnesota changed the shape of the game. A ${subjectQ[2]}–${opponentQ[2]} third quarter cut the margin to ${oppThree}–${teamThree}, just ${threeDeficit} points. That rally matters: the Lynx were not incapable of functioning without ${subject.name}, and the game itself refuses the lazy version of the argument.`
+      : null,
+    `The final quarter moved the result back the other way. ${opponent} won it ${opponentQ[3]}–${subjectQ[3]}, and the final settled at ${oppFinal}–${teamFinal}. Minnesota lost by ${finalDeficit} after getting the deficit down to ${threeDeficit ?? 'single digits'} one quarter earlier.`,
+    `That progression is more informative than the halftime screenshot by itself. The team absorbed a massive early deficit, produced a real response, and still could not finish the recovery. The completed game gives us an outcome; it still does not give us a counterfactual version of the same night with ${subject.name} on the floor.`
   );
 
-  w.section('Why this is a real WinBA stress test', { key: 'trajectory', visual: 'miles-winba-trajectory' });
+  w.section('Why WinBA belongs in this story', { key: 'trajectory', visual: 'miles-winba-trajectory' });
   w.p(
-    `${subject.name}'s position at the top is not a one-night calculation. Across the four frozen monthly boards used by ${WINBA_INDEX_SERIES}, her ranks have been ${traj.map((p) => `No. ${p.rank} in ${p.label.split(' ')[0]}`).join(', ')}. Her score moved from ${one(first.value)} in ${first.label.split(' ')[0]} to ${one(last.value)} in ${last.label.split(' ')[0]}.`,
-    `The September board places her No. 1 of ${qualified} qualified players at ${one(sept.value)}. ${rankedPeers ? `The next two names on that frozen board are ${rankedPeers}.` : ''} The point is not that a ranking predicted tonight's halftime score. The point is that an independently built season metric had already identified ${subject.name} as the league's strongest combination of production and winning context before this game began.`,
-    `${WINBA_LABEL} is rebuilt from completed games, not from tonight's live score. The canonical metric therefore does not get credit for Minnesota falling behind while ${subject.name} sits, and it will not be rewritten upward because this half happened. A useful metric should survive a dramatic anecdote without changing its rules to fit the anecdote.`
+    `${subject.name}'s place at the top was not created to explain this loss. Across the four frozen monthly boards used by ${WINBA_INDEX_SERIES}, her ranks were ${traj.map((p) => `No. ${p.rank} in ${p.label.split(' ')[0]}`).join(', ')}. Her score moved from ${one(first.value)} in ${first.label.split(' ')[0]} to ${one(last.value)} in ${last.label.split(' ')[0]}.`,
+    `The September board places her No. 1 of ${qualified} qualified players at ${one(sept.value)}. ${rankedPeers ? `The next two names on that frozen board are ${rankedPeers}.` : ''} That is important methodologically: the metric identified her first, then the absence and the loss happened later.`,
+    `${WINBA_LABEL} is rebuilt from completed games, not from this live or final result. The canonical score therefore receives no bonus because Minnesota lost without ${subject.name}, and this article does not rewrite the board after seeing the outcome. A metric that changes itself to fit a dramatic anecdote would be less credible, not more.`
   );
 
   w.section('What the 87 is actually measuring', { key: 'components', visual: 'miles-winba-components' });
   w.p(
     `WinBA v1 has four inputs. League-relative Box Impact per 36 minutes carries 45% of the score. Player win rate carries 25%. The share of a player's production that came in wins carries 20%. Court share carries the final 10%.`,
-    `On the frozen September row, ${subject.name}'s production percentile is ${one(sept.row.components?.production_percentile)}, her win-rate input is ${pct(sept.row.components?.win_rate)}, her production-in-wins input is ${pct(sept.row.components?.winning_output_share)}, and her court-share input is ${pct(sept.row.components?.court_share)}. Those are the inputs behind the ${one(sept.value)} rating; tonight's halftime margin is not one of them.`,
-    `Her conventional ${seasonLine.season_label} line is ${one(seasonLine.pts)} points, ${one(seasonLine.reb)} rebounds and ${one(seasonLine.ast)} assists per game across ${seasonLine.games} appearances. ${recent ? `Over her most recent five appearances before this one, she averaged ${one(recent.pts)} points, ${one(recent.reb)} rebounds and ${one(recent.ast)} assists.` : ''} Those numbers provide basketball context, but the test tonight is about availability: what happens to the team environment when the player sitting at No. 1 is not available?`
+    `On the frozen September row, ${subject.name}'s production percentile is ${one(sept.row.components?.production_percentile)}, her win-rate input is ${pct(sept.row.components?.win_rate)}, her production-in-wins input is ${pct(sept.row.components?.winning_output_share)}, and her court-share input is ${pct(sept.row.components?.court_share)}. Those are the inputs behind the ${one(sept.value)} rating. The ${oppFinal}–${teamFinal} final is not one of them.`,
+    `Her conventional ${seasonLine.season_label} line is ${one(seasonLine.pts)} points, ${one(seasonLine.reb)} rebounds and ${one(seasonLine.ast)} assists per game across ${seasonLine.games} appearances. ${recent ? `Over her most recent five appearances before this one, she averaged ${one(recent.pts)} points, ${one(recent.reb)} rebounds and ${one(recent.ast)} assists.` : ''} Those numbers tell us what Minnesota was missing in broad terms; they still do not isolate how many points of tonight's margin belonged to her absence.`
   );
 
-  w.section('What one game cannot prove', { key: 'limits' });
+  w.section('The result is evidence — not causation', { key: 'limits' });
   w.p(
-    `One absence cannot validate ${WINBA_LABEL}. Even a final margin in the same direction would not be enough. A proper test needs repeated absences, comparable opponents, the team's own baseline with the player available, and enough games to separate signal from the enormous variance inside basketball.`,
-    `The current score also cannot isolate which part of ${subject.name}'s value is missing. WinBA does not directly measure defence, shooting efficiency, turnovers, shot quality, lineup fit or optical-tracking effects. It is an association-with-winning index built from box production, results and minutes, not a causal estimate of wins added. That makes this game relevant to the metric's thesis, but not a controlled experiment.`,
-    `There is another trap to avoid: using the result backward. If Minnesota rallies and wins, that does not disprove ${subject.name}'s No. 1 ranking. If the deficit grows, that does not prove the ranking. The metric has to be judged across a sample, not allowed to declare victory whenever a single scoreboard happens to agree with it.`
+    `The strongest responsible statement is simple: Minnesota's No. 1 player by a pre-existing winning-impact metric was unavailable, and Minnesota lost the game by ${finalDeficit}. That is an observed sequence, not a causal estimate.`,
+    `Basketball outcomes are generated by far more than one player's availability. Shooting variance, turnovers, matchups, lineup choices, foul trouble, opponent performance and game state all matter. WinBA does not directly measure defence, shooting efficiency, turnovers, shot quality or lineup fit, and it is not designed to predict the exact score of one game.`,
+    `The third-quarter comeback is actually useful discipline here. Minnesota won that quarter ${subjectQ[2]}–${opponentQ[2]} and cut a ${halfDeficit}-point halftime deficit to ${threeDeficit} without ${subject.name}. If the thesis were “Minnesota cannot play without her,” the game itself pushes back on it. What survived the full 40 minutes was the narrower fact: the comeback was not enough, and the Lynx still lost.`,
+    `One game therefore cannot validate ${WINBA_LABEL}. Even a ${finalDeficit}-point final in the same direction as the metric's ranking is one observation. A real validation test needs repeated absences, comparable opponents, a team baseline with the player available and enough cases to separate signal from noise.`
   );
 
-  w.section('The test PropBetEdge should keep', { key: 'future_test' });
+  w.section('Why the ordering of events matters', { key: 'ordering' });
   w.p(
-    `The useful next step is to archive this game as an availability case and repeat the same process every time a highly rated player misses a game. Freeze the player's pregame WinBA rank, availability status and opponent; then compare the team's performance with its established baseline without changing the canonical score.`,
-    `Over enough cases, that creates a separate question from WinBA itself: do teams systematically move in the expected direction when players near the top of the winning-impact board are unavailable? That belongs in a WinBA Context or Availability Impact layer, not inside the canonical 0–100 score.`,
-    `That separation matters. WinBA should remain the same transparent season metric whether tonight becomes a blowout, a comeback or something in between. The context layer can ask what the absence appears to mean in a specific matchup. Mixing those two jobs would make the score less trustworthy, not more sophisticated.`
+    `This is a cleaner test than choosing a player after a bad result and then finding a metric that says she mattered. The September board was already frozen. ${subject.name} was already No. 1. Her absence was recorded before the result. Only then did Minnesota lose ${oppFinal}–${teamFinal}.`,
+    `That ordering protects the analysis from the most obvious form of hindsight bias. It does not solve every confounder, but it means the central question was not invented after the scoreboard became interesting.`,
+    `The right conclusion is not “WinBA proved Olivia Miles is worth ${finalDeficit} points.” The data does not support that sentence. The right conclusion is that a player the metric had already identified as unusually tied to production and winning was absent for a materially bad team outcome — exactly the kind of case a winning-impact metric should preserve and test over time.`
   );
 
-  w.section('Why tonight belongs in the record', { key: 'record' });
+  w.section('The next layer: Availability Impact', { key: 'future_test' });
   w.p(
-    `At halftime, the cleanest statement is also the strongest one: the player sitting No. 1 on PropBetEdge's frozen September WinBA board was out, and her team was down ${deficit} points after two quarters.`,
-    `That is not proof of causation. It is a high-information observation that arrived naturally, without changing the formula or selecting the player after the score was known. The ranking existed first. The absence existed before tip. The halftime result came afterward. That ordering is exactly why the game is worth preserving as a stress test.`,
-    `If the same pattern repeats across a meaningful sample of high-WinBA absences, the story becomes larger than one night. If it does not, the record should show that too. A proprietary metric earns credibility by keeping both outcomes.`
+    `PropBetEdge should now archive this as an availability case rather than feed it back into the canonical formula. Freeze the player's pregame WinBA rank, availability status, opponent, quarter-by-quarter game state and final result. Then repeat the same process every time a highly rated player misses a game.`,
+    `Over enough cases, that creates a separate validation layer: how do teams perform relative to their own baseline when players near the top of the WinBA board are unavailable? That can be split by opponent strength, home and road, rest, role and sample size without contaminating the canonical 0–100 score.`,
+    `If high-WinBA absences repeatedly coincide with meaningful deterioration after those controls, the metric gains out-of-sample evidence. If they do not, the archive should show that too. A proprietary metric earns credibility by retaining misses, not just wins.`
+  );
+
+  w.section('The record from this night', { key: 'record' });
+  w.p(
+    `The final record is now stronger than the halftime version: ${subject.name}, No. ${sept.rank} at ${one(sept.value)} on PropBetEdge's frozen September WinBA board, was out; Minnesota trailed ${oppHalf}–${teamHalf} at halftime, cut the deficit to ${threeDeficit} after three, and lost ${oppFinal}–${teamFinal}.`,
+    `Nothing about that sequence proves the counterfactual. It does, however, create a complete, timestamped case in which the metric's highest-rated player was unavailable and her team finished on the wrong side of the scoreboard.`,
+    `That is the kind of result worth publishing because it tests a claim made before the game rather than manufacturing one afterward. The next question is no longer whether this one night looks interesting. It is whether the same pattern survives a larger sample.`
   );
 
   const { body, sections } = w.done();
@@ -473,9 +493,9 @@ function composeMilesAbsence(ctx) {
   const visuals = [
     lineSeries({
       id: 'miles-winba-trajectory',
-      title: `${subject.name}'s WinBA rank was established before tonight`,
+      title: `${subject.name}'s WinBA rank existed before the loss`,
       subtitle: 'Monthly WinBA Score with frozen league rank',
-      caption: `Four published monthly snapshots. Tonight's live score does not change any point on this chart.`,
+      caption: `Four published monthly snapshots. The ${oppFinal}–${teamFinal} final does not change any point on this chart.`,
       entity,
       points: traj,
       provenance,
@@ -485,7 +505,7 @@ function composeMilesAbsence(ctx) {
       id: 'miles-winba-components',
       title: `What makes up ${subject.name}'s ${one(sept.value)} WinBA`,
       subtitle: 'The four frozen inputs behind the September score',
-      caption: `The live game is context, not an input. These values were fixed before tonight's result.`,
+      caption: `The final result is validation context, not an input. These values were fixed before the game ended.`,
       entity,
       total: sept.value,
       rows: componentRowsOf(sept.row),
@@ -495,8 +515,8 @@ function composeMilesAbsence(ctx) {
   ];
 
   return {
-    headline: `${subject.name} Was Out. Minnesota Was Down ${deficit} at Half. WinBA Just Got a Real Stress Test`,
-    deck: `PropBetEdge's No. 1-rated WNBA player was unavailable while the ${teamName} trailed ${oppHalf}–${teamHalf} at halftime. That does not prove causation — but it creates a clean case for testing what the metric is actually capturing.`,
+    headline: `${subject.name} Was Out. Minnesota Lost ${oppFinal}–${teamFinal}. WinBA Just Got a Full-Game Stress Test`,
+    deck: `PropBetEdge's No. 1-rated WNBA player missed the game, Minnesota fell behind by ${halfDeficit} at halftime, cut it to ${threeDeficit} after three, and still lost by ${finalDeficit}. One game cannot prove the metric — but this is exactly the kind of out-of-sample case worth recording.`,
     body,
     sections,
     visuals,
@@ -506,18 +526,20 @@ function composeMilesAbsence(ctx) {
         start_utc: game.start_utc || null,
         home: game.home || null,
         away: game.away || null,
-        halftime: half
+        halftime: half,
+        after_three: three,
+        final
       },
       availability: injury
     },
     method: [
-      `The availability status and halftime score are frozen source records from the same game window. They are evidence for timing, not for a counterfactual claim about what the score would have been with ${subject.name} available.`,
-      'This feature was commissioned during the game because the pre-existing No. 1 WinBA ranking and the confirmed absence created an unusually clean stress-test case.'
+      `The availability record, quarter progression and final score are frozen source records from the same game. They establish timing and outcome, not a counterfactual claim about what would have happened with ${subject.name} available.`,
+      'The pregame WinBA board is immutable. This completed-game result is treated as validation context and is not fed backward into the published September score.'
     ],
-    seo_title: `${subject.name} out: Minnesota's halftime deficit becomes a WinBA stress test`,
-    seo_description: `${subject.name}, No. 1 at ${one(sept.value)} on PropBetEdge's frozen September WinBA board, was out as Minnesota trailed ${oppHalf}–${teamHalf} at halftime. What the moment can — and cannot — say about the metric.`,
-    keywords: [`${subject.name} WinBA`, `${subject.name} injury`, 'Minnesota Lynx', `${teamName} ${opponent}`, 'WinBA Score', 'WNBA player impact'],
-    commission_note: 'Commissioned in-game because the pre-existing No. 1 WinBA ranking, confirmed absence and verified halftime deficit created a clean real-world stress test worth preserving without making a causal claim.'
+    seo_title: `${subject.name} out as Minnesota loses ${oppFinal}-${teamFinal}: a WinBA stress test`,
+    seo_description: `${subject.name}, No. 1 at ${one(sept.value)} on PropBetEdge's frozen September WinBA board, missed Minnesota's ${oppFinal}-${teamFinal} loss. The Lynx were down ${halfDeficit} at half, rallied to within ${threeDeficit}, and still fell by ${finalDeficit}.`,
+    keywords: [`${subject.name} WinBA`, `${subject.name} injury`, 'Minnesota Lynx', `${teamName} ${opponent}`, 'WinBA Score', 'WNBA player impact', 'Minnesota Lynx loss'],
+    commission_note: 'Commissioned because a pre-existing No. 1 WinBA ranking, a verified absence and a completed loss created a clean out-of-sample case worth preserving without making a causal claim.'
   };
 }
 
@@ -527,12 +549,12 @@ function composeMilesAbsence(ctx) {
  */
 export const COMMISSIONS = Object.freeze({
   'miles-winba-absence-stress-test': {
-    slug: 'olivia-miles-out-minnesota-halftime-winba-stress-test',
+    slug: 'olivia-miles-out-minnesota-loses-fever-winba-stress-test',
     subject: { id: '4433791', name: 'Olivia Miles' },
     mentions: [{ id: '3149391', name: "A'ja Wilson" }, { id: '4433402', name: 'Angel Reese' }],
     periods: ['2026-06', '2026-07', '2026-08', '2026-09'],
     facts: [],
-    live_context: 'availability_stress_test',
+    live_context: 'availability_loss_stress_test',
     compose: composeMilesAbsence,
     required_visuals: ['miles-winba-trajectory', 'miles-winba-components']
   },
