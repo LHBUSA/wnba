@@ -24,7 +24,7 @@ import { WINBA_LABEL, WINBA_URL, WINBA_METHOD_URL, WINBA_METRIC_ENTITY } from '.
 import { WINBA_INDEX_SERIES, winbaPeriodLabel } from './winba-index.js';
 import { lineSeries, componentBars, rankCards, resumeCard, visualsFailures, VISUALS_VERSION } from './visuals.js';
 
-export const COMMISSION_VERSION = 'wnba-commission/1.1.0';
+export const COMMISSION_VERSION = 'wnba-commission/1.2.0';
 export const COMMISSION_KIND = 'commissioned_feature';
 export const COMMISSION_DESK = 'feature';
 export const COMMISSION_SERIES = 'PropBetEdge Features';
@@ -450,7 +450,7 @@ function composeMilesAbsence(ctx) {
   w.section('What the 87 is actually measuring', { key: 'components', visual: 'miles-winba-components' });
   w.p(
     `WinBA v1 has four inputs. League-relative Box Impact per 36 minutes carries 45% of the score. Player win rate carries 25%. The share of a player's production that came in wins carries 20%. Court share carries the final 10%.`,
-    `On the frozen September row, ${subject.name}'s production percentile is ${one(sept.row.components?.production_percentile)}, her win-rate input is ${pct(sept.row.components?.win_rate)}, her production-in-wins input is ${pct(sept.row.components?.winning_output_share)}, and her court-share input is ${pct(sept.row.components?.court_share)}. Those are the inputs behind the ${one(sept.value)} rating. The ${oppFinal}–${teamFinal} final is not one of them.`,
+    `On the frozen September row, ${subject.name}'s production percentile is ${one(sept.row.components?.production_percentile)}, her win-rate input is ${pct(sept.row.components?.win_rate)}, her production-in-wins input is ${pct(sept.row.components?.winning_output_share)}, and her court-share input is ${pct(sept.row.components?.court_share)}. Those are the inputs behind the ${one(sept.value)} rating. The ${oppFinal}–${teamFinal} final is not one of them. The archive WinBA reads is close to but not identical with the official regular-season record.`,
     `Her conventional ${seasonLine.season_label} line is ${one(seasonLine.pts)} points, ${one(seasonLine.reb)} rebounds and ${one(seasonLine.ast)} assists per game across ${seasonLine.games} appearances. ${recent ? `Over her most recent five appearances before this one, she averaged ${one(recent.pts)} points, ${one(recent.reb)} rebounds and ${one(recent.ast)} assists.` : ''} Those numbers tell us what Minnesota was missing in broad terms; they still do not isolate how many points of tonight's margin belonged to her absence.`
   );
 
