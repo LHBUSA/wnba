@@ -82,6 +82,124 @@ function withCardPhotos(article, boardMedia) {
 }
 
 /**
+ * Freeze the live availability/game state used by a commissioned stress-test feature.
+ *
+ * The article may be generated during halftime or later. We always recover the
+ * first-half score from provider-published linescores when possible so a later
+ * manual run cannot rewrite the premise around the final score.
+ */
+async function availabilityStressContext(apiGet, spec, subjectRecord, at) {
+  if (spec?.live_context !== 'availability_stress_test') return null;
+
+  const playerId = String(spec.subject?.id || '');
+  const teamId = String(subjectRecord?.player?.team?.team_id || '');
+  if (!playerId || !teamId) return { ready: false, reason: 'missing_subject_identity' };
+
+  let injuries;
+  let today;
+  try {
+    [injuries, today] = await Promise.all([
+      apiGet('/v1/injuries'),
+      apiGet('/v1/today')
+    ]);
+  } catch (e) {
+    return { ready: false, reason: 'live_sources_unavailable', error: String(e.message || e).slice(0, 160) };
+  }
+
+  const injury = (injuries?.items || []).find((x) => String(x?.athlete_id || '') === playerId) || null;
+  if (!injury || !/\bout\b/i.test(String(injury.status || ''))) {
+    return { ready: false, reason: 'subject_not_confirmed_out', status: injury?.status || null };
+  }
+
+  const games = [
+    ...((today?.slate?.games || []).filter(Boolean)),
+    ...((today?.last_results?.games || []).filter(Boolean))
+  ];
+  let game = games.find((g) => [g?.home?.team_id, g?.away?.team_id].some((id) => String(id || '') === teamId)) || null;
+  if (!game?.game_id) return { ready: false, reason: 'team_game_not_found' };
+
+  try {
+    const detail = await apiGet(`/v1/games/${encodeURIComponent(game.game_id)}`);
+    if (detail?.game) game = detail.game;
+  } catch {
+    // The Today slate is already an owned normalized record. If the detail
+    // endpoint is briefly unavailable, retain the slate copy rather than invent.
+  }
+
+  const isHome = String(game?.home?.team_id || '') === teamId;
+  const subjectTeam = isHome ? game.home : game.away;
+  const opponent = isHome ? game.away : game.home;
+  if (!subjectTeam || !opponent) return { ready: false, reason: 'game_team_resolution_failed' };
+
+  const firstHalf = (team) => {
+    const q = Array.isArray(team?.linescores) ? team.linescores.slice(0, 2).map(Number) : [];
+    if (q.length === 2 && q.every(Number.isFinite)) return q[0] + q[1];
+    const isHalf = game?.status?.name === 'STATUS_HALFTIME'
+      || (Number(game?.status?.period) === 2 && Number(game?.status?.clock_s) === 0);
+    const score = Number(team?.score);
+    return isHalf && Number.isFinite(score) ? score : null;
+  };
+
+  const subjectHalf = firstHalf(subjectTeam);
+  const opponentHalf = firstHalf(opponent);
+  if (!Number.isFinite(subjectHalf) || !Number.isFinite(opponentHalf)) {
+    return {
+      ready: false,
+      reason: 'halftime_score_not_yet_available',
+      game_id: String(game.game_id),
+      state: game?.status?.state || null,
+      period: game?.status?.period ?? null
+    };
+  }
+
+  const bodyPart = [injury.side, injury.body_part].filter(Boolean).join(' ').trim() || null;
+  const observedAt = at;
+  return {
+    ready: true,
+    observed_at: observedAt,
+    injury: {
+      athlete_id: playerId,
+      status: injury.status,
+      body_part: bodyPart,
+      detail: injury.detail || null,
+      source_updated_at: injury.source_updated_at || observedAt,
+      authority: injury.authority || 'PROVIDER_FEED'
+    },
+    game: {
+      game_id: String(game.game_id),
+      start_utc: game.start_utc || null,
+      status: game.status || null,
+      home: game.home,
+      away: game.away,
+      subject_team: subjectTeam,
+      opponent
+    },
+    halftime: {
+      subject_team_score: subjectHalf,
+      opponent_score: opponentHalf,
+      margin: subjectHalf - opponentHalf,
+      subject_team_id: teamId,
+      opponent_team_id: String(opponent.team_id || '')
+    },
+    evidence: [
+      {
+        kind: 'availability_snapshot',
+        source: 'PropBetEdge WNBA availability feed (ESPN provider record)',
+        captured_at: injury.source_updated_at || observedAt,
+        detail: `${spec.subject.name}: ${injury.status}${bodyPart ? ` · ${bodyPart}` : ''}`
+      },
+      {
+        kind: 'game_snapshot',
+        source: 'PropBetEdge WNBA game feed',
+        url: `/cast/${game.game_id}`,
+        captured_at: observedAt,
+        detail: `Halftime: ${game.away?.abbr || game.away?.name || 'Away'} ${firstHalf(game.away)} - ${game.home?.abbr || game.home?.name || 'Home'} ${firstHalf(game.home)}`
+      }
+    ]
+  };
+}
+
+/**
  * Publish one named commission.
  *
  * Returns a compact report. A refusal — a failed chart, a thin draft, a team
@@ -120,12 +238,18 @@ export async function runCommissionPass(env, { key, apiGet, at = new Date().toIS
   }
   if (!seasonLine) return { key, status: 'no_season_line' };
 
+  const liveContext = await availabilityStressContext(apiGet, spec, subjectRecord, at);
+  if (spec.live_context && !liveContext?.ready) {
+    return { key, status: 'live_context_not_ready', ...(liveContext || { reason: 'missing_live_context' }) };
+  }
+
   const result = await runCommission({
     key,
     editions,
     subjectRecord,
     seasonLine,
     recent,
+    liveContext,
     factsDoc,
     at,
     force,
