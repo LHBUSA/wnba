@@ -63,22 +63,22 @@ const SEASON = { season_label: '2026 season', games: 41, pts: 16.6, reb: 12.3, a
 const RECENT = { games: 5, pts: 19, reb: 14.6, ast: 3.6, from: '2026-08-25T00:00:00.000Z', to: '2026-09-19T23:00:00.000Z' };
 const MILES_LIVE = {
   ready: true,
-  observed_at: '2026-09-23T00:50:00.000Z',
+  observed_at: '2026-09-23T03:15:00.000Z',
   injury: {
     athlete_id: '4433791',
     status: 'Out',
     body_part: 'left calf',
     source_updated_at: '2026-09-22T23:30:00.000Z',
-    authority: 'PROVIDER_FEED'
+    authority: 'GAME_SUMMARY'
   },
   game: {
     game_id: '401999999',
     start_utc: '2026-09-23T00:00:00.000Z',
-    status: { state: 'in', name: 'STATUS_HALFTIME', period: 2, clock: '0:00' },
-    home: { team_id: '5', name: 'Indiana Fever', abbr: 'IND', score: 57, linescores: [29, 28] },
-    away: { team_id: '8', name: 'Minnesota Lynx', abbr: 'MIN', score: 34, linescores: [18, 16] },
-    subject_team: { team_id: '8', name: 'Minnesota Lynx', abbr: 'MIN', score: 34, linescores: [18, 16] },
-    opponent: { team_id: '5', name: 'Indiana Fever', abbr: 'IND', score: 57, linescores: [29, 28] }
+    status: { state: 'post', name: 'STATUS_FINAL', completed: true, period: 4, clock: '0:00' },
+    home: { team_id: '5', name: 'Indiana Fever', abbr: 'IND', score: 96, linescores: [31, 26, 14, 25] },
+    away: { team_id: '8', name: 'Minnesota Lynx', abbr: 'MIN', score: 77, linescores: [16, 18, 30, 13] },
+    subject_team: { team_id: '8', name: 'Minnesota Lynx', abbr: 'MIN', score: 77, linescores: [16, 18, 30, 13] },
+    opponent: { team_id: '5', name: 'Indiana Fever', abbr: 'IND', score: 96, linescores: [31, 26, 14, 25] }
   },
   halftime: {
     subject_team_score: 34,
@@ -87,9 +87,21 @@ const MILES_LIVE = {
     subject_team_id: '8',
     opponent_team_id: '5'
   },
+  after_three: {
+    subject_team_score: 64,
+    opponent_score: 71,
+    margin: -7
+  },
+  final: {
+    subject_team_score: 77,
+    opponent_score: 96,
+    margin: -19,
+    subject_quarters: [16, 18, 30, 13],
+    opponent_quarters: [31, 26, 14, 25]
+  },
   evidence: [
-    { kind: 'availability_snapshot', source: 'PropBetEdge WNBA availability feed (ESPN provider record)', captured_at: '2026-09-22T23:30:00.000Z', detail: 'Olivia Miles: Out · left calf' },
-    { kind: 'game_snapshot', source: 'PropBetEdge WNBA game feed', url: '/cast/401999999', captured_at: '2026-09-23T00:50:00.000Z', detail: 'Halftime: MIN 34 - IND 57' }
+    { kind: 'availability_snapshot', source: 'PropBetEdge WNBA game injury record (ESPN provider record)', captured_at: '2026-09-22T23:30:00.000Z', detail: 'Olivia Miles: Out · left calf' },
+    { kind: 'game_snapshot', source: 'PropBetEdge WNBA final game record', url: '/cast/401999999', captured_at: '2026-09-23T03:15:00.000Z', detail: 'Final: MIN 77 - IND 96; halftime 34-57' }
   ]
 };
 const DICT = {
@@ -151,7 +163,7 @@ test('all commissions compose, gate clean and publish', async () => {
   }
 });
 
-test('Miles feature freezes the absence and halftime stress test without claiming causation', async () => {
+test('Miles feature freezes the absence, comeback and final loss without claiming causation', async () => {
   const { res } = await run('miles-winba-absence-stress-test');
   assert.equal(res.status, 'published');
   const a = res.article;
@@ -161,10 +173,19 @@ test('Miles feature freezes the absence and halftime stress test without claimin
   assert.equal(a.context.game.halftime.subject_team_score, 34);
   assert.equal(a.context.game.halftime.opponent_score, 57);
   assert.equal(a.context.game.halftime.margin, -23);
-  assert.match(a.headline, /Down 23 at Half/);
-  assert.match(a.deck, /does not prove causation/i);
-  assert.match(a.body.join(' '), /cannot validate WinBA/i);
+  assert.equal(a.context.game.after_three.subject_team_score, 64);
+  assert.equal(a.context.game.after_three.opponent_score, 71);
+  assert.equal(a.context.game.after_three.margin, -7);
+  assert.equal(a.context.game.final.subject_team_score, 77);
+  assert.equal(a.context.game.final.opponent_score, 96);
+  assert.equal(a.context.game.final.margin, -19);
+  assert.deepEqual(a.context.game.final.subject_quarters, [16, 18, 30, 13]);
+  assert.deepEqual(a.context.game.final.opponent_quarters, [31, 26, 14, 25]);
+  assert.match(a.headline, /Lost 96–77/);
+  assert.match(a.deck, /One game cannot prove the metric/i);
   assert.match(a.body.join(' '), /not a causal estimate/i);
+  assert.match(a.body.join(' '), /third-quarter comeback/i);
+  assert.match(a.body.join(' '), /still lost/i);
   assert.ok(a.evidence.some((e) => e.kind === 'availability_snapshot'));
   assert.ok(a.evidence.some((e) => e.kind === 'game_snapshot'));
   assert.deepEqual(visualsFailures(a.visuals), []);
