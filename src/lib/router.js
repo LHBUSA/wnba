@@ -102,7 +102,7 @@ function whenPainted(el) {
   });
 }
 
-export function createRouter({ outlet, onRoute }) {
+export function createRouter({ outlet, onRoute, onMounted }) {
   let current = null;
   let token = 0;
   let firstMount = true;
@@ -158,6 +158,7 @@ export function createRouter({ outlet, onRoute }) {
     if (my !== token) { if (typeof unmount === 'function') unmount(); return; }
     current = { unmount };
     outlet.removeAttribute('aria-busy');
+    onMounted?.({ routeId: route.id, path, params, query });
     if (scroll && !location.hash && !adopt) window.scrollTo({ top: 0 });
   }
 

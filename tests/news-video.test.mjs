@@ -235,9 +235,11 @@ test('M. page load without a click requests nothing from YouTube; the CSP except
   assert.equal(web, vercel, 'SSR and static CSP agree');
   assert.match(vercel, /frame-src https:\/\/www\.youtube-nocookie\.com;/);
   assert.match(vercel, /default-src 'self';/);
-  // Hotlinked player headshots (workers/wnba-api/src/photos.js) are the only outside image hosts.
-  assert.match(vercel, /img-src 'self' data: https:\/\/a\.espncdn\.com https:\/\/cdn\.wnba\.com;/);
-  assert.match(vercel, /script-src 'self';/);
+  // Outside image hosts are limited to sanctioned player headshots plus GA collection pixels.
+  assert.match(vercel, /img-src 'self' data: https:\/\/a\.espncdn\.com https:\/\/cdn\.wnba\.com https:\/\/www\.google-analytics\.com https:\/\/\*\.google-analytics\.com;/);
+  assert.match(vercel, /script-src 'self' https:\/\/www\.googletagmanager\.com;/);
+  assert.match(vercel, /connect-src[^;]*https:\/\/www\.google-analytics\.com[^;]*https:\/\/region1\.google-analytics\.com[^;]*https:\/\/analytics\.google\.com;/);
+  assert.doesNotMatch(vercel, /script-src[^;]*'unsafe-inline'/);
   assert.doesNotMatch(vercel, /youtube\.com(?!-)|ytimg/);
   const css = fs.readFileSync('src/styles/newsroom.css', 'utf8');
   assert.match(css, /\.gh-frame \{[^}]*aspect-ratio: 16 \/ 9/);
