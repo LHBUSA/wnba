@@ -55,11 +55,43 @@ const EDITIONS = [
 ];
 
 const SUBJECTS = {
+  '4433791': { player: { athlete_id: '4433791', name: 'Olivia Miles', position_name: 'Guard', team: { team_id: '8', name: 'Minnesota Lynx', location: 'Minnesota' } } },
   '4433402': { player: { athlete_id: '4433402', name: 'Angel Reese', position_name: 'Forward', team: { team_id: '20', name: 'Atlanta Dream', location: 'Atlanta' } } },
   '3149391': { player: { athlete_id: '3149391', name: "A'ja Wilson", position_name: 'Center', team: { team_id: '17', name: 'Las Vegas Aces', location: 'Las Vegas' } } }
 };
 const SEASON = { season_label: '2026 season', games: 41, pts: 16.6, reb: 12.3, ast: 2.8, observed_at: AT };
 const RECENT = { games: 5, pts: 19, reb: 14.6, ast: 3.6, from: '2026-08-25T00:00:00.000Z', to: '2026-09-19T23:00:00.000Z' };
+const MILES_LIVE = {
+  ready: true,
+  observed_at: '2026-09-23T00:50:00.000Z',
+  injury: {
+    athlete_id: '4433791',
+    status: 'Out',
+    body_part: 'left calf',
+    source_updated_at: '2026-09-22T23:30:00.000Z',
+    authority: 'PROVIDER_FEED'
+  },
+  game: {
+    game_id: '401999999',
+    start_utc: '2026-09-23T00:00:00.000Z',
+    status: { state: 'in', name: 'STATUS_HALFTIME', period: 2, clock: '0:00' },
+    home: { team_id: '5', name: 'Indiana Fever', abbr: 'IND', score: 57, linescores: [29, 28] },
+    away: { team_id: '8', name: 'Minnesota Lynx', abbr: 'MIN', score: 34, linescores: [18, 16] },
+    subject_team: { team_id: '8', name: 'Minnesota Lynx', abbr: 'MIN', score: 34, linescores: [18, 16] },
+    opponent: { team_id: '5', name: 'Indiana Fever', abbr: 'IND', score: 57, linescores: [29, 28] }
+  },
+  halftime: {
+    subject_team_score: 34,
+    opponent_score: 57,
+    margin: -23,
+    subject_team_id: '8',
+    opponent_team_id: '5'
+  },
+  evidence: [
+    { kind: 'availability_snapshot', source: 'PropBetEdge WNBA availability feed (ESPN provider record)', captured_at: '2026-09-22T23:30:00.000Z', detail: 'Olivia Miles: Out · left calf' },
+    { kind: 'game_snapshot', source: 'PropBetEdge WNBA game feed', url: '/cast/401999999', captured_at: '2026-09-23T00:50:00.000Z', detail: 'Halftime: MIN 34 - IND 57' }
+  ]
+};
 const DICT = {
   playerById: new Map([
     ['4433402', { athlete_id: '4433402', name: 'Angel Reese', team_id: '20' }],
@@ -90,6 +122,7 @@ const run = (key, over = {}) => {
     subjectRecord: SUBJECTS[COMMISSIONS[key].subject.id],
     seasonLine: SEASON,
     recent: RECENT,
+    liveContext: COMMISSIONS[key].live_context ? MILES_LIVE : null,
     factsDoc,
     at: AT,
     ...h.io,
@@ -97,7 +130,7 @@ const run = (key, over = {}) => {
   }).then((res) => ({ res, h }));
 };
 
-test('both commissions compose, gate clean and publish', async () => {
+test('all commissions compose, gate clean and publish', async () => {
   for (const key of Object.keys(COMMISSIONS)) {
     const { res } = await run(key);
     assert.equal(res.status, 'published', `${key}: ${JSON.stringify(res).slice(0, 300)}`);
@@ -116,6 +149,41 @@ test('both commissions compose, gate clean and publish', async () => {
       assert.ok(a.sections.some((s) => s.visual === id), `${key} does not place ${id}`);
     }
   }
+});
+
+test('Miles feature freezes the absence and halftime stress test without claiming causation', async () => {
+  const { res } = await run('miles-winba-absence-stress-test');
+  assert.equal(res.status, 'published');
+  const a = res.article;
+  assert.equal(a.winba_reference.player_id, '4433791');
+  assert.equal(a.winba_reference.rank, 1);
+  assert.equal(a.winba_reference.score, 87);
+  assert.equal(a.context.game.halftime.subject_team_score, 34);
+  assert.equal(a.context.game.halftime.opponent_score, 57);
+  assert.equal(a.context.game.halftime.margin, -23);
+  assert.match(a.headline, /Down 23 at Half/);
+  assert.match(a.deck, /does not prove causation/i);
+  assert.match(a.body.join(' '), /cannot validate WinBA/i);
+  assert.match(a.body.join(' '), /not a causal estimate/i);
+  assert.ok(a.evidence.some((e) => e.kind === 'availability_snapshot'));
+  assert.ok(a.evidence.some((e) => e.kind === 'game_snapshot'));
+  assert.deepEqual(visualsFailures(a.visuals), []);
+});
+
+test('Miles stress test refuses to publish without frozen live context', async () => {
+  const h = harness();
+  const res = await runCommission({
+    key: 'miles-winba-absence-stress-test',
+    editions: EDITIONS,
+    subjectRecord: SUBJECTS['4433791'],
+    seasonLine: SEASON,
+    recent: RECENT,
+    factsDoc,
+    at: AT,
+    ...h.io
+  });
+  assert.equal(res.status, 'missing_live_context');
+  assert.equal(h.articles.size, 0);
 });
 
 test('the two features are different arguments, not one template', async () => {
