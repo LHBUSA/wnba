@@ -35,9 +35,13 @@ Write-Host 'Running commissioned-feature regression tests...' -ForegroundColor C
 node --test tests/commission.test.mjs
 if ($LASTEXITCODE -ne 0) { throw 'Commission tests failed. Refusing production deploy.' }
 
-Write-Host "Deploying pushed main $local to wnba-news with Wrangler..." -ForegroundColor Green
+Write-Host 'Syncing local admin token to the wnba-news Cloudflare secret...' -ForegroundColor Cyan
 Push-Location (Join-Path $repo 'workers/wnba-news')
 try {
+  $adminToken | npx wrangler@latest secret put ADMIN_TOKEN
+  if ($LASTEXITCODE -ne 0) { throw 'Failed to sync ADMIN_TOKEN to wnba-news.' }
+
+  Write-Host "Deploying pushed main $local to wnba-news with Wrangler..." -ForegroundColor Green
   npx wrangler@latest deploy
   if ($LASTEXITCODE -ne 0) { throw 'wnba-news deploy failed.' }
 } finally {
