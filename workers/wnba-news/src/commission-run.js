@@ -82,48 +82,69 @@ function withCardPhotos(article, boardMedia) {
 }
 
 /**
- * Freeze the live availability/game state used by a commissioned stress-test feature.
+ * Freeze the completed availability/game state used by a commissioned WinBA
+ * absence feature.
  *
- * The article may be generated during halftime or later. We always recover the
- * first-half score from provider-published linescores when possible so a later
- * manual run cannot rewrite the premise around the final score.
+ * This lane publishes only after the game is final. It prefers the injury
+ * record attached to the game summary, then falls back to the current
+ * availability feed. The first-half and final scores are reconstructed from
+ * provider-published linescores/scores so the article cannot promote a
+ * halftime premise into a final-result claim without the final being present.
  */
 async function availabilityStressContext(apiGet, spec, subjectRecord, at) {
-  if (spec?.live_context !== 'availability_stress_test') return null;
+  if (spec?.live_context !== 'availability_loss_stress_test') return null;
 
   const playerId = String(spec.subject?.id || '');
   const teamId = String(subjectRecord?.player?.team?.team_id || '');
   if (!playerId || !teamId) return { ready: false, reason: 'missing_subject_identity' };
 
-  let injuries;
+  let currentInjuries;
   let today;
   try {
-    [injuries, today] = await Promise.all([
-      apiGet('/v1/injuries'),
+    [currentInjuries, today] = await Promise.all([
+      apiGet('/v1/injuries').catch(() => null),
       apiGet('/v1/today')
     ]);
   } catch (e) {
     return { ready: false, reason: 'live_sources_unavailable', error: String(e.message || e).slice(0, 160) };
   }
 
-  const injury = (injuries?.items || []).find((x) => String(x?.athlete_id || '') === playerId) || null;
-  if (!injury || !/\bout\b/i.test(String(injury.status || ''))) {
-    return { ready: false, reason: 'subject_not_confirmed_out', status: injury?.status || null };
-  }
-
   const games = [
     ...((today?.slate?.games || []).filter(Boolean)),
     ...((today?.last_results?.games || []).filter(Boolean))
-  ];
-  let game = games.find((g) => [g?.home?.team_id, g?.away?.team_id].some((id) => String(id || '') === teamId)) || null;
+  ].filter((g) => [g?.home?.team_id, g?.away?.team_id].some((id) => String(id || '') === teamId));
+
+  // Prefer the most recent completed game. This prevents a later rematch on the
+  // slate from replacing the final this feature was commissioned around.
+  games.sort((a, b) => {
+    const af = a?.status?.state === 'post' || a?.status?.completed === true || a?.status?.name === 'STATUS_FINAL';
+    const bf = b?.status?.state === 'post' || b?.status?.completed === true || b?.status?.name === 'STATUS_FINAL';
+    if (af !== bf) return bf - af;
+    return Date.parse(b?.start_utc || 0) - Date.parse(a?.start_utc || 0);
+  });
+
+  let game = games[0] || null;
   if (!game?.game_id) return { ready: false, reason: 'team_game_not_found' };
 
+  let detail = null;
   try {
-    const detail = await apiGet(`/v1/games/${encodeURIComponent(game.game_id)}`);
+    detail = await apiGet(`/v1/games/${encodeURIComponent(game.game_id)}`);
     if (detail?.game) game = detail.game;
   } catch {
-    // The Today slate is already an owned normalized record. If the detail
-    // endpoint is briefly unavailable, retain the slate copy rather than invent.
+    // The Today record remains authoritative enough for the score/state gate.
+  }
+
+  const isFinal = game?.status?.state === 'post'
+    || game?.status?.completed === true
+    || game?.status?.name === 'STATUS_FINAL';
+  if (!isFinal) {
+    return {
+      ready: false,
+      reason: 'game_not_final',
+      game_id: String(game.game_id),
+      state: game?.status?.state || null,
+      status_name: game?.status?.name || null
+    };
   }
 
   const isHome = String(game?.home?.team_id || '') === teamId;
@@ -131,48 +152,63 @@ async function availabilityStressContext(apiGet, spec, subjectRecord, at) {
   const opponent = isHome ? game.away : game.home;
   if (!subjectTeam || !opponent) return { ready: false, reason: 'game_team_resolution_failed' };
 
-  const firstHalf = (team) => {
-    const q = Array.isArray(team?.linescores) ? team.linescores.slice(0, 2).map(Number) : [];
-    if (q.length === 2 && q.every(Number.isFinite)) return q[0] + q[1];
-    const isHalf = game?.status?.name === 'STATUS_HALFTIME'
-      || (Number(game?.status?.period) === 2 && Number(game?.status?.clock_s) === 0);
-    const score = Number(team?.score);
-    return isHalf && Number.isFinite(score) ? score : null;
+  const periodTotal = (team, count) => {
+    const q = Array.isArray(team?.linescores) ? team.linescores.slice(0, count).map(Number) : [];
+    return q.length === count && q.every(Number.isFinite) ? q.reduce((n, x) => n + x, 0) : null;
   };
 
-  const subjectHalf = firstHalf(subjectTeam);
-  const opponentHalf = firstHalf(opponent);
-  if (!Number.isFinite(subjectHalf) || !Number.isFinite(opponentHalf)) {
+  const subjectHalf = periodTotal(subjectTeam, 2);
+  const opponentHalf = periodTotal(opponent, 2);
+  const subjectThree = periodTotal(subjectTeam, 3);
+  const opponentThree = periodTotal(opponent, 3);
+  const subjectFinal = Number(subjectTeam?.score);
+  const opponentFinal = Number(opponent?.score);
+
+  if (![subjectHalf, opponentHalf, subjectFinal, opponentFinal].every(Number.isFinite)) {
     return {
       ready: false,
-      reason: 'halftime_score_not_yet_available',
-      game_id: String(game.game_id),
-      state: game?.status?.state || null,
-      period: game?.status?.period ?? null
+      reason: 'score_progression_unavailable',
+      game_id: String(game.game_id)
     };
   }
-  if (subjectHalf >= opponentHalf) {
+  if (subjectFinal >= opponentFinal) {
     return {
       ready: false,
-      reason: 'subject_team_not_trailing_at_half',
+      reason: 'subject_team_did_not_lose',
       game_id: String(game.game_id),
-      subject_team_score: subjectHalf,
-      opponent_score: opponentHalf
+      subject_team_score: subjectFinal,
+      opponent_score: opponentFinal
     };
   }
 
-  const bodyPart = [injury.side, injury.body_part].filter(Boolean).join(' ').trim() || null;
+  const gameInjuryRaw = (detail?.injuries || [])
+    .flatMap((t) => t?.items || [])
+    .find((x) => String(x?.athlete_id || '') === playerId) || null;
+  const currentInjuryRaw = (currentInjuries?.items || [])
+    .find((x) => String(x?.athlete_id || '') === playerId) || null;
+  const rawInjury = gameInjuryRaw || currentInjuryRaw;
+  if (!rawInjury || !/\bout\b/i.test(String(rawInjury.status || ''))) {
+    return { ready: false, reason: 'subject_not_confirmed_out', status: rawInjury?.status || null };
+  }
+
+  const side = rawInjury.side || null;
+  const type = rawInjury.body_part || rawInjury.type || null;
+  const bodyPart = [side, type].filter(Boolean).join(' ').trim() || null;
+  const injuryAt = rawInjury.source_updated_at || rawInjury.reported_at || at;
   const observedAt = at;
+  const subjectQ = Array.isArray(subjectTeam.linescores) ? subjectTeam.linescores.slice(0, 4).map(Number) : [];
+  const opponentQ = Array.isArray(opponent.linescores) ? opponent.linescores.slice(0, 4).map(Number) : [];
+
   return {
     ready: true,
     observed_at: observedAt,
     injury: {
       athlete_id: playerId,
-      status: injury.status,
+      status: rawInjury.status,
       body_part: bodyPart,
-      detail: injury.detail || null,
-      source_updated_at: injury.source_updated_at || observedAt,
-      authority: injury.authority || 'PROVIDER_FEED'
+      detail: rawInjury.detail || null,
+      source_updated_at: injuryAt,
+      authority: rawInjury.authority || (gameInjuryRaw ? 'GAME_SUMMARY' : 'PROVIDER_FEED')
     },
     game: {
       game_id: String(game.game_id),
@@ -190,19 +226,33 @@ async function availabilityStressContext(apiGet, spec, subjectRecord, at) {
       subject_team_id: teamId,
       opponent_team_id: String(opponent.team_id || '')
     },
+    after_three: {
+      subject_team_score: subjectThree,
+      opponent_score: opponentThree,
+      margin: Number.isFinite(subjectThree) && Number.isFinite(opponentThree) ? subjectThree - opponentThree : null
+    },
+    final: {
+      subject_team_score: subjectFinal,
+      opponent_score: opponentFinal,
+      margin: subjectFinal - opponentFinal,
+      subject_quarters: subjectQ,
+      opponent_quarters: opponentQ
+    },
     evidence: [
       {
         kind: 'availability_snapshot',
-        source: 'PropBetEdge WNBA availability feed (ESPN provider record)',
-        captured_at: injury.source_updated_at || observedAt,
-        detail: `${spec.subject.name}: ${injury.status}${bodyPart ? ` · ${bodyPart}` : ''}`
+        source: gameInjuryRaw
+          ? 'PropBetEdge WNBA game injury record (ESPN provider record)'
+          : 'PropBetEdge WNBA availability feed (ESPN provider record)',
+        captured_at: injuryAt,
+        detail: `${spec.subject.name}: ${rawInjury.status}${bodyPart ? ` · ${bodyPart}` : ''}`
       },
       {
         kind: 'game_snapshot',
-        source: 'PropBetEdge WNBA game feed',
+        source: 'PropBetEdge WNBA final game record',
         url: `/cast/${game.game_id}`,
         captured_at: observedAt,
-        detail: `Halftime: ${game.away?.abbr || game.away?.name || 'Away'} ${firstHalf(game.away)} - ${game.home?.abbr || game.home?.name || 'Home'} ${firstHalf(game.home)}`
+        detail: `Final: ${game.away?.abbr || game.away?.name || 'Away'} ${game.away?.score} - ${game.home?.abbr || game.home?.name || 'Home'} ${game.home?.score}; halftime ${periodTotal(game.away, 2)}-${periodTotal(game.home, 2)}`
       }
     ]
   };
