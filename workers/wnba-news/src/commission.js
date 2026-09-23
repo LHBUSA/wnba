@@ -684,6 +684,12 @@ export async function runCommission({
       return { type: 'player', id: String(m.id), name: m.name, team_id: row?.team_id ? String(row.team_id) : null };
     }),
     ...(team ? [{ type: 'team', id: String(team.team_id), name: team.name }] : []),
+    ...(composed.context?.game?.game_id ? [{
+      type: 'game',
+      id: String(composed.context.game.game_id),
+      name: [composed.context.game.away?.abbr || composed.context.game.away?.name, composed.context.game.home?.abbr || composed.context.game.home?.name].filter(Boolean).join(' @ '),
+      start_utc: composed.context.game.start_utc || null
+    }] : []),
     { ...WINBA_METRIC_ENTITY }
   ];
 
