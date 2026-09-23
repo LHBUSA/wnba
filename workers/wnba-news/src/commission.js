@@ -390,10 +390,152 @@ function composeWilson(ctx) {
 }
 
 /**
+ * OLIVIA MILES — a live availability stress test for WinBA.
+ *
+ * This feature is deliberately framed as a test, not a victory lap. The player
+ * was unavailable and the team had a bad first half at the same time; that is
+ * a useful observation, not a counterfactual proof of what would have happened
+ * with her on the floor.
+ */
+function composeMilesAbsence(ctx) {
+  const { subject, team, traj, sept, seasonLine, recent, topThree, qualified, liveContext } = ctx;
+  const w = proseBuilder();
+  const first = traj[0];
+  const last = traj.at(-1);
+  const injury = liveContext?.injury || {};
+  const game = liveContext?.game || {};
+  const half = liveContext?.halftime || {};
+  const opponent = game.opponent?.name || game.opponent?.short_name || game.opponent?.abbr || 'the opponent';
+  const teamName = team?.name || game.subject_team?.name || 'Minnesota Lynx';
+  const teamHalf = Number(half.subject_team_score);
+  const oppHalf = Number(half.opponent_score);
+  const deficit = Math.abs(Number(half.margin));
+  const bodyPart = injury.body_part ? ` with a ${injury.body_part} issue` : '';
+  const rankedPeers = topThree
+    .filter((c) => String(c.entity.id) !== String(subject.id))
+    .map((c) => `${c.entity.name} at ${one(c.value)}`)
+    .join(' and ');
+
+  w.p(
+    `${subject.name} was listed out${bodyPart} before the ${teamName}'s game against ${opponent}. At halftime, Minnesota trailed ${oppHalf}–${teamHalf}, a ${deficit}-point gap.`,
+    `That timing is impossible to ignore because ${subject.name} entered the night as the No. ${sept.rank} player in the frozen ${winbaPeriodLabel(sept.period)} edition of ${WINBA_INDEX_SERIES}, with an ${one(sept.value)} ${WINBA_LABEL}. But it is just as important not to overstate what one half of basketball can prove.`
+  );
+
+  w.section('The halftime snapshot', { key: 'halftime_snapshot' });
+  w.p(
+    `The facts are narrow and clean. The availability feed listed ${subject.name} as ${injury.status || 'Out'}, and the game record shows the ${teamName} at ${teamHalf} points and ${opponent} at ${oppHalf} through two quarters. Those are separate source records captured in the same game window.`,
+    `The score does not tell us that ${subject.name}'s absence caused a ${deficit}-point halftime deficit. It tells us that the team was being outscored badly in the first half while its highest-rated player by ${WINBA_LABEL} was unavailable. That distinction is the difference between a useful stress test and a causal claim the data cannot support.`,
+    `There are dozens of reasons a team can lose a half: shooting variance, turnovers, foul trouble, matchup problems, opponent shot-making, lineup combinations and simple game-to-game noise. None of those disappear because a proprietary rating happens to have its No. 1 player sitting out.`
+  );
+
+  w.section('Why this is a real WinBA stress test', { key: 'trajectory', visual: 'miles-winba-trajectory' });
+  w.p(
+    `${subject.name}'s position at the top is not a one-night calculation. Across the four frozen monthly boards used by ${WINBA_INDEX_SERIES}, her ranks have been ${traj.map((p) => `No. ${p.rank} in ${p.label.split(' ')[0]}`).join(', ')}. Her score moved from ${one(first.value)} in ${first.label.split(' ')[0]} to ${one(last.value)} in ${last.label.split(' ')[0]}.`,
+    `The September board places her No. 1 of ${qualified} qualified players at ${one(sept.value)}. ${rankedPeers ? `The next two names on that frozen board are ${rankedPeers}.` : ''} The point is not that a ranking predicted tonight's halftime score. The point is that an independently built season metric had already identified ${subject.name} as the league's strongest combination of production and winning context before this game began.`,
+    `${WINBA_LABEL} is rebuilt from completed games, not from tonight's live score. The canonical metric therefore does not get credit for Minnesota falling behind while ${subject.name} sits, and it will not be rewritten upward because this half happened. A useful metric should survive a dramatic anecdote without changing its rules to fit the anecdote.`
+  );
+
+  w.section('What the 87 is actually measuring', { key: 'components', visual: 'miles-winba-components' });
+  w.p(
+    `WinBA v1 has four inputs. League-relative Box Impact per 36 minutes carries 45% of the score. Player win rate carries 25%. The share of a player's production that came in wins carries 20%. Court share carries the final 10%.`,
+    `On the frozen September row, ${subject.name}'s production percentile is ${one(sept.row.components?.production_percentile)}, her win-rate input is ${pct(sept.row.components?.win_rate)}, her production-in-wins input is ${pct(sept.row.components?.winning_output_share)}, and her court-share input is ${pct(sept.row.components?.court_share)}. Those are the inputs behind the ${one(sept.value)} rating; tonight's halftime margin is not one of them.`,
+    `Her conventional ${seasonLine.season_label} line is ${one(seasonLine.pts)} points, ${one(seasonLine.reb)} rebounds and ${one(seasonLine.ast)} assists per game across ${seasonLine.games} appearances. ${recent ? `Over her most recent five team games before this one, she averaged ${one(recent.pts)} points, ${one(recent.reb)} rebounds and ${one(recent.ast)} assists.` : ''} Those numbers provide basketball context, but the test tonight is about availability: what happens to the team environment when the player sitting at No. 1 is not available?`
+  );
+
+  w.section('What one game cannot prove', { key: 'limits' });
+  w.p(
+    `One absence cannot validate ${WINBA_LABEL}. Even a final margin in the same direction would not be enough. A proper test needs repeated absences, comparable opponents, the team's own baseline with the player available, and enough games to separate signal from the enormous variance inside basketball.`,
+    `The current score also cannot isolate which part of ${subject.name}'s value is missing. WinBA does not directly measure defence, shooting efficiency, turnovers, shot quality, lineup fit or optical-tracking effects. It is an association-with-winning index built from box production, results and minutes. That makes this game relevant to the metric's thesis, but not a controlled experiment.`,
+    `There is another trap to avoid: using the result backward. If Minnesota rallies and wins, that does not disprove ${subject.name}'s No. 1 ranking. If the deficit grows, that does not prove the ranking. The metric has to be judged across a sample, not allowed to declare victory whenever a single scoreboard happens to agree with it.`
+  );
+
+  w.section('The test PropBetEdge should keep', { key: 'future_test' });
+  w.p(
+    `The useful next step is to archive this game as an availability case and repeat the same process every time a highly rated player misses a game. Freeze the player's pregame WinBA rank, availability status and opponent; then compare the team's performance with its established baseline without changing the canonical score.`,
+    `Over enough cases, that creates a separate question from WinBA itself: do teams systematically move in the expected direction when players near the top of the winning-impact board are unavailable? That belongs in a WinBA Context or Availability Impact layer, not inside the canonical 0–100 score.`,
+    `That separation matters. WinBA should remain the same transparent season metric whether tonight becomes a blowout, a comeback or something in between. The context layer can ask what the absence appears to mean in a specific matchup. Mixing those two jobs would make the score less trustworthy, not more sophisticated.`
+  );
+
+  w.section('Why tonight belongs in the record', { key: 'record' });
+  w.p(
+    `At halftime, the cleanest statement is also the strongest one: the player sitting No. 1 on PropBetEdge's frozen September WinBA board was out, and her team was down ${deficit} points after two quarters.`,
+    `That is not proof of causation. It is a high-information observation that arrived naturally, without changing the formula or selecting the player after the score was known. The ranking existed first. The absence existed before tip. The halftime result came afterward. That ordering is exactly why the game is worth preserving as a stress test.`,
+    `If the same pattern repeats across a meaningful sample of high-WinBA absences, the story becomes larger than one night. If it does not, the record should show that too. A proprietary metric earns credibility by keeping both outcomes.`
+  );
+
+  const { body, sections } = w.done();
+  const provenance = {
+    source: `PropBetEdge frozen ${WINBA_LABEL} monthly snapshots`,
+    metric: 'winba/1.0.0',
+    observed_at: sept.snapshot_at
+  };
+  const entity = { type: 'player', id: String(subject.id), name: subject.name, team_id: team?.team_id ? String(team.team_id) : null };
+  const visuals = [
+    lineSeries({
+      id: 'miles-winba-trajectory',
+      title: `${subject.name}'s WinBA rank was established before tonight`,
+      subtitle: 'Monthly WinBA Score with frozen league rank',
+      caption: `Four published monthly snapshots. Tonight's live score does not change any point on this chart.`,
+      entity,
+      points: traj,
+      provenance,
+      footnote: 'Each point is copied from that month’s frozen WinBA board and carries its snapshot hash.'
+    }),
+    componentBars({
+      id: 'miles-winba-components',
+      title: `What makes up ${subject.name}'s ${one(sept.value)} WinBA`,
+      subtitle: 'The four frozen inputs behind the September score',
+      caption: `The live game is context, not an input. These values were fixed before tonight's result.`,
+      entity,
+      total: sept.value,
+      rows: componentRowsOf(sept.row),
+      provenance: { ...provenance, source: `${provenance.source} · ${sept.source_hash}` },
+      footnote: 'WinBA is an association-with-winning index, not a causal estimate of wins added.'
+    })
+  ];
+
+  return {
+    headline: `${subject.name} Was Out. Minnesota Was Down ${deficit} at Half. WinBA Just Got a Real Stress Test`,
+    deck: `PropBetEdge's No. 1-rated WNBA player was unavailable while the ${teamName} trailed ${oppHalf}–${teamHalf} at halftime. That does not prove causation — but it creates a clean case for testing what the metric is actually capturing.`,
+    body,
+    sections,
+    visuals,
+    context: {
+      game: {
+        game_id: game.game_id,
+        start_utc: game.start_utc || null,
+        home: game.home || null,
+        away: game.away || null,
+        halftime: half
+      },
+      availability: injury
+    },
+    method: [
+      `The availability status and halftime score are frozen source records from the same game window. They are evidence for timing, not for a counterfactual claim about what the score would have been with ${subject.name} available.`,
+      'This feature was commissioned during the game because the pre-existing No. 1 WinBA ranking and the confirmed absence created an unusually clean stress-test case.'
+    ],
+    seo_title: `${subject.name} out: Minnesota's halftime deficit becomes a WinBA stress test`,
+    seo_description: `${subject.name}, No. 1 at ${one(sept.value)} on PropBetEdge's frozen September WinBA board, was out as Minnesota trailed ${oppHalf}–${teamHalf} at halftime. What the moment can — and cannot — say about the metric.`,
+    keywords: [`${subject.name} WinBA`, `${subject.name} injury`, 'Minnesota Lynx', `${teamName} ${opponent}`, 'WinBA Score', 'WNBA player impact'],
+    commission_note: 'Commissioned in-game because the pre-existing No. 1 WinBA ranking, confirmed absence and verified halftime deficit created a clean real-world stress test worth preserving without making a causal claim.'
+  };
+}
+
+/**
  * The commission registry. A feature is a named, versioned entry — never a
  * generic template — so the newsroom can say exactly what was ordered.
  */
 export const COMMISSIONS = Object.freeze({
+  'miles-winba-absence-stress-test': {
+    slug: 'olivia-miles-out-minnesota-halftime-winba-stress-test',
+    subject: { id: '4433791', name: 'Olivia Miles' },
+    mentions: [{ id: '3149391', name: "A'ja Wilson" }, { id: '4433402', name: 'Angel Reese' }],
+    periods: ['2026-06', '2026-07', '2026-08', '2026-09'],
+    facts: [],
+    live_context: 'availability_stress_test',
+    compose: composeMilesAbsence,
+    required_visuals: ['miles-winba-trajectory', 'miles-winba-components']
+  },
   'reese-winba-empty-stats': {
     slug: 'angel-reese-winba-empty-stats-debate',
     subject: { id: '4433402', name: 'Angel Reese' },
@@ -427,6 +569,7 @@ export async function runCommission({
   subjectRecord = null,
   seasonLine = null,
   recent = null,
+  liveContext = null,
   factsDoc = null,
   at = new Date().toISOString(),
   getState,
@@ -437,6 +580,9 @@ export async function runCommission({
 } = {}) {
   const spec = COMMISSIONS[key];
   if (!spec) return { key, status: 'unknown_commission' };
+  if (spec.live_context && !liveContext?.ready) {
+    return { key, status: 'missing_live_context', reason: liveContext?.reason || 'required live context not supplied' };
+  }
 
   const state = (await getState()) || { version: COMMISSION_VERSION, published: {} };
   const already = state.published?.[key] || null;
@@ -486,6 +632,7 @@ export async function runCommission({
     topThree,
     leader,
     facts,
+    liveContext,
     qualified: lastBoard.qualified_count ?? null
   });
 
@@ -536,6 +683,7 @@ export async function runCommission({
       captured_at: seasonLine.observed_at,
       detail: `${seasonLine.games} appearances`
     }] : []),
+    ...(liveContext?.evidence || []),
     ...Object.values(facts).map((f) => ({
       kind: 'publisher_report',
       publisher: f.publisher,
@@ -572,6 +720,7 @@ export async function runCommission({
     evidence,
     // The commission itself is part of the record: a reader can see that a human
     // ordered this piece and why, and that the writing under it was not.
+    ...(composed.context ? { context: composed.context } : {}),
     commission: {
       key,
       version: COMMISSION_VERSION,
@@ -602,7 +751,8 @@ export async function runCommission({
       `The idea for this feature was commissioned by an editor; every number in it was composed deterministically from stored records.`,
       `The charts are frozen payloads. Each plotted value carries the hash of the monthly ${WINBA_LABEL} board it was read from, and the renderer verifies the payload before drawing it. Nothing on this page is recomputed when you load it.`,
       `Where PropBetEdge holds no data of its own — career history and league awards — the fact is cited to the official page it was read from, with the time it was read, in the records above.`,
-      `${WINBA_LABEL} is built from completed games in PropBetEdge's 2026 archive, which is close to but not identical with the official regular-season record. It is an association-with-winning index, not a causal estimate of wins added.`
+      `${WINBA_LABEL} is built from completed games in PropBetEdge's 2026 archive, which is close to but not identical with the official regular-season record. It is an association-with-winning index, not a causal estimate of wins added.`,
+      ...(composed.method || [])
     ],
     published_at: firstPublished,
     first_published_at: firstPublished,
