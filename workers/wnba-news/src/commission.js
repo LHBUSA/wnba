@@ -445,7 +445,7 @@ function composeMilesAbsence(ctx) {
   w.section('What one game cannot prove', { key: 'limits' });
   w.p(
     `One absence cannot validate ${WINBA_LABEL}. Even a final margin in the same direction would not be enough. A proper test needs repeated absences, comparable opponents, the team's own baseline with the player available, and enough games to separate signal from the enormous variance inside basketball.`,
-    `The current score also cannot isolate which part of ${subject.name}'s value is missing. WinBA does not directly measure defence, shooting efficiency, turnovers, shot quality, lineup fit or optical-tracking effects. It is an association-with-winning index built from box production, results and minutes. That makes this game relevant to the metric's thesis, but not a controlled experiment.`,
+    `The current score also cannot isolate which part of ${subject.name}'s value is missing. WinBA does not directly measure defence, shooting efficiency, turnovers, shot quality, lineup fit or optical-tracking effects. It is an association-with-winning index built from box production, results and minutes, not a causal estimate of wins added. That makes this game relevant to the metric's thesis, but not a controlled experiment.`,
     `There is another trap to avoid: using the result backward. If Minnesota rallies and wins, that does not disprove ${subject.name}'s No. 1 ranking. If the deficit grows, that does not prove the ranking. The metric has to be judged across a sample, not allowed to declare victory whenever a single scoreboard happens to agree with it.`
   );
 
