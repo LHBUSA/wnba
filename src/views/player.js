@@ -4,12 +4,19 @@ import { sourceLine, errorState, statusBadge, badge, safeColor } from '../ui/com
 import { fmtDateET, relTime, num, initials, american, bookName } from '../lib/format.js';
 import { sparkline } from '../ui/charts.js';
 import { teamLogo } from '../ui/logo.js';
+import { photoImg, photoCredits } from '../ui/photo.js';
 import { articleMini } from '../ui/articles.js';
 import { internationalCareerModule } from './international.js';
 import { careerSummary, careerRateLine, careerSeasonRows } from '../lib/player-career.js';
 
 const MARKET_LABEL = { player_points: 'Points', player_rebounds: 'Rebounds', player_assists: 'Assists', player_threes: '3PM' };
 const whole = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : '—';
+
+/** One photo credit: licensed Commons photos link source + license; hotlinked headshots name the provider. */
+function photoCredit(photo) {
+  if (photo.rights === 'external_editorial') return photo.attribution || 'Photo: external';
+  return html`${photo.attribution}${photo.capture_date ? ` · ${String(photo.capture_date).slice(0, 4)}` : ''}${photo.source_page ? html` · <a href="${photo.source_page}" rel="noopener" target="_blank">source</a>` : ''}${photo.license_url ? html` · <a href="${photo.license_url}" rel="noopener" target="_blank">license</a>` : ''}`;
+}
 
 export async function loadPlayer(api, id) {
   const [res, news, props, arts, intl] = await Promise.all([api.player(id), api.news({ player: id, limit: 6, lane: 'external' }), api.props(), api.articles({ player: id, limit: 6 }), api.intlForWnba ? api.intlForWnba(id) : Promise.resolve(null)]);
@@ -60,12 +67,12 @@ export function playerView({ id, res, news, props, arts, intl }) {
 
   return html`
     <section class="p-hero">
-      <div>
+      <div data-photo-root>
         <div class="p-photo" style="--tc:${tc}">
-          ${photo?.portrait ? html`<img src="${photo.portrait}" alt="${p.name}" width="600" height="750" decoding="async" fetchpriority="high" />` : html`<div class="fallback" aria-hidden="true"><span>${initials(p.name)}</span></div>`}
+          ${photo?.portrait ? photoImg(photo, 'portrait', { alt: p.name, attrs: 'width="600" height="750" decoding="async" fetchpriority="high"', fallback: html`<div class="fallback" aria-hidden="true"><span>${initials(p.name)}</span></div>` }) : html`<div class="fallback" aria-hidden="true"><span>${initials(p.name)}</span></div>`}
           <span class="band"></span>
         </div>
-        ${photo ? html`<p class="credit" style="margin-top:8px">${photo.attribution}${photo.capture_date ? ` · ${String(photo.capture_date).slice(0, 4)}` : ''} · <a href="${photo.source_page}" rel="noopener" target="_blank">source</a>${photo.license_url ? html` · <a href="${photo.license_url}" rel="noopener" target="_blank">license</a>` : ''}</p>` : html`<p class="credit" style="margin-top:8px">No verified, licensed photo yet — shown as a neutral card rather than risk the wrong person.</p>`}
+        <p class="credit" style="margin-top:8px">${photoCredits(photo?.portrait ? photo : null, 'portrait', photoCredit, 'No verified, licensed photo yet — shown as a neutral card rather than risk the wrong person.')}</p>
       </div>
       <div style="display:flex;flex-direction:column;justify-content:flex-end;min-width:0">
         <span style="display:flex;gap:10px;align-items:center">${p.team ? teamLogo(p.team, 36) : ''}<span class="eyebrow">${p.team ? html`<a href="/teams/${p.team.team_id}">${p.team.name}</a>` : 'Free agent'}${p.jersey ? ` · #${p.jersey}` : ''}</span></span>

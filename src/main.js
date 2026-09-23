@@ -20,9 +20,11 @@ import './styles/prop-edge.css';
 import './styles/polish.css';
 import './styles/no-scrollbars.css';
 import { mountShell } from './ui/shell.js';
+import { installPhotoFallback } from './ui/photo.js';
 import { enhanceProMore } from './ui/pro-more.js';
 import { createRouter } from './lib/router.js';
 
+installPhotoFallback();
 const shell = mountShell(document.getElementById('app'));
 enhanceProMore(document);
 const router = createRouter({

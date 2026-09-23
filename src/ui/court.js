@@ -9,6 +9,8 @@
 // Verified source geometry (game 401857189): rim ≈ (25, 0.25), baseline ≈ y=-5,
 // half court y=42. That maps to a standard 94 x 50 ft full court.
 
+import { photoChain } from './photo.js';
+
 const SOURCE_RIM = { x: 25, y: 0.25 };
 const SOURCE_BASE_Y = -5;
 const SOURCE_HALF_Y = 42;
@@ -157,7 +159,7 @@ export function courtSvg(shots = [], { home, away, highlightSeq = null, animateS
         <defs><clipPath id="${clipId}"><circle cx="${markerX}" cy="${markerY}" r="1.24"/></clipPath></defs>
         <g class="shot-photo-marker ${s.made ? 'made' : 'miss'} ${side}" aria-hidden="true">
           <circle cx="${markerX}" cy="${markerY}" r="1.42" class="shot-photo-halo"/>
-          <image href="${escapeXml(s.photo.square)}" x="${markerX - 1.24}" y="${markerY - 1.24}" width="2.48" height="2.48"
+          <image href="${escapeXml(photoChain(s.photo, 'square')[0].url)}" data-photo-next="${escapeXml(photoChain(s.photo, 'square').slice(1).map((c) => c.url).join(' '))}" data-photo-stage="0" x="${markerX - 1.24}" y="${markerY - 1.24}" width="2.48" height="2.48"
             preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})" class="shot-photo"/>
           <circle cx="${markerX}" cy="${markerY}" r="1.27" class="shot-photo-ring"/>
           ${s.made ? '<circle cx="' + markerX + '" cy="' + markerY + '" r="1.48" class="shot-photo-result"/>' : '<path d="M' + (markerX - 1.0) + ' ' + (markerY - 1.0) + ' L' + (markerX + 1.0) + ' ' + (markerY + 1.0) + ' M' + (markerX - 1.0) + ' ' + (markerY + 1.0) + ' L' + (markerX + 1.0) + ' ' + (markerY - 1.0) + '" class="shot-photo-result"/>'}

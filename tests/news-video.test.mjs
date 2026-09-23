@@ -235,7 +235,8 @@ test('M. page load without a click requests nothing from YouTube; the CSP except
   assert.equal(web, vercel, 'SSR and static CSP agree');
   assert.match(vercel, /frame-src https:\/\/www\.youtube-nocookie\.com;/);
   assert.match(vercel, /default-src 'self';/);
-  assert.match(vercel, /img-src 'self' data:;/);
+  // Hotlinked player headshots (workers/wnba-api/src/photos.js) are the only outside image hosts.
+  assert.match(vercel, /img-src 'self' data: https:\/\/a\.espncdn\.com https:\/\/cdn\.wnba\.com;/);
   assert.match(vercel, /script-src 'self';/);
   assert.doesNotMatch(vercel, /youtube\.com(?!-)|ytimg/);
   const css = fs.readFileSync('src/styles/newsroom.css', 'utf8');

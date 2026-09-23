@@ -2,6 +2,7 @@ import { html, raw } from '../lib/dom.js';
 import { STATE_LABEL, currentState, ageMs, formatAge } from '../data/freshness.js';
 import { fmtTimeET, fmtDateET, initials, relTime, num } from '../lib/format.js';
 import { teamLogo } from './logo.js';
+import { photoImg } from './photo.js';
 
 // ------------------------------------------------------------ game state
 
@@ -106,7 +107,8 @@ export function avatar(p, { size = '', teamColor } = {}) {
   const photo = p?.photo;
   const tc = safeColor(teamColor || p?.team?.color, 'var(--gold)');
   if (photo?.square) {
-    return html`<span class="avatar ${size}" style="--tc:${tc}"><img src="${photo.square}" alt="${p.name || ''}" width="128" height="128" loading="lazy" decoding="async" /></span>`;
+    const img = photoImg(photo, 'square', { alt: p.name || '', attrs: 'width="128" height="128" loading="lazy" decoding="async"', fallback: html`<span class="mono-init">${initials(p?.name)}</span>` });
+    return html`<span class="avatar ${size}" style="--tc:${tc}">${img}</span>`;
   }
   return html`<span class="avatar ${size}" style="--tc:${tc}" aria-hidden="true"><span class="mono-init">${initials(p?.name)}</span></span>`;
 }
@@ -116,9 +118,10 @@ export function playerCard(p) {
   return html`<a class="card pcard" href="/players/${p.athlete_id}" style="--tc:${tc}">
     <div class="pcard-img">
       <span class="tband"></span>
-      ${p.photo?.portrait
-        ? html`<img src="${p.photo.portrait}" alt="${p.name}" width="600" height="750" loading="lazy" decoding="async" />`
-        : html`<div class="fallback" aria-hidden="true"><span class="init">${initials(p.name)}</span>${p.jersey ? html`<span class="jersey">#${p.jersey}</span>` : ''}</div>`}
+      ${(() => {
+        const fallback = html`<div class="fallback" aria-hidden="true"><span class="init">${initials(p.name)}</span>${p.jersey ? html`<span class="jersey">#${p.jersey}</span>` : ''}</div>`;
+        return p.photo?.portrait ? photoImg(p.photo, 'portrait', { alt: p.name, attrs: 'width="600" height="750" loading="lazy" decoding="async"', fallback }) : fallback;
+      })()}
     </div>
     <div class="pcard-meta">
       <div class="pcard-name-row">

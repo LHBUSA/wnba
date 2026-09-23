@@ -2,6 +2,7 @@ import { html } from '../lib/dom.js';
 import { winbaCurrentEditionModule } from './winba-leaderboard.js';
 import { currentWinbaEdition } from './winba-index.js';
 import { pageHead, avatar } from '../ui/components.js';
+import { photoImg } from '../ui/photo.js';
 import { fmtDateTimeET } from '../lib/format.js';
 
 const one = (v) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : Number(v).toFixed(1));
@@ -32,7 +33,7 @@ function leaderPortrait(row, player) {
   return html`<a class="winba-podium-feature winba-podium-feature--${row.rank}" href="/players/${row.athlete_id}" style="--tc:${tc}">
     <div class="winba-podium-photo">
       ${photo?.portrait
-        ? html`<img src="${photo.portrait}" alt="${row.name}" width="600" height="750" loading="lazy" decoding="async" />`
+        ? photoImg(photo, 'portrait', { alt: row.name, attrs: 'width="600" height="750" loading="lazy" decoding="async"', fallback: html`<div class="winba-podium-fallback">${avatar({ name: row.name, photo: null, team }, { teamColor: team?.color })}</div>` })
         : html`<div class="winba-podium-fallback">${avatar({ name: row.name, photo, team }, { teamColor: team?.color })}</div>`}
       <span class="winba-podium-place">#${row.rank}</span>
     </div>

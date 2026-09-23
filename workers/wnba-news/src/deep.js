@@ -17,7 +17,7 @@
 //   * market numbers are "market consensus" or a named sportsbook, never a PropBetEdge projection, and each
 //     story's bettor analysis leads with the market it is about (market_type).
 
-import { finalize, marketText, standingText, nextGame, gameEntity, hashId } from './articles.js';
+import { finalize, marketText, standingText, nextGame, gameEntity, hashId, licensedContextPhoto } from './articles.js';
 import { dShort, dLong, dMonth, etDate, tET, f1, sgn, am, listJoin, nick, full, poss, cap, wordN, countOf, statAvg, avg, etDays, aan, sc, clockOf, periodOf, QUARTER } from './prose.js';
 import { coLeaders, CO_LEADER_RULE } from './reconcile.js';
 
@@ -546,7 +546,7 @@ export async function injuryDeep(ctx) {
       id, kind: 'injury', category: 'Injuries', structure: 0, headline, deck, body, sections, market_type: null, bettor, against, unknown,
       market_angle: mt ? { text: [...mt.sentences], market: ng.market, game_id: ng.game_id } : { text: [ng ? 'No market snapshot exists yet for that game. Snapshots run at 8:00 a.m., 1:00 p.m. and 6:00 p.m. ET.' : 'No upcoming game is on the published schedule.'], market: null, game_id: ng?.game_id || null },
       lead_team_id: team.team_id, lead_player_id: p.athlete_id, primary_subject: p.name, published_at: inj.source_updated_at,
-      context: { player: { athlete_id: p.athlete_id, name: p.name, position: p.position_name, photo: pRes.photo }, team: { team_id: team.team_id, name: team.name, standing: st }, next_game: ng ? { game_id: ng.game_id, start_utc: ng.start_utc, home: ng.home, away: ng.away } : null },
+      context: { player: { athlete_id: p.athlete_id, name: p.name, position: p.position_name, photo: licensedContextPhoto(pRes.photo) }, team: { team_id: team.team_id, name: team.name, standing: st }, next_game: ng ? { game_id: ng.game_id, start_utc: ng.start_utc, home: ng.home, away: ng.away } : null },
       entities: [{ type: 'player', id: p.athlete_id, name: p.name }, { type: 'team', id: team.team_id, name: team.name }, ...(opp ? [{ type: 'team', id: opp.team_id, name: opp.name }] : []), ...(ng ? [gameEntity(ng)] : [])],
       facts: { injury: stripNotes(inj), season_log: cur, provenance: [prov(p.name, cur, 'season')], absence: { mode, last_game: cur.last_date, games_since: since.n, window_missed: obs?.missed ?? 0 }, rotation_me: me ? { name: me.name, min: me.min, starts: me.starts, appearances: me.appearances } : null, rotation: rot?.rows?.map((r) => ({ name: r.name, position: r.position, min: r.min, pts: r.pts, starts: r.starts, appearances: r.appearances })), since, standing: st, next_game: ng ? { start_utc: ng.start_utc } : null, market: mt?.facts || null, other_out: otherOut.map((x) => ({ name: x.name, status: x.status })), injury_scope: [team.team_id], observed: obs, recent_games: recent5, next_opponent: oppSt ? { name: opp.name, wins: oppSt.wins, losses: oppSt.losses, last_ten: oppSt.last_ten, points_against_avg: oppSt.points_against_avg } : null, derived: D },
       evidence: [

@@ -17,6 +17,18 @@
 import { validateArticle } from './gate.js';
 import { decideIntelligence, intelligenceFailures, intelligenceOf, additiveCopy } from '../../../src/lib/intelligence.js';
 import { aan } from './prose.js';
+
+/**
+ * Newsroom context keeps only the licensed Commons photo, in its pre-provider
+ * shape: hotlinked WNBA/ESPN headshots (wnba-api photos.js) never enter stories,
+ * and the stored context bytes stay identical to before providers existed.
+ */
+export function licensedContextPhoto(ph) {
+  const lp = !ph ? null : ph.sources ? ph.licensed : ph.rights === 'external_editorial' ? null : ph;
+  if (!lp) return null;
+  const { provider, rights, sources, licensed, fallback, ...legacy } = lp;
+  return legacy;
+}
 // Synthesis generators (2.0.0-preview) replace the v1 list-style generators for these five kinds.
 // The v1 functions stay exported as *V1 for comparison runs (scripts/newsroom-dryrun.mjs).
 export { injuryDeep as injuryArticles, transactionDeep as transactionArticles, resultDeep as resultArticles, previewDeep as previewArticles, trendDeep as trendArticles } from './deep.js';
@@ -324,7 +336,7 @@ export async function injuryArticlesV1({ api, injuries, externalByPlayer, schedu
       lead_player_id: p.athlete_id,
       primary_subject: p.name,
       published_at: inj.source_updated_at,
-      context: { player: { athlete_id: p.athlete_id, name: p.name, position: p.position_name, season, last10: l10, photo: pRes.photo }, team: { team_id: team.team_id, name: team.name, standing: st }, next_game: ng ? { game_id: ng.game_id, start_utc: ng.start_utc, home: ng.home, away: ng.away } : null },
+      context: { player: { athlete_id: p.athlete_id, name: p.name, position: p.position_name, season, last10: l10, photo: licensedContextPhoto(pRes.photo) }, team: { team_id: team.team_id, name: team.name, standing: st }, next_game: ng ? { game_id: ng.game_id, start_utc: ng.start_utc, home: ng.home, away: ng.away } : null },
       entities: [{ type: 'player', id: p.athlete_id, name: p.name }, { type: 'team', id: team.team_id, name: team.name }, ...(opp ? [{ type: 'team', id: opp.team_id, name: opp.name }] : []), ...(ng ? [gameEntity(ng)] : []), ...heirs.map((h) => ({ type: 'player', id: h.athlete_id, name: h.name }))],
       facts: { injury: inj, season, last10: l10, rotation_me: me, heirs, standing: st, next_game: ng ? { start_utc: ng.start_utc } : null, market: mt?.facts || null, other_out: otherOut.map((x) => ({ name: x.name, status: x.status })) },
       evidence: [

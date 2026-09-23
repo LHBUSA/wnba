@@ -26,7 +26,7 @@ import {
 } from '../../shared/espn.js';
 import { deriveGame, shotChart, possessions } from '../../shared/derive.js';
 import { etCompact, addDays, isCompactDate, gameEtDate, daysBetween } from '../../shared/time.js';
-import { photoFor, photoCoverage } from './photos.js';
+import { photoFor, photoCoverage, configurePhotos } from './photos.js';
 import { modelSurfaces } from '../../shared/market.js';
 import { winbaForPlayer, WINBA_VERSION } from '../../shared/winba.js';
 
@@ -62,6 +62,7 @@ const TTL = {
 
 export default {
   async fetch(request, env, ctx) {
+    configurePhotos(env);
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
     // Credentialed surfaces (session cookie): exact-origin CORS, private no-store responses.

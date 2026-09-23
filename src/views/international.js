@@ -3,6 +3,7 @@
 import { html } from '../lib/dom.js';
 import { pbpFeed } from '../ui/pbp.js';
 import { pageHead, errorState, empty, avatar } from '../ui/components.js';
+import { photoImg } from '../ui/photo.js';
 import { fmtDateET, fmtTimeET, relTime, num } from '../lib/format.js';
 
 // ------------------------------------------------------------ loaders
@@ -111,7 +112,7 @@ export function wnbaModule(players, { title = 'WNBA at the World Cup' } = {}) {
   return html`<section class="section iwnba">
     <div class="sec-head"><div><h2 class="sec-title bc">${title}</h2><p class="desk-sub">${players.length} tournament players are on current WNBA rosters — matched by identical ESPN athlete ID, never by guesswork.</p></div></div>
     <div class="iwnba-grid">${[...players].sort((a, b) => (b.averages?.pts || 0) - (a.averages?.pts || 0)).map((p) => html`<article class="iwnba-card">
-      <a class="iwnba-who" href="${playerHref(p)}">${avatar({ name: p.name, photo: p.wnba.photo ? { square: p.wnba.photo.square } : null })}<span><b>${p.name}</b><small>${flag(p.team, 12)} ${p.team.name}</small></span></a>
+      <a class="iwnba-who" href="${playerHref(p)}">${avatar({ name: p.name, photo: p.wnba.photo || null })}<span><b>${p.name}</b><small>${flag(p.team, 12)} ${p.team.name}</small></span></a>
       <div class="iwnba-stats"><span><b>${num(p.averages?.pts)}</b> PTS</span><span><b>${num(p.averages?.reb)}</b> REB</span><span><b>${num(p.averages?.ast)}</b> AST</span><span class="note">${p.games} g</span></div>
       <a class="iwnba-link" href="/players/${p.wnba.wnba_player_id}">${p.wnba.wnba_team ? `${p.wnba.wnba_team.name} · ` : ''}WNBA profile →</a>
     </article>`)}</div>
@@ -285,7 +286,7 @@ export function intlPlayerView({ res, wnba }) {
   return html`
     <section class="ihero ihero--player">
       <div class="ihero-in">
-        ${w?.photo?.portrait ? html`<img class="iplayer-photo" src="${w.photo.portrait}" alt="${p.name}" width="600" height="750" decoding="async" />` : ''}
+        ${w?.photo?.portrait ? photoImg(w.photo, 'portrait', { alt: p.name, attrs: 'class="iplayer-photo" width="600" height="750" decoding="async"' }) : ''}
         <span class="eyebrow">${flag(p.team, 16)} <a href="${teamHref(p.team)}">${p.team.name}</a>${p.jersey ? ` · #${p.jersey}` : ''}</span>
         <h1 class="ihero-title">${p.name}</h1>
         <p class="ihero-sub">${[p.bio?.height, p.bio?.dob ? `Born ${fmtDateET(`${p.bio.dob}T12:00:00Z`, { month: 'long', day: 'numeric', year: 'numeric' })}` : null].filter(Boolean).join(' · ')}</p>

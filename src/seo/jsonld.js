@@ -6,6 +6,7 @@ import { SITE, SITE_NAME, NEWSROOM_NAME, PUBLICATION_NAME, IDS, LOGO, LANG, DESK
 import { deskOf, articleShareImage } from './meta.js';
 import { careerMetaLine } from '../lib/player-career.js';
 import { logoEntry } from '../ui/logo.js';
+import { licensedPhoto } from '../ui/photo.js';
 
 const clean = (o) => {
   if (Array.isArray(o)) { const a = o.map(clean).filter((x) => x !== undefined); return a.length ? a : undefined; }
@@ -177,7 +178,7 @@ export function person(d, meta) {
     url,
     image: [
       meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
-      d.photo?.portrait ? { '@type': 'ImageObject', url: abs(d.photo.portrait), width: d.photo.width, height: d.photo.height, creditText: d.photo.attribution, license: d.photo.license_url, acquireLicensePage: d.photo.source_page } : undefined
+      licensedPhoto(d.photo)?.portrait ? ((lp) => ({ '@type': 'ImageObject', url: abs(lp.portrait), width: lp.width, height: lp.height, creditText: lp.attribution, license: lp.license_url, acquireLicensePage: lp.source_page }))(licensedPhoto(d.photo)) : undefined
     ],
     birthDate: p.dob ? String(p.dob).slice(0, 10) : undefined,
     jobTitle: 'Professional basketball player',
@@ -378,7 +379,7 @@ export function pageGraph(route, meta, data = {}) {
         sameAs: p.wnba ? [`${SITE}/players/${p.wnba.wnba_player_id}`] : undefined,
         image: [
           meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
-          p.wnba?.photo?.portrait ? { '@type': 'ImageObject', url: abs(p.wnba.photo.portrait) } : undefined
+          licensedPhoto(p.wnba?.photo)?.portrait ? { '@type': 'ImageObject', url: abs(licensedPhoto(p.wnba.photo).portrait) } : undefined
         ]
       });
       break;
