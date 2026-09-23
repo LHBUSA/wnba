@@ -11,7 +11,7 @@ import { articleIdentityFailures } from '../workers/wnba-news/src/identity.js';
 import { provenanceFailures } from '../workers/wnba-news/src/quality.js';
 import factsDoc from '../data/commissions/verified-facts.json' with { type: 'json' };
 
-const AT = '2026-09-23T01:00:00.000Z';
+const AT = '2026-09-23T04:00:00.000Z';
 
 const row = (rank, id, name, teamId, teamName, score, comps, position = 'F') => ({
   rank,
