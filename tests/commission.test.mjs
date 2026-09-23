@@ -163,13 +163,16 @@ test('all commissions compose, gate clean and publish', async () => {
   }
 });
 
-test('Miles feature freezes the absence, comeback and final loss without claiming causation', async () => {
+test('Miles story reads as natural game analysis with WinBA as an established stat', async () => {
   const { res } = await run('miles-winba-absence-stress-test');
   assert.equal(res.status, 'published');
   const a = res.article;
   assert.equal(a.winba_reference.player_id, '4433791');
   assert.equal(a.winba_reference.rank, 1);
   assert.equal(a.winba_reference.score, 87);
+  assert.equal(a.category, 'Game Analysis');
+  assert.equal(a.series, 'Game Analysis');
+  assert.equal(a.commission.presentation, 'natural_news');
   assert.equal(a.context.game.halftime.subject_team_score, 34);
   assert.equal(a.context.game.halftime.opponent_score, 57);
   assert.equal(a.context.game.halftime.margin, -23);
@@ -181,11 +184,17 @@ test('Miles feature freezes the absence, comeback and final loss without claimin
   assert.equal(a.context.game.final.margin, -19);
   assert.deepEqual(a.context.game.final.subject_quarters, [16, 18, 30, 13]);
   assert.deepEqual(a.context.game.final.opponent_quarters, [31, 26, 14, 25]);
-  assert.match(a.headline, /Lost 96–77/);
-  assert.match(a.deck, /One game cannot prove the metric/i);
-  assert.match(a.body.join(' '), /not a causal estimate/i);
-  assert.match(a.body.join(' '), /third-quarter comeback/i);
-  assert.match(a.body.join(' '), /still lost/i);
+  assert.match(a.headline, /Without Olivia Miles/);
+  assert.match(a.headline, /96–77/);
+  assert.match(a.deck, /No\. 1 in WinBA Score at 87\.0/);
+  assert.match(a.body.join(' '), /No\. 1 in WinBA Score at 87\.0/);
+  assert.match(a.body.join(' '), /third quarter 30–14/i);
+  assert.match(a.body.join(' '), /could not finish/i);
+  assert.ok(a.entities.some((e) => e.type === 'game' && e.id === '401999999'));
+  assert.ok(a.visuals.some((v) => v.id === 'miles-winba-trajectory'));
+  assert.ok(a.visuals.some((v) => v.id === 'miles-winba-leaders' && v.type === 'rank_cards'));
+  const readerCopy = [a.headline, a.deck, ...a.body].join(' ');
+  assert.doesNotMatch(readerCopy, /stress test|case study|validation|validate|counterfactual|causal estimate|canonical metric/i);
   assert.ok(a.evidence.some((e) => e.kind === 'availability_snapshot'));
   assert.ok(a.evidence.some((e) => e.kind === 'game_snapshot'));
   assert.deepEqual(visualsFailures(a.visuals), []);
