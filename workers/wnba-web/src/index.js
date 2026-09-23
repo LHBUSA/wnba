@@ -20,7 +20,7 @@ const SECURITY_HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
   'permissions-policy': 'camera=(), microphone=(), geolocation=()',
   'x-frame-options': 'DENY',
-  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://a.espncdn.com https://cdn.wnba.com; connect-src 'self' https://wnba-api.sales-fd3.workers.dev https://wnba-api.propbetedge.ai https://wnba-news.sales-fd3.workers.dev https://wnba-international.sales-fd3.workers.dev; frame-src https://www.youtube-nocookie.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://buy.stripe.com"
+  'content-security-policy': "default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://a.espncdn.com https://cdn.wnba.com https://www.google-analytics.com https://*.google-analytics.com; connect-src 'self' https://wnba-api.sales-fd3.workers.dev https://wnba-api.propbetedge.ai https://wnba-news.sales-fd3.workers.dev https://wnba-international.sales-fd3.workers.dev https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com; frame-src https://www.youtube-nocookie.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://buy.stripe.com"
 };
 
 const HTML_CACHE = 'public, max-age=0, s-maxage=60, stale-while-revalidate=300';
