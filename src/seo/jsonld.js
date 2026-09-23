@@ -126,7 +126,7 @@ export function newsArticle(a, meta) {
     ? lead.filter((e) => e.type === 'metric'
       || (e.type === 'player' && String(e.id) === String(a.lead_player_id))
       || (e.type === 'team' && String(e.id) === String(a.lead_team_id)))
-    : lead.filter((e) => (e.type === 'player' && String(e.id) === String(a.lead_player_id)) || (e.type === 'team' && String(e.id) === String(a.lead_team_id)) || (e.type === 'game' && a.kind === 'preview')
+    : lead.filter((e) => (e.type === 'player' && String(e.id) === String(a.lead_player_id)) || (e.type === 'team' && String(e.id) === String(a.lead_team_id)) || (e.type === 'game' && (a.kind === 'preview' || naturalNews))
       // A feature built on a PropBetEdge metric is partly ABOUT that metric.
       || (e.type === 'metric' && a.winba_reference && !naturalNews));
   // Ranked players and their teams, capped so the graph stays a document
