@@ -402,7 +402,9 @@ async function articleRoute(env, slugOrId) {
   let a = id ? await env.NEWS_KV.get(`art:v1:item:${id}`, 'json') : null;
   if (!a) {
     const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
-    const hit = index.find((c) => c.slug === slugOrId) || index.find((c) => slugOrId.endsWith(`-${c.id.slice(0, 6)}`));
+    const hit = index.find((c) => c.slug === slugOrId)
+      || index.find((c) => (c.aliases || []).includes(slugOrId))
+      || index.find((c) => slugOrId.endsWith(`-${c.id.slice(0, 6)}`));
     if (hit) a = await env.NEWS_KV.get(`art:v1:item:${hit.id}`, 'json');
   }
   if (!a) return j({ ok: false, error: 'not_found' }, 404);
