@@ -151,6 +151,15 @@ async function availabilityStressContext(apiGet, spec, subjectRecord, at) {
       period: game?.status?.period ?? null
     };
   }
+  if (subjectHalf >= opponentHalf) {
+    return {
+      ready: false,
+      reason: 'subject_team_not_trailing_at_half',
+      game_id: String(game.game_id),
+      subject_team_score: subjectHalf,
+      opponent_score: opponentHalf
+    };
+  }
 
   const bodyPart = [injury.side, injury.body_part].filter(Boolean).join(' ').trim() || null;
   const observedAt = at;
