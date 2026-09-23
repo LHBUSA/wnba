@@ -24,7 +24,7 @@ import { WINBA_LABEL, WINBA_URL, WINBA_METHOD_URL, WINBA_METRIC_ENTITY } from '.
 import { WINBA_INDEX_SERIES, winbaPeriodLabel } from './winba-index.js';
 import { lineSeries, componentBars, rankCards, resumeCard, visualsFailures, VISUALS_VERSION } from './visuals.js';
 
-export const COMMISSION_VERSION = 'wnba-commission/1.0.1';
+export const COMMISSION_VERSION = 'wnba-commission/1.1.0';
 export const COMMISSION_KIND = 'commissioned_feature';
 export const COMMISSION_DESK = 'feature';
 export const COMMISSION_SERIES = 'PropBetEdge Features';
