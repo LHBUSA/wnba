@@ -554,6 +554,7 @@ export const COMMISSIONS = Object.freeze({
     facts: [],
     live_context: 'availability_loss_stress_test',
     event_date_et: '2026-09-22',
+    migrate_slug_on_force: true,
     compose: composeMilesAbsence,
     required_visuals: ['miles-winba-trajectory', 'miles-winba-leaders']
   },
@@ -721,13 +722,20 @@ export async function runCommission({
   ];
 
   const id = already?.id || await hashId([COMMISSION_KIND, key, spec.subject.id], 12);
-  const slug = already?.slug || `${spec.slug}-${(await hashId([key, spec.slug], 6))}`;
+  const desiredSlug = `${spec.slug}-${(await hashId([key, spec.slug], 6))}`;
+  const migrateSlug = Boolean(already && force && spec.migrate_slug_on_force && already.slug !== desiredSlug);
+  const slug = migrateSlug ? desiredSlug : (already?.slug || desiredSlug);
   const firstPublished = already?.published_at || at;
   const stored = already ? await getArticle(already.id).catch(() => null) : null;
+  const aliases = [...new Set([
+    ...(stored?.aliases || []),
+    ...(migrateSlug && already?.slug ? [already.slug] : [])
+  ].filter(Boolean))];
 
   const article = {
     id,
     slug,
+    ...(aliases.length ? { aliases } : {}),
     kind: COMMISSION_KIND,
     desk: COMMISSION_DESK,
     category: composed.category || 'Feature',
@@ -813,6 +821,7 @@ export function cardForCommission(a) {
   return {
     id: a.id,
     slug: a.slug,
+    aliases: a.aliases || [],
     kind: a.kind,
     desk: a.desk,
     category: a.category,
