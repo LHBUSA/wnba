@@ -42,6 +42,9 @@ export const DESK = {
 
 export const KIND_ORDER = ['brief', 'international', 'preview', 'injury', 'performance', 'trend', 'transaction', 'props', 'market', 'result'];
 
+const cardDeskLabel = (c) => c?.commission?.presentation === 'natural_news'
+  ? (c.category || 'Game Analysis')
+  : (DESK[c.kind] || KIND_LABEL[c.kind] || c.category);
 const teamsOf = (c) => (c.entities || []).filter((e) => e && e.type === 'team').slice(0, 2);
 // The visible story age is canonical newsroom publication time. Source/event timestamps may
 // move when an existing article is revised, but that must not make old coverage look newly published.
@@ -75,7 +78,7 @@ export function articleCard(c, { lead = false, size = null, eager = false, timeL
   return html`<article class="scard scard--${sz}">
     ${storyMedia(c.media, { slot, eager, credit: false })}
     <div class="scard-body">
-      <div class="scard-kicker"><span class="cat">${DESK[c.kind] || KIND_LABEL[c.kind] || c.category}</span><span class="scard-time">${visibleTime}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
+      <div class="scard-kicker"><span class="cat">${cardDeskLabel(c)}</span><span class="scard-time">${visibleTime}</span>${c.video ? html`<span class="scard-video" title="${`Official game highlights: ${c.video.title}`}"><span aria-hidden="true">▶</span> Highlights</span>` : ''}</div>
       <h3 class="scard-h"><a href="${href}">${headlineText(c.headline)}</a></h3>
       ${sz !== 'compact' && c.deck ? html`<p class="deck">${headlineText(c.deck)}</p>` : ''}
       ${sz !== 'lead' ? html`<div class="scard-meta">${teamsOf(c).map((t) => teamLogo({ team_id: t.id, name: t.name }, 20))}<span class="scard-src">PBE Newsroom · ${sourcesOf(c)}</span></div>` : ''}
