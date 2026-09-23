@@ -200,6 +200,34 @@ test('Miles story reads as natural game analysis with WinBA as an established st
   assert.deepEqual(visualsFailures(a.visuals), []);
 });
 
+test('Miles forced rewrite migrates the old stress-test slug and preserves it as an alias', async () => {
+  const { res: first, h } = await run('miles-winba-absence-stress-test');
+  const oldSlug = 'olivia-miles-out-minnesota-loses-fever-winba-stress-test-deadbe';
+  await h.io.putArticle({ ...first.article, slug: oldSlug });
+  await h.io.putState({
+    version: 'wnba-commission/1.1.0',
+    published: {
+      'miles-winba-absence-stress-test': {
+        id: first.id,
+        slug: oldSlug,
+        key: 'miles-winba-absence-stress-test',
+        headline: 'Old stress-test headline',
+        published_at: first.article.published_at
+      }
+    }
+  });
+
+  const { res: rewritten } = await run('miles-winba-absence-stress-test', {
+    h,
+    opts: { force: true, at: '2026-09-23T05:00:00.000Z' }
+  });
+  assert.equal(rewritten.status, 'regenerated');
+  assert.match(rewritten.slug, /^without-olivia-miles-minnesota-loses-indiana-96-77-/);
+  assert.notEqual(rewritten.slug, oldSlug);
+  assert.ok(rewritten.article.aliases.includes(oldSlug));
+  assert.equal(rewritten.article.first_published_at, first.article.published_at);
+});
+
 test('Miles stress test refuses to publish without frozen live context', async () => {
   const h = harness();
   const res = await runCommission({
