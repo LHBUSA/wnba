@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 
-Write-Host 'PropBetEdge WNBA - direct Cloudflare deploy + Olivia Miles commissioned feature' -ForegroundColor Cyan
+Write-Host 'PropBetEdge WNBA - direct Cloudflare deploy + Olivia Miles completed-loss feature' -ForegroundColor Cyan
 
 $branch = (git branch --show-current).Trim()
 if ($branch -ne 'main') {
@@ -54,8 +54,8 @@ $health = Invoke-RestMethod -Method Get -Uri "$base/health?verify=$stamp" -Heade
 if (-not $health.ok) { throw 'wnba-news /health is not ok after deploy.' }
 if ($health.service -ne 'wnba-news') { throw "Unexpected service: $($health.service)" }
 
-Write-Host 'Running Olivia Miles WinBA stress-test commission against live source records...' -ForegroundColor Cyan
-$run = Invoke-RestMethod -Method Post -Uri "$base/run?commission=miles-winba-absence-stress-test&verify=$stamp" -Headers $headers
+Write-Host 'Running Olivia Miles completed-game WinBA stress-test commission against live source records...' -ForegroundColor Cyan
+$run = Invoke-RestMethod -Method Post -Uri "$base/run?commission=miles-winba-absence-stress-test&commission_force=1&verify=$stamp" -Headers $headers
 if (-not $run.ok) { throw 'Commission trigger returned ok=false.' }
 
 $commission = $run.result.commissioned
@@ -79,6 +79,15 @@ if ($article.data.article.winba_reference.rank -ne 1) {
 }
 if ($article.data.article.context.game.halftime.margin -ge 0) {
   throw 'Refusing success: stored halftime context does not show Minnesota trailing.'
+}
+if ($article.data.article.context.game.final.margin -ge 0) {
+  throw 'Refusing success: stored final context does not show a Minnesota loss.'
+}
+if ($article.data.article.context.game.final.subject_team_score -ne 77 -or $article.data.article.context.game.final.opponent_score -ne 96) {
+  throw "Refusing success: unexpected final score. Minnesota=$($article.data.article.context.game.final.subject_team_score) Opponent=$($article.data.article.context.game.final.opponent_score)"
+}
+if ($article.data.article.headline -notmatch 'Lost 96') {
+  throw 'Refusing success: published headline is not the completed-loss feature.'
 }
 
 Write-Host 'Running full commissioned-feature live canary...' -ForegroundColor Cyan
