@@ -512,6 +512,7 @@ function composeMilesAbsence(ctx) {
 
   return {
     category: 'Game Analysis',
+    series: 'Game Analysis',
     presentation: 'natural_news',
     headline: `Without ${subject.name}, Minnesota Falls ${oppFinal}–${teamFinal} to ${opponent} After Comeback Stalls`,
     deck: `${subject.name}, No. ${sept.rank} in WinBA Score at ${one(sept.value)}, missed the game${bodyPart}. Minnesota trailed by ${halfDeficit} at halftime, cut the deficit to ${threeDeficit} after three and still could not finish the rally.`,
@@ -724,7 +725,7 @@ export async function runCommission({
     kind: COMMISSION_KIND,
     desk: COMMISSION_DESK,
     category: composed.category || 'Feature',
-    series: COMMISSION_SERIES,
+    series: composed.series || COMMISSION_SERIES,
     status: 'published',
     headline: composed.headline,
     deck: composed.deck,
