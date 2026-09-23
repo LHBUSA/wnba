@@ -51,11 +51,18 @@ for (const card of features) {
   const page = await get(`${WEB}/news/${card.slug}`, 'text');
   const h = page.body;
 
+  const naturalNews = a.commission?.presentation === 'natural_news';
   ok(`${P}: canonical returns 200`, page.status === 200);
   ok(`${P}: canonical URL is its own slug`, h.includes(`<link rel="canonical" href="${SITE}/news/${card.slug}"`));
   ok(`${P}: the record says a human ordered it`, a.commission?.autopilot === false && Boolean(a.commission?.note));
-  ok(`${P}: page shows the commissioned chip and the reason`, /commission-chip/.test(h) && /Why we commissioned this/.test(h));
-  ok(`${P}: listed as a feature, not as autopilot desk output`, card.series === 'PropBetEdge Features' && card.kind === 'commissioned_feature');
+  if (naturalNews) {
+    ok(`${P}: natural story hides commissioned-feature chrome`, !/commission-chip/.test(h) && !/Why we commissioned this/.test(h));
+    ok(`${P}: natural story is presented as Game Analysis`, card.series === 'Game Analysis' && /Game Analysis/.test(h));
+    ok(`${P}: reader copy avoids lab-report framing`, !/stress test|case study|validation|counterfactual|causal estimate|canonical metric/i.test([a.headline, a.deck, ...(a.body || [])].join(' ')));
+  } else {
+    ok(`${P}: page shows the commissioned chip and the reason`, /commission-chip/.test(h) && /Why we commissioned this/.test(h));
+    ok(`${P}: listed as a feature, not as autopilot desk output`, card.series === 'PropBetEdge Features' && card.kind === 'commissioned_feature');
+  }
   ok(`${P}: quality state is current`, card.quality_state === 'current_quality', card.quality_state);
   ok(`${P}: word count is feature length`, a.words >= COMMISSION_MIN_WORDS, `${a.words} words (min ${COMMISSION_MIN_WORDS})`);
 
@@ -103,11 +110,16 @@ for (const card of features) {
   const ref = a.winba_reference;
   ok(`${P}: the rating in the prose is the frozen rating`, text.includes(f1(ref.score)) && text.includes(`No. ${ref.rank}`));
   ok(`${P}: the reference is marked frozen and hashed`, ref.frozen === true && ref.source_hash === editions.get(ref.period)?.hash);
-  ok(`${P}: does not claim the archive is the official record`, /close to but not identical with the official regular-season record/.test(text));
+  ok(`${P}: does not claim the archive is the official record`, naturalNews
+    ? /close to but not identical with the official regular-season record/.test((a.method || []).join(' '))
+    : /close to but not identical with the official regular-season record/.test(text));
 
   // ---- entity graph and internal links
   const links = [...new Set([...h.matchAll(/href="(\/(?:players|teams)\/\d+|\/winba-score|\/news\/winba-index)"/g)].map((m) => m[1]))];
-  for (const href of ['/winba-score', '/news/winba-index', `/players/${a.lead_player_id}`, `/teams/${a.lead_team_id}`]) {
+  const requiredLinks = naturalNews
+    ? ['/winba-score', `/players/${a.lead_player_id}`, `/teams/${a.lead_team_id}`]
+    : ['/winba-score', '/news/winba-index', `/players/${a.lead_player_id}`, `/teams/${a.lead_team_id}`];
+  for (const href of requiredLinks) {
     ok(`${P}: links ${href}`, links.includes(href));
   }
   for (const href of links) {
@@ -121,9 +133,12 @@ for (const card of features) {
     const g = JSON.parse(ld[1])['@graph'] || [];
     const art = g.find((n) => n['@type'] === 'NewsArticle');
     ok(`${P}: schema subject is the player`, (art.about || []).some((x) => x['@type'] === 'Person' && x.name === a.primary_subject));
-    ok(`${P}: schema carries the team and the metric`, (art.about || []).some((x) => x['@type'] === 'SportsTeam') && (art.about || []).some((x) => x['@type'] === 'DefinedTerm'));
+    ok(`${P}: schema carries the team`, (art.about || []).some((x) => x['@type'] === 'SportsTeam'));
+    ok(`${P}: schema places WinBA correctly`, naturalNews
+      ? (art.mentions || []).some((x) => x['@type'] === 'DefinedTerm')
+      : (art.about || []).some((x) => x['@type'] === 'DefinedTerm'));
     ok(`${P}: other players are mentions, not co-subjects`, (art.mentions || []).length >= 1 && !(art.about || []).some((x) => x['@type'] === 'Person' && x.name !== a.primary_subject));
-    ok(`${P}: schema section is the feature series`, art.articleSection === 'PropBetEdge Features');
+    ok(`${P}: schema section matches presentation`, art.articleSection === (naturalNews ? 'Game Analysis' : 'PropBetEdge Features'));
     ok(`${P}: schema datePublished is the real instant`, art.datePublished === a.published_at);
     ok(`${P}: cited sources are in the graph`, (art.citation || []).length >= 1);
     ok(`${P}: breadcrumbs present`, g.some((n) => n['@type'] === 'BreadcrumbList'));
