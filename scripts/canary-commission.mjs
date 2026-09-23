@@ -42,7 +42,7 @@ for (const c of index.filter((x) => x.kind === 'winba_index')) {
 ok('all four Index editions are public and hashable', editions.size === 4, [...editions.keys()].sort().join(', '));
 
 const features = index.filter((c) => c.kind === 'commissioned_feature');
-ok('both commissioned features are listed', features.length === 2, features.map((f) => f.slug).join(', '));
+ok('all commissioned features are listed', features.length >= 3, features.map((f) => f.slug).join(', '));
 
 for (const card of features) {
   const P = card.slug.split('-')[0];
@@ -153,9 +153,9 @@ ok('the live leaderboard still promotes the September edition', winba.body.inclu
 const archive = await get(`${WEB}/news/winba-index`, 'text');
 ok('the Index archive still lists four editions', [...editions.values()].every((e) => archive.body.includes(`/news/${e.slug}`)));
 const front = await get(`${WEB}/news`, 'text');
-ok('the newsroom front page lists both features', features.every((f) => front.body.includes(`/news/${f.slug}`)));
+ok('the newsroom front page lists all features', features.every((f) => front.body.includes(`/news/${f.slug}`)));
 const sitemap = await get(`${WEB}/news-sitemap.xml`, 'text');
-ok('both features are in the news sitemap', features.every((f) => sitemap.body.includes(f.slug)));
+ok('all features are in the news sitemap', features.every((f) => sitemap.body.includes(f.slug)));
 
 console.log('\n' + '='.repeat(72));
 console.log(fails.length ? `COMMISSION CANARY FAIL — ${pass} passed, ${fails.length} failed:\n  ${fails.join('\n  ')}` : `COMMISSION CANARY PASS — ${pass} checks`);
