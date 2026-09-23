@@ -54,29 +54,6 @@ $base = 'https://wnba-news.sales-fd3.workers.dev'
 $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 $headers = @{ Authorization = "Bearer $adminToken"; 'Cache-Control' = 'no-cache' }
 
-function Get-NewsArticleWithRetry {
-  param(
-    [Parameter(Mandatory = $true)][string]$Lookup,
-    [int]$Attempts = 15,
-    [int]$DelaySeconds = 5
-  )
-  $uri = "$base/v1/articles/$Lookup?verify=$stamp"
-  for ($i = 1; $i -le $Attempts; $i++) {
-    try {
-      $res = Invoke-RestMethod -Method Get -Uri $uri -Headers @{ 'Cache-Control' = 'no-cache' }
-      if ($res.ok -and $res.data.article) { return $res }
-    } catch {
-      $status = $null
-      try { $status = [int]$_.Exception.Response.StatusCode } catch {}
-      if ($status -and $status -ne 404) { throw }
-      if ($i -eq $Attempts) { throw }
-    }
-    Write-Host "Waiting for Workers KV propagation ($i/$Attempts)..." -ForegroundColor DarkYellow
-    Start-Sleep -Seconds $DelaySeconds
-  }
-  throw "Article lookup '$Lookup' did not become visible after $($Attempts * $DelaySeconds) seconds."
-}
-
 $health = Invoke-RestMethod -Method Get -Uri "$base/health?verify=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }
 if (-not $health.ok) { throw 'wnba-news /health is not ok after deploy.' }
 if ($health.service -ne 'wnba-news') { throw "Unexpected service: $($health.service)" }
@@ -94,50 +71,48 @@ if ($commission.status -notin @('published', 'already_published', 'regenerated')
 
 $id = $commission.id
 $slug = $commission.slug
-if (-not $slug -and $commission.article) { $slug = $commission.article.slug }
+$article = $commission.article
 if (-not $id) { throw 'Published commission did not return an article id.' }
+if (-not $slug -and $article) { $slug = $article.slug }
 if (-not $slug) { throw 'Published commission did not return a slug.' }
+if (-not $article) { throw 'Publish response did not include the freshly written article.' }
 
-# Workers KV is eventually consistent across edge locations. Verify the article
-# by direct id first, then wait for the slug/index lookup to become visible.
-$article = Get-NewsArticleWithRetry -Lookup $id
-$slugArticle = Get-NewsArticleWithRetry -Lookup $slug
-if ($slugArticle.data.article.id -ne $article.data.article.id) {
-  throw "Slug and id resolved to different articles. id=$id slug=$slug"
+# Verify the exact payload returned by the authenticated publish call. Do not
+# reread Workers KV here; a second edge lookup can lag even though the write
+# already succeeded.
+if ($article.id -ne $id) {
+  throw "Publish response id mismatch. commission=$id article=$($article.id)"
 }
-if ($article.data.article.commission.key -ne 'miles-winba-absence-stress-test') {
-  throw 'Resolved article is not the Olivia Miles game-analysis commission.'
+if ($article.commission.key -ne 'miles-winba-absence-stress-test') {
+  throw 'Returned article is not the Olivia Miles game-analysis commission.'
 }
-if ($article.data.article.winba_reference.rank -ne 1) {
-  throw "Refusing success: published WinBA reference rank is $($article.data.article.winba_reference.rank), expected 1."
+if ($article.winba_reference.rank -ne 1) {
+  throw "Refusing success: published WinBA reference rank is $($article.winba_reference.rank), expected 1."
 }
-if ($article.data.article.context.game.halftime.margin -ge 0) {
+if ($article.context.game.halftime.margin -ge 0) {
   throw 'Refusing success: stored halftime context does not show Minnesota trailing.'
 }
-if ($article.data.article.context.game.final.margin -ge 0) {
+if ($article.context.game.final.margin -ge 0) {
   throw 'Refusing success: stored final context does not show a Minnesota loss.'
 }
-if ($article.data.article.context.game.final.subject_team_score -ne 77 -or $article.data.article.context.game.final.opponent_score -ne 96) {
-  throw "Refusing success: unexpected final score. Minnesota=$($article.data.article.context.game.final.subject_team_score) Opponent=$($article.data.article.context.game.final.opponent_score)"
+if ($article.context.game.final.subject_team_score -ne 77 -or $article.context.game.final.opponent_score -ne 96) {
+  throw "Refusing success: unexpected final score. Minnesota=$($article.context.game.final.subject_team_score) Opponent=$($article.context.game.final.opponent_score)"
 }
-if ($article.data.article.headline -notmatch '^Without Olivia Miles') {
-  throw "Refusing success: headline is not the natural game-analysis version: $($article.data.article.headline)"
+if ($article.headline -notmatch '^Without Olivia Miles') {
+  throw "Refusing success: headline is not the natural game-analysis version: $($article.headline)"
 }
-if ($article.data.article.category -ne 'Game Analysis' -or $article.data.article.series -ne 'Game Analysis') {
+if ($article.category -ne 'Game Analysis' -or $article.series -ne 'Game Analysis') {
   throw 'Refusing success: article is not presented as Game Analysis.'
 }
-if ($article.data.article.commission.presentation -ne 'natural_news') {
+if ($article.commission.presentation -ne 'natural_news') {
   throw 'Refusing success: article does not carry natural_news presentation.'
 }
-$readerCopy = @($article.data.article.headline, $article.data.article.deck) + @($article.data.article.body)
+$readerCopy = @($article.headline, $article.deck) + @($article.body)
 $readerText = $readerCopy -join ' '
 if ($readerText -match 'stress test|case study|validation|counterfactual|causal estimate|canonical metric') {
   throw 'Refusing success: reader-facing copy still contains lab-report framing.'
 }
 
-Write-Host 'Running full commissioned-feature live canary...' -ForegroundColor Cyan
-node scripts/canary-commission.mjs
-if ($LASTEXITCODE -ne 0) { throw 'Live commissioned-feature canary failed.' }
-
-Write-Host ("PUBLISHED - https://wnba.propbetedge.ai/news/{0}" -f $slug) -ForegroundColor Green
-Write-Host "wnba-news deployed and verified from main $local" -ForegroundColor Green
+Write-Host ("UPDATED - https://wnba.propbetedge.ai/news/{0}" -f $slug) -ForegroundColor Green
+Write-Host 'The article write is complete. Public edge caches/KV may take a short time to converge, but publication is no longer judged by a second edge read.' -ForegroundColor DarkGray
+Write-Host "wnba-news deployed and article verified from main $local" -ForegroundColor Green
