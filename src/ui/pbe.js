@@ -2,7 +2,7 @@
 // The teaser takes team identity and tip time — it has no parameter through which a probability could arrive.
 
 import { html, raw } from '../lib/dom.js';
-import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { allAccessHeroHtml, allAccessDividerHtml } from './all-access.js';
 import { membershipFrom } from '../lib/membership.js';
 import { teamLogo, logoEntry } from './logo.js';
 import { fmtDateET, fmtTimeET, relTime, american } from '../lib/format.js';
@@ -95,7 +95,7 @@ const TEASER_STATE = {
 };
 
 /** Team-page teaser. Takes identity, time and a coverage state only. `member` (server-decided) drops every purchase CTA;
- *  free visitors get the WNBA CTA with the All Access card beneath it. */
+ *  free visitors get the All Access hero first, then the WNBA CTA beneath the "ONLY WANT WNBA?" seam. */
 export function pbeTeaser({ team, opponent, isHome, tipUtc, availability = 'unknown', next = '/pro', member = false }) {
   return html`<section class="pbe-card pbe-teaser" aria-label="PBE Team Picker" data-pbe-teaser="${availability}">
     <div class="pbe-head"><span class="pbe-eyebrow">PBE Team Picker</span><span class="pbe-lock" aria-hidden="true">WNBA Pro</span></div>
@@ -105,7 +105,7 @@ export function pbeTeaser({ team, opponent, isHome, tipUtc, availability = 'unkn
       <b>${TEASER_STATE[availability] || TEASER_STATE.unknown}</b>
       <span>Win probability · market comparison · PBE Edge · model reasoning</span>
     </div>
-    ${member ? html`<a class="btn gold pbe-cta" href="/pbe-picks">Open PBE Picks</a>` : html`<a class="btn gold pbe-cta" href="${next}">Unlock WNBA Pro</a>${raw(allAccessCardHtml(membershipFrom(null), { compact: true }))}`}
+    ${member ? html`<a class="btn gold pbe-cta" href="/pbe-picks">Open PBE Picks</a>` : html`${raw(allAccessHeroHtml(membershipFrom(null), { variant: 'compact' }))}${raw(allAccessDividerHtml())}<a class="btn gold pbe-cta" href="${next}">Unlock WNBA Pro</a>`}
   </section>`;
 }
 

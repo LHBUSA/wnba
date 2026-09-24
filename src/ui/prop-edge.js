@@ -1,5 +1,5 @@
 import { html, raw } from '../lib/dom.js';
-import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { allAccessHeroHtml, allAccessDividerHtml } from './all-access.js';
 import { membershipFrom } from '../lib/membership.js';
 import { american, bookName, fmtDateTimeET, pct } from '../lib/format.js';
 
@@ -75,8 +75,9 @@ function publicTeaser(signedIn, membership) {
         <div><b>Why + risk</b><span>See what supports the call and what pushes against it.</span></div>
         <div><b>Research links</b><span>Jump into the player, matchup, Player Load and market board.</span></div>
       </div>
+      ${raw(allAccessHeroHtml(membership, { variant: 'compact' }))}
+      ${raw(allAccessDividerHtml())}
       <a class="btn gold" href="/pro?next=%2Fprops%23pbe-prop-edge">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock PBE Prop Edge'}</a>
-      ${raw(allAccessCardHtml(membership, { compact: true }))}
     </div>
     <aside class="prop-edge-lock-demo">
       <span>PRO INTELLIGENCE</span><strong>Projection → Probability → Market</strong><small>No fake lock language. No hidden benchmark.</small>

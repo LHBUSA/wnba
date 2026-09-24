@@ -29,11 +29,16 @@ test('secondary destinations live inside one accessible More disclosure', () => 
   assert.ok(navBlock.indexOf('data-more-wrap') > navBlock.lastIndexOf(`href="${PRIMARY_NAV.at(-1)[1]}"`), 'More follows the primary row');
 });
 
-test('drawer lists every destination plus WNBA Pro; Pro stays outside the nav row', () => {
+test('drawer opens with ALL ACCESS, then every destination plus WNBA Pro; Pro and All Access stay outside the nav row', () => {
   for (const [id, href] of NAV) assert.ok(drawer.includes(`<a href="${href}" data-nav="${id}">`), `${href} in drawer`);
   assert.ok(drawer.includes('<a href="/pro" data-nav="pro">WNBA Pro</a>'));
+  const drawerAA = drawer.indexOf('<a class="drawer-aa" href="https://propbetedge.ai/pro" data-nav="all-access"');
+  assert.ok(drawerAA >= 0, 'All Access is the drawer\'s first row');
+  assert.ok(drawerAA < drawer.indexOf(`<a href="${NAV[0][1]}" data-nav="${NAV[0][0]}">`), 'All Access precedes every destination in the drawer');
   assert.ok(!navBlock.includes('href="/pro"'));
-  assert.match(doc, /<div class="hdr-actions">\s*<a class="btn-pro" href="\/pro"/);
+  assert.ok(!navBlock.includes('propbetedge.ai/pro'), 'All Access is a header action, not a nav-row item');
+  assert.ok(!moreMenu.includes('propbetedge.ai/pro'), 'All Access is never buried in More');
+  assert.match(doc, /<div class="hdr-actions">\s*<a class="btn-aa" href="https:\/\/propbetedge\.ai\/pro" data-nav="all-access"[^>]*>ALL ACCESS<\/a>\s*<a class="btn-pro" href="\/pro"/, 'ALL ACCESS is the first header action, WNBA Pro beside it');
 });
 
 test('sub-routes map to their nav group', () => {

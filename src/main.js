@@ -18,6 +18,7 @@ import './styles/player-load.css';
 import './styles/pro-intelligence.css';
 import './styles/prop-edge.css';
 import './styles/pbe-membership.css';
+import './styles/all-access.css';
 import './styles/polish.css';
 import './styles/no-scrollbars.css';
 import { mountShell } from './ui/shell.js';

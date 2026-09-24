@@ -1,10 +1,10 @@
 import { html, raw } from '../lib/dom.js';
 import { PRO_INTELLIGENCE } from '../data/pro-features.js';
-import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { allAccessHeroHtml, allAccessDividerHtml } from '../ui/all-access.js';
 import { membershipFrom } from '../lib/membership.js';
 
 /** Public (non-member) view. `membership` is the server's verdict when a page has it; the SSR/static fallback is FREE.
- *  Members never see this view, so the All Access card beneath the WNBA CTA is always the free-state card. */
+ *  Members never see this view, so the All Access hero above the WNBA CTA is always the free-state hero. */
 export function proFeaturePublicView(feature, { signedIn = false, membership = null } = {}) {
   const current = feature || PRO_INTELLIGENCE[0];
   const m = membership || membershipFrom(null);
@@ -20,12 +20,13 @@ export function proFeaturePublicView(feature, { signedIn = false, membership = n
           <div><b>Transparent by design</b><span>Derived signals are labeled for what they are. No invented certainty and no protected values hidden in public HTML.</span></div>
           <div><b>One membership</b><span>Every premium WNBA intelligence layer is included with WNBA Pro and with PropBetEdge All Access.</span></div>
         </div>
+        ${raw(allAccessHeroHtml(m, { variant: 'compact' }))}
+        ${raw(allAccessDividerHtml())}
         <div class="pi-actions">
           <a class="btn gold" href="/pro?next=${encodeURIComponent(current.href)}">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock WNBA Pro'}</a>
           <a class="btn" href="/brief">Read the free Daily Brief</a>
           <a class="sec-link" href="/pbe-picks">Preview PBE Picks →</a>
         </div>
-        ${raw(allAccessCardHtml(m, { compact: true }))}
       </div>
       <aside class="pi-suite-card">
         <span class="pi-suite-kicker">WNBA PRO SUITE</span>

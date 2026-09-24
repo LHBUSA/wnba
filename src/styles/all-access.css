@@ -1,0 +1,122 @@
+/* PropBetEdge All Access — WNBA presentation (markup from src/ui/all-access.js).
+   The umbrella is the primary offer: the hero sits ABOVE the WNBA plans on every purchase surface, the
+   header carries a first-class gold ALL ACCESS link, the drawer opens with it, the footer links to it.
+   PBE gold identity with the WNBA hardwood-flame accent; condensed display type like the rest of the desk. */
+
+/* ---- the hero ---------------------------------------------------------- */
+.wnba-aa-hero {
+  position: relative; display: grid; gap: 6px; padding: 16px 18px 16px; border-radius: var(--r3);
+  color: var(--paper); font-family: var(--f-ui);
+  border: 1px solid rgba(236, 201, 92, .6);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(212, 175, 55, .26), rgba(212, 175, 55, .04) 60%),
+    radial-gradient(70% 90% at 0% 100%, rgba(255, 122, 47, .12), transparent 60%),
+    linear-gradient(160deg, #251e12, #120f0b);
+  box-shadow: 0 18px 44px rgba(212, 175, 55, .14), inset 0 1px 0 rgba(255, 236, 180, .18);
+}
+.wnba-aa-hero::before { content: ''; position: absolute; inset: 0 0 auto; height: 2px; border-radius: var(--r3) var(--r3) 0 0; background: linear-gradient(90deg, transparent, var(--gold-bright), var(--flame), transparent); pointer-events: none; }
+.wnba-aa-hero * { box-sizing: border-box; min-width: 0; }
+.wnba-aa-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.wnba-aa-eyebrow { font: 800 10px/1 var(--f-data); letter-spacing: .2em; text-transform: uppercase; color: var(--gold-bright); }
+.wnba-aa-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold)); color: #1a1406;
+  font: 900 8.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(212, 175, 55, .28);
+}
+.wnba-aa-badge::before { content: '★'; font-size: 9px; }
+.wnba-aa-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.wnba-aa-title { margin: 0; color: #fff; font: 800 36px/.95 var(--f-display); letter-spacing: .01em; text-transform: uppercase; }
+.wnba-aa-price { display: inline-flex; align-items: baseline; gap: 1px; color: var(--gold-bright); font: 800 13px/1 var(--f-data); letter-spacing: .04em; white-space: nowrap; }
+.wnba-aa-price strong { color: #fff; font: 800 32px/1 var(--f-display); letter-spacing: -.01em; }
+.wnba-aa-tagline { margin: 0; color: var(--paper); font: 600 13.5px/1.35 var(--f-ui); }
+.wnba-aa-sports { margin: 0; color: var(--paper-2); font: 500 12px/1.4 var(--f-ui); }
+.wnba-aa-sports b { color: #fff; font: 800 11.5px/1.4 var(--f-data); letter-spacing: .06em; }
+.wnba-aa-promo { margin: 0; color: var(--gold-bright); font: 700 12px/1.4 var(--f-ui); }
+.wnba-aa-code { padding: 1px 6px; border: 1px solid rgba(236, 201, 92, .55); border-radius: 6px; background: rgba(236, 201, 92, .12); color: #fff; font: 800 11px/1.4 var(--f-data); letter-spacing: .1em; }
+.wnba-aa-actions { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; margin-top: 4px; }
+.wnba-aa-cta {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border-radius: 999px; text-decoration: none;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #1a1406;
+  font: 800 12px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase;
+  box-shadow: 0 12px 30px rgba(212, 175, 55, .24); transition: transform .15s ease, filter .15s ease;
+}
+.wnba-aa-cta:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.wnba-aa-learn { display: inline-flex; align-items: center; min-height: 44px; color: #fff; font: 700 10.5px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(236, 201, 92, .6); }
+.wnba-aa-learn:hover { color: var(--gold-bright); }
+.wnba-aa-hero.is-upgrade .wnba-aa-title { font-size: 28px; }
+
+/* compact: teasers on secondary surfaces (team pages, Prop Edge, intelligence suite, track record, PBE window) */
+.wnba-aa-hero.is-compact { padding: 13px 14px 13px; gap: 4px; }
+.wnba-aa-hero.is-compact .wnba-aa-title { font-size: 28px; }
+.wnba-aa-hero.is-compact .wnba-aa-price strong { font-size: 26px; }
+.wnba-aa-hero.is-compact .wnba-aa-tagline { font-size: 12.5px; }
+.wnba-aa-hero.is-compact .wnba-aa-cta, .wnba-aa-hero.is-compact .wnba-aa-learn { min-height: 40px; }
+
+/* the seam between the umbrella and the single-sport alternative */
+.wnba-aa-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0 4px; color: var(--dim); font: 800 10px/1 var(--f-data); letter-spacing: .16em; text-transform: uppercase; text-align: center; }
+.wnba-aa-divider::before, .wnba-aa-divider::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
+.wnba-aa-divider span { padding: 0 2px; white-space: nowrap; }
+
+/* one-line strip (public PBE Picks flagship copy): the umbrella first, the WNBA actions beneath */
+.wnba-aa-mini { display: grid; grid-template-columns: auto auto; gap: 3px 10px; align-items: center; margin-top: 20px; padding: 10px 12px; border: 1px solid rgba(236, 201, 92, .5); border-radius: var(--r2); background: linear-gradient(135deg, rgba(236, 201, 92, .18), rgba(236, 201, 92, .05)); text-decoration: none; color: var(--paper); }
+.wnba-aa-mini span { color: var(--gold-bright); font: 800 10px/1 var(--f-data); letter-spacing: .14em; }
+.wnba-aa-mini b { justify-self: end; color: #fff; font: 800 16px/1 var(--f-display); }
+.wnba-aa-mini i { grid-column: 1 / -1; color: var(--dim); font: 600 10.5px/1.3 var(--f-ui); font-style: normal; }
+.wnba-aa-mini:hover { border-color: var(--gold-bright); }
+.wnba-aa-mini + .pbe-public-actions { margin-top: 12px; }
+
+/* placements */
+.pro-panel .wnba-aa-hero { margin-top: 16px; }
+.pro-panel .wnba-aa-divider + .eyebrow { margin-top: 12px !important; }
+.pbe-teaser .wnba-aa-hero, .prop-edge-lock-copy .wnba-aa-hero, .pi-public-copy .wnba-aa-hero { margin-top: 16px; }
+.pi-public-copy .wnba-aa-divider + .pi-actions { margin-top: 12px; }
+.pbe-teaser .wnba-aa-divider + .pbe-cta { margin-top: 10px; }
+.pbe-upcoming-window .wnba-aa-divider + .pbe-public-actions { margin-top: 10px !important; }
+
+/* ---- header: first-class gold ALL ACCESS beside WNBA Pro ------------------ */
+.hdr-actions .btn-aa {
+  display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 999px; white-space: nowrap;
+  font: 800 12px/1 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: #1a1406;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold)); box-shadow: 0 6px 18px rgba(212, 175, 55, .28);
+}
+.hdr-actions .btn-aa::before { content: '★'; font-size: 10px; }
+.hdr-actions .btn-aa:hover { filter: brightness(1.06); }
+/* one filled gold pill per header: the umbrella. WNBA Pro reads as the outlined single-sport alternative
+   while the umbrella pill is present (desktop); the member badge keeps its own chrome. */
+@media (min-width: 981px) {
+  .hdr-actions .btn-aa + .btn-pro:not(.is-member) { background: transparent; color: var(--gold-bright); border: 1px solid var(--gold-line); box-shadow: none; }
+  .hdr-actions .btn-aa + .btn-pro:not(.is-member):hover { background: var(--gold-soft); filter: none; }
+}
+/* phones and tablets navigate with the bottom bar + drawer: the umbrella is the drawer's first row there */
+@media (max-width: 980px) { .hdr-actions .btn-aa { display: none; } }
+.drawer-panel a.drawer-aa { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; margin: 4px 0 8px; padding: 12px 12px; border: 1px solid rgba(236, 201, 92, .5); border-radius: 10px; background: linear-gradient(135deg, rgba(236, 201, 92, .18), rgba(236, 201, 92, .05)); color: var(--gold-bright); font: 800 14px/1.2 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; }
+.drawer-panel a.drawer-aa::before { content: '★'; font-size: 12px; }
+.drawer-panel a.drawer-aa small { margin-left: auto; color: var(--paper-2); font: 600 11px/1.2 var(--f-data); letter-spacing: 0; text-transform: none; }
+
+/* ---- footer: ALL ACCESS + WHAT'S INCLUDED --------------------------------- */
+.foot-aa-links { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; margin-top: 14px; }
+.foot-aa-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: var(--gold-bright); font: 800 11px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; text-decoration: none; }
+.foot-aa-links a.foot-aa-link::before { content: '★'; font-size: 10px; }
+.foot-aa-links a b { color: var(--paper); font: 800 11px/1 var(--f-data); letter-spacing: .04em; }
+.foot-aa-links a.foot-aa-included { color: var(--paper-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(236, 201, 92, .5); }
+.foot-aa-links a:hover { color: #fff; }
+.foot-network-links a.foot-net-aa { color: var(--gold-bright); font-weight: 800; letter-spacing: .04em; }
+
+/* members with the umbrella (ALL ACCESS ACTIVE / OWNER) are never sold it: the shell hides the sell links */
+.aa-sold { display: none !important; }
+
+/* ---- responsive ------------------------------------------------------------ */
+@media (max-width: 620px) {
+  .wnba-aa-hero { padding: 14px; }
+  .wnba-aa-actions { flex-direction: column; align-items: stretch; }
+  .wnba-aa-cta { min-height: 46px; }
+  .wnba-aa-learn { justify-content: center; }
+}
+@media (max-width: 360px) {
+  .wnba-aa-title-row, .wnba-aa-top { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .wnba-aa-title { font-size: 30px; }
+  .wnba-aa-mini { grid-template-columns: 1fr; }
+  .wnba-aa-mini b { justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) { .wnba-aa-cta { transition: none; } .wnba-aa-cta:hover { transform: none; } }

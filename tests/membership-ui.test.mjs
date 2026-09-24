@@ -1,6 +1,6 @@
 // Shared PropBetEdge membership contract on the WNBA frontend: the browser only reads the server's verdict,
-// members never see a purchase CTA, free visitors get the WNBA plan first and the All Access card beneath it,
-// and the copy rules from shared/membership/README.md hold across src/.
+// members never see a purchase CTA, free visitors get the All Access hero FIRST and the WNBA plan beneath the
+// "ONLY WANT WNBA?" seam, and the copy rules from shared/membership/README.md hold across src/.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -12,6 +12,7 @@ import { proFeaturePublicView } from '../src/views/pro-intelligence.js';
 import { pbeTeaser } from '../src/ui/pbe.js';
 import { propEdgeSection } from '../src/ui/prop-edge.js';
 import { shellHtml } from '../src/ui/shell.js';
+import { allAccessHeroHtml } from '../src/ui/all-access.js';
 import { PRO_INTELLIGENCE } from '../src/data/pro-features.js';
 
 const root = new URL('../', import.meta.url);
@@ -62,31 +63,40 @@ test('legacy wnba-api without `membership` (deploy window): the server verdict s
   assert.ok(!isMember(membershipFrom(acct({ state: 'free' }))));
 });
 
-test('free teasers: WNBA CTA first, All Access card beneath; members: no purchase CTA', () => {
+test('free teasers: All Access hero first, WNBA CTA beneath the seam; members: no purchase CTA', () => {
   const free = String(proFeaturePublicView(PRO_INTELLIGENCE[1]));
-  assert.ok(free.indexOf('Unlock WNBA Pro') < free.indexOf('pbe-mbr-aa'), 'WNBA plan CTA precedes the All Access card');
-  assert.match(free, /Get All Access →/);
+  assert.ok(free.indexOf('data-wnba-all-access="hero"') < free.indexOf('ONLY WANT WNBA?'), 'the hero precedes the ONLY WANT WNBA? seam');
+  assert.ok(free.indexOf('ONLY WANT WNBA?') < free.indexOf('Unlock WNBA Pro'), 'the seam precedes the WNBA plan CTA');
+  assert.match(free, /GET ALL ACCESS/);
   assert.match(free, new RegExp(ALL_ACCESS_OFFER.checkoutUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.doesNotMatch(free, /pbe-mbr-aa/, 'the shared card is replaced by the WNBA hero');
   assert.doesNotMatch(free, /One Pro entitlement|separate from|Stripe/);
 
   const teaser = String(pbeTeaser({ team: { team_id: '20' }, opponent: { team_id: '18' }, isHome: true, tipUtc: '2026-09-25T23:00:00Z' }));
   assert.match(teaser, /Unlock WNBA Pro/);
-  assert.match(teaser, /pbe-mbr-aa/);
+  assert.match(teaser, /wnba-aa-hero is-compact/);
+  assert.ok(teaser.indexOf('data-wnba-all-access="hero"') < teaser.indexOf('Unlock WNBA Pro'), 'team teaser: hero before the WNBA CTA');
   const memberTeaser = String(pbeTeaser({ team: { team_id: '20' }, opponent: { team_id: '18' }, isHome: true, tipUtc: '2026-09-25T23:00:00Z', member: true }));
-  assert.doesNotMatch(memberTeaser, /Unlock|pbe-mbr-aa|buy\.stripe\.com/);
+  assert.doesNotMatch(memberTeaser, /Unlock|pbe-mbr-aa|wnba-aa-hero|buy\.stripe\.com/);
   assert.match(memberTeaser, /Open PBE Picks/);
 
   const propFree = String(propEdgeSection({ account: acct({ state: 'free', membership: serverMembership({ entitled: false, email: 'f@example.com' }) }), edge: null }));
   assert.match(propFree, /Upgrade to WNBA Pro/);
-  assert.match(propFree, /pbe-mbr-aa is-compact/);
+  assert.match(propFree, /wnba-aa-hero is-compact/);
+  assert.ok(propFree.indexOf('data-wnba-all-access="hero"') < propFree.indexOf('Upgrade to WNBA Pro'), 'Prop Edge teaser: hero before the WNBA CTA');
+  // The shared contract card is untouched (other sports still use it); WNBA renders its own hero from the same offer.
   assert.equal(allAccessCardHtml(serverMembership({ entitled: true, accessSource: 'all_access' })), '');
   assert.equal(allAccessCardHtml(serverMembership({ entitled: true, accessSource: 'owner' })), '');
   assert.match(allAccessCardHtml(serverMembership({ entitled: true, accessSource: 'sport' })), /Upgrade to All Access/);
+  assert.equal(allAccessHeroHtml(serverMembership({ entitled: true, accessSource: 'all_access' })), '');
+  assert.equal(allAccessHeroHtml(serverMembership({ entitled: true, accessSource: 'owner' })), '');
+  assert.match(String(allAccessHeroHtml(serverMembership({ entitled: true, accessSource: 'sport' }))), /UPGRADE TO ALL ACCESS/);
 });
 
 test('shell stays neutral until the verdict arrives and no longer sells one entitlement', () => {
   const doc = String(shellHtml());
   assert.match(doc, /<a class="btn-pro" href="\/pro" data-nav="pro">WNBA Pro<\/a>/);
+  assert.match(doc, /<a class="btn-aa" href="https:\/\/propbetedge\.ai\/pro" data-nav="all-access" data-all-access-sell rel="noopener"[^>]*>ALL ACCESS<\/a>/, 'first-class All Access link in the header');
   assert.doesNotMatch(doc, /one WNBA Pro entitlement/);
   assert.match(doc, /included with WNBA Pro and PropBetEdge All Access/);
   const shell = read('src/ui/shell.js');
@@ -104,7 +114,8 @@ test('/pro: badge from the contract, plan text from the contract, manage link, c
   assert.match(pro, /ctx\.query\.checkout === 'success'/);
   assert.match(pro, /WNBA Pro is active/);
   assert.match(pro, /sign in with your checkout email/i);
-  assert.match(pro, /m\.state === 'sport_pro' \? raw\(allAccessCardHtml\(m\)\)/, 'All Access upgrade only for sport_pro members');
+  assert.match(pro, /m\.state === 'sport_pro' \? raw\(allAccessHeroHtml\(m\)\)/, 'UPGRADE TO ALL ACCESS hero only for sport_pro members');
+  assert.doesNotMatch(pro, /allAccessCardHtml/, 'the /pro purchase panel renders the WNBA hero, not the shared card');
   assert.doesNotMatch(pro, /Member sign-in opens with WNBA Pro checkout|separate from NBA|Manage or cancel from your Stripe receipt email|Founding Season checkout/);
   assert.match(pro, /Founding Season rate/, 'Founding Season survives only as the rate label');
 });

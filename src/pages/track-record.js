@@ -1,7 +1,7 @@
 // Live track record: official locked calls only, graded from the final score. The aggregate is public; the
 // per-game ledger is WNBA Pro and comes from a separate endpoint that checks entitlement first.
 import { html, render, raw } from '../lib/dom.js';
-import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { allAccessHeroHtml, allAccessDividerHtml } from '../ui/all-access.js';
 import { membershipFrom } from '../lib/membership.js';
 import { api } from '../data/api.js';
 import { pageHead, errorState, skeleton } from '../ui/components.js';
@@ -44,7 +44,7 @@ export async function mount(root, ctx) {
   const d = normalizeTrackData(res.data);
   const r = d.record;
 
-  let ledger = html`<section class="pbe-card pbe-teaser"><div class="pbe-head"><span class="pbe-eyebrow">Full call ledger</span><span class="pbe-lock">WNBA Pro</span></div><div class="pbe-teaser-body"><b>Every locked call, game by game</b><span>Original probability · opponent · market comparison · PBE Edge · locked time · result · model version</span></div><a class="btn gold pbe-cta" href="/pro?next=%2Ftrack-record">Unlock WNBA Pro</a>${raw(allAccessCardHtml(membershipFrom(acct), { compact: true }))}</section>`;
+  let ledger = html`<section class="pbe-card pbe-teaser"><div class="pbe-head"><span class="pbe-eyebrow">Full call ledger</span><span class="pbe-lock">WNBA Pro</span></div><div class="pbe-teaser-body"><b>Every locked call, game by game</b><span>Original probability · opponent · market comparison · PBE Edge · locked time · result · model version</span></div>${raw(allAccessHeroHtml(membershipFrom(acct), { variant: 'compact' }))}${raw(allAccessDividerHtml())}<a class="btn gold pbe-cta" href="/pro?next=%2Ftrack-record">Unlock WNBA Pro</a></section>`;
   if (acct.ok && acct.data?.state === 'pro') {
     const L = await api.trackRecordLedger();
     if (!ctx.isCurrent()) return;

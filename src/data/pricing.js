@@ -17,7 +17,7 @@ export const PLANS = Object.freeze({
     label: 'Monthly',
     price: '$9.99',
     per: 'month',
-    tag: 'Best value',
+    tag: 'Popular',
     note: 'Billed monthly · cancel anytime · no free trial',
     stripePriceId: 'price_1UEfAmF3CaVzg4OReyWRioNO',
     paymentLinkId: 'plink_1UEfBOF3CaVzg4ORuxdQriRX',

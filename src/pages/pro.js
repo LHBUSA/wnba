@@ -4,8 +4,8 @@
 //
 // Membership vocabulary = the shared PropBetEdge contract (src/lib/pbe-membership.js): FREE · WNBA PRO ACTIVE ·
 // ALL ACCESS ACTIVE · OWNER, read from the server's `membership` object and never re-derived here.
-//   free       WNBA plan picker (monthly / weekly, live checkout) + the All Access card beneath
-//   sport_pro  plan active, manage link, All Access as the optional upgrade
+//   free       All Access hero FIRST, then "ONLY WANT WNBA?" + the WNBA plan picker (monthly / weekly, live checkout)
+//   sport_pro  plan active, manage link, UPGRADE TO ALL ACCESS hero (no WNBA purchase)
 //   all_access ALL ACCESS ACTIVE, manage link, network row — no purchase CTA anywhere
 //   owner      OWNER — no purchase CTA, no manage link
 
@@ -15,7 +15,8 @@ import { skeleton, badge } from '../ui/components.js';
 import { PLANS, DEFAULT_PLAN, checkoutReady } from '../data/pricing.js';
 import { fmtDateET } from '../lib/format.js';
 import { PRO_INTELLIGENCE } from '../data/pro-features.js';
-import { membershipBadgeHtml, planText, manageLinkHtml, allAccessCardHtml, networkLinksHtml, deriveMembership, ALL_ACCESS_URL } from '../lib/pbe-membership.js';
+import { membershipBadgeHtml, planText, manageLinkHtml, networkLinksHtml, deriveMembership, ALL_ACCESS_URL } from '../lib/pbe-membership.js';
+import { allAccessHeroHtml, allAccessDividerHtml } from '../ui/all-access.js';
 import { membershipFrom, isMember, announceMembership, SPORT } from '../lib/membership.js';
 
 export const title = () => 'WNBA Pro';
@@ -108,7 +109,7 @@ export async function mount(root, ctx) {
     <a class="btn block" style="margin-top:10px;border-color:var(--gold-line)" href="/player-load">Open Player Load Intelligence</a>
     <div class="pi-suite-rail" style="margin-top:12px">${PRO_INTELLIGENCE.map((f) => html`<a href="${f.href}"><span>${f.name}</span><b>PRO</b></a>`)}</div>
     <div class="pill-row" style="margin-top:12px;justify-content:center"><a class="pill" href="/brief">Free Daily Brief</a><a class="pill" href="/track-record">Track record</a><a class="pill" href="/cast">WNBACast</a><a class="pill" href="/props">Best line</a><a class="pill" href="/matchups">Matchups</a></div>
-    ${m.state === 'sport_pro' ? raw(allAccessCardHtml(m)) : ''}
+    ${m.state === 'sport_pro' ? raw(allAccessHeroHtml(m)) : ''}
     ${m.state === 'all_access' || m.state === 'owner' ? html`<div class="pbe-mbr-links"><a class="pbe-mbr-network-link" href="${ALL_ACCESS_URL}" rel="noopener">${m.state === 'all_access' ? 'Your network' : 'PropBetEdge All Access'}</a></div>${raw(networkLinksHtml(SPORT))}` : ''}
     ${m.show_manage ? html`<div class="pbe-mbr-links">${raw(manageLinkHtml(m))}</div>` : ''}
     <button class="btn block" style="margin-top:16px" type="button" data-logout>Sign out</button>
@@ -119,11 +120,12 @@ export async function mount(root, ctx) {
     const signedIn = account.state === 'free';
     return html`<section class="card pro-panel" id="plans">
       <div class="pro-state">${signedIn ? html`${raw(membershipBadgeHtml(m))}<span>${m.email}</span>` : badge('sched', 'Choose your plan')}</div>
-      <h2 style="font:800 30px/1 var(--f-display);text-transform:uppercase;margin:16px 0">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock WNBA Pro'}</h2>
+      <h2 style="font:800 30px/1 var(--f-display);text-transform:uppercase;margin:16px 0">${signedIn ? 'Upgrade your access' : 'Choose your access'}</h2>
       ${checkoutSuccess && !signedIn ? signInBlock({ lead: 'Sign in with your checkout email to open your desk.' }) : ''}
+      ${raw(allAccessHeroHtml(m))}
+      ${raw(allAccessDividerHtml())}
       ${planPicker()}${checkout()}
       <ul class="note" style="margin:16px 0 0;padding-left:18px;display:grid;gap:4px"><li>No free trial</li><li>Cancel anytime</li><li>Also included with PropBetEdge All Access</li></ul>
-      ${raw(allAccessCardHtml(m))}
       ${signedIn
         ? html`${account.entitlement_check === 'UNAVAILABLE' ? html`<p class="callout warn" style="margin-top:14px">We couldn’t confirm your subscription just now. If you’re a member, reload in a minute.</p>` : ''}<button class="btn" style="margin-top:14px" type="button" data-logout>Sign out</button>`
         : checkoutSuccess ? '' : signInBlock()}
@@ -142,7 +144,7 @@ export async function mount(root, ctx) {
 
   const draw = () => {
     const member = isMember(m);
-    render(root, html`${preview ? html`<div class="callout warn" style="margin-bottom:16px">DESIGN PREVIEW · dev build only · state “${preview}” with specimen values. Production renders only the state the server returns.</div>` : ''}${successBanner()}<div class="pro-wrap"><section class="pro-hero">${member ? raw(membershipBadgeHtml(m)) : html`<span class="eyebrow">PropBetEdge WNBA</span>`}<h1 style="margin-top:14px">WNBA <span>Pro</span></h1><p style="margin-top:14px;color:var(--paper-2);font-size:16px;max-width:58ch">PBE Picks is the center of a full intelligence stack: game calls, player-prop projections, model movement, player workload, rotation pressure, scenario paths, live watchlists and a permanent locked-call record.</p>${valueList(FLAGSHIP)}<span class="eyebrow" style="display:block;margin-top:22px">The full WNBA desk</span>${valueList(DESK)}<div class="pill-row" style="margin-top:18px"><a class="pill on" href="/brief">Try the free Daily Brief</a>${PRO_INTELLIGENCE.map((f) => html`<a class="pill" href="${f.href}">${f.name}</a>`)}</div>${member ? '' : html`<a class="btn gold" style="margin-top:22px" href="#plans">Unlock WNBA Pro</a>`}<p class="note" style="margin-top:18px">Player Load measures workload and schedule pressure, not medical fatigue. PBE Prop Edge V1 is a tracking beta until its historical validation and locked prop record are complete. Scenario Lab v1 explains evidence paths rather than inventing simulations. Model details: <a class="sec-link" href="/pbe-picks/model">how the PBE model works</a> · <a class="sec-link" href="/track-record">live track record</a>.</p></section>${member ? memberPanel() : freePanel()}</div>`);
+    render(root, html`${preview ? html`<div class="callout warn" style="margin-bottom:16px">DESIGN PREVIEW · dev build only · state “${preview}” with specimen values. Production renders only the state the server returns.</div>` : ''}${successBanner()}<div class="pro-wrap"><section class="pro-hero">${member ? raw(membershipBadgeHtml(m)) : html`<span class="eyebrow">PropBetEdge WNBA</span>`}<h1 style="margin-top:14px">WNBA <span>Pro</span></h1><p style="margin-top:14px;color:var(--paper-2);font-size:16px;max-width:58ch">PBE Picks is the center of a full intelligence stack: game calls, player-prop projections, model movement, player workload, rotation pressure, scenario paths, live watchlists and a permanent locked-call record.</p>${valueList(FLAGSHIP)}<span class="eyebrow" style="display:block;margin-top:22px">The full WNBA desk</span>${valueList(DESK)}<div class="pill-row" style="margin-top:18px"><a class="pill on" href="/brief">Try the free Daily Brief</a>${PRO_INTELLIGENCE.map((f) => html`<a class="pill" href="${f.href}">${f.name}</a>`)}</div>${member ? '' : html`<a class="btn gold" style="margin-top:22px" href="#plans">Choose your access</a>`}<p class="note" style="margin-top:18px">Player Load measures workload and schedule pressure, not medical fatigue. PBE Prop Edge V1 is a tracking beta until its historical validation and locked prop record are complete. Scenario Lab v1 explains evidence paths rather than inventing simulations. Model details: <a class="sec-link" href="/pbe-picks/model">how the PBE model works</a> · <a class="sec-link" href="/track-record">live track record</a>.</p></section>${member ? memberPanel() : freePanel()}</div>`);
     root.querySelectorAll('[data-plan]').forEach((b) => b.addEventListener('click', () => { selected = b.dataset.plan; draw(); }));
     root.querySelector('[data-signin]')?.addEventListener('submit', async (e) => { e.preventDefault(); const email = String(new FormData(e.target).get('email') || '').trim(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { signin = { status: 'error', message: 'Enter a valid email address.' }; return draw(); } signin = { status: 'sending', message: '' }; draw(); const r = await api.authRequest(email, next); signin = r.ok ? { status: 'sent', message: `Check ${email} for your sign-in link. It works once, for 15 minutes.` } : { status: 'error', message: r.error?.message || 'We could not send the link. Try again shortly.' }; draw(); });
     root.querySelector('[data-logout]')?.addEventListener('click', async () => { await api.authLogout(); location.reload(); });

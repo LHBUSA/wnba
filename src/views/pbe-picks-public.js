@@ -1,4 +1,5 @@
-import { html } from '../lib/dom.js';
+import { html, raw } from '../lib/dom.js';
+import { allAccessMiniHtml } from '../ui/all-access.js';
 
 // Public/server-rendered flagship shell for PBE Picks. It deliberately contains
 // zero protected prediction values. The entitled client replaces this with the
@@ -16,6 +17,7 @@ export function pbePicksPublicView() {
           <div><b>Why / why not</b><span>Supporting factors and opposing factors come from the model's real feature contributions.</span></div>
           <div><b>Beyond the pick</b><span>Pro opens Edge Timeline, Scenario Lab, Rotation Impact, Player Load and your own Watchlist around the same call.</span></div>
         </div>
+        ${raw(allAccessMiniHtml(null))}
         <div class="pbe-public-actions">
           <a class="btn gold" href="/pro?next=%2Fpbe-picks">Unlock WNBA Pro</a>
           <a class="btn" href="/brief">Read the free Daily Brief</a>
