@@ -48,6 +48,9 @@ const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 
 const BRAND_MARK = `<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1813"/><circle cx="32" cy="32" r="19" fill="none" stroke="#d4af37" stroke-width="3.5"/><path d="M13 32h38M32 13v38M19 18c7 6 7 22 0 28M45 18c-7 6-7 22 0 28" fill="none" stroke="#ff7a2f" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 
+/** Short header badge for phones; the full label stays in the contract badge and the link's aria-label. */
+const SHORT_LABEL = (m) => m.state === 'owner' ? 'OWNER' : m.state === 'all_access' ? 'ALL ACCESS' : m.legacy_tier === 'founding' ? 'FOUNDING' : m.legacy_tier === 'season_pass' ? 'PASS' : 'WNBA PRO';
+
 const MOTHER_VERIFY_URL = 'https://mother.proptechusa.ai/verify/xgH9unhpY6TDvTtmG8CsUWrq0O6M10TS';
 // Same-origin passthrough to Mother AI's official live SVG. Vercel proxies this path to
 // api.mother.proptechusa.ai so the badge remains stateful/verifiable without weakening CSP.
@@ -243,7 +246,9 @@ export function mountShell(root) {
       if (a.classList.contains('btn-pro')) {
         a.classList.add('is-member');
         a.setAttribute('aria-label', `${m.label} · your WNBA Pro desk`);
-        a.innerHTML = membershipBadgeHtml(m);
+        // Phones (<=480px) show a short badge so brand + badge + menu fit at 320-430 in every state;
+        // the full contract badge returns from 481px. The link's aria-label carries the full label.
+        a.innerHTML = `${membershipBadgeHtml(m)}<span class="pbe-mbr-badge is-${m.state} pbe-mbr-badge-short" aria-hidden="true">${SHORT_LABEL(m)}</span>`;
       } else {
         a.textContent = m.label;
       }

@@ -124,6 +124,12 @@
 .hdr-actions .btn-pro.is-member:hover { filter: none; }
 .hdr-actions .btn-pro.is-member .pbe-mbr-badge { padding: 9px 12px; }
 .hdr-actions .btn-pro.is-member .pbe-mbr-badge.is-free { display: none; }
+/* header member badge on phones: short label <=480px (WNBA PRO / ALL ACCESS / OWNER), the full contract label from 481px */
+.hdr-actions .btn-pro.is-member .pbe-mbr-badge-short { display: none; padding: 8px 9px; font-size: 9px; letter-spacing: .1em; }
+@media (max-width: 480px) {
+  .hdr-actions .btn-pro.is-member .pbe-mbr-badge:not(.pbe-mbr-badge-short) { display: none; }
+  .hdr-actions .btn-pro.is-member .pbe-mbr-badge-short { display: inline-flex; }
+}
 .pbe-teaser .pbe-mbr-aa, .prop-edge-lock-copy .pbe-mbr-aa, .pi-public-copy .pbe-mbr-aa, .pro-panel .pbe-mbr-aa, .pro-hero .pbe-mbr-aa { margin-top: 18px; }
 .pro-panel .pbe-mbr-network { margin-top: 14px; }
 .pro-panel .pbe-mbr-links { margin-top: 14px; justify-content: center; }

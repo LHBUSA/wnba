@@ -151,6 +151,18 @@ test('chrome: gold ALL ACCESS header link beside WNBA Pro, drawer first row, foo
   assert.match(read('src/main.js'), /import '\.\/styles\/all-access\.css';/);
 });
 
+test('phone header fit: brand gives way, short member badge <=480px, mark-only <=360px (no horizontal overflow in any state)', () => {
+  const shell = read('src/ui/shell.js');
+  assert.match(shell, /const SHORT_LABEL = \(m\) => m\.state === 'owner' \? 'OWNER' : m\.state === 'all_access' \? 'ALL ACCESS'/);
+  assert.match(shell, /\$\{membershipBadgeHtml\(m\)\}<span class="pbe-mbr-badge is-\$\{m\.state\} pbe-mbr-badge-short" aria-hidden="true">\$\{SHORT_LABEL\(m\)\}<\/span>/, 'full contract badge kept, short badge beside it');
+  const comp = read('src/styles/components.css');
+  assert.match(comp, /@media \(max-width: 980px\) \{\s*\.brand \{ flex: 0 1 auto; min-width: 0; \}/);
+  assert.match(comp, /\.brand-txt b \{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; \}/);
+  assert.match(comp, /@media \(max-width: 360px\) \{\s*\.brand-txt \{ display: none; \}/);
+  const pbe = read('src/styles/pbe.css');
+  assert.match(pbe, /@media \(max-width: 480px\) \{\s*\.hdr-actions \.btn-pro\.is-member \.pbe-mbr-badge:not\(\.pbe-mbr-badge-short\) \{ display: none; \}\s*\.hdr-actions \.btn-pro\.is-member \.pbe-mbr-badge-short \{ display: inline-flex; \}/);
+});
+
 test('the shared contract copies are untouched (server and client byte-identical, card still exported)', () => {
   assert.equal(read('src/lib/pbe-membership.js'), read('workers/wnba-api/src/pbe-membership.js'));
   assert.match(read('src/lib/pbe-membership.js'), /export function allAccessCardHtml/);

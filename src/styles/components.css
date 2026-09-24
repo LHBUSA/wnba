@@ -56,11 +56,24 @@
   .mnav a[aria-current='page'] { color: var(--gold); }
   body { padding-bottom: 64px; }
 }
-/* 360-class phones: brand + Pro + menu otherwise run 23px past the viewport and clip the menu button */
+/* Phone header fit (320-480, every membership state): the actions never shrink, so the brand is the flex item
+   that gives way (min-width 0 + ellipsis as the hard stop), the wordmark tightens under 480px, and at 360px and
+   below the brand is the mark alone. The row can no longer be wider than the viewport in any state. */
+@media (max-width: 980px) {
+  .brand { flex: 0 1 auto; min-width: 0; }
+  .brand-txt { min-width: 0; }
+  .brand-txt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hdr-actions { flex: 0 0 auto; min-width: 0; }
+}
+@media (max-width: 480px) {
+  .brand-txt b { font-size: 16px; letter-spacing: .04em; }
+}
 @media (max-width: 380px) {
   .hdr-in { gap: var(--s3); }
-  .brand-txt b { font-size: 17px; }
   .btn-pro { padding: 9px 11px; font-size: 11.5px; }
+}
+@media (max-width: 360px) {
+  .brand-txt { display: none; }
 }
 .drawer { position: fixed; inset: 0; z-index: 60; display: none; }
 .drawer.open { display: block; }
