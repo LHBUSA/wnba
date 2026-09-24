@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import zlib from 'node:zlib';
 import { pbePicks, pbeGame, pbeTeam, pbeCoverage, trackRecordLedger, pbeVisibility } from '../workers/wnba-api/src/pbe.js';
 import { resolveAccount } from '../workers/wnba-api/src/account.js';
+import { CONTRACT_VERSION, MANAGE_URL, ALL_ACCESS_URL } from '../workers/wnba-api/src/pbe-membership.js';
 import { signSession, verifySession, requestLink, verifyPage, verifyConsume, logout, safeNext, SESSION_COOKIE, sha256Hex } from '../workers/wnba-api/src/auth.js';
 import { buildPredictionDoc, lockDoc } from '../workers/shared/pbe-runtime.js';
 
@@ -28,10 +29,16 @@ function kvStore() {
 }
 
 // Billing ledger stub: per email, per product. Records every read so the product key can be asserted.
+// Shape = the deployed propbetedge-sports-billing POST /v1/entitlement verdict: { entitled, product_key, access_source,
+// subscription: { product_key, plan, status, current_period_end, cancel_at_period_end } }.
 const LEDGER = {
-  'pro@example.com': { wnba_pro: { entitled: true, subscription: { plan: 'monthly', status: 'active', current_period_end: '2099-01-01T00:00:00Z', cancel_at_period_end: false } } },
-  'expired@example.com': { wnba_pro: { entitled: false, subscription: { plan: 'weekly', status: 'active', current_period_end: '2020-01-01T00:00:00Z', cancel_at_period_end: false } } },
-  'nba@example.com': { nba_pro: { entitled: true, subscription: { plan: 'monthly', status: 'active', current_period_end: '2099-01-01T00:00:00Z' } } },
+  'pro@example.com': { wnba_pro: { entitled: true, access_source: 'sport', subscription: { product_key: 'wnba_pro', plan: 'monthly', status: 'active', current_period_end: '2099-01-01T00:00:00Z', cancel_at_period_end: false } } },
+  'weekly@example.com': { wnba_pro: { entitled: true, access_source: 'sport', subscription: { product_key: 'wnba_pro', plan: 'weekly', status: 'active', current_period_end: '2099-01-08T00:00:00Z', cancel_at_period_end: true } } },
+  'allaccess@example.com': { wnba_pro: { entitled: true, access_source: 'all_access', subscription: { product_key: 'pbe_all_access', plan: 'monthly', status: 'active', current_period_end: '2099-02-01T00:00:00Z', cancel_at_period_end: false } } },
+  'expired@example.com': { wnba_pro: { entitled: false, access_source: null, subscription: { product_key: 'wnba_pro', plan: 'weekly', status: 'active', current_period_end: '2020-01-01T00:00:00Z', cancel_at_period_end: false } } },
+  'canceled@example.com': { wnba_pro: { entitled: false, access_source: null, subscription: { product_key: 'wnba_pro', plan: 'monthly', status: 'canceled', current_period_end: '2020-01-01T00:00:00Z', cancel_at_period_end: false } } },
+  'pastdue@example.com': { wnba_pro: { entitled: false, access_source: null, subscription: { product_key: 'wnba_pro', plan: 'monthly', status: 'past_due', current_period_end: '2099-01-01T00:00:00Z', cancel_at_period_end: false } } },
+  'nba@example.com': { nba_pro: { entitled: true, access_source: 'sport', subscription: { product_key: 'nba_pro', plan: 'monthly', status: 'active', current_period_end: '2099-01-01T00:00:00Z' } } },
   'free@example.com': {}
 };
 function billing(reads, { down = false } = {}) {
@@ -43,7 +50,7 @@ function billing(reads, { down = false } = {}) {
       const { email, product_key } = JSON.parse(init.body);
       reads.push({ email, product_key });
       const e = LEDGER[email]?.[product_key];
-      return new Response(JSON.stringify({ entitled: Boolean(e?.entitled), product_key, subscription: e?.subscription || null }), { status: 200 });
+      return new Response(JSON.stringify({ entitled: Boolean(e?.entitled), product_key, access_source: e?.entitled ? e.access_source || null : null, subscription: e?.subscription || null }), { status: 200 });
     }
   };
 }
@@ -296,6 +303,87 @@ test('official lock stays on the picks board after tip even when the mutable KV 
   assert.equal(p.pick_team_id, row.selected_team_id);
   assert.equal(p.pick_probability, row.win_probability);
   assert.equal(p.locked_at, lockedAt);
+});
+
+// ------------------------------------------------------------------ membership contract (shared, v1.1.0)
+
+const acctFor = async (env, email) => resolveAccount(req('/v1/account', email ? { cookie: await sessionFor(email) } : {}), env);
+const FREE_MEMBERSHIP = (email) => ({ state: 'free', label: 'FREE', entitled: false, access_source: null, product_key: null, plan: null, email, current_period_end: null, cancel_at_period_end: false, show_purchase_cta: true, show_all_access_upgrade: false, show_manage: false });
+const pickM = (m) => ({ state: m.state, label: m.label, entitled: m.entitled, access_source: m.access_source, product_key: m.product_key, plan: m.plan, email: m.email, current_period_end: m.current_period_end, cancel_at_period_end: m.cancel_at_period_end, show_purchase_cta: m.show_purchase_cta, show_all_access_upgrade: m.show_all_access_upgrade, show_manage: m.show_manage });
+
+test('membership: the Worker copy of the contract is byte-identical to the client copy and pinned to 1.1.0', () => {
+  const worker = fs.readFileSync(new URL('../workers/wnba-api/src/pbe-membership.js', import.meta.url), 'utf8');
+  const client = fs.readFileSync(new URL('../src/lib/pbe-membership.js', import.meta.url), 'utf8');
+  assert.equal(worker, client);
+  assert.equal(CONTRACT_VERSION, '1.1.0');
+  assert.ok(fs.existsSync(new URL('../src/styles/pbe-membership.css', import.meta.url)));
+  assert.match(fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'), /import '\.\/styles\/pbe-membership\.css';/);
+});
+
+test('membership: signed out and free carry FREE (email only when signed in); nothing paid, no plan, no source', async () => {
+  const { env } = await seededEnv();
+  const out = await acctFor(env, null);
+  assert.equal(out.membership.contract, CONTRACT_VERSION);
+  assert.equal(out.membership.sport, 'wnba');
+  assert.deepEqual(pickM(out.membership), FREE_MEMBERSHIP(null));
+  const free = await acctFor(env, 'free@example.com');
+  assert.equal(free.state, 'free');
+  assert.deepEqual(pickM(free.membership), FREE_MEMBERSHIP('free@example.com'));
+});
+
+test('membership: WNBA plan (access_source sport) -> WNBA PRO ACTIVE for monthly and weekly, manage link on, All Access upgrade on', async () => {
+  const { env } = await seededEnv();
+  const monthly = await acctFor(env, 'pro@example.com');
+  assert.equal(monthly.state, 'pro');
+  assert.equal(monthly.access_source, 'sport');
+  assert.deepEqual(pickM(monthly.membership), { state: 'sport_pro', label: 'WNBA PRO ACTIVE', entitled: true, access_source: 'sport', product_key: 'wnba_pro', plan: 'monthly', email: 'pro@example.com', current_period_end: '2099-01-01T00:00:00Z', cancel_at_period_end: false, show_purchase_cta: false, show_all_access_upgrade: true, show_manage: true });
+  assert.equal(monthly.membership.manage_url, MANAGE_URL);
+  assert.equal(monthly.membership.network_url, ALL_ACCESS_URL);
+  const weekly = await acctFor(env, 'weekly@example.com');
+  assert.deepEqual([weekly.state, weekly.plan, weekly.cancel_at_period_end], ['pro', 'weekly', true]);
+  assert.deepEqual([weekly.membership.state, weekly.membership.label, weekly.membership.plan, weekly.membership.cancel_at_period_end, weekly.membership.show_manage], ['sport_pro', 'WNBA PRO ACTIVE', 'weekly', true, true]);
+});
+
+test('membership: All Access (plan monthly + access_source all_access) -> ALL ACCESS ACTIVE, full WNBA Pro access, no purchase CTA, no upgrade', async () => {
+  const { env, doc } = await seededEnv();
+  const acct = await acctFor(env, 'allaccess@example.com');
+  assert.equal(acct.state, 'pro', 'the gated surfaces keep keying on state=pro');
+  assert.equal(acct.access, 'subscriber');
+  assert.equal(acct.access_source, 'all_access');
+  assert.deepEqual(pickM(acct.membership), { state: 'all_access', label: 'ALL ACCESS ACTIVE', entitled: true, access_source: 'all_access', product_key: 'pbe_all_access', plan: 'monthly', email: 'allaccess@example.com', current_period_end: '2099-02-01T00:00:00Z', cancel_at_period_end: false, show_purchase_cta: false, show_all_access_upgrade: false, show_manage: true });
+  const picks = await call(pbePicks, '/v1/pbe/picks', env, { cookie: await sessionFor('allaccess@example.com') });
+  assert.equal(picks.status, 200);
+  assert.equal(picks.body.data.picks[0].p_home, doc.p_home);
+});
+
+test('membership: owner -> OWNER, no purchase CTA, no manage link', async () => {
+  const { env } = await seededEnv();
+  const acct = await acctFor(env, 'owner@example.com');
+  assert.deepEqual([acct.state, acct.access, acct.access_source, acct.entitlement_check], ['pro', 'owner', 'owner', 'OWNER']);
+  assert.deepEqual(pickM(acct.membership), { state: 'owner', label: 'OWNER', entitled: true, access_source: 'owner', product_key: null, plan: null, email: 'owner@example.com', current_period_end: null, cancel_at_period_end: false, show_purchase_cta: false, show_all_access_upgrade: false, show_manage: false });
+});
+
+test('membership: canceled, expired, past_due and other-sport-only are FREE with no plan and no source', async () => {
+  const { env } = await seededEnv();
+  for (const email of ['canceled@example.com', 'expired@example.com', 'pastdue@example.com', 'nba@example.com']) {
+    const acct = await acctFor(env, email);
+    assert.equal(acct.state, 'free', email);
+    assert.equal(acct.access_source, null, email);
+    assert.deepEqual(pickM(acct.membership), FREE_MEMBERSHIP(email), email);
+  }
+  // Ledger unreachable: still FREE, never a plan or a source.
+  env.BILLING = billing([], { down: true });
+  const down = await acctFor(env, 'pro@example.com');
+  assert.deepEqual([down.state, down.entitlement_check], ['free', 'UNAVAILABLE']);
+  assert.deepEqual(pickM(down.membership), FREE_MEMBERSHIP('pro@example.com'));
+});
+
+test('membership: the browser-safe object never carries ledger internals, tokens or secrets', async () => {
+  const { env } = await seededEnv();
+  for (const email of ['pro@example.com', 'allaccess@example.com', 'owner@example.com', 'free@example.com']) {
+    const text = JSON.stringify((await acctFor(env, email)).membership);
+    assert.doesNotMatch(text, /stripe_|customer|webhook|token|secret|supabase|row_id|ledger_id/i, email);
+  }
 });
 
 // ------------------------------------------------------------------ sign-in

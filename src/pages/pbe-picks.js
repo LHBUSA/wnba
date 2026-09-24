@@ -4,7 +4,9 @@
 //   owner, not published  shadow calls, explicitly labelled
 //   Pro, published        live PRE-LOCK + LOCKED calls with research context
 
-import { html, render } from '../lib/dom.js';
+import { html, render, raw } from '../lib/dom.js';
+import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { membershipFrom } from '../lib/membership.js';
 import { api } from '../data/api.js';
 import { skeleton, pageHead, errorState } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
@@ -148,11 +150,13 @@ function teaserView(cov, acct) {
   const games = cov.ok ? cov.data.games || [] : [];
   const published = cov.ok && cov.data.published;
   const signedIn = acct.ok && acct.data?.state === 'free';
+  const m = membershipFrom(acct);
   return html`${pbePicksPublicView()}
     <section class="pbe-card pbe-teaser pbe-upcoming-window">
       <div class="pbe-head"><span class="pbe-eyebrow">Current PBE window</span><span class="pbe-lock">WNBA Pro</span></div>
       <div class="pbe-teaser-body"><b>${published ? 'Live model calls are on the other side of WNBA Pro' : 'PBE model window'}</b><span>The public view shows only covered games and tip times. Probabilities, market disagreement, confidence and reasoning are entitlement-gated.</span></div>
       ${games.length ? html`<div class="pbe-teaser-list">${games.map((g) => html`<div class="pbe-teaser-row"><div class="m"><a href="/teams/${g.away_team_id}">${teamLogo({ team_id: g.away_team_id }, 26)}<span>${teamName({ team_id: g.away_team_id }, { short: true })}</span></a><em class="note">at</em><a href="/teams/${g.home_team_id}"><span>${teamName({ team_id: g.home_team_id }, { short: true })}</span>${teamLogo({ team_id: g.home_team_id }, 26)}</a></div><small><a href="/matchups/${g.game_id}">${fmtDateET(g.scheduled_tip_utc)} · ${fmtTimeET(g.scheduled_tip_utc)} →</a></small></div>`)}</div>` : html`<div class="pbe-empty" style="margin-top:14px">No covered games are in the current public window.</div>`}
       <div class="pbe-public-actions" style="margin-top:14px"><a class="btn gold pbe-cta" href="/pro?next=%2Fpbe-picks">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock the full PBE board'}</a><a class="btn" href="/brief">Read the free Daily Brief</a></div>
+      ${raw(allAccessCardHtml(m))}
     </section>`;
 }

@@ -19,7 +19,7 @@ No Vercel Functions (`api/` is forbidden by `scripts/guard-truth.mjs`). No GitHu
 
 | Worker | Trigger | Bindings | Source |
 |---|---|---|---|
-| `wnba-api` | HTTP | `WNBA_KV`, var `WNBA_PURCHASE_ACTIVE="false"`, optional `SUPABASE_*` | `workers/wnba-api` |
+| `wnba-api` | HTTP | `WNBA_KV`, service `BILLING`→`propbetedge-sports-billing`, `EMAIL`, var `WNBA_PURCHASE_ACTIVE="true"` (checkout live), secrets `WNBA_SESSION_SECRET`, `ENTITLEMENT_READ_TOKEN`, `WNBA_OWNER_EMAILS`, optional `PBE_SUPABASE_*` | `workers/wnba-api` (`/v1/account` returns the shared membership contract, `src/pbe-membership.js` v1.1.0) |
 | `wnba-ingest` | Cron `* * * * *` + `POST /run/<task>` (bearer) | `WNBA_KV`, secrets `ODDS_API_KEY`, `ADMIN_TOKEN`, optional `SUPABASE_*` | `workers/wnba-ingest` |
 | `wnba-news` | Cron `*/10 * * * *` + `POST /run` (bearer) | `NEWS_KV` (= `WNBA_NEWS_KV`), service `API`→`wnba-api`, secret `ADMIN_TOKEN`, optional `SUPABASE_*` | `workers/wnba-news` |
 

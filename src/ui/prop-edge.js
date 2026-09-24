@@ -1,4 +1,6 @@
-import { html } from '../lib/dom.js';
+import { html, raw } from '../lib/dom.js';
+import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { membershipFrom } from '../lib/membership.js';
 import { american, bookName, fmtDateTimeET, pct } from '../lib/format.js';
 
 const MARKET_LABEL = {
@@ -10,7 +12,7 @@ const MARKET_LABEL = {
 
 export function propEdgeSection({ account, edge }) {
   const pro = Boolean(account?.ok && account.data?.state === 'pro');
-  if (!pro) return publicTeaser(account?.ok && account.data?.state === 'free');
+  if (!pro) return publicTeaser(account?.ok && account.data?.state === 'free', membershipFrom(account));
   if (!edge?.ok) return warming(edge?.error?.message);
 
   const d = edge.data || {};
@@ -61,7 +63,7 @@ export function propEdgeSection({ account, edge }) {
   </section>`;
 }
 
-function publicTeaser(signedIn) {
+function publicTeaser(signedIn, membership) {
   return html`<section class="prop-edge prop-edge-locked" id="pbe-prop-edge">
     <div class="prop-edge-lock-copy">
       <span class="eyebrow">WNBA Pro · PBE Prop Edge</span>
@@ -74,6 +76,7 @@ function publicTeaser(signedIn) {
         <div><b>Research links</b><span>Jump into the player, matchup, Player Load and market board.</span></div>
       </div>
       <a class="btn gold" href="/pro?next=%2Fprops%23pbe-prop-edge">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock PBE Prop Edge'}</a>
+      ${raw(allAccessCardHtml(membership, { compact: true }))}
     </div>
     <aside class="prop-edge-lock-demo">
       <span>PRO INTELLIGENCE</span><strong>Projection → Probability → Market</strong><small>No fake lock language. No hidden benchmark.</small>

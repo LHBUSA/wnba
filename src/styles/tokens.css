@@ -60,6 +60,15 @@
   --f-data: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --f-editorial: 'Newsreader', Georgia, 'Times New Roman', serif;
 
+  /* PropBetEdge membership contract hooks (src/styles/pbe-membership.css reads --pbe-*). */
+  --pbe-gold: var(--gold);
+  --pbe-gold-bright: var(--gold-bright);
+  --pbe-paper: var(--paper);
+  --pbe-dim: var(--dim);
+  --pbe-font-ui: var(--f-ui);
+  --pbe-font-data: var(--f-data);
+  --pbe-font-display: var(--f-display);
+
   --fs-micro: 10.5px;
   --fs-xs: 11.5px;
   --fs-sm: 13px;

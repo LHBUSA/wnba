@@ -6,7 +6,7 @@
 // The wnba-api responses are produced by the REAL handlers (workers/wnba-api/src/pbe.js, account.js) running in
 // this process over real 2025–2026 rows and the live odds snapshot, then served to the browser through
 // Playwright route interception. For every persona the browser sees exactly what production would return.
-// Personas: signed_out, free, pro (published), pro_validation (not published), owner (shadow).
+// Personas: signed_out, free, pro (published), pro_validation (not published), all_access (published), owner (shadow).
 // Checks: horizontal overflow, console/page errors, and — for every non-Pro view — no paid field anywhere in the
 // DOM or in any PBE/account network response.
 
@@ -60,13 +60,21 @@ if (docs[0]) { // one locked call so the LOCKED state renders
 }
 for (const ledger of ['official', 'shadow']) await store.put(`pbe:v1:${ledger}:index`, JSON.stringify(index));
 
-const LEDGER = { 'pro@qa.test': true, 'owner@qa.test': false, 'free@qa.test': false };
-const billing = { async fetch(url, init) { const b = JSON.parse(init.body); return new Response(JSON.stringify({ entitled: Boolean(LEDGER[b.email]) && b.product_key === 'wnba_pro', product_key: b.product_key, subscription: LEDGER[b.email] ? { plan: 'monthly', status: 'active', current_period_end: '2026-10-15T00:00:00Z', cancel_at_period_end: false } : null }), { status: 200 }); } };
+// Billing verdict mock = the deployed propbetedge-sports-billing shape incl. access_source + subscription.product_key,
+// so the shared membership contract (workers/wnba-api/src/pbe-membership.js) renders every state the browser can see.
+const LEDGER = {
+  'pro@qa.test': { access_source: 'sport', subscription: { product_key: 'wnba_pro', plan: 'monthly', status: 'active', current_period_end: '2026-10-15T00:00:00Z', cancel_at_period_end: false } },
+  'allaccess@qa.test': { access_source: 'all_access', subscription: { product_key: 'pbe_all_access', plan: 'monthly', status: 'active', current_period_end: '2026-10-24T00:00:00Z', cancel_at_period_end: false } },
+  'owner@qa.test': null,
+  'free@qa.test': null
+};
+const billing = { async fetch(url, init) { const b = JSON.parse(init.body); const e = b.product_key === 'wnba_pro' ? LEDGER[b.email] : null; return new Response(JSON.stringify({ entitled: Boolean(e), product_key: b.product_key, access_source: e ? e.access_source : null, subscription: e ? e.subscription : null }), { status: 200 }); } };
 const PERSONAS = {
   signed_out: { email: null, publish: 'true' },
   free: { email: 'free@qa.test', publish: 'true' },
   pro: { email: 'pro@qa.test', publish: 'true' },
   pro_validation: { email: 'pro@qa.test', publish: 'false' },
+  all_access: { email: 'allaccess@qa.test', publish: 'true' },
   owner: { email: 'owner@qa.test', publish: 'false' }
 };
 const envFor = (p) => ({ WNBA_SESSION_SECRET: SECRET, WNBA_KV: store, BILLING: billing, ENTITLEMENT_READ_TOKEN: 't', PBE_PUBLISH: p.publish, WNBA_OWNER_EMAILS: 'owner@qa.test', PBE_MODE: 'dry_run' });

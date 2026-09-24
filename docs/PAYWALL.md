@@ -1,6 +1,6 @@
 # WNBA Pro — paywall & entitlement activation
 
-**State 2026-09-15: FAIL-CLOSED.** Stripe objects exist and are wired into `src/data/pricing.js` (IDs only). The billing Worker + production ledger pass 12/12 signed canaries for WNBA. Checkout stays disabled: WNBA sign-in is built and tested but not deployed (gates 15c–15e), and no real checkout has been run (gates 6, 12).
+**State 2026-09-24: LIVE, fail-closed.** Checkout is active: `src/data/pricing.js` carries the live Stripe Payment Link URLs (monthly $9.99 / weekly $3.99, re-read from the live link objects 2026-09-16) and `workers/wnba-api/wrangler.toml` sets `WNBA_PURCHASE_ACTIVE="true"`; the guard fails the build unless both agree. WNBA sign-in (`__Host-wnba_session`) and the entitlement read run on `wnba-api.propbetedge.ai`. Membership vocabulary is the shared PropBetEdge contract (`src/lib/pbe-membership.js` = `workers/wnba-api/src/pbe-membership.js`, v1.1.0): `/v1/account` returns `membership` with state `free` / `sport_pro` / `all_access` / `owner` (labels FREE / WNBA PRO ACTIVE / ALL ACCESS ACTIVE / OWNER), derived server-side from the billing verdict's `access_source`; the browser only reads it. PropBetEdge All Access (`pbe_all_access`) grants WNBA Pro through that verdict; other sports' own plans never do.
 
 ## Offer (fixed)
 
@@ -9,7 +9,7 @@
 | Monthly (default selected) | $9.99 / month | Best value | recurring · no free trial · cancel anytime |
 | Weekly | $3.99 / week | Flexible | recurring · no free trial · cancel anytime |
 
-Config lives only in `src/data/pricing.js` (`stripePriceId`, `paymentLinkId`, `url` are `null`).
+Config lives only in `src/data/pricing.js` (`stripePriceId`, `paymentLinkId`, `url` — all live). Prices, links and `WNBA_PURCHASE_ACTIVE` never change without owner approval. The All Access card shown beneath the WNBA plans is display-only from the contract's `ALL_ACCESS_OFFER` ($29/month, Stripe's own Payment Link); WNBA never creates a checkout for it.
 
 ## Runtime path
 
@@ -40,7 +40,9 @@ One email owns each sport independently (one row per Stripe subscription; unique
 |---|---|---|
 | `signed_out` | default (current) | value, $9.99 monthly pre-selected, $3.99 weekly, existing-subscriber sign-in line |
 | `free` | verified session, no active `wnba_pro` | verified email, same two plans, direct upgrade, no second login |
-| `pro` | verified session + active `wnba_pro` with `current_period_end > now()` | desk treatment, plan/status/renewal, primary action "Open WNBACast", restrained controls |
+| `pro` | verified session + billing verdict `entitled` for `wnba_pro` (`access_source` `sport` or `all_access`) or owner | desk treatment with the membership badge (WNBA PRO ACTIVE / ALL ACCESS ACTIVE / OWNER), plan/status/renewal from the contract, Manage subscription link when `show_manage`, All Access upgrade card for `sport_pro` only, network row for `all_access`/`owner`, never a purchase CTA |
+
+`/pro?checkout=success` (the Payment Link return URL) shows "WNBA Pro is active — sign in with your checkout email" and re-reads `/v1/account` while the webhook settles; once entitled no checkout CTA renders.
 
 `?preview=free|pro` works **only in `vite dev`** (tree-shaken from production) for design review. The guard fails the build if `localStorage` is used for entitlement.
 

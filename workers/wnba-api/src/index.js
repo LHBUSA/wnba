@@ -41,7 +41,7 @@ import { resolveAccount } from './account.js';
 import { pbeStatus, pbeCoverage, pbeFreeSample, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 
 const SERVICE = 'wnba-api';
-const VERSION = '1.0.2';
+const VERSION = '1.1.0'; // 1.1.0: /v1/account carries the shared membership contract (access_source pass-through)
 
 // Freshness windows (seconds). Live data is short; season aggregates are long.
 const TTL = {

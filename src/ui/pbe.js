@@ -1,7 +1,9 @@
 // PBE Picks UI. Every component here renders ONLY what the server returned for this visitor.
 // The teaser takes team identity and tip time — it has no parameter through which a probability could arrive.
 
-import { html } from '../lib/dom.js';
+import { html, raw } from '../lib/dom.js';
+import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { membershipFrom } from '../lib/membership.js';
 import { teamLogo, logoEntry } from './logo.js';
 import { fmtDateET, fmtTimeET, relTime, american } from '../lib/format.js';
 
@@ -92,8 +94,9 @@ const TEASER_STATE = {
   unknown: 'PBE model calls for every covered game'
 };
 
-/** Signed-out / free team-page teaser. Takes identity, time and a coverage state only. */
-export function pbeTeaser({ team, opponent, isHome, tipUtc, availability = 'unknown', next = '/pro' }) {
+/** Team-page teaser. Takes identity, time and a coverage state only. `member` (server-decided) drops every purchase CTA;
+ *  free visitors get the WNBA CTA with the All Access card beneath it. */
+export function pbeTeaser({ team, opponent, isHome, tipUtc, availability = 'unknown', next = '/pro', member = false }) {
   return html`<section class="pbe-card pbe-teaser" aria-label="PBE Team Picker" data-pbe-teaser="${availability}">
     <div class="pbe-head"><span class="pbe-eyebrow">PBE Team Picker</span><span class="pbe-lock" aria-hidden="true">WNBA Pro</span></div>
     ${team && opponent ? html`<h2 class="pbe-matchup">${teamLogo(team, 34)}<span>${teamName(team, { short: true })}</span><em>${isHome ? 'vs' : 'at'}</em><span>${teamName(opponent, { short: true })}</span>${teamLogo(opponent, 34)}</h2>
@@ -102,7 +105,7 @@ export function pbeTeaser({ team, opponent, isHome, tipUtc, availability = 'unkn
       <b>${TEASER_STATE[availability] || TEASER_STATE.unknown}</b>
       <span>Win probability · market comparison · PBE Edge · model reasoning</span>
     </div>
-    <a class="btn gold pbe-cta" href="${next}">Unlock WNBA Pro</a>
+    ${member ? html`<a class="btn gold pbe-cta" href="/pbe-picks">Open PBE Picks</a>` : html`<a class="btn gold pbe-cta" href="${next}">Unlock WNBA Pro</a>${raw(allAccessCardHtml(membershipFrom(null), { compact: true }))}`}
   </section>`;
 }
 

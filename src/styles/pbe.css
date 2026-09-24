@@ -118,3 +118,16 @@
 }
 @media (max-width: 380px) { .mnav a { min-width: 52px; } }
 .pbe-flag { display: inline-block; margin-top: 7px; font: 700 10px/1.2 var(--f-data); letter-spacing: .06em; color: var(--warn, #e3b04b); border: 1px solid rgba(227, 176, 75, .45); border-radius: 999px; padding: 4px 7px; }
+
+/* ---- membership contract placement (markup from src/lib/pbe-membership.js; identity styles in pbe-membership.css) ---- */
+.hdr-actions .btn-pro.is-member { padding: 0; background: none; box-shadow: none; }
+.hdr-actions .btn-pro.is-member:hover { filter: none; }
+.hdr-actions .btn-pro.is-member .pbe-mbr-badge { padding: 9px 12px; }
+.hdr-actions .btn-pro.is-member .pbe-mbr-badge.is-free { display: none; }
+.pbe-teaser .pbe-mbr-aa, .prop-edge-lock-copy .pbe-mbr-aa, .pi-public-copy .pbe-mbr-aa, .pro-panel .pbe-mbr-aa, .pro-hero .pbe-mbr-aa { margin-top: 18px; }
+.pro-panel .pbe-mbr-network { margin-top: 14px; }
+.pro-panel .pbe-mbr-links { margin-top: 14px; justify-content: center; }
+.pro-state .pbe-mbr-badge { flex: none; }
+.pro-checkout-success { display: grid; gap: 6px; margin-bottom: 16px; padding: 16px 18px; border-radius: 14px; border: 1px solid rgba(127, 224, 164, .45); background: rgba(127, 224, 164, .08); }
+.pro-checkout-success b { font: 800 18px/1.15 var(--f-display); text-transform: uppercase; letter-spacing: .02em; color: #7fe0a4; }
+.pro-checkout-success span { font: 500 13px/1.45 var(--f-ui); color: var(--paper-2); }

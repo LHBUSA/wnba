@@ -20,7 +20,7 @@ Receipts: `docs/evidence/wnba-pbe-view-grant-revoke-tkmln.json`, `docs/evidence/
 1. Eligibility contract: study proposes K=3 (unchanged floor); holdout entry slice misses the pre-registered floor — owner chooses (docs/PBE_WNBA_ELIGIBILITY_STUDY.md). Freeze `model/pbe-wnba-model-v1/eligibility/eligibility_contract.json` (status FROZEN) before promotion; `scripts/model/promotion-sql.mjs` refuses without it.
 2. Promotion (`scripts/model/promotion-sql.mjs --approved-by`), then arming (`PBE_MODE=armed`, `PBE_ARMED_BY`, ingest `PBE_SUPABASE_*`) and `PBE_PUBLISH=true` — after lock-policy evidence review.
 3. Lock policy: `node scripts/pbe/lock-policy-report.mjs` once games have been measured; T-15m stays experimental.
-4. Checkout: stays OFF until owner activation after sign-in/entitlement/cancellation evidence (all passed on production 2026-09-15) and explicit approval; then pricing.js URLs + `WNBA_PURCHASE_ACTIVE` together.
+4. Checkout: LIVE. `src/data/pricing.js` carries the live Stripe Payment Link URLs (monthly $9.99 / weekly $3.99) and `workers/wnba-api/wrangler.toml` has `WNBA_PURCHASE_ACTIVE="true"` (the guard keeps them atomic). `/v1/account` also returns the shared PropBetEdge membership contract (`membership`, v1.1.0: free / sport_pro / all_access / owner) derived from the billing verdict's `access_source`; PropBetEdge All Access (`pbe_all_access`) grants WNBA Pro through that verdict. See docs/PAYWALL.md.
 
 ## Dry-run timeline
 

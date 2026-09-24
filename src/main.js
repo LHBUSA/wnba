@@ -17,6 +17,7 @@ import './styles/pbe-flagship.css';
 import './styles/player-load.css';
 import './styles/pro-intelligence.css';
 import './styles/prop-edge.css';
+import './styles/pbe-membership.css';
 import './styles/polish.css';
 import './styles/no-scrollbars.css';
 import { mountShell } from './ui/shell.js';
@@ -24,11 +25,16 @@ import { installPhotoFallback } from './ui/photo.js';
 import { enhanceProMore } from './ui/pro-more.js';
 import { createRouter } from './lib/router.js';
 import { initAnalytics, trackPageView } from './analytics.js';
+import { api } from './data/api.js';
+import { membershipFrom } from './lib/membership.js';
 
 initAnalytics();
 installPhotoFallback();
 const shell = mountShell(document.getElementById('app'));
 enhanceProMore(document);
+// One account read on boot: the header/footer follow the server's membership verdict (members see their badge;
+// free visitors keep the neutral "WNBA Pro" link, so nothing flickers while the read is in flight).
+api.account().then((res) => shell.setMembership(membershipFrom(res)));
 const router = createRouter({
   outlet: shell.outlet,
   onRoute: (id) => shell.setActive(id),

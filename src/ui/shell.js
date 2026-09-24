@@ -1,9 +1,11 @@
 import { html, render, raw } from '../lib/dom.js';
 import { NETWORK, CURRENT_SPORT } from './network.js';
+import { membershipBadgeHtml } from '../lib/pbe-membership.js';
+import { isMember } from '../lib/membership.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-21.2';
+export const SHELL_REV = '2026-09-24.1';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -92,7 +94,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <div class="foot-pro-copy">
             <span class="foot-kicker">WNBA PRO · PROPBETEDGE INTELLIGENCE</span>
             <h3>One call. A full intelligence stack.</h3>
-            <p>PBE Picks, Edge Timeline, Player Load, Rotation Impact, Scenario Lab, Watchlist, matchup research and a permanent track record — one WNBA Pro entitlement.</p>
+            <p>PBE Picks, Edge Timeline, Player Load, Rotation Impact, Scenario Lab, Watchlist, matchup research and a permanent track record — included with WNBA Pro and PropBetEdge All Access.</p>
           </div>
           <a class="foot-pro-cta" href="/pro">Get WNBA Pro <span aria-hidden="true">→</span></a>
         </section>
@@ -223,8 +225,30 @@ export function mountShell(root) {
   });
   root.querySelector('[data-more-wrap]')?.addEventListener('focusout', (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setMore(false); });
 
+  // Membership chrome. The static shell is neutral ("WNBA Pro"), which is exactly the free state, so nothing
+  // changes until the server's verdict arrives; members then see their badge (WNBA PRO ACTIVE / ALL ACCESS
+  // ACTIVE / OWNER) linking to /pro, and the footer stops selling them something they already have.
+  const setMembership = (m) => {
+    if (!isMember(m)) return;
+    for (const a of root.querySelectorAll('a[data-nav="pro"]')) {
+      if (a.classList.contains('btn-pro')) {
+        a.classList.add('is-member');
+        a.setAttribute('aria-label', `${m.label} · your WNBA Pro desk`);
+        a.innerHTML = membershipBadgeHtml(m);
+      } else {
+        a.textContent = m.label;
+      }
+    }
+    const foot = root.querySelector('.foot-pro-cta');
+    if (foot) foot.innerHTML = 'Open your WNBA desk <span aria-hidden="true">→</span>';
+    const kicker = root.querySelector('.foot-kicker');
+    if (kicker) kicker.textContent = `${m.label} · PROPBETEDGE INTELLIGENCE`;
+  };
+  document.addEventListener('pbe:membership', (e) => setMembership(e.detail));
+
   return {
     outlet: root.querySelector('main'),
+    setMembership,
     setActive(id) {
       const group = NAV_GROUP[id] || id;
       root.querySelectorAll('[data-nav]').forEach((a) => {

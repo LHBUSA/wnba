@@ -1,8 +1,13 @@
-import { html } from '../lib/dom.js';
+import { html, raw } from '../lib/dom.js';
 import { PRO_INTELLIGENCE } from '../data/pro-features.js';
+import { allAccessCardHtml } from '../lib/pbe-membership.js';
+import { membershipFrom } from '../lib/membership.js';
 
-export function proFeaturePublicView(feature, { signedIn = false } = {}) {
+/** Public (non-member) view. `membership` is the server's verdict when a page has it; the SSR/static fallback is FREE.
+ *  Members never see this view, so the All Access card beneath the WNBA CTA is always the free-state card. */
+export function proFeaturePublicView(feature, { signedIn = false, membership = null } = {}) {
   const current = feature || PRO_INTELLIGENCE[0];
+  const m = membership || membershipFrom(null);
   return html`
     <section class="pi-public">
       <div class="pi-public-copy">
@@ -13,17 +18,18 @@ export function proFeaturePublicView(feature, { signedIn = false } = {}) {
           <div><b>Live WNBA context</b><span>Built from the same owned WNBA data layer that powers PBE Picks, matchups, availability and Player Load.</span></div>
           <div><b>Internal research links</b><span>Move from a signal into teams, matchups, players, methodology and the permanent track record without leaving the desk.</span></div>
           <div><b>Transparent by design</b><span>Derived signals are labeled for what they are. No invented certainty and no protected values hidden in public HTML.</span></div>
-          <div><b>One Pro entitlement</b><span>All premium WNBA intelligence layers are included with WNBA Pro.</span></div>
+          <div><b>One membership</b><span>Every premium WNBA intelligence layer is included with WNBA Pro and with PropBetEdge All Access.</span></div>
         </div>
         <div class="pi-actions">
           <a class="btn gold" href="/pro?next=${encodeURIComponent(current.href)}">${signedIn ? 'Upgrade to WNBA Pro' : 'Unlock WNBA Pro'}</a>
           <a class="btn" href="/brief">Read the free Daily Brief</a>
           <a class="sec-link" href="/pbe-picks">Preview PBE Picks →</a>
         </div>
+        ${raw(allAccessCardHtml(m, { compact: true }))}
       </div>
       <aside class="pi-suite-card">
         <span class="pi-suite-kicker">WNBA PRO SUITE</span>
-        <h2>One subscription. The full intelligence stack.</h2>
+        <h2>One membership. The full intelligence stack.</h2>
         <div class="pi-suite-list">
           ${PRO_INTELLIGENCE.map((f) => html`<a href="${f.href}" class="${f.id === current.id ? 'on' : ''}"><span>${f.name}</span><b>PRO</b></a>`)}
         </div>

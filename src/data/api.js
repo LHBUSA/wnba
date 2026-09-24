@@ -19,7 +19,16 @@ function privateAvailable() {
   return privateReady;
 }
 
-async function privateJson(path, { method = 'GET', body, timeoutMs = 12000 } = {}) {
+// Concurrent identical private GETs (the shell's boot read + the page's read of /v1/account) share one request.
+// Nothing is remembered after it settles: every later call asks the server again.
+const privateInflight = new Map();
+async function privateJson(path, opts = {}) {
+  if ((opts.method || 'GET') !== 'GET') return privateFetch(path, opts);
+  if (!privateInflight.has(path)) privateInflight.set(path, privateFetch(path, opts).finally(() => privateInflight.delete(path)));
+  return privateInflight.get(path);
+}
+
+async function privateFetch(path, { method = 'GET', body, timeoutMs = 12000 } = {}) {
   if (!(await privateAvailable())) return { ok: false, status: 0, data: null, error: { code: 'private_api_unavailable' } };
   try {
     const ctrl = new AbortController();

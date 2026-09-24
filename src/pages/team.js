@@ -35,7 +35,7 @@ async function mountPbe(root, ctx, data) {
     if (!ctx.isCurrent()) return;
     if (r.ok && r.data?.availability === 'MODEL_IN_VALIDATION') return render(slot, pbeValidationNotice({ compact: true }));
     if (r.ok && r.data?.call) return render(slot, pbeTeamPicker(r.data, id));
-    if (r.ok) return render(slot, pbeTeaser({ ...m, availability: 'opens', next: '/pbe-picks' }));
+    if (r.ok) return render(slot, pbeTeaser({ ...m, availability: 'opens', next: '/pbe-picks', member: true }));
   }
   render(slot, pbeTeaser({ ...m, availability }));
 }
