@@ -93,10 +93,11 @@ function contextCallout(d) {
   if (!d.rounds?.length) {
     return html`<div class="callout po-callout">The source has not published a ${d.season} postseason schedule yet. The bracket appears here as soon as it does — nothing is drawn in advance.</div>`;
   }
-  if (d.status === 'NOT_STARTED' && tbd) {
+  const named = (d.rounds || []).flatMap((r) => r.series).filter((s) => s.status !== 'TBD').length;
+  if (d.status === 'NOT_STARTED' && tbd && !named) {
     return html`<div class="callout po-callout">ESPN has published the ${d.season} postseason schedule — ${d.provenance?.postseason_game_count ?? 0} games across ${d.rounds.length} rounds — but has not named the matchups. A series appears the moment the source lists both teams; until then every slot stays TBD. The seed table below is the final league standing as published.</div>`;
   }
-  if (tbd) return html`<div class="callout po-callout">Later-round slots stay TBD until the source names both teams. PropBetEdge never projects who advances.</div>`;
+  if (tbd) return html`<div class="callout po-callout">${d.status === 'NOT_STARTED' ? `${named} series ${named === 1 ? 'is' : 'are'} set by the source. ` : ''}Later-round slots stay TBD until the source names both teams. PropBetEdge never projects who advances.</div>`;
   return '';
 }
 

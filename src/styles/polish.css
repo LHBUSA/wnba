@@ -16,13 +16,14 @@
 
   .nav {
     margin-left: 0;
-    gap: 5px;
+    gap: 4px;
     align-items: center;
   }
 
+  /* Eight primary destinations (Playoffs added 2026-09-25) must fit from 1181px up without scrolling. */
   .nav a,
   .nav-more-btn {
-    padding: 10px 12px;
+    padding: 10px 9px;
     border: 1px solid transparent;
     border-radius: 10px;
     letter-spacing: .045em;
@@ -94,7 +95,7 @@
   .hdr-in { padding-inline: 20px; }
   .hdr .brand { padding-right: 15px; margin-right: 11px; }
   .nav { gap: 2px; }
-  .nav a, .nav-more-btn { padding-inline: 9px; font-size: 12px; }
+  .nav a, .nav-more-btn { padding-inline: 6px; font-size: 12px; } /* 8 primary items fit at 1181px */
   .hdr-actions { margin-left: 10px; padding-left: 13px; }
   .hdr-actions .btn-pro { padding-inline: 15px; }
 }

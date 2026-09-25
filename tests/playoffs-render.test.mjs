@@ -37,6 +37,14 @@ test('not started (real 2026): TBD slots only, context callout, seed table, no i
   assert.match(out, /href="\/standings"/);
 });
 
+test('callout never claims matchups are unnamed once the source has named some', () => {
+  const s = snapOf(2025, asOf(fx('espn-postseason-2025.json').events, '2025-09-14T12:00:00Z'));
+  const out = text(playoffsView({ res: res(s), arts: { ok: false }, cov: { ok: false } }));
+  assert.equal(s.status, 'NOT_STARTED');
+  assert.doesNotMatch(out, /has not named the matchups/);
+  assert.match(out, /4 series are set by the source/);
+});
+
 test('complete (real 2025): champion banner + card, every series final, results link to WNBACast', () => {
   const out = text(playoffsView({ res: res(snapOf(2025), { is_current_season: false, current_season: 2026 }), arts: { ok: false }, cov: { ok: false } }, { season: '2025' }));
   assert.match(out, /2025 WNBA Playoffs/);
