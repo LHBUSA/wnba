@@ -1,0 +1,1561 @@
+{
+ "_capture": {
+  "kind": "REAL_PROVIDER_PAYLOAD_TRIMMED",
+  "captured_at": "2026-09-25T13:43:02.741Z",
+  "url": "https://site.web.api.espn.com/apis/v2/sports/basketball/wnba/standings?level=1&season=2026",
+  "note": "League-level standings (level=1): playoffSeed is the league seed; clincher description is the source label."
+ },
+ "seasons": [
+  {
+   "year": 2026,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2026-04-03T07:00Z",
+     "endDate": "2026-05-08T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2026-05-08T07:00Z",
+     "endDate": "2026-09-25T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2026-09-25T07:00Z",
+     "endDate": "2026-11-01T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2026-11-01T07:00Z",
+     "endDate": "2027-05-01T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2025,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2025-04-14T07:00Z",
+     "endDate": "2025-05-15T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2025-05-15T07:00Z",
+     "endDate": "2025-09-12T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2025-09-12T07:00Z",
+     "endDate": "2025-10-20T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2025-10-20T07:00Z",
+     "endDate": "2026-04-03T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2024,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2024-04-15T07:00Z",
+     "endDate": "2024-05-14T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2024-05-14T07:00Z",
+     "endDate": "2024-09-21T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2024-09-21T07:00Z",
+     "endDate": "2024-10-21T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2024-10-21T07:00Z",
+     "endDate": "2025-05-01T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2023,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2023-04-21T07:00Z",
+     "endDate": "2023-05-19T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2023-05-19T07:00Z",
+     "endDate": "2023-09-11T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2023-09-11T07:00Z",
+     "endDate": "2023-11-02T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2023-11-02T07:00Z",
+     "endDate": "2024-04-15T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2022,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2022-04-22T07:00Z",
+     "endDate": "2022-05-06T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2022-05-06T07:00Z",
+     "endDate": "2022-08-15T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2022-08-15T07:00Z",
+     "endDate": "2022-10-19T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2022-10-19T07:00Z",
+     "endDate": "2023-04-21T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2021,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2021-05-01T07:00Z",
+     "endDate": "2021-05-13T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2021-05-13T07:00Z",
+     "endDate": "2021-09-23T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2021-09-23T07:00Z",
+     "endDate": "2021-10-20T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2021-10-20T07:00Z",
+     "endDate": "2022-04-22T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2020,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2020-05-04T07:00Z",
+     "endDate": "2020-05-15T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2020-05-15T07:00Z",
+     "endDate": "2020-09-15T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2020-09-15T07:00Z",
+     "endDate": "2020-11-02T07:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2020-11-02T08:00Z",
+     "endDate": "2021-05-01T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2019,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2019-05-03T07:00Z",
+     "endDate": "2019-05-21T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2019-05-21T07:00Z",
+     "endDate": "2019-09-10T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2019-09-10T07:00Z",
+     "endDate": "2019-11-01T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2019-11-01T07:00Z",
+     "endDate": "2020-05-04T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2018,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2018-03-25T07:00Z",
+     "endDate": "2018-05-18T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2018-05-18T07:00Z",
+     "endDate": "2018-08-20T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2018-08-20T07:00Z",
+     "endDate": "2018-09-18T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2018-09-18T07:00Z",
+     "endDate": "2019-05-03T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2017,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2017-04-28T07:00Z",
+     "endDate": "2017-05-12T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2017-05-12T07:00Z",
+     "endDate": "2017-09-07T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2017-09-07T07:00Z",
+     "endDate": "2017-11-01T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2017-11-01T07:00Z",
+     "endDate": "2018-03-25T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2016,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2016-05-01T07:00Z",
+     "endDate": "2016-05-13T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2016-05-13T07:00Z",
+     "endDate": "2016-09-19T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2016-09-19T07:00Z",
+     "endDate": "2016-11-01T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2016-11-01T07:00Z",
+     "endDate": "2017-01-01T07:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2015,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2015-05-01T07:00Z",
+     "endDate": "2015-06-05T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2015-06-05T07:00Z",
+     "endDate": "2015-09-14T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2015-09-14T07:00Z",
+     "endDate": "2015-10-21T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2015-10-21T07:00Z",
+     "endDate": "2015-11-10T07:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2014,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2014-05-01T07:00Z",
+     "endDate": "2014-05-16T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2014-05-16T07:00Z",
+     "endDate": "2014-08-18T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2014-08-18T07:00Z",
+     "endDate": "2014-10-21T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2014-10-21T07:00Z",
+     "endDate": "2015-05-01T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2013,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2013-05-01T07:00Z",
+     "endDate": "2013-05-23T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2013-05-23T07:00Z",
+     "endDate": "2013-09-17T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2013-09-17T07:00Z",
+     "endDate": "2013-10-21T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2013-10-21T07:00Z",
+     "endDate": "2014-05-01T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2012,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2012-05-01T07:00Z",
+     "endDate": "2012-05-17T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2012-05-17T07:00Z",
+     "endDate": "2012-09-25T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2012-09-25T07:00Z",
+     "endDate": "2012-10-21T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2012-10-21T07:00Z",
+     "endDate": "2013-05-01T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2011,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2011-05-19T07:00Z",
+     "endDate": "2011-06-01T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2011-06-01T07:00Z",
+     "endDate": "2011-09-13T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2011-09-13T07:00Z",
+     "endDate": "2011-10-31T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2011-10-31T07:00Z",
+     "endDate": "2012-05-01T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2010,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2010-04-30T07:00Z",
+     "endDate": "2010-05-15T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2010-05-15T07:00Z",
+     "endDate": "2010-08-25T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2010-08-25T07:00Z",
+     "endDate": "2010-09-22T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2010-09-22T07:00Z",
+     "endDate": "2011-05-19T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2009,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2009-05-05T07:00Z",
+     "endDate": "2009-06-06T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2009-06-06T07:00Z",
+     "endDate": "2009-09-16T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2009-09-16T07:00Z",
+     "endDate": "2009-10-11T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2009-10-11T07:00Z",
+     "endDate": "2010-04-28T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2008,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2008-04-28T07:00Z",
+     "endDate": "2008-05-17T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2008-05-17T07:00Z",
+     "endDate": "2008-09-17T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2008-09-17T07:00Z",
+     "endDate": "2008-10-30T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2008-10-30T07:00Z",
+     "endDate": "2009-05-05T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2007,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2007-04-28T07:00Z",
+     "endDate": "2007-05-19T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2007-05-19T07:00Z",
+     "endDate": "2007-08-20T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2007-08-20T07:00Z",
+     "endDate": "2007-09-21T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2007-09-21T07:00Z",
+     "endDate": "2008-04-28T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2006,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2006-05-02T07:00Z",
+     "endDate": "2006-05-18T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2006-05-18T07:00Z",
+     "endDate": "2006-08-15T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2006-08-15T07:00Z",
+     "endDate": "2006-09-15T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2006-09-15T07:00Z",
+     "endDate": "2007-05-02T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2005,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2005-05-01T07:00Z",
+     "endDate": "2005-05-17T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2005-05-17T07:00Z",
+     "endDate": "2005-08-30T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2005-08-30T07:00Z",
+     "endDate": "2005-09-27T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2005-09-27T07:00Z",
+     "endDate": "2006-05-02T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2004,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2004-05-04T07:00Z",
+     "endDate": "2004-05-19T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2004-05-19T07:00Z",
+     "endDate": "2004-09-20T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2004-09-20T07:00Z",
+     "endDate": "2004-10-14T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2004-10-14T07:00Z",
+     "endDate": "2005-05-02T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2003,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2003-05-05T07:00Z",
+     "endDate": "2003-05-22T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2003-05-22T07:00Z",
+     "endDate": "2003-08-27T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2003-08-27T07:00Z",
+     "endDate": "2003-10-02T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2003-10-02T07:00Z",
+     "endDate": "2004-05-04T06:59Z"
+    }
+   ]
+  },
+  {
+   "year": 2002,
+   "types": [
+    {
+     "id": "1",
+     "name": "Preseason",
+     "abbreviation": "pre",
+     "startDate": "2002-05-01T07:00Z",
+     "endDate": "2002-05-25T06:59Z"
+    },
+    {
+     "id": "2",
+     "name": "Regular Season",
+     "abbreviation": "reg",
+     "startDate": "2002-05-25T07:00Z",
+     "endDate": "2002-08-15T06:59Z"
+    },
+    {
+     "id": "3",
+     "name": "Postseason",
+     "abbreviation": "post",
+     "startDate": "2002-08-15T07:00Z",
+     "endDate": "2002-09-16T06:59Z"
+    },
+    {
+     "id": "4",
+     "name": "Off Season",
+     "abbreviation": "off",
+     "startDate": "2002-09-16T07:00Z",
+     "endDate": "2003-05-05T06:59Z"
+    }
+   ]
+  }
+ ],
+ "standings": {
+  "season": 2026,
+  "seasonType": 2,
+  "entries": [
+   {
+    "team": {
+     "id": "8",
+     "abbreviation": "MIN",
+     "displayName": "Minnesota Lynx",
+     "shortDisplayName": "Lynx",
+     "location": "Minnesota",
+     "name": "Lynx"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Best League Record",
+      "value": 10,
+      "displayValue": "*"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 0,
+      "displayValue": "-"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 11,
+      "displayValue": "11"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 1,
+      "displayValue": "1"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.75,
+      "displayValue": ".750"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 33,
+      "displayValue": "33"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "129689",
+     "abbreviation": "GS",
+     "displayName": "Golden State Valkyries",
+     "shortDisplayName": "Valkyries",
+     "location": "Golden State",
+     "name": "Valkyries"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Playoff Berth",
+      "value": 1,
+      "displayValue": "x"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 1,
+      "displayValue": "1"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 12,
+      "displayValue": "12"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 2,
+      "displayValue": "2"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.72727275,
+      "displayValue": ".727"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 32,
+      "displayValue": "32"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "17",
+     "abbreviation": "LV",
+     "displayName": "Las Vegas Aces",
+     "shortDisplayName": "Aces",
+     "location": "Las Vegas",
+     "name": "Aces"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Playoff Berth",
+      "value": 1,
+      "displayValue": "x"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 2,
+      "displayValue": "2"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 13,
+      "displayValue": "13"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 3,
+      "displayValue": "3"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.70454544,
+      "displayValue": ".705"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 31,
+      "displayValue": "31"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "20",
+     "abbreviation": "ATL",
+     "displayName": "Atlanta Dream",
+     "shortDisplayName": "Dream",
+     "location": "Atlanta",
+     "name": "Dream"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Playoff Berth",
+      "value": 1,
+      "displayValue": "x"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 3,
+      "displayValue": "3"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 14,
+      "displayValue": "14"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 4,
+      "displayValue": "4"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.6818182,
+      "displayValue": ".682"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 30,
+      "displayValue": "30"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "16",
+     "abbreviation": "WSH",
+     "displayName": "Washington Mystics",
+     "shortDisplayName": "Mystics",
+     "location": "Washington",
+     "name": "Mystics"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Playoff Berth",
+      "value": 1,
+      "displayValue": "x"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 5,
+      "displayValue": "5"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 16,
+      "displayValue": "16"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 5,
+      "displayValue": "5"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.6363636,
+      "displayValue": ".636"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 28,
+      "displayValue": "28"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "5",
+     "abbreviation": "IND",
+     "displayName": "Indiana Fever",
+     "shortDisplayName": "Fever",
+     "location": "Indiana",
+     "name": "Fever"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Playoff Berth",
+      "value": 1,
+      "displayValue": "x"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 5,
+      "displayValue": "5"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 16,
+      "displayValue": "16"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 6,
+      "displayValue": "6"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.6363636,
+      "displayValue": ".636"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 28,
+      "displayValue": "28"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "3",
+     "abbreviation": "DAL",
+     "displayName": "Dallas Wings",
+     "shortDisplayName": "Wings",
+     "location": "Dallas",
+     "name": "Wings"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Playoff Berth",
+      "value": 1,
+      "displayValue": "x"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 6,
+      "displayValue": "6"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 17,
+      "displayValue": "17"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 7,
+      "displayValue": "7"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.6136364,
+      "displayValue": ".614"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 27,
+      "displayValue": "27"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "9",
+     "abbreviation": "NY",
+     "displayName": "New York Liberty",
+     "shortDisplayName": "Liberty",
+     "location": "New York",
+     "name": "Liberty"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Clinched Playoff Berth and Won Commissioner's Cup",
+      "value": 8,
+      "displayValue": "cx"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 7,
+      "displayValue": "7"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 18,
+      "displayValue": "18"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 8,
+      "displayValue": "8"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.59090906,
+      "displayValue": ".591"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 26,
+      "displayValue": "26"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "132052",
+     "abbreviation": "POR",
+     "displayName": "Portland Fire",
+     "shortDisplayName": "Fire",
+     "location": "Portland",
+     "name": "Fire"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Eliminated From Playoffs",
+      "value": 4,
+      "displayValue": "e"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 16,
+      "displayValue": "16"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 27,
+      "displayValue": "27"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 9,
+      "displayValue": "9"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.38636363,
+      "displayValue": ".386"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 17,
+      "displayValue": "17"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "11",
+     "abbreviation": "PHX",
+     "displayName": "Phoenix Mercury",
+     "shortDisplayName": "Mercury",
+     "location": "Phoenix",
+     "name": "Mercury"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Eliminated From Playoffs",
+      "value": 4,
+      "displayValue": "e"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 17,
+      "displayValue": "17"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 28,
+      "displayValue": "28"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 10,
+      "displayValue": "10"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.36363637,
+      "displayValue": ".364"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 16,
+      "displayValue": "16"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "19",
+     "abbreviation": "CHI",
+     "displayName": "Chicago Sky",
+     "shortDisplayName": "Sky",
+     "location": "Chicago",
+     "name": "Sky"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Eliminated From Playoffs",
+      "value": 4,
+      "displayValue": "e"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 17,
+      "displayValue": "17"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 28,
+      "displayValue": "28"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 11,
+      "displayValue": "11"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.36363637,
+      "displayValue": ".364"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 16,
+      "displayValue": "16"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "6",
+     "abbreviation": "LA",
+     "displayName": "Los Angeles Sparks",
+     "shortDisplayName": "Sparks",
+     "location": "Los Angeles",
+     "name": "Sparks"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Eliminated From Playoffs",
+      "value": 4,
+      "displayValue": "e"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 17,
+      "displayValue": "17"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 28,
+      "displayValue": "28"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 12,
+      "displayValue": "12"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.36363637,
+      "displayValue": ".364"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 16,
+      "displayValue": "16"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "131935",
+     "abbreviation": "TOR",
+     "displayName": "Toronto Tempo",
+     "shortDisplayName": "Tempo",
+     "location": "Toronto",
+     "name": "Tempo"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Eliminated From Playoffs",
+      "value": 4,
+      "displayValue": "e"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 22,
+      "displayValue": "22"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 33,
+      "displayValue": "33"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 13,
+      "displayValue": "13"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.25,
+      "displayValue": ".250"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 11,
+      "displayValue": "11"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "18",
+     "abbreviation": "CON",
+     "displayName": "Connecticut Sun",
+     "shortDisplayName": "Sun",
+     "location": "Connecticut",
+     "name": "Sun"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Eliminated From Playoffs",
+      "value": 4,
+      "displayValue": "e"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 22,
+      "displayValue": "22"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 33,
+      "displayValue": "33"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 14,
+      "displayValue": "14"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.25,
+      "displayValue": ".250"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 11,
+      "displayValue": "11"
+     }
+    ]
+   },
+   {
+    "team": {
+     "id": "14",
+     "abbreviation": "SEA",
+     "displayName": "Seattle Storm",
+     "shortDisplayName": "Storm",
+     "location": "Seattle",
+     "name": "Storm"
+    },
+    "stats": [
+     {
+      "name": "clincher",
+      "description": "Eliminated From Playoffs",
+      "value": 4,
+      "displayValue": "e"
+     },
+     {
+      "name": "gamesBehind",
+      "description": "Games Back",
+      "value": 25,
+      "displayValue": "25"
+     },
+     {
+      "name": "losses",
+      "description": "Losses",
+      "value": 36,
+      "displayValue": "36"
+     },
+     {
+      "name": "playoffSeed",
+      "description": "Playoff Seed",
+      "value": 15,
+      "displayValue": "15"
+     },
+     {
+      "name": "winPercent",
+      "description": "Winning Percentage",
+      "value": 0.18181819,
+      "displayValue": ".182"
+     },
+     {
+      "name": "wins",
+      "description": "Wins",
+      "value": 8,
+      "displayValue": "8"
+     }
+    ]
+   }
+  ]
+ }
+}

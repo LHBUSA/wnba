@@ -5,7 +5,7 @@ import { isMember } from '../lib/membership.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-24.2';
+export const SHELL_REV = '2026-09-25.1';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -14,6 +14,7 @@ export const PRIMARY_NAV = [
   ['today', '/', 'Today'],
   ['pbe-picks', '/pbe-picks', 'PBE Picks'],
   ['cast', '/cast', 'WNBACast'],
+  ['playoffs', '/playoffs', 'Playoffs'],
   ['props', '/props', 'Props'],
   ['matchups', '/matchups', 'Matchups'],
   ['news', '/news', 'News']
@@ -133,6 +134,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         <div class="foot-col">
           <h4>Research &amp; Trust</h4>
           <ul>
+            <li><a href="/playoffs">Playoffs &amp; bracket</a></li>
             <li><a href="/matchups">Matchups</a></li>
             <li><a href="/injuries">Availability</a></li>
             <li><a href="/pbe-picks/model">PBE methodology</a></li>

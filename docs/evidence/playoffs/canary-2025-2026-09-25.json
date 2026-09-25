@@ -1,0 +1,65 @@
+{
+  "at": "2026-09-25T13:59:11.400Z",
+  "season": 2025,
+  "summary": {
+    "PASS": 11
+  },
+  "checks": [
+    {
+      "name": "standings level=1: league seeds",
+      "status": "PASS",
+      "detail": "13 teams · seeds 1,2,3,4,5,6,7,8,9,10,11,12,13"
+    },
+    {
+      "name": "standings: clincher descriptions",
+      "status": "PASS",
+      "detail": "Clinched Best League Record | Clinched Playoff Berth | Clinched Playoff Berth and Won Commissioner's Cup | Eliminated From Playoffs"
+    },
+    {
+      "name": "season window: postseason type 3",
+      "status": "PASS",
+      "detail": "{\"start\":\"2025-09-12T07:00Z\",\"end\":\"2025-10-20T06:59Z\"}"
+    },
+    {
+      "name": "scoreboard calendar: postseason days",
+      "status": "PASS",
+      "detail": "14 days 20250914..20251010"
+    },
+    {
+      "name": "events: season.type 3 found",
+      "status": "PASS",
+      "detail": "24 postseason events"
+    },
+    {
+      "name": "events: notes \"<Round> - Game N\"",
+      "status": "PASS",
+      "detail": "labels: First Round | WNBA Semifinals | WNBA Finals | WNBA FINALS"
+    },
+    {
+      "name": "events: every round label supported",
+      "status": "PASS",
+      "detail": "First Round | WNBA Semifinals | WNBA Finals | WNBA FINALS"
+    },
+    {
+      "name": "events: series{type:playoff,competitors}",
+      "status": "PASS",
+      "detail": "24/24 carry series"
+    },
+    {
+      "name": "events: team identity or TBD placeholder",
+      "status": "PASS",
+      "detail": "24 with both teams · 0 placeholder"
+    },
+    {
+      "name": "core id list matches the scan",
+      "status": "PASS",
+      "detail": "core 24 · scanned 24 · missing none"
+    },
+    {
+      "name": "normalizer builds a VALID bracket",
+      "status": "PASS",
+      "detail": "COMPLETE · First Round bo3 4/4 · Semifinals bo5 2/2 · WNBA Finals bo7 1/1 · champion LV"
+    }
+  ],
+  "warnings": []
+}

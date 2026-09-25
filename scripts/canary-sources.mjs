@@ -50,6 +50,8 @@ const winba = await get(`${API}/v1/stats/winba`);
 check('WinBA Score', winba, (b) => ({ pass: b.ok && b.data.version === 'winba/1.0.0' && b.data.status === 'AVAILABLE' && b.data.qualified_count > 0 && b.data.rows.some((r) => r.qualified && r.rank === 1), detail: `${b.data.qualified_count || 0} qualified · ${b.data.provisional_count || 0} provisional · ${b.data.games_used || 0} finals` }));
 check('team season stats', await get(`${API}/v1/stats/teams`), (b) => ({ pass: b.data.rows.length === 15, detail: `${b.data.rows.length} teams` }));
 check('matchup research', await get(`${API}/v1/matchups/401857190`), (b) => ({ pass: b.ok && b.data.teams.every((t) => t.rotation.sample > 0), detail: b.data.teams.map((t) => `${t.team.abbr} rot n=${t.rotation.sample}`).join(' · ') }));
+const po = await get(`${API}/v1/playoffs`);
+check('playoffs bracket', po, (b) => ({ pass: b.ok && b.data.contract === 'pbe-playoffs/1.0.0' && b.data.seeds.length > 0 && Boolean(b.meta.semantics) && !b.meta.degraded.some((d) => d.startsWith('last_capture_rejected')), detail: `${b.data.season} ${b.data.status} · ${b.data.provenance.postseason_game_count} games · ${b.data.provenance.series_count} series · ${b.meta.semantics} · ${b.meta.freshness}` }));
 const odds = await get(`${API}/v1/odds`);
 check('game odds', odds, (b) => ({ pass: b.data.events.length > 0, detail: `${b.data.events.length} events · captured ${b.data.captured_at}` }));
 const props = await get(`${API}/v1/props`);

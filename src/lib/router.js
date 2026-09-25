@@ -28,6 +28,7 @@ const PAGES = {
   article: () => import('../pages/article.js'),
   history: () => import('../pages/history.js'),
   standings: () => import('../pages/standings.js'),
+  playoffs: () => import('../pages/playoffs.js'),
   stats: () => import('../pages/stats.js'),
   teams: () => import('../pages/teams.js'),
   team: () => import('../pages/team.js'),

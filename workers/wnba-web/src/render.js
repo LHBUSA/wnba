@@ -19,6 +19,7 @@ import { loadMatchup, matchupView, loadMatchupsList, matchupsListView } from '..
 import { loadInjuries, injuriesView, loadStandings, standingsView, loadTeams, teamsView, loadPlayers, playersView, loadStats, statsView } from '../../../src/views/league.js';
 import { loadToday, todayView } from '../../../src/views/today.js';
 import { loadWinbaScore, winbaScoreView } from '../../../src/views/winba-score.js';
+import { loadPlayoffs, playoffsView } from '../../../src/views/playoffs.js';
 import { TRUST_VIEWS, sourcesHead, sourcesRegistryView, newsHealthView } from '../../../src/views/trust.js';
 import { fmtDateET, fmtTimeET } from '../../../src/lib/format.js';
 import { loadIntlHome, intlHomeView, loadCompetition, competitionView, loadIntlGame, intlGameView, loadNationalTeam, nationalTeamView, loadIntlPlayer, intlPlayerView, playerHref } from '../../../src/views/international.js';
@@ -131,6 +132,11 @@ export async function renderRoute(pathname, api) {
     case 'injuries': {
       const data = await loadInjuries(api);
       return out(data.res?.ok ? 200 : 503, routeMeta(id, { path }), injuriesView(data));
+    }
+    case 'playoffs': {
+      const data = await loadPlayoffs(api);
+      if (!data.res?.ok) return unavailable('The playoff bracket', data.res);
+      return out(200, routeMeta(id, { path }), playoffsView(data));
     }
     case 'standings': {
       const data = await loadStandings(api);

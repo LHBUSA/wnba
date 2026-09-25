@@ -39,9 +39,10 @@ import { attachMarkets, marketForGame, marketHistory, marketSnapshots } from './
 import { requestLink, verifyPage, verifyConsume, logout, privateJson, credentialedPreflight } from './auth.js';
 import { resolveAccount } from './account.js';
 import { pbeStatus, pbeCoverage, pbeFreeSample, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
+import { playoffs as playoffsRoute } from './playoffs.js';
 
 const SERVICE = 'wnba-api';
-const VERSION = '1.1.0'; // 1.1.0: /v1/account carries the shared membership contract (access_source pass-through)
+const VERSION = '1.2.0'; // 1.2.0: /v1/playoffs (postseason bracket). 1.1.0: /v1/account carries the shared membership contract
 
 // Freshness windows (seconds). Live data is short; season aggregates are long.
 const TTL = {
@@ -103,6 +104,7 @@ const ROUTES = [
   ['/v1/games/:id/shots', gameShots],
   ['/v1/matchups/:id', matchup],
   ['/v1/standings', standings],
+  ['/v1/playoffs', (c) => playoffsRoute(c, { service: SERVICE, version: VERSION })],
   ['/v1/teams', teams],
   ['/v1/teams/:id', team],
   ['/v1/teams/:id/roster', teamRoster],
@@ -214,6 +216,9 @@ async function sources({ env, ctx, path }) {
     ['scoreboard', `${ESPN.site}/scoreboard`],
     ['summary', `${ESPN.site}/summary?event=401857189`],
     ['standings', `${ESPN.v2}/standings`],
+    ['standings_league_seeds', `${ESPN.v2}/standings?level=1`],
+    ['postseason_day', `${ESPN.site}/scoreboard?dates=${etCompact()}&limit=100`],
+    ['postseason_core_ids', `${ESPN.core}/seasons/${new Date().getUTCFullYear()}/types/3/events?limit=5`],
     ['injuries', `${ESPN.site}/injuries`],
     ['teams', `${ESPN.site}/teams`],
     ['roster', `${ESPN.site}/teams/3/roster`],

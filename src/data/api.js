@@ -58,6 +58,7 @@ const MEM_TTL = [
   [/\/live(\?|$)/, 0],
   [/\/v1\/international\/(games|competitions)/, 4000],
   [/\/v1\/today/, 15000],
+  [/\/v1\/playoffs/, 20000],
   [/\/v1\/news/, 60000],
   [/\/v1\/(standings|teams|players|stats)/, 120000],
   [/.*/, 30000]
@@ -148,6 +149,7 @@ export const api = {
   live: (id, since, opts) => getJson(`${API_BASE}/v1/games/${encodeURIComponent(id)}/live${q({ since })}`, opts),
   matchup: (id) => getJson(`${API_BASE}/v1/matchups/${encodeURIComponent(id)}`),
   standings: () => getJson(`${API_BASE}/v1/standings`),
+  playoffs: (season) => getJson(`${API_BASE}/v1/playoffs${q({ season })}`),
   teams: () => getJson(`${API_BASE}/v1/teams`),
   team: (id) => getJson(`${API_BASE}/v1/teams/${encodeURIComponent(id)}`),
   players: () => getJson(`${API_BASE}/v1/players`),

@@ -19,6 +19,7 @@ export const ROUTE_TABLE = [
   { id: 'article', re: /^\/news\/([a-z0-9-]+-[a-f0-9]{6})$/, keys: ['slug'] },
   { id: 'history', re: /^\/history$/ },
   { id: 'standings', re: /^\/standings$/ },
+  { id: 'playoffs', re: /^\/playoffs$/ },
   { id: 'stats', re: /^\/stats$/ },
   { id: 'teams', re: /^\/teams$/ },
   { id: 'team', re: /^\/teams\/(\d{1,8})$/, keys: ['teamId'] },

@@ -388,7 +388,7 @@ export function pageGraph(route, meta, data = {}) {
       const trust = TRUST_PAGES.find(([p]) => p === meta.path);
       const label = trust?.[1] || meta.title.split(' | ')[0];
       if (meta.path !== '/') crumbs.push([label, meta.path]);
-      g.push(webPage(meta, meta.path === '/about' ? 'AboutPage' : ['/players', '/teams', '/injuries', '/standings', '/stats', '/props'].includes(meta.path) ? 'CollectionPage' : 'WebPage'));
+      g.push(webPage(meta, meta.path === '/about' ? 'AboutPage' : ['/players', '/teams', '/injuries', '/standings', '/playoffs', '/stats', '/props'].includes(meta.path) ? 'CollectionPage' : 'WebPage'));
     }
   }
   g.push(breadcrumbs(meta.url, crumbs));

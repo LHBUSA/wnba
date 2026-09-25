@@ -169,6 +169,8 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: `WNBA Injuries Today & Player Availability | ${BRAND}`, description: 'Every WNBA player on the injury feed with status, reported detail, source update time and capture time, grouped by team. No invented return dates.', image: pageShareImage('injuries', 'WNBA Injuries Today & Player Availability — PropBetEdge WNBA') });
     case 'props':
       return m({ title: `WNBA Player Props & Best Sportsbook Lines | ${BRAND}`, description: 'The WNBA best-line board: the best sportsbook price and the no-vig market consensus for every game and captured player prop, with book and capture time.', image: pageShareImage('props', 'WNBA Player Props & Best Sportsbook Lines — PropBetEdge WNBA') });
+    case 'playoffs':
+      return m({ title: `WNBA Playoffs & Bracket | ${BRAND}`, description: 'Live WNBA playoff bracket and series center: seeds, series status, schedule and results, next games and postseason intelligence — built from verified postseason game records, never projected.', image: pageShareImage('playoffs', 'WNBA Playoffs & Bracket — PropBetEdge WNBA') });
     case 'standings':
       return m({ title: `WNBA Standings & Playoff Race | ${BRAND}`, description: 'Current WNBA standings by conference: seeds, games back, last 10, streaks, home and road records, point differential and clinch marks.', image: pageShareImage('standings', 'WNBA Standings & Playoff Race — PropBetEdge WNBA') });
     case 'stats':

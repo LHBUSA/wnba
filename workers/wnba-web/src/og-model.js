@@ -21,6 +21,7 @@ const PAGE_CARDS = Object.freeze({
   injuries: ['Availability desk', 'WNBA Injuries Today', 'Player availability, reported injury detail and source freshness — with no invented return dates.'],
   props: ['Market intelligence', 'WNBA Player Props', 'Best available prices, market consensus and capture time across the current WNBA slate.'],
   standings: ['League table', 'WNBA Standings', 'Conference seeds, records, games back, streaks, last 10 and point differential.'],
+  playoffs: ['Postseason', 'WNBA Playoffs & Bracket', 'Live bracket, series status, schedule and results — built from verified postseason games.'],
   stats: ['League leaders', 'WNBA Stats Leaders', 'Current-season player leaders and team profiles with sourced sample sizes.'],
   teams: ['Team directory', 'WNBA Teams', 'Every team linked to its roster, schedule, player profiles, injuries and newsroom coverage.'],
   players: ['Player directory', 'WNBA Players', 'Current rosters linked to player profiles, stats, career totals, game logs, WinBA and news.'],

@@ -16,8 +16,8 @@
 // mirrored. `licensed` always carries the Commons entry (or null) so surfaces
 // that must stay licensed-only (JSON-LD, newsroom) can ignore the hotlinks.
 
-import manifest from '../../../data/player-photos.json';
-import headshots from '../../../data/player-headshots.json';
+import manifest from '../../../data/player-photos.json' with { type: 'json' };
+import headshots from '../../../data/player-headshots.json' with { type: 'json' };
 
 const approved = new Map();
 for (const p of manifest.players || []) {

@@ -72,7 +72,7 @@ export function standingsView({ res }) {
   if (!res?.ok) return html`${standingsHead()}${errorState(res, 'Standings')}`;
   const d = res.data;
   return html`
-    ${pageHead({ eyebrow: d.is_current ? 'Current season' : 'Prior season — final', title: 'Standings', sub: d.label, right: d.is_current ? badge('final', d.phase || 'Current') : badge('stale', 'Not current') })}
+    ${pageHead({ eyebrow: d.is_current ? 'Current season' : 'Prior season — final', title: 'Standings', sub: d.label, right: html`<div class="standings-po-r">${d.is_current ? badge('final', d.phase || 'Current') : badge('stale', 'Not current')}<a class="standings-po-link" href="/playoffs">View playoff bracket →</a></div>` })}
     <div class="grid g2">
       ${d.groups.map((g) => html`<section class="card">
         <div class="card-head"><span class="card-title">${g.name}</span></div>

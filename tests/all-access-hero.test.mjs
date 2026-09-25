@@ -140,7 +140,7 @@ test('chrome: gold ALL ACCESS header link beside WNBA Pro, drawer first row, foo
   assert.match(footer, /<li><a class="foot-net-aa" href="https:\/\/propbetedge\.ai\/pro" rel="noopener" data-all-access-sell>All Access · \$29\/month<\/a><\/li>/);
   assert.doesNotMatch(doc, /buy\.stripe\.com/, 'the shell never carries a Stripe link (the hero does, per state)');
   assert.notEqual(SHELL_REV, '2026-09-24.1', 'SHELL_REV must move so the publishing Worker\'s SSR shell is reconciled');
-  assert.equal(SHELL_REV, '2026-09-24.2');
+  assert.ok(SHELL_REV >= '2026-09-24.2', 'at or after the All Access chrome revision'); // later chrome changes move it forward
   assert.match(doc, new RegExp(`data-shell-rev="${SHELL_REV}"`));
   const shell = read('src/ui/shell.js');
   assert.match(shell, /if \(m\.state === 'all_access' \|\| m\.state === 'owner'\) root\.querySelectorAll\('\[data-all-access-sell\]'\)\.forEach\(\(a\) => a\.classList\.add\('aa-sold'\)\);/, 'umbrella members are never sold the umbrella');
