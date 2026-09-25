@@ -50,12 +50,16 @@ try {
   Pop-Location
 }
 
-Start-Sleep -Seconds 3
-
 $base = 'https://wnba-ingest.sales-fd3.workers.dev'
 $stamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 
-$health = Invoke-RestMethod -Method Get -Uri "$base/health?verify=$stamp" -Headers @{ 'Cache-Control' = 'no-cache' }
+# A new version takes a few seconds to reach every edge; poll (max ~60s) before judging it.
+$health = $null
+for ($i = 0; $i -lt 20; $i++) {
+  Start-Sleep -Seconds 3
+  $health = Invoke-RestMethod -Method Get -Uri "$base/health?verify=$stamp-$i" -Headers @{ 'Cache-Control' = 'no-cache' }
+  if ($health.version -eq $expectedVersion) { break }
+}
 if (-not $health.ok) { throw 'wnba-ingest /health is not ok.' }
 if ($health.version -ne $expectedVersion) { throw "Unexpected deployed version: $($health.version) (expected $expectedVersion)" }
 if ($health.scheduler -ne 'cloudflare-cron') { throw "Unexpected scheduler: $($health.scheduler)" }
