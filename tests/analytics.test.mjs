@@ -74,7 +74,15 @@ test('WNBA shell has no inline analytics bootstrap and production CSP allows onl
   ]) assert.ok(csp.includes(required), required);
 
   assert.ok(!csp.includes("script-src 'self' 'unsafe-inline'"), 'inline scripts remain blocked');
+  const directive = (name) => csp.split(';').map((d) => d.trim()).find((d) => d.startsWith(`${name} `));
+  // gtag's diagnostics beacon (https://www.googletagmanager.com/a?id=G-…) loads as an image; production logged it
+  // blocked by img-src on /cast (2026-09-25). Only that host is added — no wildcard, no other Google domain.
+  assert.equal(directive('img-src'), "img-src 'self' data: https://a.espncdn.com https://cdn.wnba.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com");
+  assert.equal(directive('script-src'), "script-src 'self' https://www.googletagmanager.com");
+  assert.equal(directive('connect-src'), "connect-src 'self' https://wnba-api.sales-fd3.workers.dev https://wnba-api.propbetedge.ai https://wnba-news.sales-fd3.workers.dev https://wnba-international.sales-fd3.workers.dev https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com");
+  assert.doesNotMatch(directive('script-src'), /unsafe/);
   for (const source of [worker, historical]) {
-    assert.ok(source.includes(csp), 'Cloudflare publishing CSP matches Vercel CSP');
+    const served = source.match(/'content-security-policy': "([^"]+)"/)?.[1];
+    assert.equal(served, csp, 'Cloudflare publishing CSP is identical to the Vercel CSP');
   }
 });

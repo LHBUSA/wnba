@@ -4,6 +4,8 @@
 
 Target: `https://wnba.propbetedge.ai`
 
+> **Status: MAINTENANCE MODE since 2026-09-25 — no active feature roadmap.** See [`docs/STATUS.md`](docs/STATUS.md).
+
 This repository starts from the product and architecture lessons already proven across PropBetEdge NBA, UFC, NFL, NHL and MLB. It is **not** a generic basketball skin and it is **not** a copy of NBA data. The WNBA product must be WNBA-native while reusing the strongest PropBetEdge interaction, truth, account and research patterns.
 
 ## Product thesis

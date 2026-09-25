@@ -84,8 +84,20 @@ const apiCookie = async (ctx) => (await ctx.cookies(API)).find((c) => c.name ===
   const pro = await ctx.newPage();
   await pro.goto(`${SITE}/pro`, { waitUntil: 'networkidle' });
   await pro.waitForTimeout(2000);
-  const badge = (await pro.locator('.pro-state').first().textContent().catch(() => '')) || '';
-  step('owner: Account (WNBA Pro page) shows the correct access', /WNBA Pro · Owner/.test(badge), badge.trim());
+  // Shared membership contract v1.1.0: the owner badge is data-pbe-membership="owner" reading OWNER, and an owner is
+  // never sold anything. Fails on FREE / WNBA PRO ACTIVE / any plan picker, Stripe checkout or All Access sell block.
+  const view = await pro.evaluate(async (u) => {
+    const a = await (await fetch(`${u}/v1/account`, { credentials: 'include' })).json();
+    const b = document.querySelector('#main .pro-state .pbe-mbr-badge');
+    const main = document.querySelector('#main');
+    return {
+      membership: a.data?.membership?.state, access: a.data?.access, state: a.data?.state,
+      badgeState: b?.getAttribute('data-pbe-membership') || null, badgeText: (b?.textContent || '').trim(),
+      sells: [...main.querySelectorAll('[data-plan], a[href*="buy.stripe.com"], .pbe-mbr-aa')].map((x) => x.className || x.getAttribute('href')).slice(0, 5)
+    };
+  }, API);
+  step('owner: Account (WNBA Pro page) shows the correct access', view.state === 'pro' && view.access === 'owner' && view.membership === 'owner' && view.badgeState === 'owner' && view.badgeText === 'OWNER' && view.sells.length === 0,
+    `account ${view.state}/${view.access} · membership ${view.membership} · badge ${view.badgeState} "${view.badgeText}" · purchase CTAs ${view.sells.length ? view.sells.join(',') : 'none'}`);
   const oldCookie = c?.value;
   await Promise.all([pro.waitForEvent('load').catch(() => {}), pro.click('[data-logout]')]);
   await pro.waitForTimeout(3000);

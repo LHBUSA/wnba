@@ -122,10 +122,18 @@ await check('02 active wnba_pro authenticates (real verify endpoint, real cookie
   expect(S.pro.location === `${APP}/pbe-picks`, `redirect ${S.pro.location}`);
   const a = await get('/v1/account', S.pro.cookie);
   expect(a.body?.data?.state === 'pro' && a.body.data.access === 'subscriber' && a.body.data.entitlement_check === 'CURRENT', JSON.stringify(a.body?.data));
+  // Current contract (official PBE Picks published to WNBA Pro since 2026-09-16): the public coverage flag says
+  // published/LIVE, and an active subscriber gets the official ledger with every call's values.
+  const cov = await get('/v1/pbe/coverage');
+  expect(cov.status === 200 && cov.body?.data?.published === true && cov.body.data.availability === 'LIVE', `public coverage ${cov.status} ${cov.body?.data?.availability}`);
   const picks = await get('/v1/pbe/picks', S.pro.cookie);
   expect(picks.status === 200 && picks.body?.data?.access === 'granted', `picks ${picks.status}`);
-  expect(!PAID.test(picks.text), 'values served while PBE_PUBLISH=false');
-  return `303 → /pbe-picks · account pro/subscriber/CURRENT · picks 200 ${picks.body.data.availability} (PBE_PUBLISH=false: no values to any subscriber)`;
+  expect(picks.body.data.availability === 'LIVE', `availability ${picks.body.data.availability} (expected the published official ledger)`);
+  expect(Array.isArray(picks.body.data.picks), 'picks payload is not a list');
+  const list = picks.body.data.picks;
+  // A recorded call carries its values; a game with no pre-tip lock carries call:null plus its reason, never values.
+  expect(list.every((c) => c?.game?.game_id && (c.call === null ? Boolean(c.reason) && !PAID.test(JSON.stringify(c)) : PAID.test(JSON.stringify(c)))), 'a published call is missing its values (or an unlocked game carries values)');
+  return `303 → /pbe-picks · account pro/subscriber/CURRENT · picks 200 granted LIVE · ${list.length} published call${list.length === 1 ? '' : 's'} in window${list.length ? ' with values' : ''}`;
 });
 
 await check('03 session alone never grants Pro: signed-in email with no entitlement is free, 403 everywhere', async () => {
