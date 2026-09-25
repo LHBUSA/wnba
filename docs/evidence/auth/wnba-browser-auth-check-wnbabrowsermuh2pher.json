@@ -1,0 +1,78 @@
+{
+  "run": "wnbabrowsermuh2pher",
+  "at": "2026-09-25T14:46:30.093Z",
+  "passed": 14,
+  "total": 14,
+  "results": [
+    {
+      "step": "owner: open link → confirm page → Continue → lands on the WNBA site",
+      "pass": true,
+      "detail": "confirm page \"Sign in to PropBetEdge WNBA\" → https://wnba.propbetedge.ai/pbe-picks"
+    },
+    {
+      "step": "owner: session cookie created with the right attributes",
+      "pass": true,
+      "detail": "__Host-wnba_session domain=wnba-api.propbetedge.ai path=/ secure=true httpOnly=true sameSite=Lax expires=2026-10-25T14:45:57.947Z"
+    },
+    {
+      "step": "owner: account resolves to WNBA Pro · Owner through the server boundary",
+      "pass": true,
+      "detail": "state=pro access=owner entitlement_check=OWNER"
+    },
+    {
+      "step": "owner: PBE Picks page opened and its protected API returned 200",
+      "pass": true,
+      "detail": "GET /v1/account 200 · GET /v1/pbe/picks 200 · GET /v1/account 200"
+    },
+    {
+      "step": "owner: refresh retains the session (protected API still 200)",
+      "pass": true,
+      "detail": "status 200 availability LIVE"
+    },
+    {
+      "step": "owner: second protected page (team PBE Picker) works in a new tab",
+      "pass": true,
+      "detail": "/v1/account 200 · /v1/account 200 · /v1/pbe/teams/20 200"
+    },
+    {
+      "step": "owner: Account (WNBA Pro page) shows the correct access",
+      "pass": true,
+      "detail": "account pro/owner · membership owner · badge owner \"OWNER\" · purchase CTAs none"
+    },
+    {
+      "step": "owner: logout in the UI signs the browser out; protected request 401",
+      "pass": true,
+      "detail": "account signed_out · picks 401"
+    },
+    {
+      "step": "owner: the logged-out cookie replayed elsewhere is revoked",
+      "pass": true,
+      "detail": "picks 401 · account signed_out/session_revoked"
+    },
+    {
+      "step": "owner: the used link cannot be replayed",
+      "pass": true,
+      "detail": "replay → 403"
+    },
+    {
+      "step": "owner: no console errors on the site during the flow",
+      "pass": true,
+      "detail": "none"
+    },
+    {
+      "step": "NBA-Pro-only subscriber authenticates but gets no WNBA paid access (403, teaser)",
+      "pass": true,
+      "detail": "landed https://wnba.propbetedge.ai/pbe-picks · account free · picks 403 · teaser 1"
+    },
+    {
+      "step": "forged session cookie in a real browser → 401",
+      "pass": true,
+      "detail": "picks 401"
+    },
+    {
+      "step": "foreign origin gets no credentialed CORS",
+      "pass": true,
+      "detail": "ACAO null"
+    }
+  ]
+}
