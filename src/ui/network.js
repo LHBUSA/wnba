@@ -9,6 +9,8 @@ export const NETWORK = Object.freeze({
   // propbetedge.ai/store is not a live store yet (it serves the news homepage);
   // the one live PropBetEdge checkout is the store on ufc.propbetedge.ai.
   store: { label: 'Store', href: 'https://ufc.propbetedge.ai/store' },
+  // Network education layer: first-party, canonical, same-tab.
+  learn: { label: 'Learn', href: 'https://learn.propbetedge.ai/' },
   discord: { label: 'Discord', href: PROPBETEDGE_DISCORD_URL },
   sports: [
     { key: 'mlb', label: 'MLB', name: 'Baseball Intelligence', href: 'https://mlb.propbetedge.ai/' },

@@ -5,7 +5,7 @@ import { isMember } from '../lib/membership.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-25.1';
+export const SHELL_REV = '2026-09-25.2';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -151,6 +151,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <ul class="foot-network-links">
             <li><a class="foot-net-aa" href="${ALL_ACCESS_URL}" rel="noopener" data-all-access-sell>All Access · ${ALL_ACCESS_OFFER.price}</a></li>
             <li><a href="${NETWORK.news.href}">${NETWORK.news.label}</a></li>
+            <li><a href="${NETWORK.learn.href}">${NETWORK.learn.label}</a></li>
             <li><a href="${NETWORK.store.href}">${NETWORK.store.label}</a></li>
             <li><a href="https://billing.stripe.com/p/login/cNi3cv2vY7em3lr4oj7wA00" target="_blank" rel="noopener noreferrer">Manage billing ↗</a></li>
             <li><a href="mailto:sales@proptechusa.ai">Contact us</a></li>
