@@ -106,6 +106,11 @@ async function sbInsert(env, table, row) {
   return JSON.parse(text)[0];
 }
 
+/** An insert refused because the prediction is already graded: unique index (23505) or the revision trigger (P0001). */
+export function gradeAlreadyInLedger(e) {
+  return e?.code === '23505' || (e?.code === 'P0001' && /must follow revision/.test(String(e?.message || '')));
+}
+
 async function sbSelect(env, path) {
   const res = await fetch(`${env.PBE_SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: env.PBE_SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.PBE_SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json' }, signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`supabase_select_${res.status}:${(await res.text()).slice(0, 200)}`);
@@ -545,16 +550,22 @@ export async function pbeTask(env, { now = Date.now(), minute = new Date(now).ge
         try {
           row = await sbInsert(env, 'wnba_pbe_grade_revisions', { prediction_id: predictionId, revision: 1, result: grade.result, home_score: grade.home_score, away_score: grade.away_score, winner_team_id: grade.winner_team_id, result_reference: reference, graded_by: runId });
         } catch (e) {
-          if (e.code !== '23505') throw e;
-          const [existing] = await sbSelect(env, `wnba_pbe_grade_revisions?prediction_id=eq.${encodeURIComponent(predictionId)}&revision=eq.1&select=*&limit=1`);
-          if (!existing) throw e;
-          const same = existing.result === grade.result
-            && Number(existing.home_score) === grade.home_score
-            && Number(existing.away_score) === grade.away_score
-            && String(existing.winner_team_id || '') === String(grade.winner_team_id || '');
-          if (!same) throw new Error(`grade_revision_1_conflict:${id}`);
-          row = existing;
-          summary.skipped.push(`already_graded_mirrored:${id}`);
+          // The ledger already holds a grade. Production answers with the BEFORE INSERT trigger's P0001
+          // ("revision 1 must follow revision N"), which fires before the unique index can raise 23505.
+          if (!gradeAlreadyInLedger(e)) throw e;
+          const [latest] = await sbSelect(env, `wnba_pbe_grade_revisions?prediction_id=eq.${encodeURIComponent(predictionId)}&select=*&order=revision.desc&limit=1`);
+          if (!latest) throw e;
+          if (Number(latest.revision) === 1) {
+            const same = latest.result === grade.result
+              && Number(latest.home_score) === grade.home_score
+              && Number(latest.away_score) === grade.away_score
+              && String(latest.winner_team_id || '') === String(grade.winner_team_id || '');
+            if (!same) throw new Error(`grade_revision_1_conflict:${id}`);
+          }
+          // A later revision is an audited correction chain in the ledger; the mirror reflects the newest revision.
+          row = latest;
+          stored = { ...stored, revision: Number(latest.revision), result: latest.result, home_score: Number(latest.home_score), away_score: Number(latest.away_score), winner_team_id: latest.winner_team_id == null ? null : String(latest.winner_team_id), result_reference: latest.result_reference ?? stored.result_reference };
+          summary.skipped.push(`already_graded_mirrored:${id}:r${latest.revision}`);
         }
         stored = { ...stored, grade_id: row.grade_id, graded_at: row.graded_at };
       }

@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import zlib from 'node:zlib';
-import { pbeTask, modeOf, ROWS_KEY, eligibleFinals } from '../workers/wnba-ingest/src/pbe-runner.js';
+import { pbeTask, modeOf, ROWS_KEY, eligibleFinals, gradeAlreadyInLedger } from '../workers/wnba-ingest/src/pbe-runner.js';
 
 const ROWS = zlib.gunzipSync(fs.readFileSync(new URL('./fixtures/pbe-wnba-model/rows-2025-2026.jsonl.gz', import.meta.url))).toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 
@@ -235,8 +235,11 @@ function fakeSupabase({ lockFail = () => null, existingLocks = [], existingGrade
       }
       if (table === 'wnba_pbe_grade_revisions') {
         const pid = (url.searchParams.get('prediction_id') || '').replace('eq.', '');
-        const rev = Number((url.searchParams.get('revision') || '').replace('eq.', ''));
-        return reply(db.grades.filter((g) => g.prediction_id === pid && (!Number.isFinite(rev) || g.revision === rev)));
+        const revRaw = url.searchParams.get('revision');
+        const rev = revRaw ? Number(revRaw.replace('eq.', '')) : NaN;
+        const rows = db.grades.filter((g) => g.prediction_id === pid && (!Number.isFinite(rev) || g.revision === rev));
+        if (url.searchParams.get('order') === 'revision.desc') rows.sort((a, b) => b.revision - a.revision);
+        return reply(rows.slice(0, Number(url.searchParams.get('limit') || rows.length)));
       }
       throw new Error(`unexpected GET table ${table}`);
     }
@@ -255,9 +258,13 @@ function fakeSupabase({ lockFail = () => null, existingLocks = [], existingGrade
       return reply([stored], 201);
     }
     if (table === 'wnba_pbe_grade_revisions') {
-      if (db.grades.some((g) => g.prediction_id === row.prediction_id && g.revision === row.revision)) {
-        return reply({ code: '23505', message: 'duplicate key value violates unique constraint "wnba_pbe_grade_revision_unique"' }, 409);
+      // Mirrors production: the BEFORE INSERT trigger (20260915200000_wnba_pbe_ledger_v1.sql) raises P0001 before the
+      // unique index is ever consulted when any grade already exists for the prediction.
+      const latest = db.grades.filter((g) => g.prediction_id === row.prediction_id).sort((a, b) => b.revision - a.revision)[0];
+      if (latest && (row.revision !== latest.revision + 1 || row.supersedes_grade_id !== latest.grade_id)) {
+        return reply({ code: 'P0001', message: `wnba_pbe: revision ${row.revision} must follow revision ${latest.revision} and supersede it` }, 400);
       }
+      if (!latest && row.revision !== 1) return reply({ code: 'P0001', message: 'wnba_pbe: first grade must be revision 1' }, 400);
       const stored = { ...row, grade_id: `grade-${db.grades.length + 1}`, graded_at: '2026-01-01T03:00:00+00:00' };
       db.grades.push(stored);
       return reply([stored], 201);
@@ -370,7 +377,7 @@ test('armed: grade written to ledger but missing from KV is recovered idempotent
   kv.put = originalPut;
   const s2 = await pbeTask(env, { now: NOW + 4 * 3600e3, minute: 3, eventsFor, fetchSummary: noSummaries });
   assert.equal(s2.grades, 1, 'the missing KV grade is repaired');
-  assert.ok(s2.skipped.includes('already_graded_mirrored:G_A'));
+  assert.ok(s2.skipped.includes('already_graded_mirrored:G_A:r1'));
   const repaired = JSON.parse(kv.map.get('pbe:v1:official:grade:G_A'));
   const ledgerGrade = supabase.db.grades.find((g) => g.prediction_id === supabase.db.locks.find((l) => l.game_id === 'G_A').prediction_id);
   assert.equal(repaired.grade_id, ledgerGrade.grade_id);
@@ -378,6 +385,44 @@ test('armed: grade written to ledger but missing from KV is recovered idempotent
   assert.equal(supabase.db.grades.filter((g) => g.prediction_id === ledgerGrade.prediction_id).length, 1, 'no duplicate grade inserted');
 });
 
+
+test('armed: a ledger correction chain (revision 2) with no KV grade mirrors the newest revision instead of failing every pass', async (t) => {
+  // Production 2026-09-25: games 401857201/401857202 were graded in the ledger (one corrected to revision 2) but
+  // their KV mirrors were missing. The revision trigger answered P0001, never 23505, so every minute failed.
+  const supabase = fakeSupabase();
+  const { kv, env, events, eventsFor } = await armedSetup(t, supabase);
+  await pbeTask(env, { now: NOW, minute: 0, eventsFor, fetchSummary: noSummaries });
+  for (const id of ['G_A', 'G_B']) {
+    const g = events[2026].find((e) => e.id === id);
+    g.status.type.name = 'STATUS_FINAL';
+    g.competitions[0].competitors[0].score = id === 'G_A' ? '88' : '77';
+    g.competitions[0].competitors[1].score = id === 'G_A' ? '79' : '81';
+  }
+  await pbeTask(env, { now: NOW + 3 * 3600e3, minute: 2, eventsFor, fetchSummary: noSummaries });
+  const pid = supabase.db.locks.find((l) => l.game_id === 'G_A').prediction_id;
+  const r1 = supabase.db.grades.find((g) => g.prediction_id === pid);
+  supabase.db.grades.push({ ...r1, revision: 2, supersedes_grade_id: r1.grade_id, grade_id: 'grade-correction', result: 'void', winner_team_id: null });
+  kv.map.delete('pbe:v1:official:grade:G_A');
+  kv.map.delete('pbe:v1:official:grade:G_B');
+
+  const s = await pbeTask(env, { now: NOW + 4 * 3600e3, minute: 3, eventsFor, fetchSummary: noSummaries });
+  assert.equal(s.errors.length, 0, 'no armed errors');
+  assert.equal(s.grades, 2);
+  assert.ok(s.skipped.includes('already_graded_mirrored:G_A:r2'));
+  assert.ok(s.skipped.includes('already_graded_mirrored:G_B:r1'));
+  const mirrored = JSON.parse(kv.map.get('pbe:v1:official:grade:G_A'));
+  assert.equal(mirrored.revision, 2);
+  assert.equal(mirrored.grade_id, 'grade-correction');
+  assert.equal(mirrored.result, 'void');
+  assert.equal(supabase.db.grades.filter((g) => g.prediction_id === pid).length, 2, 'nothing new inserted');
+});
+
+test('gradeAlreadyInLedger recognises both refusal shapes and nothing else', () => {
+  assert.equal(gradeAlreadyInLedger({ code: '23505', message: 'duplicate key' }), true);
+  assert.equal(gradeAlreadyInLedger({ code: 'P0001', message: 'supabase_x_400:{"message":"wnba_pbe: revision 1 must follow revision 2 and supersede it"}' }), true);
+  assert.equal(gradeAlreadyInLedger({ code: 'P0001', message: 'wnba_pbe: grade for prediction x before scheduled tip' }), false);
+  assert.equal(gradeAlreadyInLedger({ code: '42501', message: 'permission denied' }), false);
+});
 
 test('armed: a Supabase lock missing from KV and index is recovered after tip and still graded', async (t) => {
   const supabase = fakeSupabase();
