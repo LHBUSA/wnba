@@ -288,9 +288,12 @@ test('api adapter gates every DNA call on /health listing the route (no request 
   assert.match(src, /r\.routes\.includes\(DNA_ROUTE\)/);
   assert.match(src, /dnaPlayer: async \(id\) => \(\(await dnaAvailable\(\)\) \? getJson\(/);
   assert.match(src, /dnaMeta: async \(\) => \(\(await dnaAvailable\(\)\) \? getJson\(/);
-  // the player page never awaits DNA before painting, and uses the injected, inert-by-default row
+  // the player page prefetches DNA in parallel with its own data, waits at most DNA_WAIT_MS so the row lands in the
+  // same paint (no layout shift), and otherwise falls back to inserting the inert-by-default row when it arrives
   const page = readFileSync(new URL('../src/pages/player.js', import.meta.url), 'utf8');
-  assert.match(page, /render\(root, playerView\(data\)\);[\s\S]*mountDnaRow\(root, id, ctx, \{ api, membershipFrom, isMember \}\)\.then\(/);
+  assert.match(page, /const dnaP = fetchDnaRow\(id, deps\)[\s\S]*const data = await loadPlayer\(api, id\)/, 'DNA fetch starts before the page data resolves');
+  assert.match(page, /const DNA_WAIT_MS = 1500;[\s\S]*Promise\.race\(\[dnaP,/);
+  assert.match(page, /render\(root, playerView\(data\)\);[\s\S]*fillDnaRow\(root, early\)[\s\S]*mountDnaRow\(root, id, ctx, deps, dnaP\)\.then\(/);
   const view = readFileSync(new URL('../src/views/player.js', import.meta.url), 'utf8');
   assert.match(view, /<div class="dna-slot" data-dna-slot hidden><\/div>/);
 });

@@ -71,20 +71,38 @@ export function dnaRowHtml(dnaRes, loadRes = null) {
  * is live, so no visitor triggers a 401. deps = { api, membershipFrom, isMember } (injected; testable).
  * Resolves to an unbind function, or undefined when nothing was mounted.
  */
-export async function mountDnaRow(root, id, ctx, deps) {
-  const slot = root?.querySelector?.('[data-dna-slot]');
-  if (!slot) return undefined;
+/** Fetch everything the DNA row needs (DNA doc; Player Load only for members). Starts before the page renders. */
+export async function fetchDnaRow(id, deps) {
   const dna = await Promise.resolve().then(() => deps.api.dnaPlayer(id)).catch(() => null);
-  if (!ctx.isCurrent() || !dnaUsable(dna)) return undefined;
+  if (!dnaUsable(dna)) return null;
   let load = null;
   const account = await Promise.resolve().then(() => deps.api.account()).catch(() => null);
   if (deps.isMember(deps.membershipFrom(account))) load = await Promise.resolve().then(() => deps.api.playerLoadPlayer(id)).catch(() => null);
-  if (!ctx.isCurrent()) return undefined;
-  const markup = dnaRowHtml(dna, load);
+  return { dna, load };
+}
+
+/** Fill the (hidden) slot synchronously; returns the interaction unbinder or undefined. */
+export function fillDnaRow(root, pre) {
+  const slot = root?.querySelector?.('[data-dna-slot]');
+  if (!slot || !pre) return undefined;
+  const markup = dnaRowHtml(pre.dna, pre.load);
   if (!markup) return undefined;
   slot.innerHTML = markup;
   slot.hidden = false;
   return bindDnaInteractions(slot);
+}
+
+/**
+ * DNA row on the player page. `prefetch` is the promise from fetchDnaRow started in parallel with the page data,
+ * so the row is normally inserted in the same paint as the page (no layout shift); if it resolves later, it is
+ * inserted when it arrives.
+ */
+export async function mountDnaRow(root, id, ctx, deps, prefetch = null) {
+  const slot = root?.querySelector?.('[data-dna-slot]');
+  if (!slot) return undefined;
+  const pre = await (prefetch || fetchDnaRow(id, deps)).catch(() => null);
+  if (!ctx.isCurrent() || !pre) return undefined;
+  return fillDnaRow(root, pre);
 }
 
 /* ── full profile ────────────────────────────────────────────────────── */

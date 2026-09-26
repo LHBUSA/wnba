@@ -14,7 +14,7 @@ export const title = () => 'Player DNA';
 
 export async function mount(root, ctx) {
   const id = ctx.params.playerId;
-  root.innerHTML = `<div class="dna-page">${skeleton(320)}${skeleton(420)}</div>`;
+  root.innerHTML = `<div class="dna-page dna-page--loading">${skeleton(320)}${skeleton(420)}</div>`; // reserved height: the footer stays below the fold until the profile paints (no CLS)
   const [dna, meta, player] = await Promise.all([api.dnaPlayer(id), api.dnaMeta(), api.player(id)]);
   if (!ctx.isCurrent()) return;
   if (!dnaUsable(dna)) {

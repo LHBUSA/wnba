@@ -364,3 +364,6 @@
 .dna-pc__row small.note { font-size: 10px; }
 .dna-cmp > .dna-radar, .dna-pc > .dna-radar { width: 100%; }
 .dna-cmp__tbl td:first-child { white-space: normal; min-width: 7em; } .dna-cmp__tbl th { white-space: normal; overflow-wrap: normal; word-break: keep-all; } .dna-cmp__tbl th, .dna-cmp__tbl td { padding-left: 6px; padding-right: 6px; }
+
+/* Loading reserve: keeps the footer below the fold until the profile paints (the profile is always taller). */
+.dna-page--loading { min-height: 160vh; }

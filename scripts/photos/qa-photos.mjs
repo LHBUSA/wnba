@@ -94,7 +94,14 @@ async function audit(ctx, route, expect = null) {
 }
 
 for (const w of widths) { // sequential: one browser, one page at a time
-  const ctx = await browser.newContext({ viewport: { width: w, height: w >= 1000 ? 900 : 844 }, deviceScaleFactor: w >= 1000 ? 1 : 2, isMobile: w < 1000, hasTouch: w < 1000 });
+  // cdn.wnba.com's bot filter answers the default "HeadlessChrome" user agent with ERR_HTTP2_PROTOCOL_ERROR
+  // (verified 2026-09-26: HTTP/1.1 with any Referer and headless Chrome with a normal UA both get the 1040x760
+  // portrait). Real visitors are unaffected, so QA browses with a normal desktop/mobile Chrome UA; set
+  // QA_HEADLESS_UA=1 to reproduce the blocked path (the page must then fall back to ESPN with no broken image).
+  const UA = process.env.QA_HEADLESS_UA ? undefined : (w < 1000
+    ? 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36'
+    : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36');
+  const ctx = await browser.newContext({ viewport: { width: w, height: w >= 1000 ? 900 : 844 }, deviceScaleFactor: w >= 1000 ? 1 : 2, isMobile: w < 1000, hasTouch: w < 1000, ...(UA ? { userAgent: UA } : {}) });
   ctx._w = w;
   for (const [label, id] of CASES) {
     const expect = byId.get(id);
