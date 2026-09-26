@@ -80,7 +80,7 @@ async function get(path, cookie, extra = {}) {
   const text = await r.text();
   return { status: r.status, text, body: (() => { try { return JSON.parse(text); } catch { return null; } })() };
 }
-const PROTECTED = ['/v1/pbe/picks', '/v1/pbe/teams/20', '/v1/pbe/games/401857190', '/v1/track-record/ledger'];
+const PROTECTED = ['/v1/pbe/picks', '/v1/pbe/teams/20', '/v1/pbe/games/401857190', '/v1/track-record/ledger', '/v1/player-load/4433791'];
 
 const results = [];
 async function check(name, fn) {
@@ -133,7 +133,12 @@ await check('02 active wnba_pro authenticates (real verify endpoint, real cookie
   const list = picks.body.data.picks;
   // A recorded call carries its values; a game with no pre-tip lock carries call:null plus its reason, never values.
   expect(list.every((c) => c?.game?.game_id && (c.call === null ? Boolean(c.reason) && !PAID.test(JSON.stringify(c)) : PAID.test(JSON.stringify(c)))), 'a published call is missing its values (or an unlocked game carries values)');
-  return `303 → /pbe-picks · account pro/subscriber/CURRENT · picks 200 granted LIVE · ${list.length} published call${list.length === 1 ? '' : 's'} in window${list.length ? ' with values' : ''}`;
+  // Player Load is Pro-only and separate from Player DNA (2026-09-26): 200 with a load record for an active subscriber.
+  const load = await get('/v1/player-load/4433791', S.pro.cookie);
+  expect(load.status === 200 && load.body?.ok !== false && load.body?.data, `player-load ${load.status}`);
+  const dna = await get('/v1/dna/players/4433791', S.pro.cookie);
+  expect(dna.status === 200 && !/player_load|injur/i.test(JSON.stringify(dna.body?.data?.scopes || {})), `dna ${dna.status} or load/injury fields inside DNA scopes`);
+  return `303 → /pbe-picks · account pro/subscriber/CURRENT · picks 200 granted LIVE · ${list.length} published call${list.length === 1 ? '' : 's'} in window${list.length ? ' with values' : ''} · player-load 200 · dna 200 (no load fields)`;
 });
 
 await check('03 session alone never grants Pro: signed-in email with no entitlement is free, 403 everywhere', async () => {
