@@ -77,7 +77,7 @@ test('WNBA shell has no inline analytics bootstrap and production CSP allows onl
   const directive = (name) => csp.split(';').map((d) => d.trim()).find((d) => d.startsWith(`${name} `));
   // gtag's diagnostics beacon (https://www.googletagmanager.com/a?id=G-…) loads as an image; production logged it
   // blocked by img-src on /cast (2026-09-25). Only that host is added — no wildcard, no other Google domain.
-  assert.equal(directive('img-src'), "img-src 'self' data: https://a.espncdn.com https://cdn.wnba.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com");
+  assert.equal(directive('img-src'), "img-src 'self' data: https://a.espncdn.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com");
   assert.equal(directive('script-src'), "script-src 'self' https://www.googletagmanager.com");
   assert.equal(directive('connect-src'), "connect-src 'self' https://wnba-api.sales-fd3.workers.dev https://wnba-api.propbetedge.ai https://wnba-news.sales-fd3.workers.dev https://wnba-international.sales-fd3.workers.dev https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com");
   assert.doesNotMatch(directive('script-src'), /unsafe/);

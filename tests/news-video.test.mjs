@@ -236,7 +236,7 @@ test('M. page load without a click requests nothing from YouTube; the CSP except
   assert.match(vercel, /frame-src https:\/\/www\.youtube-nocookie\.com;/);
   assert.match(vercel, /default-src 'self';/);
   // Outside image hosts are limited to sanctioned player headshots plus GA collection pixels and gtag's image beacon.
-  assert.match(vercel, /img-src 'self' data: https:\/\/a\.espncdn\.com https:\/\/cdn\.wnba\.com https:\/\/www\.google-analytics\.com https:\/\/\*\.google-analytics\.com https:\/\/www\.googletagmanager\.com;/);
+  assert.match(vercel, /img-src 'self' data: https:\/\/a\.espncdn\.com https:\/\/www\.google-analytics\.com https:\/\/\*\.google-analytics\.com https:\/\/www\.googletagmanager\.com;/);
   assert.match(vercel, /script-src 'self' https:\/\/www\.googletagmanager\.com;/);
   assert.match(vercel, /connect-src[^;]*https:\/\/www\.google-analytics\.com[^;]*https:\/\/region1\.google-analytics\.com[^;]*https:\/\/analytics\.google\.com;/);
   assert.doesNotMatch(vercel, /script-src[^;]*'unsafe-inline'/);

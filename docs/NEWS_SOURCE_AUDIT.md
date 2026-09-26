@@ -212,3 +212,16 @@ v2 events by lane: other 26, league 11, games 6, international 4, injuries 3, ro
 
 * First production pass from Cloudflare egress (2026-09-13 16:26Z): every official team site, WNBA.com and the national/beat feeds answered 200. The Seattle Times answered 403 and was removed from the registry; `/sources` shows live per-source health.
 * Supabase is not bound. The registry, health and items live in KV, as all newsroom state did before this release.
+
+## Player imagery: cdn.wnba.com (decision record, 2026-09-26)
+
+- **State: FALLBACK ACTIVE.** No source-specific, owner-approved rights decision for WNBA.com / cdn.wnba.com
+  imagery exists (WNBA.com is `review_required` above; its Terms restrict commercial reuse without written
+  permission). The WNBA CDN photo provider is therefore **off** (`WNBA_ENABLE_WNBA_CDN = "false"` in
+  `workers/wnba-api/wrangler.toml`; `cdn.wnba.com` removed from img-src).
+- Active order: ESPN headshot (external_editorial hotlink) → licensed Wikimedia Commons → initials.
+- Kept intact for a future decision: the 226 Wikidata-P3588 id mappings (exact name + exact DOB, placeholder
+  rejection, Commons-ledger corroboration) in `data/player-headshots.json` and `docs/photos/wnba-id-mapping-2026-09-26.json`.
+- To re-enable after an owner rights decision: record the decision here, set the flag to `"true"`, add
+  `https://cdn.wnba.com` back to img-src (vercel.json + both wnba-web entrypoints), deploy wnba-api + wnba-web.
+

@@ -132,8 +132,10 @@ test('surfaces consume the resolver: no page builds a provider URL, WinBA and WN
   assert.match(read('workers/wnba-news/src/media-resolve.js'), /\/media\/players\/\$\{pid\}\/square\.webp/);
 });
 
-test('CSP img-src allows exactly the resolver hosts (self, ESPN, WNBA CDN) plus analytics, nothing broader', () => {
-  const need = new Set(["'self'", 'data:', 'https://a.espncdn.com', 'https://cdn.wnba.com']);
+test('CSP img-src allows exactly the resolver hosts (self, ESPN, WNBA CDN only when enabled) plus analytics, nothing broader', () => {
+  // cdn.wnba.com is allowed only while the WNBA CDN provider is enabled in the wnba-api env.
+  const cdnOn = /^WNBA_ENABLE_WNBA_CDN = "true"/m.test(read('workers/wnba-api/wrangler.toml'));
+  const need = new Set(["'self'", 'data:', 'https://a.espncdn.com', ...(cdnOn ? ['https://cdn.wnba.com'] : [])]);
   const analytics = new Set(['https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://www.googletagmanager.com']);
   for (const f of ['vercel.json', 'workers/wnba-web/src/index.js', 'workers/wnba-web/src/index-historical.js']) {
     const src = read(f).match(/img-src ([^;"]+)/)[1].trim().split(/\s+/);

@@ -30,7 +30,7 @@ PBE_PUBLISH = "true"
 # Player photo providers (workers/wnba-api/src/photos.js). WNBA/ESPN are hotlinked
 # external_editorial headshots; Commons is the licensed fallback; avatar = initials.
 WNBA_PHOTO_PROVIDER_ORDER = "wnba,espn,commons,avatar"
-WNBA_ENABLE_WNBA_CDN = "true"
+WNBA_ENABLE_WNBA_CDN = "false" # no source-specific WNBA.com image rights decision on record (NEWS_SOURCE_AUDIT: WNBA.com review_required); ids stay mapped, provider off
 WNBA_ENABLE_ESPN_HEADSHOTS = "true"
 WNBA_ENABLE_COMMONS = "true"
 
