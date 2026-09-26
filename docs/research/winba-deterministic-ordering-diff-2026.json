@@ -1,0 +1,67 @@
+{
+  "generated": "2026-09-26",
+  "production": {
+    "source": "GET https://wnba-api.sales-fd3.workers.dev/v1/stats/winba (serves KV winba:v1:latest unchanged; photo/status stripped)",
+    "version": "winba/1.0.0",
+    "generated_at": "2026-09-25T04:26:27.869Z",
+    "archive_signature": "350:401857218",
+    "games_used": 332,
+    "rows": 238
+  },
+  "candidate": {
+    "version": "winba/1.0.1-research",
+    "base_version": "winba/1.0.0",
+    "ordering": "start_utc ascending, then game_id ascending",
+    "archive": "350 archived documents (archive:v1:index 350:401857218), same archive state as production",
+    "games_used": 332
+  },
+  "archive_games_sharing_a_tip_time_with_the_previous_game": 59,
+  "rows_production": 238,
+  "rows_candidate": 238,
+  "rows_changed": 4,
+  "fields_changed": 4,
+  "fields_changed_by_name": {
+    "team_id": 4
+  },
+  "row_order_identical": true,
+  "board": {
+    "games_used": [
+      332,
+      332
+    ],
+    "qualified_count": [
+      196,
+      196
+    ],
+    "provisional_count": [
+      42,
+      42
+    ]
+  },
+  "changes": [
+    {
+      "athlete_id": "3065570",
+      "field": "team_id",
+      "production": "6",
+      "candidate": "11"
+    },
+    {
+      "athlete_id": "4068159",
+      "field": "team_id",
+      "production": "132052",
+      "candidate": "3"
+    },
+    {
+      "athlete_id": "4282168",
+      "field": "team_id",
+      "production": "11",
+      "candidate": "131935"
+    },
+    {
+      "athlete_id": "4684384",
+      "field": "team_id",
+      "production": "18",
+      "candidate": "131935"
+    }
+  ]
+}
