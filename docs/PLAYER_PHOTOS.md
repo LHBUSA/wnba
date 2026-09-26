@@ -2,6 +2,30 @@
 
 Ledger: `data/player-photos.json` (Git-versioned; bundled into `wnba-api`, which is the only authority the site reads). Derivatives: `public/media/players/<espnAthleteId>/{portrait,square}.webp`. Pipeline: `scripts/photos/s1_roster.py … s8_manifest.py` (run log: `docs/PHOTO_COVERAGE_PIPELINE_RUN.md`).
 
+## Providers and live coverage (2026-09-26)
+
+Resolver: `workers/wnba-api/src/photos.js`, order `wnba,espn,commons,avatar` (wrangler env). Every
+player surface renders the API photo object through `src/ui/photo.js` (`photoImg` / `photoChain`),
+which walks the chain on image error and ends on the initials card. JSON-LD and the newsroom read the
+Commons (`licensed`) entry only.
+
+| Provider | Rights | How a player gets it |
+|---|---|---|
+| WNBA CDN (`cdn.wnba.com`, 1040x760 / 260x190) | external editorial, hotlinked | `scripts/photos/s11_provider_ids.mjs`: Wikidata P3588 (CC0) matched to the ESPN athlete by exact normalized name AND exact day DOB, one candidate, unique id, no conflict with this ledger's own match; then the live image must be 200 PNG at the exact size and not the silhouette. stats.wnba.com / wnba.com pages are never read. |
+| ESPN (`a.espncdn.com`) | external editorial, hotlinked | ESPN roster headshot (s1), or ESPN's athlete record headshot for the same id (s11), live-verified |
+| Commons (`/media/players`) | licensed | this ledger (unchanged rules below) |
+| initials | — | nothing above verified |
+
+The WNBA CDN answers an unknown id with **HTTP 200 and a generic silhouette** (1040x760 request ->
+1094x800 image; 260x190 request -> same-size image, distinct hash), so the browser error fallback cannot
+catch it. Ids ship only after s11 verified the live image; WNBA portraits also carry
+`data-photo-guard="1040x760"` and a load at any other size advances the chain.
+
+Evidence: `docs/photos/wnba-id-mapping-2026-09-26.json` (every decision), `docs/photos/coverage-2026-09-26.json`
+(every player, live vs this commit, every URL fetched). Refresh: `python scripts/photos/s1_roster.py`
+then `node scripts/photos/s11_provider_ids.mjs`, then `node scripts/photos/coverage-report.mjs`.
+Production QA: `node scripts/photos/qa-photos.mjs`.
+
 ## Coverage (2026-09-11, after stage 9)
 
 **166 verified photos / 209 active roster players (79.4%)** — 156 from the Wikidata P18 route plus 10 from Commons-category discovery (stage 9).

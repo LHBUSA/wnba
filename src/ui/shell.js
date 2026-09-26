@@ -5,7 +5,7 @@ import { isMember } from '../lib/membership.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-26.3';
+export const SHELL_REV = '2026-09-26.4';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -175,7 +175,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           </div>
         </div>
 
-        <p class="foot-note">PropBetEdge WNBA is independent and is not affiliated with, endorsed by or sponsored by the WNBA, its teams or players. Scores, play-by-play, rosters, standings, injury statuses and market snapshots are delivered through PropSports.PropTechUSA.ai; underlying source provenance is documented on the Sources page; external news links open on the publisher's site. Player photos are Wikimedia Commons images used under their stated licenses with credit on each player page. For entertainment and research — bet responsibly. 21+.</p>
+        <p class="foot-note">PropBetEdge WNBA is independent and is not affiliated with, endorsed by or sponsored by the WNBA, its teams or players. Scores, play-by-play, rosters, standings, injury statuses and market snapshots are delivered through PropSports.PropTechUSA.ai; underlying source provenance is documented on the Sources page; external news links open on the publisher's site. Player headshots are hotlinked from WNBA.com and ESPN where available, otherwise Wikimedia Commons images used under their stated licenses with credit on each player page. For entertainment and research — bet responsibly. 21+.</p>
       </div>
     </footer>
     <nav class="mnav" aria-label="Primary mobile" data-shell-rev="${SHELL_REV}">

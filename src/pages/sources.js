@@ -54,7 +54,7 @@ export async function mount(root, ctx) {
         <li><b>WinBA Score</b> has its own <a href="/winba-score">formula, live rankings, qualification rules and limitations</a>.</li>
         <li><b>Market consensus</b> is the median no-vig probability across books — a benchmark, never a PropBetEdge model.</li>
         <li><b>Newsroom events</b> are one story per real-world event: reports are joined by their facts (event type, player, team), scored by a stated materiality rule, and only material events become stories.</li>
-        <li><b>Player photos</b> are Wikimedia Commons images under CC0 / public-domain / CC BY / CC BY-SA, matched to the player by exact name and date of birth on Wikidata, then crop-reviewed. Otherwise a neutral card.</li>
+        <li><b>Player photos</b> are, in order: the WNBA.com headshot (hotlinked, never copied; the WNBA.com id comes from Wikidata, matched by exact name and date of birth, and the live image is checked not to be the generic silhouette), the ESPN headshot (hotlinked, never copied), then a Wikimedia Commons image under CC0 / public-domain / CC BY / CC BY-SA matched the same way and crop-reviewed. Otherwise a neutral initials card. Structured data and the newsroom use the Commons images only.</li>
       </ul>
       <p class="note" style="margin-top:12px">Photo coverage: ${h?.photo_coverage ? `${h.photo_coverage.approved} verified` : '—'}.</p>
     </section>

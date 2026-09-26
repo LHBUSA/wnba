@@ -189,7 +189,8 @@ function winbaMap(snapshot) {
 function boxWithWinba(box, snapshot) {
   if (!box) return box;
   const idx = winbaMap(snapshot);
-  return { ...box, players: (box.players || []).map((p) => ({ ...p, winba: idx.get(String(p.athlete_id)) || null })) };
+  // photo: the same resolver chain as every other player surface (WNBACast shot markers read it).
+  return { ...box, players: (box.players || []).map((p) => ({ ...p, winba: idx.get(String(p.athlete_id)) || null, photo: photoFor(p.athlete_id) })) };
 }
 
 // ---------------------------------------------------------------- health

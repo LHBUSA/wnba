@@ -1,0 +1,4811 @@
+{
+ "generated_at": "2026-09-26T16:21:43.724Z",
+ "api": "https://wnba-api.sales-fd3.workers.dev",
+ "site": "https://wnba.propbetedge.ai",
+ "provider_env": {
+  "WNBA_PHOTO_PROVIDER_ORDER": "wnba,espn,commons,avatar",
+  "WNBA_ENABLE_WNBA_CDN": "true",
+  "WNBA_ENABLE_ESPN_HEADSHOTS": "true",
+  "WNBA_ENABLE_COMMONS": "true"
+ },
+ "definitions": {
+  "all_dna": "every doc in /v1/dna/index",
+  "qualified": "DNA docs whose season scope is calculated (season_calculated = true)",
+  "active_roster": "every player in /v1/players (ESPN team rosters)",
+  "live": "photo object served by production wnba-api now; every URL fetched",
+  "main": "photo object the resolver at this commit serves after wnba-api deploy; every URL fetched",
+  "provider_true": "portrait and square both HTTP 200 image, expected size, not the provider silhouette/placeholder"
+ },
+ "silhouette": {
+  "wnba_full_sha256": "5f99d96e1c09b620",
+  "wnba_full_dims": [
+   1094,
+   800
+  ],
+  "wnba_square_sha256": "1ef05c33c1f10bf7",
+  "wnba_square_dims": [
+   260,
+   190
+  ]
+ },
+ "urls_checked": 1212,
+ "totals": {
+  "all_dna": {
+   "live": {
+    "players": 239,
+    "wnba": 0,
+    "espn": 196,
+    "commons": 164,
+    "any_real_photo": 204,
+    "initials_only": 35,
+    "chosen": {
+     "wnba": 0,
+     "espn": 196,
+     "commons": 8,
+     "avatar": 35
+    }
+   },
+   "main": {
+    "players": 239,
+    "wnba": 224,
+    "espn": 209,
+    "commons": 164,
+    "any_real_photo": 231,
+    "initials_only": 8,
+    "chosen": {
+     "wnba": 224,
+     "espn": 6,
+     "commons": 1,
+     "avatar": 8
+    }
+   }
+  },
+  "qualified": {
+   "live": {
+    "players": 166,
+    "wnba": 0,
+    "espn": 154,
+    "commons": 138,
+    "any_real_photo": 160,
+    "initials_only": 6,
+    "chosen": {
+     "wnba": 0,
+     "espn": 154,
+     "commons": 6,
+     "avatar": 6
+    }
+   },
+   "main": {
+    "players": 166,
+    "wnba": 159,
+    "espn": 157,
+    "commons": 138,
+    "any_real_photo": 166,
+    "initials_only": 0,
+    "chosen": {
+     "wnba": 159,
+     "espn": 6,
+     "commons": 1,
+     "avatar": 0
+    }
+   }
+  },
+  "active_roster": {
+   "live": {
+    "players": 221,
+    "wnba": 0,
+    "espn": 199,
+    "commons": 164,
+    "any_real_photo": 206,
+    "initials_only": 15,
+    "chosen": {
+     "wnba": 0,
+     "espn": 199,
+     "commons": 7,
+     "avatar": 15
+    }
+   },
+   "main": {
+    "players": 221,
+    "wnba": 204,
+    "espn": 200,
+    "commons": 164,
+    "any_real_photo": 214,
+    "initials_only": 7,
+    "chosen": {
+     "wnba": 204,
+     "espn": 8,
+     "commons": 2,
+     "avatar": 7
+    }
+   }
+  },
+  "dna_or_roster": {
+   "live": {
+    "players": 245,
+    "wnba": 0,
+    "espn": 199,
+    "commons": 166,
+    "any_real_photo": 208,
+    "initials_only": 37,
+    "chosen": {
+     "wnba": 0,
+     "espn": 199,
+     "commons": 9,
+     "avatar": 37
+    }
+   },
+   "main": {
+    "players": 245,
+    "wnba": 226,
+    "espn": 213,
+    "commons": 166,
+    "any_real_photo": 236,
+    "initials_only": 9,
+    "chosen": {
+     "wnba": 226,
+     "espn": 8,
+     "commons": 2,
+     "avatar": 9
+    }
+   }
+  }
+ },
+ "players": [
+  {
+   "player_id": "869",
+   "name": "DeWanna Bonner",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "887",
+   "name": "Sami Whitcomb",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "924",
+   "name": "Alysha Clark",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "981",
+   "name": "Courtney Vandersloot",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "1054",
+   "name": "Tiffany Hayes",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "1068",
+   "name": "Nneka Ogwumike",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2284331",
+   "name": "Emma Cannon",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2327695",
+   "name": "Rebekah Gardner",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "2490553",
+   "name": "Brittney Griner",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2491205",
+   "name": "Skylar Diggins",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2491214",
+   "name": "Erica Wheeler",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2491232",
+   "name": "Kayla Alexander",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "2529047",
+   "name": "Odyssey Sims",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529122",
+   "name": "Chelsea Gray",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529130",
+   "name": "Natasha Howard",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529137",
+   "name": "Natasha Cloud",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529140",
+   "name": "Alyssa Thomas",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529183",
+   "name": "Stefanie Dolson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529205",
+   "name": "Kayla McBride",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529458",
+   "name": "Cheyenne Parker-Tyus",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2529622",
+   "name": "Kayla Thornton",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2566081",
+   "name": "Elizabeth Williams",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2566106",
+   "name": "Dearica Hamby",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2566110",
+   "name": "Julie Vanloo",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "2566186",
+   "name": "Rachel Banham",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2566453",
+   "name": "Isabelle Harrison",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2569044",
+   "name": "Temi Fagbenle",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2590093",
+   "name": "Kiah Stokes",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2593770",
+   "name": "Betnijah Laney-Hamilton",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2955898",
+   "name": "Damiris Dantas",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "2987869",
+   "name": "Jewell Loyd",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2987891",
+   "name": "Courtney Williams",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2988756",
+   "name": "Brittney Sykes",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2998928",
+   "name": "Breanna Stewart",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2998938",
+   "name": "Kahleah Copper",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "2999101",
+   "name": "Jonquel Jones",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3054590",
+   "name": "Nia Brodie",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "espn",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3056672",
+   "name": "Mercedes Russell",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3056730",
+   "name": "Karlie Samuelson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3058892",
+   "name": "Lexie Brown",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3058893",
+   "name": "Shatori Walker-Kimbrough",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3058895",
+   "name": "Brionna Jones",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3058901",
+   "name": "Allisha Gray",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3065570",
+   "name": "Kelsey Plum",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3099736",
+   "name": "Stephanie Talbot",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3102133",
+   "name": "Rebecca Allen",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3142010",
+   "name": "Azura Stevens",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3142055",
+   "name": "Myisha Hines-Allen",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "espn",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3142086",
+   "name": "Brianna Turner",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3142191",
+   "name": "Kelsey Mitchell",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3142242",
+   "name": "Amy Okonkwo",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3142250",
+   "name": "Jordin Canada",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3142255",
+   "name": "Monique Billings",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3142327",
+   "name": "Kia Nurse",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3142328",
+   "name": "Gabby Williams",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3146151",
+   "name": "Ariel Atkins",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3149391",
+   "name": "A'ja Wilson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3904479",
+   "name": "Mariella Fasoula",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3904576",
+   "name": "Marina Mabrey",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3904577",
+   "name": "Arike Ogunbowale",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3906753",
+   "name": "Natisha Hiedeman",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3906769",
+   "name": "Jovana Nogic",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3906949",
+   "name": "Jessica Shepard",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3906972",
+   "name": "Bridget Carleton",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3907781",
+   "name": "Sophie Cunningham",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3910470",
+   "name": "Maria Conde",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3913680",
+   "name": "Emese Hof",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3913881",
+   "name": "Alanna Smith",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3913903",
+   "name": "Teaira McCowan",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3916514",
+   "name": "Kalani Brown",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3917450",
+   "name": "Napheesa Collier",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3917453",
+   "name": "Katie Lou Samuelson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3919496",
+   "name": "Valeriane Ayayi",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3920741",
+   "name": "Kitija Laksa",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "3922628",
+   "name": "Kennedy Burke",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "3934218",
+   "name": "Megan DiLeo",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4001679",
+   "name": "Julie Allemand",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4038379",
+   "name": "Marine Johannes",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4065760",
+   "name": "Tyasha Harris",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4065780",
+   "name": "Kaila Charles",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4065870",
+   "name": "Jackie Young",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4066533",
+   "name": "Sabrina Ionescu",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4066546",
+   "name": "Nadia Fingall",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4066548",
+   "name": "DiJonai Carrington",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4066553",
+   "name": "Aari McDonald",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4068042",
+   "name": "Natasha Mack",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4068104",
+   "name": "Peyton Williams",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4068159",
+   "name": "Sug Sutton",
+   "dna": true,
+   "qualified": true,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4068161",
+   "name": "Joyner Holmes",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4068346",
+   "name": "Kamiah Smalls",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4257500",
+   "name": "Cecilia Zandalasini",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4280850",
+   "name": "Maya Caldwell",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4280877",
+   "name": "Chloe Bibby",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4280892",
+   "name": "Chennedy Carter",
+   "dna": true,
+   "qualified": true,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4281190",
+   "name": "Dana Evans",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4281929",
+   "name": "Satou Sabally",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4281930",
+   "name": "Anneli Maley",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4282168",
+   "name": "Kiana Williams",
+   "dna": true,
+   "qualified": true,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4282173",
+   "name": "Michaela Onyenwere",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4336633",
+   "name": "Li Yueru",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4337216",
+   "name": "Han Xu",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398577",
+   "name": "Miela Sowah",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4398589",
+   "name": "Elizabeth Balogun",
+   "dna": false,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "espn",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398674",
+   "name": "Rhyne Howard",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398729",
+   "name": "Emily Engstler",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398764",
+   "name": "Rae Burrell",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398766",
+   "name": "Zaay Green",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4398768",
+   "name": "Nyara Sabally",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4398776",
+   "name": "NaLyssa Smith",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398829",
+   "name": "Lexie Hull",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398907",
+   "name": "Kate Martin",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4398911",
+   "name": "Shakira Austin",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398915",
+   "name": "Naz Hillmon",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398935",
+   "name": "Veronica Burton",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398938",
+   "name": "Dorka Juhasz",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398965",
+   "name": "Christyn Williams",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4398966",
+   "name": "Olivia Nelson-Ododa",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4399342",
+   "name": "Lexi Held",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4399415",
+   "name": "Maddy Siegrist",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4420318",
+   "name": "Ezi Magbegor",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4432830",
+   "name": "Jordan Horston",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4432831",
+   "name": "Aliyah Boston",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4432832",
+   "name": "Zia Cooke",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4432834",
+   "name": "Laeticia Amihere",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4432844",
+   "name": "Aubrey Griffin",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4432865",
+   "name": "Jacy Sheldon",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433293",
+   "name": "Charisma Osborne",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433386",
+   "name": "Jaylyn Sherrod",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433402",
+   "name": "Angel Reese",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433403",
+   "name": "Caitlin Clark",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433404",
+   "name": "Cameron Brink",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433405",
+   "name": "Kamilla Cardoso",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433408",
+   "name": "Aaliyah Edwards",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433410",
+   "name": "Deja Kelly",
+   "dna": false,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433411",
+   "name": "Angela Dugalic",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433412",
+   "name": "Hailey Van Lith",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433416",
+   "name": "Madison Scott",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433424",
+   "name": "Maddy Westbeld",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433431",
+   "name": "Te-Hina Paopao",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433433",
+   "name": "Aicha Coulibaly",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433514",
+   "name": "Saniya Rivers",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433523",
+   "name": "Rori Harmon",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433524",
+   "name": "Sonia Citron",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433542",
+   "name": "Saylor Poffenbarger",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433546",
+   "name": "Makayla Timpson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433630",
+   "name": "Rickea Jackson",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433633",
+   "name": "Kierstan Bell",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433634",
+   "name": "Ashten Prechtel",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433635",
+   "name": "Diamond Miller",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433643",
+   "name": "Mackenzie Holmes",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433690",
+   "name": "Holly Winterburn",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "espn",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433730",
+   "name": "Paige Bueckers",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433744",
+   "name": "Michelle Onyiah",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433790",
+   "name": "Azzi Fudd",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433791",
+   "name": "Olivia Miles",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433792",
+   "name": "Rayah Marshall",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433795",
+   "name": "Sania Feagin",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433797",
+   "name": "Raven Johnson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4433807",
+   "name": "Aziaha James",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433808",
+   "name": "Shyanne Sellers",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4433815",
+   "name": "Lucy Olsen",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4434015",
+   "name": "JJ Quinerly",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4434020",
+   "name": "Teonni Key",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4565505",
+   "name": "Kiki Rice",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4565515",
+   "name": "Tonie Morgan",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4583144",
+   "name": "Cotie McMahon",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4594786",
+   "name": "Sydney Taylor",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4595823",
+   "name": "Alex Fowler",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4595910",
+   "name": "Haley Jones",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4596309",
+   "name": "Liatu King",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4597509",
+   "name": "Aaliyah Nye",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4599199",
+   "name": "Morgan Maly",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4609797",
+   "name": "Ta'Niya Latson",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4682797",
+   "name": "Luisa Geiselsoder",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4682855",
+   "name": "Justine Pissott",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4683006",
+   "name": "Leonie Fiebich",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4684384",
+   "name": "Aneesah Morrow",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4688629",
+   "name": "Shay Ciezki",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4698730",
+   "name": "Kara Dunn",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4698736",
+   "name": "Flau'jae Johnson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4703609",
+   "name": "Charlisse Leger-Walker",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4703794",
+   "name": "Sarah Ashlee Barker",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4704180",
+   "name": "Georgia Amoore",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4704594",
+   "name": "Marta Suarez",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4790258",
+   "name": "Raquel Carrera",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4790260",
+   "name": "Marine Fauthoux",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "commons",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4790263",
+   "name": "Iliana Rupert",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4790264",
+   "name": "Janelle Salaun",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4790266",
+   "name": "Awak Kuier",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4858656",
+   "name": "Gabriela Jaquez",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4873358",
+   "name": "Antonia Delaere",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4873359",
+   "name": "Kyara Linskens",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4874375",
+   "name": "Jihyun Park",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "espn",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4874475",
+   "name": "Nikolina Milic",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4898383",
+   "name": "Bree Hall",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4898384",
+   "name": "Kiki Iriafen",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4898400",
+   "name": "Taylor Thierry",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4898548",
+   "name": "Maria Gakdeng",
+   "dna": false,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "4898898",
+   "name": "Gianna Kneepkens",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "4899328",
+   "name": "Kaitlyn Chen",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5017605",
+   "name": "Kamila Borkowska",
+   "dna": false,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "espn",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5017721",
+   "name": "Sika Kone",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5017726",
+   "name": "Jade Melbourne",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5105406",
+   "name": "Frieda Buhner",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5105729",
+   "name": "Chance Gray",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5105731",
+   "name": "Grace VanSlooten",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5105732",
+   "name": "Raegan Beers",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5105737",
+   "name": "Lauren Betts",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5105740",
+   "name": "Indya Nivar",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5105752",
+   "name": "Alissa Pili",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5106145",
+   "name": "Darianna Littlepage-Buggs",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5106170",
+   "name": "Ndjakalenga Mwenentanda",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5106222",
+   "name": "Taina Mair",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5106232",
+   "name": "Ashlon Jackson",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5107404",
+   "name": "Quionche Carter",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5107515",
+   "name": "Laura Ziegler",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5108051",
+   "name": "Jordan Harrison",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5108550",
+   "name": "Serah Williams",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5108587",
+   "name": "Madina Okot",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5122345",
+   "name": "Cassandre Prosper",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5208981",
+   "name": "Leila Lacan",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5208982",
+   "name": "Carla Leite",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5208983",
+   "name": "Isobel Borlase",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5208984",
+   "name": "Elena Buenavida",
+   "dna": false,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "commons",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5208985",
+   "name": "Alicia Florez",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5209202",
+   "name": "Nyadiew Puoch",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5209602",
+   "name": "Matilde Villa",
+   "dna": false,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5220104",
+   "name": "Mai Yamamoto",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5220150",
+   "name": "Dominique Malonga",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5274110",
+   "name": "Monique Akoa Makani",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5277552",
+   "name": "Juste Jocyte",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5278157",
+   "name": "Alex Wilson",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5278237",
+   "name": "Anastasiia Olairi Kosu",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "espn",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5345319",
+   "name": "Nell Angloma",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5345320",
+   "name": "Pauline Astier",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5345322",
+   "name": "Emma Cechova",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5345325",
+   "name": "Awa Fam",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": false,
+   "espn": true,
+   "commons": false,
+   "chosen_provider": "espn",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": false,
+    "chosen_provider": "espn",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5345444",
+   "name": "Laura Juskaite",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5345473",
+   "name": "Costanza Verona",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5345478",
+   "name": "Eliska Joklova",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5345524",
+   "name": "Noemie Brochant",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": true,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "espn",
+   "live": {
+    "wnba": false,
+    "espn": true,
+    "commons": true,
+    "chosen_provider": "espn",
+    "fallback": "commons"
+   }
+  },
+  {
+   "player_id": "5346554",
+   "name": "Teja Oblak",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": true,
+   "chosen_provider": "wnba",
+   "fallback": "commons",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": true,
+    "chosen_provider": "commons",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5355509",
+   "name": "Tima Pouye",
+   "dna": true,
+   "qualified": false,
+   "active_roster": false,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5364343",
+   "name": "Ornella Bankole",
+   "dna": true,
+   "qualified": true,
+   "active_roster": true,
+   "wnba": true,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "wnba",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  },
+  {
+   "player_id": "5447776",
+   "name": "Aminata Gueye",
+   "dna": true,
+   "qualified": false,
+   "active_roster": true,
+   "wnba": false,
+   "espn": false,
+   "commons": false,
+   "chosen_provider": "avatar",
+   "fallback": "avatar",
+   "live": {
+    "wnba": false,
+    "espn": false,
+    "commons": false,
+    "chosen_provider": "avatar",
+    "fallback": "avatar"
+   }
+  }
+ ]
+}

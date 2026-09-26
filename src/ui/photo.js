@@ -6,6 +6,12 @@
 // next, and after the last one replaces the image with the sibling
 // <template data-photo-fallback> (the initials avatar/card). CSP forbids inline
 // onerror handlers, hence the single delegated listener.
+//
+// cdn.wnba.com answers an unknown id with HTTP 200 and a generic silhouette, which
+// never fires `error`. Its 1040x760 portrait silhouette is 1094x800, so a WNBA
+// portrait carries data-photo-guard="1040x760" and a load of any other size is
+// treated as a failure. (The 260x190 square silhouette has the real size; square
+// ids are only shipped after s11_provider_ids.mjs verified the live image.)
 
 import { html, raw } from '../lib/dom.js';
 
@@ -37,7 +43,13 @@ export function photoImg(photo, variant, { alt = '', attrs = '', fallback = '' }
   const chain = photoChain(photo, variant);
   if (!chain.length) return '';
   const next = chain.slice(1).map((c) => c.url).join(' ');
-  return html`<img src="${chain[0].url}" alt="${alt}" ${raw(attrs)} data-photo-next="${next}" data-photo-stage="0" /><template data-photo-fallback>${fallback}</template>`;
+  const guard = variant === 'portrait' ? photoGuard(chain[0].source) : '';
+  return html`<img src="${chain[0].url}" alt="${alt}" ${raw(attrs)} data-photo-next="${next}" data-photo-stage="0"${guard ? raw(` data-photo-guard="${guard}"`) : ''} /><template data-photo-fallback>${fallback}</template>`;
+}
+
+/** Expected natural size ("WxH") for a portrait source whose provider hides misses behind a 200, else ''. */
+export function photoGuard(source) {
+  return source?.provider === 'wnba' && source.width && source.height ? `${source.width}x${source.height}` : '';
 }
 
 /**
@@ -61,9 +73,8 @@ let installed = false;
 export function installPhotoFallback(doc = document) {
   if (installed) return;
   installed = true;
-  doc.addEventListener('error', (e) => {
-    const el = e.target;
-    if (!el || typeof el.getAttribute !== 'function' || !el.hasAttribute('data-photo-next')) return;
+  const advance = (el) => {
+    el.removeAttribute('data-photo-guard'); // only the first (WNBA) stage is guarded
     const next = el.getAttribute('data-photo-next').split(' ').filter(Boolean);
     const stage = Number(el.getAttribute('data-photo-stage') || 0) + 1;
     el.setAttribute('data-photo-stage', String(stage));
@@ -82,5 +93,14 @@ export function installPhotoFallback(doc = document) {
     } else {
       el.remove();
     }
+  };
+  const chained = (el) => el && typeof el.getAttribute === 'function' && el.hasAttribute('data-photo-next');
+  doc.addEventListener('error', (e) => { if (chained(e.target)) advance(e.target); }, true);
+  doc.addEventListener('load', (e) => {
+    const el = e.target;
+    if (!chained(el) || !el.hasAttribute('data-photo-guard')) return;
+    const [w, h] = el.getAttribute('data-photo-guard').split('x').map(Number);
+    if (el.naturalWidth && (el.naturalWidth !== w || el.naturalHeight !== h)) advance(el);
+    else el.removeAttribute('data-photo-guard');
   }, true);
 }

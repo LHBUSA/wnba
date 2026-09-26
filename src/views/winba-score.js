@@ -26,8 +26,12 @@ export function latestWinbaIndex(articles) {
   return currentWinbaEdition(articles);
 }
 
+// The board row carries the API resolver's photo too, so a player who is not on a current roster
+// (released, retired, traded mid-season) still gets her face; the roster copy wins when both exist.
+const photoOf = (row, player) => player?.photo || row?.photo || null;
+
 function leaderPortrait(row, player) {
-  const photo = player?.photo;
+  const photo = photoOf(row, player);
   const team = player?.team;
   const tc = team?.color ? `#${String(team.color).replace(/^#/, '')}` : 'var(--gold)';
   return html`<a class="winba-podium-feature winba-podium-feature--${row.rank}" href="/players/${row.athlete_id}" style="--tc:${tc}">
@@ -50,7 +54,7 @@ function leaderRow(row, player) {
   const team = player?.team;
   return html`<a class="winba-authority-leader" href="/players/${row.athlete_id}">
     <span class="winba-authority-rank">#${row.rank}</span>
-    ${avatar({ name: row.name, photo: player?.photo, team }, { size: 'sm', teamColor: team?.color })}
+    ${avatar({ name: row.name, photo: photoOf(row, player), team }, { size: 'sm', teamColor: team?.color })}
     <span class="winba-authority-player"><b>${row.name}</b><small>${team?.name || 'WNBA'} · ${row.sample?.games ?? '—'} GP · ${row.sample?.minutes ?? '—'} MIN</small></span>
     <span class="winba-score">${one(row.score)}<em>WINBA</em></span>
   </a>`;

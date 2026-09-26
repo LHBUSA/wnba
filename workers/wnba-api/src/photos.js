@@ -3,8 +3,10 @@
 // Resolution walks a provider chain (WNBA_PHOTO_PROVIDER_ORDER, default
 // "commons,avatar" so an unconfigured Worker behaves exactly as before):
 //
-//   wnba     cdn.wnba.com headshot, hotlinked. Needs a WNBA player id in
-//            data/player-headshots.json; none are mapped yet, so it is inert.
+//   wnba     cdn.wnba.com headshot, hotlinked (portrait 1040x760, square 260x190).
+//            Needs a WNBA player id in data/player-headshots.json, written only by
+//            scripts/photos/s11_provider_ids.mjs: Wikidata P3588 matched by exact
+//            name + DOB, and the live CDN image verified as not the silhouette.
 //   espn     a.espncdn.com headshot, hotlinked. Only for athletes whose ESPN
 //            roster entry carried a headshot (scripts/photos/s1_roster.py).
 //            Both ESPN renditions are landscape (full 600x436, combiner 350x254).
@@ -82,8 +84,8 @@ function externalSource(provider, portrait, square, width, height, attribution) 
 function resolve(provider, id) {
   const x = external[id];
   if (provider === 'wnba' && cfg.wnba && x?.wnba_player_id) {
-    const u = `https://cdn.wnba.com/headshots/wnba/latest/1040x760/${encodeURIComponent(x.wnba_player_id)}.png`;
-    return externalSource('wnba', u, u, 1040, 760, 'Photo: WNBA');
+    const w = encodeURIComponent(x.wnba_player_id);
+    return { ...externalSource('wnba', `https://cdn.wnba.com/headshots/wnba/latest/1040x760/${w}.png`, `https://cdn.wnba.com/headshots/wnba/latest/260x190/${w}.png`, 1040, 760, 'Photo: WNBA'), identity: 'wikidata_name_dob' };
   }
   if (provider === 'espn' && cfg.espn && x?.espn_headshot_full) {
     return externalSource('espn', x.espn_headshot_full, x.espn_headshot_square || x.espn_headshot_full, 600, 436, 'Photo: ESPN');

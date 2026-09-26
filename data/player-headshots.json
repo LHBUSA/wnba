@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-09-23T14:20:15Z",
- "source": "ESPN WNBA team rosters (s1_roster.py)",
+ "source": "ESPN WNBA team rosters (s1_roster.py) + ESPN athlete records and Wikidata P3588 WNBA ids, live-verified (s11_provider_ids.mjs)",
  "rights": "external_editorial",
  "mirrored": false,
  "note": "Hotlink URLs only. Commons approved photos (player-photos.json) remain the licensed fallback.",
@@ -9,199 +9,219 @@
    "name": "DeWanna Bonner",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/869.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/869.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "201886"
   },
   "887": {
    "name": "Sami Whitcomb",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/887.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/887.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628244"
   },
   "924": {
    "name": "Alysha Clark",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/924.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/924.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "202252"
   },
   "981": {
    "name": "Courtney Vandersloot",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/981.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/981.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "202664"
   },
   "1054": {
    "name": "Tiffany Hayes",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/1054.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/1054.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203026"
   },
   "1068": {
    "name": "Nneka Ogwumike",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/1068.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/1068.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203014"
   },
   "2284331": {
    "name": "Emma Cannon",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2284331.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2284331.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628242"
   },
   "2327695": {
    "name": "Rebekah Gardner",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2327695.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2327695.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203822"
   },
   "2490553": {
    "name": "Brittney Griner",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2490553.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2490553.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203398"
   },
   "2491205": {
    "name": "Skylar Diggins",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2491205.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2491205.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203400"
   },
   "2491214": {
    "name": "Erica Wheeler",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2491214.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2491214.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204365"
+  },
+  "2491232": {
+   "name": "Kayla Alexander",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "203405"
   },
   "2529047": {
    "name": "Odyssey Sims",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529047.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529047.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203824"
   },
   "2529122": {
    "name": "Chelsea Gray",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529122.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529122.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203833"
   },
   "2529130": {
    "name": "Natasha Howard",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529130.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529130.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203827"
   },
   "2529137": {
    "name": "Natasha Cloud",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529137.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529137.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204333"
   },
   "2529140": {
    "name": "Alyssa Thomas",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529140.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529140.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203826"
   },
   "2529183": {
    "name": "Stefanie Dolson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529183.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529183.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203828"
   },
   "2529205": {
    "name": "Kayla McBride",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529205.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529205.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203825"
   },
   "2529458": {
    "name": "Cheyenne Parker-Tyus",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529458.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529458.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204323"
   },
   "2529622": {
    "name": "Kayla Thornton",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2529622.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2529622.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203866"
   },
   "2566081": {
    "name": "Elizabeth Williams",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2566081.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2566081.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204322"
   },
   "2566106": {
    "name": "Dearica Hamby",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2566106.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2566106.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204324"
+  },
+  "2566110": {
+   "name": "Julie Vanloo",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2566110.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2566110.png&w=350&h=254",
+   "wnba_player_id": "1642210",
+   "espn_attested_by": "athlete_record"
   },
   "2566186": {
    "name": "Rachel Banham",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2566186.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2566186.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1627671"
   },
   "2566453": {
    "name": "Isabelle Harrison",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2566453.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2566453.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204330"
   },
   "2569044": {
    "name": "Temi Fagbenle",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2569044.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2569044.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1627701"
   },
   "2590093": {
    "name": "Kiah Stokes",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2590093.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2590093.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204329"
   },
   "2593770": {
    "name": "Betnijah Laney-Hamilton",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2593770.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2593770.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204335"
+  },
+  "2955898": {
+   "name": "Damiris Dantas",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2955898.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2955898.png&w=350&h=254",
+   "wnba_player_id": "203024",
+   "espn_attested_by": "athlete_record"
   },
   "2987869": {
    "name": "Jewell Loyd",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2987869.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2987869.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204319"
   },
   "2987891": {
    "name": "Courtney Williams",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2987891.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2987891.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1627675"
   },
   "2988756": {
    "name": "Brittney Sykes",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2988756.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2988756.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628279"
   },
   "2998928": {
    "name": "Breanna Stewart",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2998928.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2998928.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1627668"
   },
   "2998938": {
    "name": "Kahleah Copper",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2998938.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2998938.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1627674"
   },
   "2999101": {
    "name": "Jonquel Jones",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/2999101.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/2999101.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1627673"
   },
   "3054590": {
    "name": "Nia Brodie",
@@ -213,55 +233,62 @@
    "name": "Mercedes Russell",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3056672.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3056672.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628920"
   },
   "3056730": {
    "name": "Karlie Samuelson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3056730.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3056730.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628317"
+  },
+  "3058892": {
+   "name": "Lexie Brown",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3058892.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3058892.png&w=350&h=254",
+   "wnba_player_id": "1628882",
+   "espn_attested_by": "athlete_record"
   },
   "3058893": {
    "name": "Shatori Walker-Kimbrough",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3058893.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3058893.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628278"
   },
   "3058895": {
    "name": "Brionna Jones",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3058895.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3058895.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628280"
   },
   "3058901": {
    "name": "Allisha Gray",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3058901.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3058901.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628277"
   },
   "3065570": {
    "name": "Kelsey Plum",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3065570.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3065570.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628276"
   },
   "3099736": {
    "name": "Stephanie Talbot",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3099736.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3099736.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "203855"
   },
   "3102133": {
    "name": "Rebecca Allen",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3102133.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3102133.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "204296"
   },
   "3142010": {
    "name": "Azura Stevens",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142010.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142010.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628922"
   },
   "3142055": {
    "name": "Myisha Hines-Allen",
@@ -273,247 +300,325 @@
    "name": "Brianna Turner",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142086.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142086.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629488"
   },
   "3142191": {
    "name": "Kelsey Mitchell",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142191.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142191.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628909"
   },
   "3142242": {
    "name": "Amy Okonkwo",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142242.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142242.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629539"
   },
   "3142250": {
    "name": "Jordin Canada",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142250.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142250.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628886"
   },
   "3142255": {
    "name": "Monique Billings",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142255.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142255.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628881"
   },
   "3142327": {
    "name": "Kia Nurse",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142327.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142327.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628915"
   },
   "3142328": {
    "name": "Gabby Williams",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3142328.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3142328.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628931"
   },
   "3146151": {
    "name": "Ariel Atkins",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3146151.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3146151.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628878"
   },
   "3149391": {
    "name": "A'ja Wilson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3149391.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3149391.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628932"
+  },
+  "3904479": {
+   "name": "Mariella Fasoula",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3904479.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3904479.png&w=350&h=254",
+   "wnba_player_id": "1630108",
+   "espn_attested_by": "athlete_record"
   },
   "3904576": {
    "name": "Marina Mabrey",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3904576.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3904576.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629497"
   },
   "3904577": {
    "name": "Arike Ogunbowale",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3904577.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3904577.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629481"
   },
   "3906753": {
    "name": "Natisha Hiedeman",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3906753.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3906753.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629567"
+  },
+  "3906769": {
+   "name": "Jovana Nogic",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643505"
   },
   "3906949": {
    "name": "Jessica Shepard",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3906949.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3906949.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629491"
   },
   "3906972": {
    "name": "Bridget Carleton",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3906972.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3906972.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629524"
   },
   "3907781": {
    "name": "Sophie Cunningham",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3907781.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3907781.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629482"
+  },
+  "3910470": {
+   "name": "Maria Conde",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1629576"
+  },
+  "3913680": {
+   "name": "Emese Hof",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1629581"
   },
   "3913881": {
    "name": "Alanna Smith",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3913881.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3913881.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629501"
+  },
+  "3913903": {
+   "name": "Teaira McCowan",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3913903.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3913903.png&w=350&h=254",
+   "wnba_player_id": "1629479",
+   "espn_attested_by": "athlete_record"
   },
   "3916514": {
    "name": "Kalani Brown",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3916514.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3916514.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629480"
   },
   "3917450": {
    "name": "Napheesa Collier",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3917450.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3917450.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629483"
   },
   "3917453": {
    "name": "Katie Lou Samuelson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3917453.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3917453.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629478"
+  },
+  "3919496": {
+   "name": "Valeriane Ayayi",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "204468"
   },
   "3920741": {
    "name": "Kitija Laksa",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3920741.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3920741.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629490"
   },
   "3922628": {
    "name": "Kennedy Burke",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3922628.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3922628.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629568"
   },
   "3934218": {
    "name": "Megan DiLeo",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/3934218.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/3934218.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629484"
   },
   "4001679": {
    "name": "Julie Allemand",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4001679.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4001679.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1627700"
   },
   "4038379": {
    "name": "Marine Johannes",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4038379.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4038379.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629546"
   },
   "4065760": {
    "name": "Tyasha Harris",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4065760.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4065760.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630112"
   },
   "4065780": {
    "name": "Kaila Charles",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4065780.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4065780.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630097"
   },
   "4065870": {
    "name": "Jackie Young",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4065870.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4065870.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629498"
   },
   "4066533": {
    "name": "Sabrina Ionescu",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4066533.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4066533.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629477"
+  },
+  "4066546": {
+   "name": "Nadia Fingall",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643686"
   },
   "4066548": {
    "name": "DiJonai Carrington",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4066548.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4066548.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630096"
   },
   "4066553": {
    "name": "Aari McDonald",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4066553.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4066553.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630462"
   },
   "4068042": {
    "name": "Natasha Mack",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4068042.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4068042.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630442"
+  },
+  "4068159": {
+   "name": "Sug Sutton",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4068159.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4068159.png&w=350&h=254",
+   "wnba_player_id": "1630134",
+   "espn_attested_by": "athlete_record"
+  },
+  "4068161": {
+   "name": "Joyner Holmes",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4068161.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4068161.png&w=350&h=254",
+   "wnba_player_id": "1630115",
+   "espn_attested_by": "athlete_record"
+  },
+  "4068346": {
+   "name": "Kamiah Smalls",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1630154"
   },
   "4257500": {
    "name": "Cecilia Zandalasini",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4257500.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4257500.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1628508"
   },
   "4280850": {
    "name": "Maya Caldwell",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4280850.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4280850.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630471"
   },
   "4280877": {
    "name": "Chloe Bibby",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4280877.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4280877.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631064"
+  },
+  "4280892": {
+   "name": "Chennedy Carter",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4280892.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4280892.png&w=350&h=254",
+   "wnba_player_id": "1630150",
+   "espn_attested_by": "athlete_record"
   },
   "4281190": {
    "name": "Dana Evans",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4281190.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4281190.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630389"
   },
   "4281929": {
    "name": "Satou Sabally",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4281929.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4281929.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630149"
   },
   "4281930": {
    "name": "Anneli Maley",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4281930.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4281930.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630993"
+  },
+  "4282168": {
+   "name": "Kiana Williams",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4282168.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4282168.png&w=350&h=254",
+   "wnba_player_id": "1630461",
+   "espn_attested_by": "athlete_record"
   },
   "4282173": {
    "name": "Michaela Onyenwere",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4282173.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4282173.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630446"
   },
   "4336633": {
    "name": "Li Yueru",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4336633.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4336633.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629574"
   },
   "4337216": {
    "name": "Han Xu",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4337216.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4337216.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629566"
   },
   "4398577": {
    "name": "Miela Sowah",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398577.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398577.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631039"
   },
   "4398589": {
    "name": "Elizabeth Balogun",
@@ -525,265 +630,278 @@
    "name": "Rhyne Howard",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398674.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398674.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631009"
   },
   "4398729": {
    "name": "Emily Engstler",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398729.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398729.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631083"
   },
   "4398764": {
    "name": "Rae Burrell",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398764.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398764.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630996"
   },
   "4398766": {
    "name": "Zaay Green",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398766.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398766.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642791"
   },
   "4398768": {
    "name": "Nyara Sabally",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398768.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398768.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631055"
   },
   "4398776": {
    "name": "NaLyssa Smith",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398776.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398776.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631019"
   },
   "4398829": {
    "name": "Lexie Hull",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398829.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398829.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631086"
   },
   "4398907": {
    "name": "Kate Martin",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398907.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398907.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642324"
   },
   "4398911": {
    "name": "Shakira Austin",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398911.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398911.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631022"
   },
   "4398915": {
    "name": "Naz Hillmon",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398915.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398915.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631044"
   },
   "4398935": {
    "name": "Veronica Burton",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398935.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398935.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631007"
   },
   "4398938": {
    "name": "Dorka Juhasz",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398938.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398938.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641657"
   },
   "4398965": {
    "name": "Christyn Williams",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398965.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398965.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631090"
   },
   "4398966": {
    "name": "Olivia Nelson-Ododa",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4398966.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4398966.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631135"
   },
   "4399342": {
    "name": "Lexi Held",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4399342.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4399342.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631118"
   },
   "4399415": {
    "name": "Maddy Siegrist",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4399415.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4399415.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641652"
   },
   "4420318": {
    "name": "Ezi Magbegor",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4420318.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4420318.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1629496"
   },
   "4432830": {
    "name": "Jordan Horston",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4432830.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4432830.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641651"
   },
   "4432831": {
    "name": "Aliyah Boston",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4432831.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4432831.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641648"
   },
   "4432832": {
    "name": "Zia Cooke",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4432832.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4432832.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641660"
   },
   "4432834": {
    "name": "Laeticia Amihere",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4432834.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4432834.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641656"
   },
   "4432865": {
    "name": "Jacy Sheldon",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4432865.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4432865.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642292"
   },
   "4433293": {
    "name": "Charisma Osborne",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433293.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433293.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642294"
   },
   "4433386": {
    "name": "Jaylyn Sherrod",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433386.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433386.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642320"
   },
   "4433402": {
    "name": "Angel Reese",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433402.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433402.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642291"
   },
   "4433403": {
    "name": "Caitlin Clark",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433403.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433403.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642286"
   },
   "4433404": {
    "name": "Cameron Brink",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433404.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433404.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642287"
   },
   "4433405": {
    "name": "Kamilla Cardoso",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433405.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433405.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642289"
   },
   "4433408": {
    "name": "Aaliyah Edwards",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433408.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433408.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642290"
+  },
+  "4433410": {
+   "name": "Deja Kelly",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433410.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433410.png&w=350&h=254",
+   "wnba_player_id": "1642795",
+   "espn_attested_by": "athlete_record"
   },
   "4433411": {
    "name": "Angela Dugalic",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433411.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433411.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643455"
   },
   "4433412": {
    "name": "Hailey Van Lith",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433412.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433412.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642817"
   },
   "4433416": {
    "name": "Madison Scott",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433416.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433416.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642810"
   },
   "4433424": {
    "name": "Maddy Westbeld",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433424.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433424.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642818"
   },
   "4433431": {
    "name": "Te-Hina Paopao",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433431.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433431.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642804"
   },
   "4433433": {
    "name": "Aicha Coulibaly",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433433.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433433.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642786"
   },
   "4433514": {
    "name": "Saniya Rivers",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433514.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433514.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642809"
   },
   "4433523": {
    "name": "Rori Harmon",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433523.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433523.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643450"
   },
   "4433524": {
    "name": "Sonia Citron",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433524.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433524.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642785"
+  },
+  "4433542": {
+   "name": "Saylor Poffenbarger",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643458"
   },
   "4433546": {
    "name": "Makayla Timpson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433546.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433546.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642815"
   },
   "4433630": {
    "name": "Rickea Jackson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433630.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433630.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642288"
   },
   "4433633": {
    "name": "Kierstan Bell",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433633.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433633.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631006"
   },
   "4433634": {
    "name": "Ashten Prechtel",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433634.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433634.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641695"
   },
   "4433635": {
    "name": "Diamond Miller",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433635.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433635.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641649"
   },
   "4433643": {
    "name": "Mackenzie Holmes",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433643.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433643.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642307"
   },
   "4433690": {
    "name": "Holly Winterburn",
@@ -795,193 +913,212 @@
    "name": "Paige Bueckers",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433730.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433730.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642784"
   },
   "4433790": {
    "name": "Azzi Fudd",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433790.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433790.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643425"
   },
   "4433791": {
    "name": "Olivia Miles",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433791.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433791.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643426"
   },
   "4433792": {
    "name": "Rayah Marshall",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433792.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433792.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642796"
   },
   "4433795": {
    "name": "Sania Feagin",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433795.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433795.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642790"
   },
   "4433797": {
    "name": "Raven Johnson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433797.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433797.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643433"
   },
   "4433807": {
    "name": "Aziaha James",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433807.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433807.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642793"
   },
   "4433815": {
    "name": "Lucy Olsen",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4433815.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4433815.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642802"
+  },
+  "4434015": {
+   "name": "JJ Quinerly",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4434015.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4434015.png&w=350&h=254",
+   "wnba_player_id": "1642808",
+   "espn_attested_by": "athlete_record"
   },
   "4434020": {
    "name": "Teonni Key",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4434020.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4434020.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643457"
   },
   "4565505": {
    "name": "Kiki Rice",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4565505.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4565505.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643445"
   },
   "4565515": {
    "name": "Tonie Morgan",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4565515.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4565515.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643439"
   },
   "4583144": {
    "name": "Cotie McMahon",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4583144.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4583144.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643430"
   },
   "4594786": {
    "name": "Sydney Taylor",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4594786.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4594786.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642321"
+  },
+  "4595823": {
+   "name": "Alex Fowler",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643525"
   },
   "4595910": {
    "name": "Haley Jones",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4595910.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4595910.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1641650"
   },
   "4596309": {
    "name": "Liatu King",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4596309.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4596309.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642820"
   },
   "4597509": {
    "name": "Aaliyah Nye",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4597509.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4597509.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642801"
   },
   "4609797": {
    "name": "Ta'Niya Latson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4609797.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4609797.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643444"
   },
   "4682797": {
    "name": "Luisa Geiselsoder",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4682797.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4682797.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630143"
   },
   "4682855": {
    "name": "Justine Pissott",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4682855.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4682855.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643495"
   },
   "4683006": {
    "name": "Leonie Fiebich",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4683006.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4683006.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630142"
   },
   "4684384": {
    "name": "Aneesah Morrow",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4684384.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4684384.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642800"
+  },
+  "4688629": {
+   "name": "Shay Ciezki",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643470"
   },
   "4698736": {
    "name": "Flau'jae Johnson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4698736.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4698736.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643428"
   },
   "4703609": {
    "name": "Charlisse Leger-Walker",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4703609.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4703609.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643449"
   },
   "4703794": {
    "name": "Sarah Ashlee Barker",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4703794.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4703794.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642782"
   },
   "4704180": {
    "name": "Georgia Amoore",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4704180.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4704180.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642781"
   },
   "4704594": {
    "name": "Marta Suarez",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4704594.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4704594.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643438"
   },
   "4790263": {
    "name": "Iliana Rupert",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4790263.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4790263.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630387"
   },
   "4790264": {
    "name": "Janelle Salaun",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4790264.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4790264.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642767"
   },
   "4790266": {
    "name": "Awak Kuier",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4790266.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4790266.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1630386"
   },
   "4858656": {
    "name": "Gabriela Jaquez",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4858656.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4858656.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643447"
   },
   "4873358": {
    "name": "Antonia Delaere",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4873358.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4873358.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643489"
   },
   "4873359": {
    "name": "Kyara Linskens",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4873359.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4873359.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642768"
   },
   "4874375": {
    "name": "Jihyun Park",
@@ -989,41 +1126,47 @@
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4874375.png&w=350&h=254",
    "wnba_player_id": null
   },
+  "4874475": {
+   "name": "Nikolina Milic",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1631263"
+  },
   "4898383": {
    "name": "Bree Hall",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4898383.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4898383.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642788"
   },
   "4898384": {
    "name": "Kiki Iriafen",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4898384.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4898384.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642792"
   },
   "4898400": {
    "name": "Taylor Thierry",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4898400.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4898400.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642814"
   },
   "4898548": {
    "name": "Maria Gakdeng",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4898548.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4898548.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642832"
   },
   "4898898": {
    "name": "Gianna Kneepkens",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4898898.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4898898.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643429"
   },
   "4899328": {
    "name": "Kaitlyn Chen",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/4899328.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/4899328.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642822"
   },
   "5017605": {
    "name": "Kamila Borkowska",
@@ -1035,127 +1178,177 @@
    "name": "Sika Kone",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5017721.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5017721.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631021"
   },
   "5017726": {
    "name": "Jade Melbourne",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5017726.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5017726.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631141"
   },
   "5105406": {
    "name": "Frieda Buhner",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5105406.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5105406.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643494"
   },
   "5105729": {
    "name": "Chance Gray",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5105729.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5105729.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643462"
   },
   "5105731": {
    "name": "Grace VanSlooten",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5105731.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5105731.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643453"
   },
   "5105732": {
    "name": "Raegan Beers",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5105732.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5105732.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643441"
   },
   "5105737": {
    "name": "Lauren Betts",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5105737.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5105737.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643427"
   },
   "5105740": {
    "name": "Indya Nivar",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5105740.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5105740.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643469"
+  },
+  "5105752": {
+   "name": "Alissa Pili",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5105752.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5105752.png&w=350&h=254",
+   "wnba_player_id": "1642293",
+   "espn_attested_by": "athlete_record"
   },
   "5106145": {
    "name": "Darianna Littlepage-Buggs",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5106145.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5106145.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643440"
+  },
+  "5106170": {
+   "name": "Ndjakalenga Mwenentanda",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643479"
   },
   "5106222": {
    "name": "Taina Mair",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5106222.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5106222.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643473"
   },
   "5106232": {
    "name": "Ashlon Jackson",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5106232.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5106232.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643437"
+  },
+  "5107404": {
+   "name": "Quionche Carter",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643487"
+  },
+  "5107515": {
+   "name": "Laura Ziegler",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643461"
+  },
+  "5108051": {
+   "name": "Jordan Harrison",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643527"
   },
   "5108550": {
    "name": "Serah Williams",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5108550.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5108550.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643436"
   },
   "5108587": {
    "name": "Madina Okot",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5108587.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5108587.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643431"
   },
   "5122345": {
    "name": "Cassandre Prosper",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5122345.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5122345.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643467"
   },
   "5208981": {
    "name": "Leila Lacan",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5208981.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5208981.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642303"
   },
   "5208982": {
    "name": "Carla Leite",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5208982.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5208982.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642304"
   },
   "5208983": {
    "name": "Isobel Borlase",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5208983.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5208983.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642302"
+  },
+  "5208985": {
+   "name": "Alicia Florez",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643644"
   },
   "5209202": {
    "name": "Nyadiew Puoch",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5209202.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5209202.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642296"
   },
   "5220104": {
    "name": "Mai Yamamoto",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5220104.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5220104.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642769"
   },
   "5220150": {
    "name": "Dominique Malonga",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5220150.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5220150.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642798"
   },
   "5274110": {
    "name": "Monique Akoa Makani",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5274110.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5274110.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1642777"
+  },
+  "5277552": {
+   "name": "Juste Jocyte",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1642794"
+  },
+  "5278157": {
+   "name": "Alex Wilson",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5278157.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5278157.png&w=350&h=254",
+   "wnba_player_id": "1642775",
+   "espn_attested_by": "athlete_record"
   },
   "5278237": {
    "name": "Anastasiia Olairi Kosu",
@@ -1163,11 +1356,24 @@
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5278237.png&w=350&h=254",
    "wnba_player_id": null
   },
+  "5345319": {
+   "name": "Nell Angloma",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643448"
+  },
   "5345320": {
    "name": "Pauline Astier",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5345320.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5345320.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1631136"
+  },
+  "5345322": {
+   "name": "Emma Cechova",
+   "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5345322.png",
+   "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5345322.png&w=350&h=254",
+   "wnba_player_id": "1643488",
+   "espn_attested_by": "athlete_record"
   },
   "5345325": {
    "name": "Awa Fam",
@@ -1179,25 +1385,44 @@
    "name": "Laura Juskaite",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5345444.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5345444.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643420"
   },
   "5345473": {
    "name": "Costanza Verona",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5345473.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5345473.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643424"
   },
   "5345478": {
    "name": "Eliska Joklova",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5345478.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5345478.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643490"
   },
   "5345524": {
    "name": "Noemie Brochant",
    "espn_headshot_full": "https://a.espncdn.com/i/headshots/wnba/players/full/5345524.png",
    "espn_headshot_square": "https://a.espncdn.com/combiner/i?img=/i/headshots/wnba/players/full/5345524.png&w=350&h=254",
-   "wnba_player_id": null
+   "wnba_player_id": "1643493"
+  },
+  "5346554": {
+   "name": "Teja Oblak",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643506"
+  },
+  "5355509": {
+   "name": "Tima Pouye",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643647"
+  },
+  "5364343": {
+   "name": "Ornella Bankole",
+   "espn_headshot_full": null,
+   "espn_headshot_square": null,
+   "wnba_player_id": "1643706"
   }
- }
+ },
+ "s11_verified_at": "2026-09-26T16:09:13.471Z"
 }

@@ -3,8 +3,9 @@
 Also records each athlete's ESPN headshot URLs and writes data/player-headshots.json,
 the hotlink map the wnba-api photo providers read (workers/wnba-api/src/photos.js).
 Headshots are external_editorial: URLs only, never downloaded or mirrored.
-A WNBA.com player id is attached only from a reviewed data/wnba-player-ids.json
-({"<espn id>": "<wnba id>"}); nothing here guesses one.
+A WNBA.com player id is attached only from data/wnba-player-ids.json
+({"<espn id>": "<wnba id>"}), written by s11_provider_ids.mjs (Wikidata P3588, exact
+name + DOB, live CDN verified); nothing here guesses one. Run s11 after this stage.
 """
 from common import *
 
@@ -68,6 +69,15 @@ for p in sorted(players, key=lambda p: int(p["espn_athlete_id"])):
             "espn_headshot_square": p["espn_headshot_square"],
             "wnba_player_id": p["wnba_player_id"],
         }
+# Keep what stage 11 (s11_provider_ids.mjs) verified for athletes who are not on a current roster:
+# ESPN athlete-record headshots and mapped WNBA ids. Rerun s11 after s1 to re-verify them live.
+if os.path.exists(HEADSHOTS_OUT):
+    with open(HEADSHOTS_OUT, encoding="utf-8") as f:
+        prev = json.load(f).get("players", {})
+    for k, v in prev.items():
+        if k not in hs and (v.get("espn_attested_by") == "athlete_record" or wnba_ids.get(k)):
+            hs[k] = {**v, "wnba_player_id": wnba_ids.get(k)}
+    hs = dict(sorted(hs.items(), key=lambda kv: int(kv[0])))
 with open(HEADSHOTS_OUT, "w", encoding="utf-8", newline="\n") as f:
     json.dump({"generated_at": fetched_at, "source": "ESPN WNBA team rosters (s1_roster.py)",
                "rights": "external_editorial", "mirrored": False,

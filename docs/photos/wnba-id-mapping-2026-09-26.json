@@ -1,0 +1,9719 @@
+{
+ "generated_at": "2026-09-26T16:09:13.471Z",
+ "api": "https://wnba-api.sales-fd3.workers.dev",
+ "population": {
+  "total": 245,
+  "dna": 239,
+  "roster": 221
+ },
+ "rules": {
+  "identity": "ESPN core athlete (normalized exact full/display name + exact DOB) == Wikidata person (normalized exact primary/alias name + day-precision DOB); exactly one candidate; single P3588; id unique; no conflict with the Commons ledger wnba_com_id",
+  "wnba_source": "Wikidata P3588 (CC0) via data/wbh/manifests/wikidata-wnba-identity-v1.json; stats.wnba.com / wnba.com pages never read",
+  "cdn": "cdn.wnba.com 1040x760 and 260x190 PNG, HTTP 200, image/png, exact dimensions, sha256 != silhouette measured live from id 999999999",
+  "espn_athlete": "ESPN athlete record headshot.href == the WNBA headshot path for the same id; image live, PNG, 600x436 / 350x254, not a placeholder"
+ },
+ "silhouette": {
+  "full": {
+   "sha256": "5f99d96e1c09b620",
+   "dims": [
+    1094,
+    800
+   ],
+   "bytes": 12531
+  },
+  "square": {
+   "sha256": "1ef05c33c1f10bf7",
+   "dims": [
+    260,
+    190
+   ],
+   "bytes": 4030
+  }
+ },
+ "totals": {
+  "outcome": {
+   "mapped": 226,
+   "rejected": 19
+  },
+  "reason": {
+   "no_wikidata_person_with_exact_name": 12,
+   "wikidata_name_match_but_dob_differs": 3,
+   "cdn_silhouette+silhouette": 4
+  },
+  "espn_athlete_headshots_added": 14
+ },
+ "decisions": [
+  {
+   "espn_id": "869",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "201886",
+   "evidence": {
+    "qid": "Q866093",
+    "name": "DeWanna Bonner",
+    "dob": "1987-08-21",
+    "name_keys": [
+     "dewanna bonner"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 258487,
+     "sha256": "2621350355526206",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20344,
+     "sha256": "bfe0e7cf47f04cd3",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "DeWanna Bonner",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "887",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628244",
+   "evidence": {
+    "qid": "Q20744786",
+    "name": "Sami Whitcomb",
+    "dob": "1988-07-20",
+    "name_keys": [
+     "sami whitcomb"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 179984,
+     "sha256": "bc7469954deb81aa",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15155,
+     "sha256": "9acc4fc766b7778d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sami Whitcomb",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "924",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "202252",
+   "evidence": {
+    "qid": "Q4738724",
+    "name": "Alysha Clark",
+    "dob": "1987-07-07",
+    "name_keys": [
+     "alysha clark"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 129147,
+     "sha256": "fad46846b684a8c6",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 12038,
+     "sha256": "ffa204f3ef68a1bb",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Alysha Clark",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "981",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "202664",
+   "evidence": {
+    "qid": "Q3001534",
+    "name": "Courtney Vandersloot",
+    "dob": "1989-02-08",
+    "name_keys": [
+     "courtney vandersloot"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 171353,
+     "sha256": "5aada7e360c965ed",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15316,
+     "sha256": "221c4c8cd2a15f79",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Courtney Vandersloot",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "1054",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203026",
+   "evidence": {
+    "qid": "Q1588042",
+    "name": "Tiffany Hayes",
+    "dob": "1989-09-20",
+    "name_keys": [
+     "tiffany hayes"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 213600,
+     "sha256": "65ee2258776d7288",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17179,
+     "sha256": "dfb0b4e7db64336d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Tiffany Hayes",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "1068",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203014",
+   "evidence": {
+    "qid": "Q3342371",
+    "name": "Nneka Ogwumike",
+    "dob": "1990-07-02",
+    "name_keys": [
+     "nneka ogwumike"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 231363,
+     "sha256": "a34ac14c68bc64e3",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19524,
+     "sha256": "6d5f19a35f1a16c4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Nneka Ogwumike",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2284331",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628242",
+   "evidence": {
+    "qid": "Q20752038",
+    "name": "Emma Cannon",
+    "dob": "1989-06-01",
+    "name_keys": [
+     "emma cannon"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 169155,
+     "sha256": "c93e4496514eb4ae",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14636,
+     "sha256": "975ea668b179d60f",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Emma Cannon",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2327695",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203822",
+   "evidence": {
+    "qid": "Q112045766",
+    "name": "Rebekah Gardner",
+    "dob": "1990-07-09",
+    "name_keys": [
+     "rebekah gardner"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 270607,
+     "sha256": "27e7c5bc997b6e87",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22154,
+     "sha256": "f065dea48e1d8c11",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rebekah Gardner",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2490553",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203398",
+   "evidence": {
+    "qid": "Q2925780",
+    "name": "Brittney Griner",
+    "dob": "1990-10-18",
+    "name_keys": [
+     "brittney griner"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 220385,
+     "sha256": "0ef47f3ec9bb4d00",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19270,
+     "sha256": "1288926642bd27e2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Brittney Griner",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2491205",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203400",
+   "evidence": {
+    "qid": "Q2113195",
+    "name": "Skylar Diggins-Smith",
+    "dob": "1990-08-02",
+    "name_keys": [
+     "skylar diggins"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 204059,
+     "sha256": "c05d9cc936b5576d",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17665,
+     "sha256": "3150c1bcb3fdf20e",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Skylar Diggins",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2491214",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204365",
+   "evidence": {
+    "qid": "Q21030815",
+    "name": "Erica Wheeler",
+    "dob": "1991-05-02",
+    "name_keys": [
+     "erica wheeler"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 221335,
+     "sha256": "be5960235e066412",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18549,
+     "sha256": "4b25310abdc394cd",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Erica Wheeler",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2491232",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203405",
+   "evidence": {
+    "qid": "Q16020945",
+    "name": "Kayla Alexander",
+    "dob": "1991-01-05",
+    "name_keys": [
+     "kayla alexander"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 167735,
+     "sha256": "a376d2fd153a8410",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 13792,
+     "sha256": "424a640d45f9bd03",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kayla Alexander",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "2529047",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203824",
+   "evidence": {
+    "qid": "Q2268963",
+    "name": "Odyssey Sims",
+    "dob": "1992-07-13",
+    "name_keys": [
+     "odyssey sims"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 220234,
+     "sha256": "f1010a61afdd8851",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18532,
+     "sha256": "70cd7e61d0f6ef65",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Odyssey Sims",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529122",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203833",
+   "evidence": {
+    "qid": "Q17708794",
+    "name": "Chelsea Gray",
+    "dob": "1992-10-08",
+    "name_keys": [
+     "chelsea gray"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 228819,
+     "sha256": "e78228ad737370e7",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19536,
+     "sha256": "95c40781864a0bba",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Chelsea Gray",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529130",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203827",
+   "evidence": {
+    "qid": "Q16729933",
+    "name": "Natasha Howard",
+    "dob": "1991-09-02",
+    "name_keys": [
+     "natasha howard"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 227121,
+     "sha256": "8d33308584ee5ef8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16498,
+     "sha256": "f0b1f6a8c540bf55",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Natasha Howard",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529137",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204333",
+   "evidence": {
+    "qid": "Q20109554",
+    "name": "Natasha Cloud",
+    "dob": "1992-02-22",
+    "name_keys": [
+     "natasha cloud"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 180570,
+     "sha256": "1fe114f4b8228f4a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15339,
+     "sha256": "f943fac4e2af682e",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Natasha Cloud",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529140",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203826",
+   "evidence": {
+    "qid": "Q16762819",
+    "name": "Alyssa Thomas",
+    "dob": "1992-04-12",
+    "name_keys": [
+     "alyssa thomas"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 177805,
+     "sha256": "fb0276cb323cef91",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15292,
+     "sha256": "5c4212a386a51b60",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Alyssa Thomas",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529183",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203828",
+   "evidence": {
+    "qid": "Q16440418",
+    "name": "Stefanie Dolson",
+    "dob": "1992-01-08",
+    "name_keys": [
+     "stefanie dolson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 180998,
+     "sha256": "8c5c2e35fd4c54ad",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17670,
+     "sha256": "65fe2edec0df16b2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Stefanie Dolson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529205",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203825",
+   "evidence": {
+    "qid": "Q16732215",
+    "name": "Kayla McBride",
+    "dob": "1992-06-25",
+    "name_keys": [
+     "kayla mcbride"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 151036,
+     "sha256": "30249f45269d2015",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 12698,
+     "sha256": "cecef60f9ae8f38e",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kayla McBride",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529458",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204323",
+   "evidence": {
+    "qid": "Q20709853",
+    "name": "Cheyenne Parker",
+    "dob": "1992-08-22",
+    "name_keys": [
+     "cheyenne parker tyus"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 277736,
+     "sha256": "bbfb385c37edd928",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21953,
+     "sha256": "c1af516f545970ce",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Cheyenne Parker-Tyus",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2529622",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203866",
+   "evidence": {
+    "qid": "Q43422347",
+    "name": "Kayla Thornton",
+    "dob": "1992-10-20",
+    "name_keys": [
+     "kayla thornton"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 369095,
+     "sha256": "1b4323ec99f7fe15",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 27338,
+     "sha256": "a22a1482ff3bc520",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kayla Thornton",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2566081",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204322",
+   "evidence": {
+    "qid": "Q20710856",
+    "name": "Elizabeth Williams",
+    "dob": "1993-06-23",
+    "name_keys": [
+     "elizabeth williams"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 223843,
+     "sha256": "b17f8bd7cbc1ed22",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18098,
+     "sha256": "b614079630c440c6",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Elizabeth Williams",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2566106",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204324",
+   "evidence": {
+    "qid": "Q20676886",
+    "name": "Dearica Hamby",
+    "dob": "1993-11-06",
+    "name_keys": [
+     "dearica hamby"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 167452,
+     "sha256": "4aa0aed984d91e73",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14666,
+     "sha256": "e2364b563b6c315c",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Dearica Hamby",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2566110",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642210",
+   "evidence": {
+    "qid": "Q3189280",
+    "name": "Julie Vanloo",
+    "dob": "1993-02-10",
+    "name_keys": [
+     "julie vanloo"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 201214,
+     "sha256": "d337ea6ee3c5d389",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16578,
+     "sha256": "6991ed40fe5f68bb",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Julie Vanloo",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "2566186",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1627671",
+   "evidence": {
+    "qid": "Q23884014",
+    "name": "Rachel Banham",
+    "dob": "1993-07-15",
+    "name_keys": [
+     "rachel banham"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 198640,
+     "sha256": "c778e81bc54ab52a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17044,
+     "sha256": "33c6b9db1d2b44a6",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rachel Banham",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2566453",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204330",
+   "evidence": {
+    "qid": "Q20676907",
+    "name": "Isabelle Harrison",
+    "dob": "1993-09-27",
+    "name_keys": [
+     "isabelle harrison"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 253764,
+     "sha256": "4399dfd4b8b96f49",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20810,
+     "sha256": "47f8769472859c98",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Isabelle Harrison",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2569044",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1627701",
+   "evidence": {
+    "qid": "Q3517451",
+    "name": "Temi Fagbenle",
+    "dob": "1992-09-08",
+    "name_keys": [
+     "temi fagbenle"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 281025,
+     "sha256": "6ea5af2436d1f9d5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22713,
+     "sha256": "f67526bd071ad63d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Temi Fagbenle",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2590093",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204329",
+   "evidence": {
+    "qid": "Q18158499",
+    "name": "Kiah Stokes",
+    "dob": "1993-03-30",
+    "name_keys": [
+     "kiah stokes"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 243794,
+     "sha256": "fc9cce5ac268e44e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19350,
+     "sha256": "94425ce6013989bd",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kiah Stokes",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2593770",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204335",
+   "evidence": {
+    "qid": "Q20657151",
+    "name": "Betnijah Laney",
+    "dob": "1993-10-29",
+    "name_keys": [
+     "betnijah laney hamilton"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 227020,
+     "sha256": "b483a1e3ff45dc96",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18838,
+     "sha256": "a54d1a98ab392197",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Betnijah Laney-Hamilton",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2955898",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203024",
+   "evidence": {
+    "qid": "Q2065779",
+    "name": "Damiris Dantas",
+    "dob": "1992-11-17",
+    "name_keys": [
+     "damiris dantas"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 141910,
+     "sha256": "e71c58ce32f9f303",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 13055,
+     "sha256": "d0f93dc4b1d5e48b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Damiris Dantas",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "2987869",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204319",
+   "evidence": {
+    "qid": "Q19819883",
+    "name": "Jewell Loyd",
+    "dob": "1993-10-05",
+    "name_keys": [
+     "jewell loyd"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 170619,
+     "sha256": "76dfc5e1c2e58225",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14027,
+     "sha256": "97209c259b17dc25",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jewell Loyd",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2987891",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1627675",
+   "evidence": {
+    "qid": "Q23884729",
+    "name": "Courtney Williams",
+    "dob": "1994-05-11",
+    "name_keys": [
+     "courtney williams"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 201273,
+     "sha256": "faecf0dabb74eebd",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15580,
+     "sha256": "6ad5fb64a0ca40dc",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Courtney Williams",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2988756",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628279",
+   "evidence": {
+    "qid": "Q29841116",
+    "name": "Brittney Sykes",
+    "dob": "1994-02-07",
+    "name_keys": [
+     "brittney sykes"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 177623,
+     "sha256": "98733e92344551e5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17135,
+     "sha256": "71f45e44380bc5d9",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Brittney Sykes",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2998928",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1627668",
+   "evidence": {
+    "qid": "Q2654539",
+    "name": "Breanna Stewart",
+    "dob": "1994-08-27",
+    "name_keys": [
+     "breanna stewart"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 213883,
+     "sha256": "ef52f76afd48466a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17823,
+     "sha256": "489537bdcc2c9a4a",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Breanna Stewart",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2998938",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1627674",
+   "evidence": {
+    "qid": "Q28660885",
+    "name": "Kahleah Copper",
+    "dob": "1994-08-28",
+    "name_keys": [
+     "kahleah copper"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 320907,
+     "sha256": "0a255d56838a51ea",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 24074,
+     "sha256": "3c584b0975af2264",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kahleah Copper",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "2999101",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1627673",
+   "evidence": {
+    "qid": "Q24951394",
+    "name": "Jonquel Jones",
+    "dob": "1994-01-05",
+    "name_keys": [
+     "jonquel jones"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 282592,
+     "sha256": "f05524692da37829",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22019,
+     "sha256": "d6cc401e25e26fb4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jonquel Jones",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3054590",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "nia brodie"
+    ],
+    "dob": "1995-06-11"
+   },
+   "name": "Nia Brodie",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3056672",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628920",
+   "evidence": {
+    "qid": "Q51876726",
+    "name": "Mercedes Russell",
+    "dob": "1995-07-27",
+    "name_keys": [
+     "mercedes russell"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 292960,
+     "sha256": "6bf96a927b44ec09",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23026,
+     "sha256": "270e786774718e15",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Mercedes Russell",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3056730",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628317",
+   "evidence": {
+    "qid": "Q53869138",
+    "name": "Karlie Samuelson",
+    "dob": "1995-05-10",
+    "name_keys": [
+     "karlie samuelson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 278263,
+     "sha256": "80321e82b5845c83",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21877,
+     "sha256": "d89d3656303f3cb4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Karlie Samuelson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3058892",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628882",
+   "evidence": {
+    "qid": "Q28743053",
+    "name": "Lexie Brown",
+    "dob": "1994-10-27",
+    "name_keys": [
+     "lexie brown"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 267862,
+     "sha256": "42069d2689da338c",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20766,
+     "sha256": "c740213fe9845ec6",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Lexie Brown",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "3058893",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628278",
+   "evidence": {
+    "qid": "Q29841112",
+    "name": "Shatori Walker-Kimbrough",
+    "dob": "1995-05-18",
+    "name_keys": [
+     "shatori walker kimbrough"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 183099,
+     "sha256": "d5f90edd3fe77ff5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16392,
+     "sha256": "a02c2b942ef2b418",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Shatori Walker-Kimbrough",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3058895",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628280",
+   "evidence": {
+    "qid": "Q29847260",
+    "name": "Brionna Jones",
+    "dob": "1995-12-18",
+    "name_keys": [
+     "brionna jones"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 261913,
+     "sha256": "ee4e01375cb961f7",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21843,
+     "sha256": "c54bfe2fce34dd9b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Brionna Jones",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3058901",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628277",
+   "evidence": {
+    "qid": "Q29617945",
+    "name": "Allisha Gray",
+    "dob": "1995-01-12",
+    "name_keys": [
+     "allisha gray"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 343414,
+     "sha256": "090cceab67a27787",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 28002,
+     "sha256": "276dc94a0522770f",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Allisha Gray",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3065570",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628276",
+   "evidence": {
+    "qid": "Q20657581",
+    "name": "Kelsey Plum",
+    "dob": "1994-08-24",
+    "name_keys": [
+     "kelsey plum"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 207236,
+     "sha256": "060723ab7539b15d",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17009,
+     "sha256": "7cb00fc6da527b0f",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kelsey Plum",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3099736",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "203855",
+   "evidence": {
+    "qid": "Q18166102",
+    "name": "Stephanie Talbot",
+    "dob": "1994-06-15",
+    "name_keys": [
+     "stephanie talbot"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 259598,
+     "sha256": "8451bb0cdf2b523c",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20647,
+     "sha256": "c6fa21a9c1d5b01f",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Stephanie Talbot",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3102133",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204296",
+   "evidence": {
+    "qid": "Q17418367",
+    "name": "Rebecca Allen",
+    "dob": "1992-11-06",
+    "name_keys": [
+     "rebecca allen"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 239189,
+     "sha256": "52058318d8c2b1df",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19878,
+     "sha256": "8449529bdf362606",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rebecca Allen",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142010",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628922",
+   "evidence": {
+    "qid": "Q54165535",
+    "name": "Azurá Stevens",
+    "dob": "1996-02-01",
+    "name_keys": [
+     "azura stevens"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 243396,
+     "sha256": "fa07ca9da247d9a6",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20605,
+     "sha256": "4373fa7c406e164f",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Azura Stevens",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142055",
+   "outcome": "rejected",
+   "reason": "wikidata_name_match_but_dob_differs",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "myisha hines allen"
+    ],
+    "dob": "1995-05-30",
+    "candidates": [
+     {
+      "qid": "Q56224090",
+      "dob": "1996-05-30",
+      "precision": "day"
+     }
+    ]
+   },
+   "name": "Myisha Hines-Allen",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142086",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629488",
+   "evidence": {
+    "qid": "Q50777712",
+    "name": "Brianna Turner",
+    "dob": "1996-07-05",
+    "name_keys": [
+     "brianna turner"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 231515,
+     "sha256": "27a7bcc3db52133f",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18927,
+     "sha256": "c08fdebcf868912a",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Brianna Turner",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142191",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628909",
+   "evidence": {
+    "qid": "Q50282206",
+    "name": "Kelsey Mitchell",
+    "dob": "1995-11-12",
+    "name_keys": [
+     "kelsey mitchell"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 218759,
+     "sha256": "59d8a89aec145f2b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18350,
+     "sha256": "b4a9740603dcf8c7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kelsey Mitchell",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142242",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629539",
+   "evidence": {
+    "qid": "Q107567861",
+    "name": "Amy Okonkwo",
+    "dob": "1996-08-26",
+    "name_keys": [
+     "amy okonkwo"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 282386,
+     "sha256": "fd4b9dbb124f929d",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21525,
+     "sha256": "4c4fd19aa3f58365",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Amy Okonkwo",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142250",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628886",
+   "evidence": {
+    "qid": "Q55081382",
+    "name": "Jordin Canada",
+    "dob": "1995-08-11",
+    "name_keys": [
+     "jordin canada"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 265796,
+     "sha256": "b3b2bc67783bb129",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20228,
+     "sha256": "4e1c8437dbcc5509",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jordin Canada",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142255",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628881",
+   "evidence": {
+    "qid": "Q56043636",
+    "name": "Monique Billings",
+    "dob": "1996-05-02",
+    "name_keys": [
+     "monique billings"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 257752,
+     "sha256": "22b00ee4263b8c05",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23059,
+     "sha256": "69e3aedbcdace2f1",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Monique Billings",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142327",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628915",
+   "evidence": {
+    "qid": "Q18211238",
+    "name": "Kia Nurse",
+    "dob": "1996-02-22",
+    "name_keys": [
+     "kia nurse"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 288630,
+     "sha256": "8b15999f38a5517e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 24219,
+     "sha256": "6711038814756349",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kia Nurse",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3142328",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628931",
+   "evidence": {
+    "qid": "Q19867079",
+    "name": "Gabby Williams",
+    "dob": "1996-09-09",
+    "name_keys": [
+     "gabby williams"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 254077,
+     "sha256": "4d34c4428256f42b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19817,
+     "sha256": "67209fc83c9bf6ce",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Gabby Williams",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3146151",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628878",
+   "evidence": {
+    "qid": "Q56254723",
+    "name": "Ariel Atkins",
+    "dob": "1996-07-30",
+    "name_keys": [
+     "ariel atkins"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 246544,
+     "sha256": "fa347c4aae1a201b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19623,
+     "sha256": "045b4c0345b4d6e1",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Ariel Atkins",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3149391",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628932",
+   "evidence": {
+    "qid": "Q21623331",
+    "name": "A'ja Wilson",
+    "dob": "1996-08-08",
+    "name_keys": [
+     "a ja wilson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 321703,
+     "sha256": "f693f500086f398b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23416,
+     "sha256": "0ac24736f8085796",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "A'ja Wilson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3904479",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630108",
+   "evidence": {
+    "qid": "Q21207975",
+    "name": "Mariella Fasoula",
+    "dob": "1997-09-02",
+    "name_keys": [
+     "mariella fasoula"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 204723,
+     "sha256": "a9c53c8992d151ca",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16235,
+     "sha256": "62c95fdf7f6c0d19",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Mariella Fasoula",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "3904576",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629497",
+   "evidence": {
+    "qid": "Q63967101",
+    "name": "Marina Mabrey",
+    "dob": "1996-09-14",
+    "name_keys": [
+     "marina mabrey"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 189117,
+     "sha256": "ef43c186a6c1fbcb",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17757,
+     "sha256": "2723de35c9c13b91",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Marina Mabrey",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3904577",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629481",
+   "evidence": {
+    "qid": "Q51858305",
+    "name": "Arike Ogunbowale",
+    "dob": "1997-03-02",
+    "name_keys": [
+     "arike ogunbowale"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 283712,
+     "sha256": "44ffde617ff5aa72",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22521,
+     "sha256": "9841eb0e003547bc",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Arike Ogunbowale",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3906753",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629567",
+   "evidence": {
+    "qid": "Q64875538",
+    "name": "Natisha Hiedeman",
+    "dob": "1997-02-10",
+    "name_keys": [
+     "natisha hiedeman"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 166342,
+     "sha256": "4dd2512c7b58e95b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15666,
+     "sha256": "2c8ae0e0e8b46417",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Natisha Hiedeman",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3906769",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643505",
+   "evidence": {
+    "qid": "Q109587550",
+    "name": "Jovana Nogić",
+    "dob": "1997-12-17",
+    "name_keys": [
+     "jovana nogic"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 186398,
+     "sha256": "ad62406108048283",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16902,
+     "sha256": "5e0b87ded1a31ac5",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jovana Nogic",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3906949",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629491",
+   "evidence": {
+    "qid": "Q63314355",
+    "name": "Jessica Shepard",
+    "dob": "1996-09-11",
+    "name_keys": [
+     "jessica shepard"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 168334,
+     "sha256": "73d518f538797bec",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14516,
+     "sha256": "25a3d3030c232bb0",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jessica Shepard",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3906972",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629524",
+   "evidence": {
+    "qid": "Q59828766",
+    "name": "Bridget Carleton",
+    "dob": "1997-05-22",
+    "name_keys": [
+     "bridget carleton"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 206962,
+     "sha256": "d03f2e673437be6d",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15900,
+     "sha256": "88c0e168459516b4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Bridget Carleton",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3907781",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629482",
+   "evidence": {
+    "qid": "Q65161168",
+    "name": "Sophie Cunningham",
+    "dob": "1996-08-16",
+    "name_keys": [
+     "sophie cunningham"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 231299,
+     "sha256": "284a05e6235f23df",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18152,
+     "sha256": "a5b0604c56508c19",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sophie Cunningham",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3910470",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629576",
+   "evidence": {
+    "qid": "Q30348852",
+    "name": "María Conde",
+    "dob": "1997-01-14",
+    "name_keys": [
+     "maria conde"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 159264,
+     "sha256": "4af4293e5b6695cc",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14028,
+     "sha256": "ca03a439222dc894",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Maria Conde",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3913680",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629581",
+   "evidence": {
+    "qid": "Q112113356",
+    "name": "Emese Hof",
+    "dob": "1996-05-29",
+    "name_keys": [
+     "emese hof"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 241278,
+     "sha256": "0e77c29170cb2c5b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18289,
+     "sha256": "12c0c956d5395695",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Emese Hof",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "3913881",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629501",
+   "evidence": {
+    "qid": "Q27922414",
+    "name": "Alanna Smith",
+    "dob": "1996-09-10",
+    "name_keys": [
+     "alanna smith"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 242110,
+     "sha256": "24da62d322769030",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20975,
+     "sha256": "7bce367fda18b2af",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Alanna Smith",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3913903",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629479",
+   "evidence": {
+    "qid": "Q61713329",
+    "name": "Teaira McCowan",
+    "dob": "1996-09-28",
+    "name_keys": [
+     "teaira mccowan"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 244415,
+     "sha256": "22c8e02e3f80cb5e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18616,
+     "sha256": "85acbdc213548d04",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Teaira McCowan",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "3916514",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629480",
+   "evidence": {
+    "qid": "Q61764911",
+    "name": "Kalani Brown",
+    "dob": "1997-03-21",
+    "name_keys": [
+     "kalani brown"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 224800,
+     "sha256": "0c4b1e7438d03676",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19222,
+     "sha256": "a65f5d53b357c337",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kalani Brown",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3917450",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629483",
+   "evidence": {
+    "qid": "Q23882821",
+    "name": "Napheesa Collier",
+    "dob": "1996-09-23",
+    "name_keys": [
+     "napheesa collier"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 255698,
+     "sha256": "acff5a527f4417b3",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19570,
+     "sha256": "1968b5408da7e50b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Napheesa Collier",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3917453",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629478",
+   "evidence": {
+    "qid": "Q24060555",
+    "name": "Katie Lou Samuelson",
+    "dob": "1997-06-13",
+    "name_keys": [
+     "katie lou samuelson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 185410,
+     "sha256": "10520b7bba9dc86c",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15840,
+     "sha256": "585b8040909f4d84",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Katie Lou Samuelson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3919496",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "204468",
+   "evidence": {
+    "qid": "Q3554207",
+    "name": "Valériane Ayayi",
+    "dob": "1994-04-29",
+    "name_keys": [
+     "valeriane ayayi"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 237909,
+     "sha256": "65375911e4992438",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17965,
+     "sha256": "081fddb36d89fc93",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Valeriane Ayayi",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3920741",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629490",
+   "evidence": {
+    "qid": "Q13460940",
+    "name": "Kitija Laksa",
+    "dob": "1996-05-21",
+    "name_keys": [
+     "kitija laksa"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 161833,
+     "sha256": "4d658e8005da4a32",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14058,
+     "sha256": "ebc9f3a8572c98fa",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kitija Laksa",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3922628",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629568",
+   "evidence": {
+    "qid": "Q63154659",
+    "name": "Kennedy Burke",
+    "dob": "1997-02-14",
+    "name_keys": [
+     "kennedy burke"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 196098,
+     "sha256": "149540e8ae2e31fc",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16436,
+     "sha256": "ec84042acae1424d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kennedy Burke",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "3934218",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629484",
+   "evidence": {
+    "qid": "Q62088343",
+    "name": "Megan DiLeo",
+    "dob": "1996-12-13",
+    "name_keys": [
+     "megan dileo"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 267033,
+     "sha256": "08effaf794961d26",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21789,
+     "sha256": "d35c255f2dd04bbc",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Megan DiLeo",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4001679",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1627700",
+   "evidence": {
+    "qid": "Q42894095",
+    "name": "Julie Allemand",
+    "dob": "1996-07-07",
+    "name_keys": [
+     "julie allemand"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 186525,
+     "sha256": "242d660b088ba698",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16350,
+     "sha256": "bf1b8f7339ea6e14",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Julie Allemand",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4038379",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629546",
+   "evidence": {
+    "qid": "Q16663089",
+    "name": "Marine Johannes",
+    "dob": "1995-01-21",
+    "name_keys": [
+     "marine johannes"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 249273,
+     "sha256": "f54f6743121462e5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21019,
+     "sha256": "f2b14f144aa3420c",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Marine Johannes",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4065760",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630112",
+   "evidence": {
+    "qid": "Q90728463",
+    "name": "Tyasha Harris",
+    "dob": "1998-05-01",
+    "name_keys": [
+     "tyasha harris"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 200151,
+     "sha256": "89d5028acd715a9e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16505,
+     "sha256": "3aa6ae84a4bcd2d2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Tyasha Harris",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4065780",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630097",
+   "evidence": {
+    "qid": "Q83664254",
+    "name": "Kaila Charles",
+    "dob": "1998-03-23",
+    "name_keys": [
+     "kaila charles"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 252636,
+     "sha256": "8c715e2b08e0a0b0",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20261,
+     "sha256": "a1cd79cebf70678d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kaila Charles",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4065870",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629498",
+   "evidence": {
+    "qid": "Q63101251",
+    "name": "Jackie Young",
+    "dob": "1997-09-16",
+    "name_keys": [
+     "jackie young"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 245797,
+     "sha256": "4b3cac803a330919",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19544,
+     "sha256": "4845a862618321f4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jackie Young",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4066533",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629477",
+   "evidence": {
+    "qid": "Q50425487",
+    "name": "Sabrina Ionescu",
+    "dob": "1997-12-06",
+    "name_keys": [
+     "sabrina ionescu"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 244996,
+     "sha256": "215a523f4a620710",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19640,
+     "sha256": "f021e6fe7241bfe4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sabrina Ionescu",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4066546",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643686",
+   "evidence": {
+    "qid": "Q118591566",
+    "name": "Nadia Fingall",
+    "dob": "1998-08-12",
+    "name_keys": [
+     "nadia fingall"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 260506,
+     "sha256": "ae93ccc3ceed5b8d",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22194,
+     "sha256": "79c4d69dedce9d1a",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Nadia Fingall",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4066548",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630096",
+   "evidence": {
+    "qid": "Q106873495",
+    "name": "DiJonai Carrington",
+    "dob": "1998-01-08",
+    "name_keys": [
+     "dijonai carrington"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 228278,
+     "sha256": "07d3ff4b8f7a4371",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18253,
+     "sha256": "ed381de2dbaf0ca8",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "DiJonai Carrington",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4066553",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630462",
+   "evidence": {
+    "qid": "Q105834672",
+    "name": "Aari McDonald",
+    "dob": "1998-08-20",
+    "name_keys": [
+     "aari mcdonald"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 293280,
+     "sha256": "ab8afe86ffab4f17",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22346,
+     "sha256": "21b509cf22a7d4fa",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Aari McDonald",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4068042",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630442",
+   "evidence": {
+    "qid": "Q106512895",
+    "name": "Natasha Mack",
+    "dob": "1997-11-03",
+    "name_keys": [
+     "natasha mack"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 220447,
+     "sha256": "3ee4eb3f89e5b898",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17377,
+     "sha256": "9d92ce31d6f083a1",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Natasha Mack",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4068104",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "peyton williams"
+    ],
+    "dob": "1998-04-27"
+   },
+   "name": "Peyton Williams",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4068159",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630134",
+   "evidence": {
+    "qid": "Q98519411",
+    "name": "Sug Sutton",
+    "dob": "1998-12-17",
+    "name_keys": [
+     "sug sutton"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 185908,
+     "sha256": "1cfbcea70793cca5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15335,
+     "sha256": "909f8d65ff593d28",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sug Sutton",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4068161",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630115",
+   "evidence": {
+    "qid": "Q93140363",
+    "name": "Joyner Holmes",
+    "dob": "1998-02-22",
+    "name_keys": [
+     "joyner holmes"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 257653,
+     "sha256": "0ab29fabb28e214e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19600,
+     "sha256": "c64909c50a9f70ee",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Joyner Holmes",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4068346",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630154",
+   "evidence": {
+    "qid": "Q106623152",
+    "name": "Kamiah Smalls",
+    "dob": "1998-04-17",
+    "name_keys": [
+     "kamiah smalls"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 217949,
+     "sha256": "d060eeb4d4b46394",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18025,
+     "sha256": "52a551cc9dbe9983",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kamiah Smalls",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4257500",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1628508",
+   "evidence": {
+    "qid": "Q16658170",
+    "name": "Cecilia Zandalasini",
+    "dob": "1996-03-16",
+    "name_keys": [
+     "cecilia zandalasini"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 168847,
+     "sha256": "fdcd2e054a8e5923",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14070,
+     "sha256": "f46e5093b9d52ad9",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Cecilia Zandalasini",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4280850",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630471",
+   "evidence": {
+    "qid": "Q112110342",
+    "name": "Maya Caldwell",
+    "dob": "1998-12-15",
+    "name_keys": [
+     "maya caldwell"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 279595,
+     "sha256": "be1fd8691e5eadcc",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21565,
+     "sha256": "e4569a6186990e1b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Maya Caldwell",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4280877",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631064",
+   "evidence": {
+    "qid": "Q24852573",
+    "name": "Chloe Bibby",
+    "dob": "1998-06-15",
+    "name_keys": [
+     "chloe bibby"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 236504,
+     "sha256": "f6eedade708afa39",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19789,
+     "sha256": "580abe6c79c2e635",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Chloe Bibby",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4280892",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630150",
+   "evidence": {
+    "qid": "Q83664355",
+    "name": "Chennedy Carter",
+    "dob": "1998-11-14",
+    "name_keys": [
+     "chennedy carter"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 270999,
+     "sha256": "29c74e01f2fa09bd",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20784,
+     "sha256": "cb52a64bb85ba581",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Chennedy Carter",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4281190",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630389",
+   "evidence": {
+    "qid": "Q106515412",
+    "name": "Dana Evans",
+    "dob": "1998-08-01",
+    "name_keys": [
+     "dana evans"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 286031,
+     "sha256": "af323bd06b61a2b8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21499,
+     "sha256": "83cd22a7a9453387",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Dana Evans",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4281929",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630149",
+   "evidence": {
+    "qid": "Q19308493",
+    "name": "Satou Sabally",
+    "dob": "1998-04-25",
+    "name_keys": [
+     "satou sabally"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 179919,
+     "sha256": "18437ee7f227f108",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15425,
+     "sha256": "a6efa585d3ab1de6",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Satou Sabally",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4281930",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630993",
+   "evidence": {
+    "qid": "Q28051428",
+    "name": "Anneli Maley",
+    "dob": "1998-09-01",
+    "name_keys": [
+     "anneli maley"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 179025,
+     "sha256": "7d0e76d9b0da347a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15824,
+     "sha256": "e4f78d406b004e85",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Anneli Maley",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4282168",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630461",
+   "evidence": {
+    "qid": "Q106838172",
+    "name": "Kiana Williams",
+    "dob": "1999-04-09",
+    "name_keys": [
+     "kiana williams"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 275094,
+     "sha256": "d7f8539e8399e63e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21470,
+     "sha256": "75e1e2924206018d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kiana Williams",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4282173",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630446",
+   "evidence": {
+    "qid": "Q91247687",
+    "name": "Michaela Onyenwere",
+    "dob": "1999-08-10",
+    "name_keys": [
+     "michaela onyenwere"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 254117,
+     "sha256": "f0289e34e891879f",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18932,
+     "sha256": "37f6c4f04922b3c2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Michaela Onyenwere",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4336633",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629574",
+   "evidence": {
+    "qid": "Q34635844",
+    "name": "Li Yueru",
+    "dob": "1999-03-28",
+    "name_keys": [
+     "li yueru"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 198773,
+     "sha256": "4ece37078a22eaed",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16899,
+     "sha256": "2412c2c82b1abce7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Li Yueru",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4337216",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629566",
+   "evidence": {
+    "qid": "Q59828188",
+    "name": "Han Xu",
+    "dob": "1999-10-31",
+    "name_keys": [
+     "han xu"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 179492,
+     "sha256": "6958edb2bf32c3f0",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16634,
+     "sha256": "f0736d57163ab745",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Han Xu",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398577",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631039",
+   "evidence": {
+    "qid": "Q119100186",
+    "name": "Miela Sowah",
+    "dob": "2000-06-04",
+    "name_keys": [
+     "miela sowah"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 254743,
+     "sha256": "d4a39deb9232e172",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19944,
+     "sha256": "0d9d3b87c4c08350",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Miela Sowah",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398589",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "elizabeth balogun"
+    ],
+    "dob": "2000-09-09"
+   },
+   "name": "Elizabeth Balogun",
+   "dna": false,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398674",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631009",
+   "evidence": {
+    "qid": "Q83681308",
+    "name": "Rhyne Howard",
+    "dob": "2000-04-29",
+    "name_keys": [
+     "rhyne howard"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 250755,
+     "sha256": "9e49e73ddb8aa088",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19472,
+     "sha256": "ffa868c78614a7da",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rhyne Howard",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398729",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631083",
+   "evidence": {
+    "qid": "Q110587267",
+    "name": "Emily Engstler",
+    "dob": "2000-05-01",
+    "name_keys": [
+     "emily engstler"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 198687,
+     "sha256": "f98f584c45572cf8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16324,
+     "sha256": "0d1405ef6b393a19",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Emily Engstler",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398764",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630996",
+   "evidence": {
+    "qid": "Q111585585",
+    "name": "Rae Burrell",
+    "dob": "2000-06-21",
+    "name_keys": [
+     "rae burrell"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 251123,
+     "sha256": "2f570d28fc476aa1",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19883,
+     "sha256": "6b3315245d6436b4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rae Burrell",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398766",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642791",
+   "evidence": {
+    "qid": "Q119558350",
+    "name": "Zaay Green",
+    "dob": "2000-03-25",
+    "name_keys": [
+     "zaay green"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 283371,
+     "sha256": "a53e3fb0ebe7a3e3",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20102,
+     "sha256": "7a5221a623355804",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Zaay Green",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398768",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631055",
+   "evidence": {
+    "qid": "Q111585258",
+    "name": "Nyara Sabally",
+    "dob": "2000-02-26",
+    "name_keys": [
+     "nyara sabally"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 185632,
+     "sha256": "097894e5a6b7a148",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16350,
+     "sha256": "2610ea2d5c8fa888",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Nyara Sabally",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398776",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631019",
+   "evidence": {
+    "qid": "Q106623070",
+    "name": "NaLyssa Smith",
+    "dob": "2000-08-08",
+    "name_keys": [
+     "nalyssa smith"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 195464,
+     "sha256": "38015f83d2a91ac7",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16142,
+     "sha256": "b097afd097064153",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "NaLyssa Smith",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398829",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631086",
+   "evidence": {
+    "qid": "Q110510329",
+    "name": "Lexie Hull",
+    "dob": "1999-09-13",
+    "name_keys": [
+     "lexie hull"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 268540,
+     "sha256": "d030dcc68bf9450b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21042,
+     "sha256": "1a9302c7e4efcef4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Lexie Hull",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398907",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642324",
+   "evidence": {
+    "qid": "Q117428822",
+    "name": "Kate Martin",
+    "dob": "2000-06-05",
+    "name_keys": [
+     "kate martin"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 244786,
+     "sha256": "79b28f252841c2ef",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18506,
+     "sha256": "494e72d57fb1e4dd",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kate Martin",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398911",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631022",
+   "evidence": {
+    "qid": "Q102043028",
+    "name": "Shakira Austin",
+    "dob": "2000-07-25",
+    "name_keys": [
+     "shakira austin"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 323211,
+     "sha256": "a1b472b87e0e6ddd",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22711,
+     "sha256": "d604664125991ab5",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Shakira Austin",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398915",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631044",
+   "evidence": {
+    "qid": "Q104985490",
+    "name": "Naz Hillmon",
+    "dob": "2000-04-05",
+    "name_keys": [
+     "naz hillmon"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 264437,
+     "sha256": "1a1e35ca5bdf406e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20762,
+     "sha256": "082d96c5d17198da",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Naz Hillmon",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398935",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631007",
+   "evidence": {
+    "qid": "Q111585576",
+    "name": "Veronica Burton",
+    "dob": "2000-07-12",
+    "name_keys": [
+     "veronica burton"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 247114,
+     "sha256": "8b3c5a251ed53f68",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19733,
+     "sha256": "9d3c7468290532cc",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Veronica Burton",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398938",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641657",
+   "evidence": {
+    "qid": "Q118591697",
+    "name": "Dorka Juhász",
+    "dob": "1999-12-18",
+    "name_keys": [
+     "dorka juhasz"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 273756,
+     "sha256": "f9e617b0decbfbf4",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21041,
+     "sha256": "b9133bae043ebbfc",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Dorka Juhasz",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398965",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631090",
+   "evidence": {
+    "qid": "Q51754609",
+    "name": "Christyn Williams",
+    "dob": "2000-05-20",
+    "name_keys": [
+     "christyn williams"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 201711,
+     "sha256": "79e754b36c839bdc",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16001,
+     "sha256": "ea5c14fe45a378a5",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Christyn Williams",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4398966",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631135",
+   "evidence": {
+    "qid": "Q108203260",
+    "name": "Olivia Nelson-Ododa",
+    "dob": "2000-08-17",
+    "name_keys": [
+     "olivia nelson ododa"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 237066,
+     "sha256": "1ec3ff6b83b72218",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18832,
+     "sha256": "da1dc0b9e792039c",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Olivia Nelson-Ododa",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4399342",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631118",
+   "evidence": {
+    "qid": "Q119554010",
+    "name": "Alexa Held",
+    "dob": "1999-12-28",
+    "name_keys": [
+     "lexi held"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 221348,
+     "sha256": "b3c68f72d0486585",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20897,
+     "sha256": "e53a09fd6c16b0a9",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Lexi Held",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4399415",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641652",
+   "evidence": {
+    "qid": "Q111491054",
+    "name": "Maddy Siegrist",
+    "dob": "2000-05-22",
+    "name_keys": [
+     "maddy siegrist"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 254816,
+     "sha256": "caef32e9843b6e5b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21424,
+     "sha256": "8c179ba8870f412f",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Maddy Siegrist",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4420318",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1629496",
+   "evidence": {
+    "qid": "Q25324868",
+    "name": "Eziyoda Magbegor",
+    "dob": "1999-08-13",
+    "name_keys": [
+     "ezi magbegor"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 292345,
+     "sha256": "ce707b414d0f0c7c",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21329,
+     "sha256": "2316e704e6c99fb0",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Ezi Magbegor",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4432830",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641651",
+   "evidence": {
+    "qid": "Q106934982",
+    "name": "Jordan Horston",
+    "dob": "2001-05-21",
+    "name_keys": [
+     "jordan horston"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 152856,
+     "sha256": "975fe9989fcc36e7",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 13818,
+     "sha256": "b884a2d4a2a7bf47",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jordan Horston",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4432831",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641648",
+   "evidence": {
+    "qid": "Q88598610",
+    "name": "Aliyah Boston",
+    "dob": "2001-12-11",
+    "name_keys": [
+     "aliyah boston"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 245657,
+     "sha256": "cdc2a1e45cb987c8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19742,
+     "sha256": "59c2134dea0ce6a2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Aliyah Boston",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4432832",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641660",
+   "evidence": {
+    "qid": "Q108162788",
+    "name": "Zia Cooke",
+    "dob": "2001-01-09",
+    "name_keys": [
+     "zia cooke"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 318075,
+     "sha256": "93ca1b596ce15f29",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23906,
+     "sha256": "4ca346e53b610816",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Zia Cooke",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4432834",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641656",
+   "evidence": {
+    "qid": "Q107493640",
+    "name": "Laeticia Amihere",
+    "dob": "2001-07-10",
+    "name_keys": [
+     "laeticia amihere"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 278497,
+     "sha256": "9c56d6f468f76a53",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21363,
+     "sha256": "882756c5122955e2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Laeticia Amihere",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4432844",
+   "outcome": "rejected",
+   "reason": "cdn_silhouette+silhouette",
+   "wnba_id": null,
+   "evidence": {
+    "qid": "Q119540453",
+    "name": "Aubrey Griffin",
+    "dob": "2001-11-06",
+    "name_keys": [
+     "aubrey griffin"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 12531,
+     "sha256": "5f99d96e1c09b620",
+     "dims": [
+      1094,
+      800
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 4030,
+     "sha256": "1ef05c33c1f10bf7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "wnba_id_candidate": "1642826",
+   "name": "Aubrey Griffin",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4432865",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642292",
+   "evidence": {
+    "qid": "Q114943755",
+    "name": "Jacy Sheldon",
+    "dob": "2000-08-23",
+    "name_keys": [
+     "jacy sheldon"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 289375,
+     "sha256": "5db4ebbae79049df",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22839,
+     "sha256": "4d5a8a6942494add",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jacy Sheldon",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433293",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642294",
+   "evidence": {
+    "qid": "Q119548171",
+    "name": "Charisma Osborne",
+    "dob": "2001-07-03",
+    "name_keys": [
+     "charisma osborne"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 216501,
+     "sha256": "53e829ae68e5da0f",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17456,
+     "sha256": "279a0c8fa11f5131",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Charisma Osborne",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433386",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642320",
+   "evidence": {
+    "qid": "Q119559247",
+    "name": "Jaylyn Sherrod",
+    "dob": "2001-10-21",
+    "name_keys": [
+     "jaylyn sherrod"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 305569,
+     "sha256": "68456a0c8d326371",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23447,
+     "sha256": "3bf105f2e029599b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jaylyn Sherrod",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433402",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642291",
+   "evidence": {
+    "qid": "Q111698612",
+    "name": "Angel Reese",
+    "dob": "2002-05-06",
+    "name_keys": [
+     "angel reese"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 253487,
+     "sha256": "13560912dceb64e0",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18879,
+     "sha256": "45e49a1b13fbb423",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Angel Reese",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433403",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642286",
+   "evidence": {
+    "qid": "Q106298476",
+    "name": "Caitlin Clark",
+    "dob": "2002-01-22",
+    "name_keys": [
+     "caitlin clark"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 195514,
+     "sha256": "954c3c0d17f9a264",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17210,
+     "sha256": "f9aff1176f4ec5d7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Caitlin Clark",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433404",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642287",
+   "evidence": {
+    "qid": "Q108175240",
+    "name": "Cameron Brink",
+    "dob": "2001-12-31",
+    "name_keys": [
+     "cameron brink"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 250679,
+     "sha256": "b4e879fcdaacf515",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20408,
+     "sha256": "e9f213a10bbf6e30",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Cameron Brink",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433405",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642289",
+   "evidence": {
+    "qid": "Q115760765",
+    "name": "Kamilla Cardoso",
+    "dob": "2001-04-30",
+    "name_keys": [
+     "kamilla cardoso"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 260472,
+     "sha256": "cffc930c272e5468",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21040,
+     "sha256": "cce118931b9ad6e3",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kamilla Cardoso",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433408",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642290",
+   "evidence": {
+    "qid": "Q107493673",
+    "name": "Aaliyah Edwards",
+    "dob": "2002-07-09",
+    "name_keys": [
+     "aaliyah edwards"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 189920,
+     "sha256": "6e3484c07ca653d6",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16097,
+     "sha256": "b7222618d6b8c539",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Aaliyah Edwards",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433410",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642795",
+   "evidence": {
+    "qid": "Q112277890",
+    "name": "Deja Kelly",
+    "dob": "2001-09-08",
+    "name_keys": [
+     "deja kelly"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 283480,
+     "sha256": "398ccbd78cc86479",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22125,
+     "sha256": "a9c8ffd31ac443d6",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Deja Kelly",
+   "dna": false,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433411",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643455",
+   "evidence": {
+    "qid": "Q107387819",
+    "name": "Angela Dugalić",
+    "dob": "2001-12-29",
+    "name_keys": [
+     "angela dugalic"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 289274,
+     "sha256": "ea2c79b5e74e3ded",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22032,
+     "sha256": "506fbac8ce8f3595",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Angela Dugalic",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433412",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642817",
+   "evidence": {
+    "qid": "Q108189269",
+    "name": "Hailey Van Lith",
+    "dob": "2001-09-09",
+    "name_keys": [
+     "hailey van lith"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 231997,
+     "sha256": "7ead706e88702635",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19019,
+     "sha256": "65f3020d631b3853",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Hailey Van Lith",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433416",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642810",
+   "evidence": {
+    "qid": "Q125107098",
+    "name": "Madison Scott",
+    "dob": "2001-12-27",
+    "name_keys": [
+     "madison scott"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 257094,
+     "sha256": "b444b69ea4d671b2",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19055,
+     "sha256": "4018a903c79392c0",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Madison Scott",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433424",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642818",
+   "evidence": {
+    "qid": "Q119541808",
+    "name": "Maddy Westbeld",
+    "dob": "2002-02-10",
+    "name_keys": [
+     "maddy westbeld"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 319693,
+     "sha256": "9671bfe4cbe4e410",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 25005,
+     "sha256": "e73f70c55c1a7582",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Maddy Westbeld",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433431",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642804",
+   "evidence": {
+    "qid": "Q119555304",
+    "name": "Te-Hina Paopao",
+    "dob": "2002-08-21",
+    "name_keys": [
+     "te hina paopao"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 306852,
+     "sha256": "95ab99442a5be701",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23028,
+     "sha256": "18464bc87a3c011e",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Te-Hina Paopao",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433433",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642786",
+   "evidence": {
+    "qid": "Q119551738",
+    "name": "Aicha Coulibaly",
+    "dob": "2001-10-18",
+    "name_keys": [
+     "aicha coulibaly"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 207339,
+     "sha256": "760d66d78ea298ac",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17365,
+     "sha256": "fcfec1ced41fc563",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Aicha Coulibaly",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433514",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642809",
+   "evidence": {
+    "qid": "Q119546390",
+    "name": "Saniya Rivers",
+    "dob": "2003-03-04",
+    "name_keys": [
+     "saniya rivers"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 258400,
+     "sha256": "7a74093620bafab8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20009,
+     "sha256": "f5fa7c34734c6634",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Saniya Rivers",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433523",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643450",
+   "evidence": {
+    "qid": "Q111253638",
+    "name": "Rori Harmon",
+    "dob": "2003-01-29",
+    "name_keys": [
+     "rori harmon"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 300521,
+     "sha256": "f48b161ebe5359a2",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22640,
+     "sha256": "9f28506ff70d1466",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rori Harmon",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433524",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642785",
+   "evidence": {
+    "qid": "Q115869992",
+    "name": "Sonia Citron",
+    "dob": "2003-10-22",
+    "name_keys": [
+     "sonia citron"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 223150,
+     "sha256": "904d936a17ce314a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17479,
+     "sha256": "77a4f0abbfdd8afe",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sonia Citron",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433542",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643458",
+   "evidence": {
+    "qid": "Q119549607",
+    "name": "Saylor Poffenbarger",
+    "dob": "2003-04-14",
+    "name_keys": [
+     "saylor poffenbarger"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 226045,
+     "sha256": "d01608421984a6b7",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18023,
+     "sha256": "f070544b4cd218ac",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Saylor Poffenbarger",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433546",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642815",
+   "evidence": {
+    "qid": "Q119547423",
+    "name": "Makayla Timpson",
+    "dob": "2002-09-20",
+    "name_keys": [
+     "makayla timpson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 194354,
+     "sha256": "176e77afd5ffa1e1",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15364,
+     "sha256": "0a1f72a4781c84e9",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Makayla Timpson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433630",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642288",
+   "evidence": {
+    "qid": "Q115104686",
+    "name": "Rickea Jackson",
+    "dob": "2001-03-16",
+    "name_keys": [
+     "rickea jackson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 253587,
+     "sha256": "8bd36dd9f67a0055",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19096,
+     "sha256": "c3aa69969a3bf8b3",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rickea Jackson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433633",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631006",
+   "evidence": {
+    "qid": "Q111869858",
+    "name": "Kierstan Bell",
+    "dob": "2000-03-16",
+    "name_keys": [
+     "kierstan bell"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 207183,
+     "sha256": "827c6e4eeb321a69",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17161,
+     "sha256": "b603cf7a01e5df8c",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kierstan Bell",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433634",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641695",
+   "evidence": {
+    "qid": "Q119569459",
+    "name": "Ashten Prechtel",
+    "dob": "2001-05-11",
+    "name_keys": [
+     "ashten prechtel"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 208423,
+     "sha256": "fcde62430ee6bf27",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18642,
+     "sha256": "76d6491c9f535250",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Ashten Prechtel",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433635",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641649",
+   "evidence": {
+    "qid": "Q111908764",
+    "name": "Diamond Miller",
+    "dob": "2001-02-11",
+    "name_keys": [
+     "diamond miller"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 245742,
+     "sha256": "47c7782e40311d00",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19697,
+     "sha256": "f3e8cb5fd320ae8d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Diamond Miller",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433643",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642307",
+   "evidence": {
+    "qid": "Q115958141",
+    "name": "Mackenzie Holmes",
+    "dob": "2000-11-01",
+    "name_keys": [
+     "mackenzie holmes"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 215120,
+     "sha256": "1a8e04781f426e23",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18272,
+     "sha256": "c5055a0bf11782ac",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Mackenzie Holmes",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433690",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "holly winterburn"
+    ],
+    "dob": "2000-10-01"
+   },
+   "name": "Holly Winterburn",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433730",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642784",
+   "evidence": {
+    "qid": "Q67202319",
+    "name": "Paige Bueckers",
+    "dob": "2001-10-20",
+    "name_keys": [
+     "paige bueckers"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 232523,
+     "sha256": "48d40e9f4fdf69c6",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19997,
+     "sha256": "a53dbad0e45b71e0",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Paige Bueckers",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433744",
+   "outcome": "rejected",
+   "reason": "wikidata_name_match_but_dob_differs",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "michelle onyiah"
+    ],
+    "dob": "2003-03-12",
+    "candidates": [
+     {
+      "qid": "Q119545957",
+      "dob": "2002-03-12",
+      "precision": "day"
+     }
+    ]
+   },
+   "name": "Michelle Onyiah",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433790",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643425",
+   "evidence": {
+    "qid": "Q87469439",
+    "name": "Azzi Fudd",
+    "dob": "2002-11-11",
+    "name_keys": [
+     "azzi fudd"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 193078,
+     "sha256": "3540fe7b371169e1",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16060,
+     "sha256": "15b3ea158a16a8ea",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Azzi Fudd",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433791",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643426",
+   "evidence": {
+    "qid": "Q113641976",
+    "name": "Olivia Miles",
+    "dob": "2003-01-29",
+    "name_keys": [
+     "olivia miles"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 167610,
+     "sha256": "39abbc21bec4e0bc",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 13751,
+     "sha256": "35f267731fd8f2f4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Olivia Miles",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433792",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642796",
+   "evidence": {
+    "qid": "Q119541854",
+    "name": "Rayah Marshall",
+    "dob": "2003-11-15",
+    "name_keys": [
+     "rayah marshall"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 196757,
+     "sha256": "e769db794c8c90df",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15895,
+     "sha256": "614e8d84f239c069",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Rayah Marshall",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433795",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642790",
+   "evidence": {
+    "qid": "Q119537361",
+    "name": "Sania Feagin",
+    "dob": "2003-03-15",
+    "name_keys": [
+     "sania feagin"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 239471,
+     "sha256": "ae96527dbe304c72",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20050,
+     "sha256": "e17f866f28619ad4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sania Feagin",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433797",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643433",
+   "evidence": {
+    "qid": "Q120484419",
+    "name": "Raven Johnson",
+    "dob": "2003-03-04",
+    "name_keys": [
+     "raven johnson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 306868,
+     "sha256": "e64ec1d15c0d478a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23915,
+     "sha256": "d9a52ba08832c8c4",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Raven Johnson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433807",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642793",
+   "evidence": {
+    "qid": "Q119561345",
+    "name": "Aziaha James",
+    "dob": "2002-11-19",
+    "name_keys": [
+     "aziaha james"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 161609,
+     "sha256": "1169533513450fd7",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14288,
+     "sha256": "900d44ec87e283af",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Aziaha James",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433808",
+   "outcome": "rejected",
+   "reason": "cdn_silhouette+silhouette",
+   "wnba_id": null,
+   "evidence": {
+    "qid": "Q119570774",
+    "name": "Shyanne Sellers",
+    "dob": "2003-04-24",
+    "name_keys": [
+     "shyanne sellers"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 12531,
+     "sha256": "5f99d96e1c09b620",
+     "dims": [
+      1094,
+      800
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 4030,
+     "sha256": "1ef05c33c1f10bf7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "wnba_id_candidate": "1642811",
+   "name": "Shyanne Sellers",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4433815",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642802",
+   "evidence": {
+    "qid": "Q119551566",
+    "name": "Lucy Olsen",
+    "dob": "2003-05-26",
+    "name_keys": [
+     "lucy olsen"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 312515,
+     "sha256": "90be53d9c072cd73",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22243,
+     "sha256": "d7b00a326b1f202c",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Lucy Olsen",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4434015",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642808",
+   "evidence": {
+    "qid": "Q119560878",
+    "name": "Ja'Naiya Quinerly",
+    "dob": "2002-10-24",
+    "name_keys": [
+     "jj quinerly"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 202985,
+     "sha256": "60176e9c98902fc0",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17003,
+     "sha256": "cf355e1bc671cfce",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "JJ Quinerly",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4434020",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643457",
+   "evidence": {
+    "qid": "Q119542140",
+    "name": "Teonni Key",
+    "dob": "2003-07-10",
+    "name_keys": [
+     "teonni key"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 249928,
+     "sha256": "1bbe9a115a8ec764",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20429,
+     "sha256": "4943e6519a28ea1b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Teonni Key",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4565505",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643445",
+   "evidence": {
+    "qid": "Q112810862",
+    "name": "Kiki Rice",
+    "dob": "2004-01-14",
+    "name_keys": [
+     "kiki rice"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 258459,
+     "sha256": "d1b7b2dba488e14b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20058,
+     "sha256": "59b55421a89e45fb",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kiki Rice",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4565515",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643439",
+   "evidence": {
+    "qid": "Q119541424",
+    "name": "Tonie Morgan",
+    "dob": "2004-07-16",
+    "name_keys": [
+     "tonie morgan"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 209730,
+     "sha256": "ef4afe65d6174122",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17666,
+     "sha256": "67ddd702d20cf995",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Tonie Morgan",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4583144",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643430",
+   "evidence": {
+    "qid": "Q116448249",
+    "name": "Cotie McMahon",
+    "dob": "2004-05-04",
+    "name_keys": [
+     "cotie mcmahon"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 289949,
+     "sha256": "71091fede9f121af",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21515,
+     "sha256": "d3880c88451d27b2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Cotie McMahon",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4594786",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642321",
+   "evidence": {
+    "qid": "Q119565437",
+    "name": "Sydney Taylor",
+    "dob": "2001-06-21",
+    "name_keys": [
+     "sydney taylor"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 188872,
+     "sha256": "382611ede1e361fa",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16183,
+     "sha256": "23fea71a856f26d8",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sydney Taylor",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4595823",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643525",
+   "evidence": {
+    "qid": "Q66049369",
+    "name": "Alexandra Fowler",
+    "dob": "2001-07-21",
+    "name_keys": [
+     "alex fowler"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 213709,
+     "sha256": "dbb00045a095e6ef",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17637,
+     "sha256": "8b4463a4fbabcc08",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Alex Fowler",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4595910",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1641650",
+   "evidence": {
+    "qid": "Q106424817",
+    "name": "Haley Jones",
+    "dob": "2001-05-23",
+    "name_keys": [
+     "haley jones"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 219597,
+     "sha256": "bfb77c716fa6e9c0",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17293,
+     "sha256": "91cd29f8cfe584e0",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Haley Jones",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4596309",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642820",
+   "evidence": {
+    "qid": "Q119562639",
+    "name": "Liatu King",
+    "dob": "2002-02-10",
+    "name_keys": [
+     "liatu king"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 242746,
+     "sha256": "05e1d930bced498e",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18713,
+     "sha256": "fb385a33ca78c7eb",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Liatu King",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4597509",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642801",
+   "evidence": {
+    "qid": "Q119548912",
+    "name": "Aaliyah Nye",
+    "dob": "2002-08-14",
+    "name_keys": [
+     "aaliyah nye"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 152268,
+     "sha256": "18f0d5d29b11f49c",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14139,
+     "sha256": "27895fe62af5a187",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Aaliyah Nye",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4599199",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "morgan maly"
+    ],
+    "dob": "2002-01-25"
+   },
+   "name": "Morgan Maly",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4609797",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643444",
+   "evidence": {
+    "qid": "Q115257446",
+    "name": "Ta'Niya Latson",
+    "dob": "2003-12-26",
+    "name_keys": [
+     "ta niya latson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 211626,
+     "sha256": "f7455c6b626a3e8f",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17747,
+     "sha256": "fa0a85a8eb4ba260",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Ta'Niya Latson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4682797",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630143",
+   "evidence": {
+    "qid": "Q88408657",
+    "name": "Luisa Geiselsöder",
+    "dob": "2000-02-10",
+    "name_keys": [
+     "luisa geiselsoder"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 261527,
+     "sha256": "c4aae306231442f4",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20864,
+     "sha256": "9c8e4670d1891d98",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Luisa Geiselsoder",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4682855",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643495",
+   "evidence": {
+    "qid": "Q119570584",
+    "name": "Justine Pissott",
+    "dob": "2004-02-04",
+    "name_keys": [
+     "justine pissott"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 271783,
+     "sha256": "759470c0a68084f5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20701,
+     "sha256": "e6154ad8035b7eb2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Justine Pissott",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4683006",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630142",
+   "evidence": {
+    "qid": "Q57693334",
+    "name": "Leonie Fiebich",
+    "dob": "2000-01-10",
+    "name_keys": [
+     "leonie fiebich"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 178841,
+     "sha256": "8fa1c443c20a6bc3",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16123,
+     "sha256": "ddfee7a531c26f8d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Leonie Fiebich",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4684384",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642800",
+   "evidence": {
+    "qid": "Q111459120",
+    "name": "Aneesah Morrow",
+    "dob": "2003-02-02",
+    "name_keys": [
+     "aneesah morrow"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 230152,
+     "sha256": "9bc4046711cab839",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19056,
+     "sha256": "b442803dbcd93f0f",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Aneesah Morrow",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4688629",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643470",
+   "evidence": {
+    "qid": "Q119562865",
+    "name": "Shay Ciezki",
+    "dob": "2003-11-26",
+    "name_keys": [
+     "shay ciezki"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 202666,
+     "sha256": "68bd45b7494bc985",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17236,
+     "sha256": "496daa92ba6c00dd",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Shay Ciezki",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4698730",
+   "outcome": "rejected",
+   "reason": "cdn_silhouette+silhouette",
+   "wnba_id": null,
+   "evidence": {
+    "qid": "Q119550661",
+    "name": "Kara Dunn",
+    "dob": "2003-12-06",
+    "name_keys": [
+     "kara dunn"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 12531,
+     "sha256": "5f99d96e1c09b620",
+     "dims": [
+      1094,
+      800
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 4030,
+     "sha256": "1ef05c33c1f10bf7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "wnba_id_candidate": "1643454",
+   "name": "Kara Dunn",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4698736",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643428",
+   "evidence": {
+    "qid": "Q118132650",
+    "name": "Flau'jae Johnson",
+    "dob": "2003-11-03",
+    "name_keys": [
+     "flau jae johnson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 315073,
+     "sha256": "a2eab9d365431a73",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22962,
+     "sha256": "3286c1c9e46bc079",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Flau'jae Johnson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4703609",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643449",
+   "evidence": {
+    "qid": "Q100977795",
+    "name": "Charlisse Leger-Walker",
+    "dob": "2001-09-15",
+    "name_keys": [
+     "charlisse leger walker"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 313509,
+     "sha256": "37b2a7d1b6266bd7",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 24513,
+     "sha256": "fb47b51e532bdd7a",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Charlisse Leger-Walker",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4703794",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642782",
+   "evidence": {
+    "qid": "Q119542558",
+    "name": "Sarah Ashlee Barker",
+    "dob": "2001-09-10",
+    "name_keys": [
+     "sarah ashlee barker"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 252793,
+     "sha256": "a1d6d30b460ce23d",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20175,
+     "sha256": "f2be136e22ff7c2d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sarah Ashlee Barker",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4704180",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642781",
+   "evidence": {
+    "qid": "Q117289169",
+    "name": "Georgia Amoore",
+    "dob": "2001-04-03",
+    "name_keys": [
+     "georgia amoore"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 285205,
+     "sha256": "1aea2a52d89a7c75",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21333,
+     "sha256": "b2689b7b43fb446b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Georgia Amoore",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4704594",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643438",
+   "evidence": {
+    "qid": "Q119552078",
+    "name": "Marta Suárez",
+    "dob": "2002-05-07",
+    "name_keys": [
+     "marta suarez"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 205696,
+     "sha256": "9c0491a4162aac9c",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17799,
+     "sha256": "2a4c1396946f2d95",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Marta Suarez",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4790258",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "raquel carrera"
+    ],
+    "dob": "2001-10-31"
+   },
+   "name": "Raquel Carrera",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4790260",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "marine fauthoux"
+    ],
+    "dob": "2001-01-23"
+   },
+   "name": "Marine Fauthoux",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4790263",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630387",
+   "evidence": {
+    "qid": "Q36296866",
+    "name": "Iliana Rupert",
+    "dob": "2001-07-12",
+    "name_keys": [
+     "iliana rupert"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 181678,
+     "sha256": "3211b85c29ccde73",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14848,
+     "sha256": "635114f1e8e145e2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": null,
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4790264",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642767",
+   "evidence": {
+    "qid": "Q110255140",
+    "name": "Janelle Salaün",
+    "dob": "2001-09-05",
+    "name_keys": [
+     "janelle salaun"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 269661,
+     "sha256": "a042ea7917690a57",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21926,
+     "sha256": "987b700b6bf1931d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Janelle Salaun",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4790266",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1630386",
+   "evidence": {
+    "qid": "Q60035092",
+    "name": "Awak Kuier",
+    "dob": "2001-08-19",
+    "name_keys": [
+     "awak kuier"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 260816,
+     "sha256": "c9e000c22bded705",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19588,
+     "sha256": "4f8a4edae3880858",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Awak Kuier",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4858656",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643447",
+   "evidence": {
+    "qid": "Q119556661",
+    "name": "Gabriela Jaquez",
+    "dob": "2003-11-19",
+    "name_keys": [
+     "gabriela jaquez"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 219129,
+     "sha256": "a15d6dc9cbff6a5a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19320,
+     "sha256": "e1d6fe20bbeaceca",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Gabriela Jaquez",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4873358",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643489",
+   "evidence": {
+    "qid": "Q17177082",
+    "name": "Antonia Delaere",
+    "dob": "1994-08-01",
+    "name_keys": [
+     "antonia delaere"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 229835,
+     "sha256": "d0713e074d600bd5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18019,
+     "sha256": "f534509803f39d61",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Antonia Delaere",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4873359",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642768",
+   "evidence": {
+    "qid": "Q30331377",
+    "name": "Kyara Linskens",
+    "dob": "1996-11-13",
+    "name_keys": [
+     "kyara linskens"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 142036,
+     "sha256": "9cf5b072f658f5a4",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 13281,
+     "sha256": "1f01c8a746600619",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kyara Linskens",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4874375",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "jihyun park"
+    ],
+    "dob": "2000-04-07"
+   },
+   "name": "Jihyun Park",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4874475",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631263",
+   "evidence": {
+    "qid": "Q65182309",
+    "name": "Nikolina Milić",
+    "dob": "1994-04-12",
+    "name_keys": [
+     "nikolina milic"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 168730,
+     "sha256": "91d3a16154beb0d8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 13802,
+     "sha256": "b32431281375c2bf",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Nikolina Milic",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "4898383",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642788",
+   "evidence": {
+    "qid": "Q119562099",
+    "name": "Bree Hall",
+    "dob": "2003-06-28",
+    "name_keys": [
+     "bree hall"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 218685,
+     "sha256": "dbff3185c20d4fb8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16876,
+     "sha256": "cb636bf56668b786",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Bree Hall",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4898384",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642792",
+   "evidence": {
+    "qid": "Q119548084",
+    "name": "Kiki Iriafen",
+    "dob": "2003-08-26",
+    "name_keys": [
+     "kiki iriafen"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 300108,
+     "sha256": "3843f91a458dcbb0",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23320,
+     "sha256": "d2d5cf5ffce6e555",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kiki Iriafen",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4898400",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642814",
+   "evidence": {
+    "qid": "Q119560793",
+    "name": "Taylor Thierry",
+    "dob": "2003-01-08",
+    "name_keys": [
+     "taylor thierry"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 199535,
+     "sha256": "bcc79826aee97f85",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17106,
+     "sha256": "b330096f67a84d22",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Taylor Thierry",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4898548",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642832",
+   "evidence": {
+    "qid": "Q119558281",
+    "name": "Maria Gakdeng",
+    "dob": "2003-06-09",
+    "name_keys": [
+     "maria gakdeng"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 237302,
+     "sha256": "dd2fa7a784ca42cc",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18923,
+     "sha256": "0be685cc96053a8d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Maria Gakdeng",
+   "dna": false,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4898898",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643429",
+   "evidence": {
+    "qid": "Q119542017",
+    "name": "Gianna Kneepkens",
+    "dob": "2003-03-04",
+    "name_keys": [
+     "gianna kneepkens"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 248413,
+     "sha256": "2a5d93d47e5f5cd8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20364,
+     "sha256": "884a406a186a6e7c",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Gianna Kneepkens",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "4899328",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642822",
+   "evidence": {
+    "qid": "Q119555712",
+    "name": "Kaitlyn Chen",
+    "dob": "2002-02-22",
+    "name_keys": [
+     "kaitlyn chen"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 242682,
+     "sha256": "3edb4d60faf1ff94",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18656,
+     "sha256": "b9f87649460409a1",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Kaitlyn Chen",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5017605",
+   "outcome": "rejected",
+   "reason": "wikidata_name_match_but_dob_differs",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "kamila borkowska"
+    ],
+    "dob": "2002-06-26",
+    "candidates": [
+     {
+      "qid": "Q106587773",
+      "dob": "2002-07-26",
+      "precision": "day"
+     }
+    ]
+   },
+   "name": "Kamila Borkowska",
+   "dna": false,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5017721",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631021",
+   "evidence": {
+    "qid": "Q110905460",
+    "name": "Sika Koné",
+    "dob": "2002-07-13",
+    "name_keys": [
+     "sika kone"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 230670,
+     "sha256": "c5d7f3219934c805",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18782,
+     "sha256": "c24319fc1eb83204",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Sika Kone",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5017726",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631141",
+   "evidence": {
+    "qid": "Q110183553",
+    "name": "Jade Melbourne",
+    "dob": "2002-08-18",
+    "name_keys": [
+     "jade melbourne"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 185549,
+     "sha256": "5be05ae92b09ea64",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15197,
+     "sha256": "bf14eddeea6f6ec2",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jade Melbourne",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5105406",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643494",
+   "evidence": {
+    "qid": "Q116894480",
+    "name": "Frieda Bühner",
+    "dob": "2004-05-28",
+    "name_keys": [
+     "frieda buhner"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 198250,
+     "sha256": "89729cd31145c244",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16291,
+     "sha256": "39b15402e8021b29",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Frieda Buhner",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5105729",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643462",
+   "evidence": {
+    "qid": "Q119548466",
+    "name": "Chance Gray",
+    "dob": "2004-07-06",
+    "name_keys": [
+     "chance gray"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 192698,
+     "sha256": "2e43d66e76439462",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17046,
+     "sha256": "345363d8fccc4e81",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Chance Gray",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5105731",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643453",
+   "evidence": {
+    "qid": "Q119550404",
+    "name": "Grace VanSlooten",
+    "dob": "2004-06-16",
+    "name_keys": [
+     "grace vanslooten"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 260628,
+     "sha256": "a203786c0990b9dc",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19860,
+     "sha256": "a2468843272ce720",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Grace VanSlooten",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5105732",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643441",
+   "evidence": {
+    "qid": "Q119561417",
+    "name": "Raegan Beers",
+    "dob": "2003-07-23",
+    "name_keys": [
+     "raegan beers"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 267346,
+     "sha256": "960b88ddbe72eb69",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21001,
+     "sha256": "0c0788c8316e9ae9",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Raegan Beers",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5105737",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643427",
+   "evidence": {
+    "qid": "Q112843440",
+    "name": "Lauren Betts",
+    "dob": "2003-10-15",
+    "name_keys": [
+     "lauren betts"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 245421,
+     "sha256": "d1be2dec4269c794",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20584,
+     "sha256": "d17c0c1d8c4669dc",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Lauren Betts",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5105740",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643469",
+   "evidence": {
+    "qid": "Q119567734",
+    "name": "Indya Nivar",
+    "dob": "2004-01-16",
+    "name_keys": [
+     "indya nivar"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 276580,
+     "sha256": "720f9173be84c1bb",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22022,
+     "sha256": "48683de1eb8e81db",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Indya Nivar",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5105752",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642293",
+   "evidence": {
+    "qid": "Q116812541",
+    "name": "Alissa Pili",
+    "dob": "2001-06-08",
+    "name_keys": [
+     "alissa pili"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 167914,
+     "sha256": "d4d877a7beb17b3b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15214,
+     "sha256": "1e7d265b6e8b1163",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Alissa Pili",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "5106145",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643440",
+   "evidence": {
+    "qid": "Q119562472",
+    "name": "Darianna Littlepage-Buggs",
+    "dob": "2003-09-23",
+    "name_keys": [
+     "darianna littlepage buggs"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 350793,
+     "sha256": "6e5cf3fbd462a41b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 24493,
+     "sha256": "71df8d278f245eb9",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Darianna Littlepage-Buggs",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5106170",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643479",
+   "evidence": {
+    "qid": "Q119565918",
+    "name": "Ndjakalenga Mwenentanda",
+    "dob": "2003-11-24",
+    "name_keys": [
+     "ndjakalenga mwenentanda"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 258439,
+     "sha256": "7fe08a2405e4e9f6",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20812,
+     "sha256": "670c62910988197b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Ndjakalenga Mwenentanda",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5106222",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643473",
+   "evidence": {
+    "qid": "Q119567314",
+    "name": "Taina Mair",
+    "dob": "2003-11-20",
+    "name_keys": [
+     "taina mair"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 189576,
+     "sha256": "84521cf85e7f1e7a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15474,
+     "sha256": "a75ea818678f7d90",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Taina Mair",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5106232",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643437",
+   "evidence": {
+    "qid": "Q119546432",
+    "name": "Ashlon Jackson",
+    "dob": "2004-01-06",
+    "name_keys": [
+     "ashlon jackson"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 217506,
+     "sha256": "f9cbdf7da00fbc7b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19203,
+     "sha256": "f9e0823213bf613c",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Ashlon Jackson",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5107404",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643487",
+   "evidence": {
+    "qid": "Q119540821",
+    "name": "Sha Carter",
+    "dob": "2000-10-25",
+    "name_keys": [
+     "quionche carter"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 249120,
+     "sha256": "eafd532322989e07",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19767,
+     "sha256": "d797ea6a15d33ed8",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Quionche Carter",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "5107515",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643461",
+   "evidence": {
+    "qid": "Q119555457",
+    "name": "Laura Ziegler",
+    "dob": "2002-07-23",
+    "name_keys": [
+     "laura ziegler"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 233968,
+     "sha256": "0b2638f665c8b7e8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18996,
+     "sha256": "1b1db5b6e575211b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Laura Ziegler",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "5108051",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643527",
+   "evidence": {
+    "qid": "Q119545929",
+    "name": "Jordan Harrison",
+    "dob": "2004-04-26",
+    "name_keys": [
+     "jordan harrison"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 195104,
+     "sha256": "bfa1b1041a7e71d8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 16473,
+     "sha256": "f3c4198610e21236",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Jordan Harrison",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5108550",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643436",
+   "evidence": {
+    "qid": "Q119560001",
+    "name": "Serah Williams",
+    "dob": "2004-01-17",
+    "name_keys": [
+     "serah williams"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 243408,
+     "sha256": "8fdde7a7a4798144",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19730,
+     "sha256": "d429802c31534f77",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Serah Williams",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5108587",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643431",
+   "evidence": {
+    "qid": "Q135226037",
+    "name": "Madina Okot",
+    "dob": "2004-08-23",
+    "name_keys": [
+     "madina okot"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 228610,
+     "sha256": "db70d048dfa59a36",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 18826,
+     "sha256": "38efd22935e553f5",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Madina Okot",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5122345",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643467",
+   "evidence": {
+    "qid": "Q119538644",
+    "name": "Cassandre Prosper",
+    "dob": "2005-06-25",
+    "name_keys": [
+     "cassandre prosper"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 242067,
+     "sha256": "13090cc3d50e4283",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17935,
+     "sha256": "265b98d35f844263",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Cassandre Prosper",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5208981",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642303",
+   "evidence": {
+    "qid": "Q118816422",
+    "name": "Leïla Lacan",
+    "dob": "2004-06-02",
+    "name_keys": [
+     "leila lacan"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 181362,
+     "sha256": "e5772c125fed49c1",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15654,
+     "sha256": "30bb77acf70f9cdb",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Leila Lacan",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5208982",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642304",
+   "evidence": {
+    "qid": "Q118809525",
+    "name": "Carla Leite",
+    "dob": "2004-04-16",
+    "name_keys": [
+     "carla leite"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 287170,
+     "sha256": "21a5d53ca55405f3",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 23054,
+     "sha256": "9b47bc4270ba96ab",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Carla Leite",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5208983",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642302",
+   "evidence": {
+    "qid": "Q124216554",
+    "name": "Isobel Borlase",
+    "dob": "2004-09-12",
+    "name_keys": [
+     "isobel borlase"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 281206,
+     "sha256": "bcf23daeeb5eafa8",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21035,
+     "sha256": "790c193f2bcccd43",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Isobel Borlase",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5208984",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "elena buenavida"
+    ],
+    "dob": "2004-03-08"
+   },
+   "name": "Elena Buenavida",
+   "dna": false,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5208985",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643644",
+   "evidence": {
+    "qid": "Q135347509",
+    "name": "Alicia Flórez",
+    "dob": "2004-04-19",
+    "name_keys": [
+     "alicia florez"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 242499,
+     "sha256": "472416a13dfb2332",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 17716,
+     "sha256": "c3ff7502aed728bc",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Alicia Florez",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5209202",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642296",
+   "evidence": {
+    "qid": "Q125498790",
+    "name": "Nyadiew Puoch",
+    "dob": "2004-06-23",
+    "name_keys": [
+     "nyadiew puoch"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 285050,
+     "sha256": "9389c8be2be5d900",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 22027,
+     "sha256": "153b269e2b1b3f2d",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Nyadiew Puoch",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5209602",
+   "outcome": "rejected",
+   "reason": "cdn_silhouette+silhouette",
+   "wnba_id": null,
+   "evidence": {
+    "qid": "Q103831237",
+    "name": "Matilde Villa",
+    "dob": "2004-12-09",
+    "name_keys": [
+     "matilde villa"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 12531,
+     "sha256": "5f99d96e1c09b620",
+     "dims": [
+      1094,
+      800
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 4030,
+     "sha256": "1ef05c33c1f10bf7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "wnba_id_candidate": "1642327",
+   "name": "Matilde Villa",
+   "dna": false,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5220104",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642769",
+   "evidence": {
+    "qid": "Q84546398",
+    "name": "Mai Yamamoto",
+    "dob": "1999-10-23",
+    "name_keys": [
+     "mai yamamoto"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 189856,
+     "sha256": "a527cf6b200dd049",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15187,
+     "sha256": "77828459f4971456",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Mai Yamamoto",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5220150",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642798",
+   "evidence": {
+    "qid": "Q113149945",
+    "name": "Dominique Malonga",
+    "dob": "2005-11-16",
+    "name_keys": [
+     "dominique malonga"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 193916,
+     "sha256": "08f8c107d0153e54",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15538,
+     "sha256": "838854c4e9fde106",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Dominique Malonga",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5274110",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642777",
+   "evidence": {
+    "qid": "Q124609370",
+    "name": "Monique Akoa Makani",
+    "dob": "2001-02-04",
+    "name_keys": [
+     "monique akoa makani"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 223246,
+     "sha256": "e007543a12ecc273",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20207,
+     "sha256": "b0b9de57ec300bea",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Monique Akoa Makani",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5277552",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642794",
+   "evidence": {
+    "qid": "Q74320801",
+    "name": "Justė Jocytė",
+    "dob": "2005-11-19",
+    "name_keys": [
+     "juste jocyte"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 126350,
+     "sha256": "3570076e3a1d98ac",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 13345,
+     "sha256": "1bdeb8e6b11ae46a",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Juste Jocyte",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5278157",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1642775",
+   "evidence": {
+    "qid": "Q16228343",
+    "name": "Alex Wilson",
+    "dob": "1994-03-21",
+    "name_keys": [
+     "alex wilson"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 292773,
+     "sha256": "42b7cd590a70063c",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 21990,
+     "sha256": "b0658b849885f75b",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Alex Wilson",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "5278237",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "anastasiia olairi kosu"
+    ],
+    "dob": "2005-04-21"
+   },
+   "name": "Anastasiia Olairi Kosu",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5345319",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643448",
+   "evidence": {
+    "qid": "Q135358760",
+    "name": "Nell Angloma",
+    "dob": "2006-06-12",
+    "name_keys": [
+     "nell angloma"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 160602,
+     "sha256": "6f3558aec6f7a97a",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 15340,
+     "sha256": "b9d2c926cc802e32",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Nell Angloma",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5345320",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1631136",
+   "evidence": {
+    "qid": "Q105709929",
+    "name": "Pauline Astier",
+    "dob": "2002-02-15",
+    "name_keys": [
+     "pauline astier"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 220093,
+     "sha256": "2c3b1f171fe23e89",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19024,
+     "sha256": "16f544f724f46ee0",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Pauline Astier",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5345322",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643488",
+   "evidence": {
+    "qid": "Q134731487",
+    "name": "Emma Čechová",
+    "dob": "2004-07-12",
+    "name_keys": [
+     "emma cechova"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 253691,
+     "sha256": "4816247e4eb829b0",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19253,
+     "sha256": "44735c0be1039147",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Emma Cechova",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "5345325",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "awa fam"
+    ],
+    "dob": "2006-06-17"
+   },
+   "name": "Awa Fam",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5345444",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643420",
+   "evidence": {
+    "qid": "Q21063950",
+    "name": "Laura Juškaitė",
+    "dob": "1997-09-22",
+    "name_keys": [
+     "laura juskaite"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 218594,
+     "sha256": "e084f997f3d76cd5",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19511,
+     "sha256": "aff00d02beda95c0",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Laura Juskaite",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5345473",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643424",
+   "evidence": {
+    "qid": "Q107594966",
+    "name": "Costanza Verona",
+    "dob": "1999-08-06",
+    "name_keys": [
+     "costanza verona"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 255957,
+     "sha256": "473b947e0282b78b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 20766,
+     "sha256": "85d2c58af4481a63",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Costanza Verona",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5345478",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643490",
+   "evidence": {
+    "qid": "Q111983529",
+    "name": "Eliška Joklová",
+    "dob": "2001-10-01",
+    "name_keys": [
+     "eliska joklova"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 252901,
+     "sha256": "d986bcf54b448160",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 19149,
+     "sha256": "dfc0cbb4f6f85b32",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Eliska Joklova",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5345524",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643493",
+   "evidence": {
+    "qid": "Q123669747",
+    "name": "Noémie Brochant",
+    "dob": "1999-10-25",
+    "name_keys": [
+     "noemie brochant"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 168943,
+     "sha256": "60da095ce6c3b322",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14897,
+     "sha256": "d803ae012541fba7",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Noemie Brochant",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5346554",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643506",
+   "evidence": {
+    "qid": "Q31271251",
+    "name": "Teja Oblak",
+    "dob": "1990-12-20",
+    "name_keys": [
+     "teja oblak"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 149476,
+     "sha256": "33fc4a2bcc39f8ce",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14163,
+     "sha256": "29381838a678c481",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Teja Oblak",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5355509",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643647",
+   "evidence": {
+    "qid": "Q94538407",
+    "name": "Tima Pouye",
+    "dob": "1999-04-07",
+    "name_keys": [
+     "tima pouye"
+    ],
+    "ledger_agrees": null
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 178511,
+     "sha256": "7ccd546c37dbd670",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 14519,
+     "sha256": "ee3a1cd48e7fa866",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Tima Pouye",
+   "dna": true,
+   "active_roster": false
+  },
+  {
+   "espn_id": "5364343",
+   "outcome": "mapped",
+   "reason": "exact_name_and_dob",
+   "wnba_id": "1643706",
+   "evidence": {
+    "qid": "Q41673320",
+    "name": "Ornella Bankolé",
+    "dob": "1997-09-17",
+    "name_keys": [
+     "ornella bankole"
+    ],
+    "ledger_agrees": true
+   },
+   "cdn": {
+    "full": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 329462,
+     "sha256": "da9367c3e1a8aa4b",
+     "dims": [
+      1040,
+      760
+     ]
+    },
+    "square": {
+     "status": 200,
+     "mime": "image/png",
+     "bytes": 24816,
+     "sha256": "6c47a06c793e29db",
+     "dims": [
+      260,
+      190
+     ]
+    }
+   },
+   "name": "Ornella Bankole",
+   "dna": true,
+   "active_roster": true
+  },
+  {
+   "espn_id": "5447776",
+   "outcome": "rejected",
+   "reason": "no_wikidata_person_with_exact_name",
+   "wnba_id": null,
+   "evidence": {
+    "names": [
+     "aminata gueye"
+    ],
+    "dob": "2002-07-10"
+   },
+   "name": "Aminata Gueye",
+   "dna": true,
+   "active_roster": true
+  }
+ ],
+ "espn_athlete_headshots": {
+  "added": [
+   {
+    "id": "2566110",
+    "name": "Julie Vanloo"
+   },
+   {
+    "id": "2955898",
+    "name": "Damiris Dantas"
+   },
+   {
+    "id": "3058892",
+    "name": "Lexie Brown"
+   },
+   {
+    "id": "3904479",
+    "name": "Mariella Fasoula"
+   },
+   {
+    "id": "3913903",
+    "name": "Teaira McCowan"
+   },
+   {
+    "id": "4068159",
+    "name": "Sug Sutton"
+   },
+   {
+    "id": "4068161",
+    "name": "Joyner Holmes"
+   },
+   {
+    "id": "4280892",
+    "name": "Chennedy Carter"
+   },
+   {
+    "id": "4282168",
+    "name": "Kiana Williams"
+   },
+   {
+    "id": "4433410",
+    "name": "Deja Kelly"
+   },
+   {
+    "id": "4434015",
+    "name": "JJ Quinerly"
+   },
+   {
+    "id": "5105752",
+    "name": "Alissa Pili"
+   },
+   {
+    "id": "5278157",
+    "name": "Alex Wilson"
+   },
+   {
+    "id": "5345322",
+    "name": "Emma Cechova"
+   }
+  ],
+  "not_added": [
+   {
+    "id": "2491232",
+    "name": "Kayla Alexander",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "3906769",
+    "name": "Jovana Nogic",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "3910470",
+    "name": "Maria Conde",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "3913680",
+    "name": "Emese Hof",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "3919496",
+    "name": "Valeriane Ayayi",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4066546",
+    "name": "Nadia Fingall",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4068104",
+    "name": "Peyton Williams",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4068346",
+    "name": "Kamiah Smalls",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4432844",
+    "name": "Aubrey Griffin",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4433542",
+    "name": "Saylor Poffenbarger",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4433744",
+    "name": "Michelle Onyiah",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4433808",
+    "name": "Shyanne Sellers",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4595823",
+    "name": "Alex Fowler",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4599199",
+    "name": "Morgan Maly",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4688629",
+    "name": "Shay Ciezki",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4698730",
+    "name": "Kara Dunn",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4790258",
+    "name": "Raquel Carrera",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4790260",
+    "name": "Marine Fauthoux",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "4874475",
+    "name": "Nikolina Milic",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5106170",
+    "name": "Ndjakalenga Mwenentanda",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5107404",
+    "name": "Quionche Carter",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5107515",
+    "name": "Laura Ziegler",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5108051",
+    "name": "Jordan Harrison",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5208984",
+    "name": "Elena Buenavida",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5208985",
+    "name": "Alicia Florez",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5209602",
+    "name": "Matilde Villa",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5277552",
+    "name": "Juste Jocyte",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5345319",
+    "name": "Nell Angloma",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5346554",
+    "name": "Teja Oblak",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5355509",
+    "name": "Tima Pouye",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5364343",
+    "name": "Ornella Bankole",
+    "reason": "espn_athlete_record_has_no_headshot"
+   },
+   {
+    "id": "5447776",
+    "name": "Aminata Gueye",
+    "reason": "espn_athlete_record_has_no_headshot"
+   }
+  ]
+ }
+}
