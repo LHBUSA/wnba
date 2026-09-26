@@ -1,12 +1,26 @@
-# WinBA deterministic ordering — research candidate `winba/1.0.1-research`
+# WinBA deterministic ordering — promoted as `winba/1.0.1`
 
-Status: **RESEARCH READY — not promoted.** Production WinBA is unchanged: `winba/1.0.0`
-(`workers/shared/winba.js`, sha256-pinned in tests), built by wnba-ingest in archive-index order.
-Nothing in this change is runtime-visible: no Worker, route, KV key, page or edition uses the candidate.
+Status: **PROMOTED IN CODE (owner-approved 2026-09-26); live after wnba-ingest 1.4.0 is deployed and the
+board is rebuilt.** The research candidate `winba/1.0.1-research` (`winba-research.js`) was removed; its
+rule now lives in production `workers/shared/winba.js` (`WINBA_VERSION = 'winba/1.0.1'`,
+`winbaGameOrder`, sha256-pinned). `winba/1.0.0` is preserved byte-for-byte in
+`workers/shared/winba-1.0.0.js` (same pinned hash as the published file).
 
-- Candidate code: `workers/shared/winba-research.js` (`tipOrdered`, `buildWinbaSnapshotResearch`, `diffBoards`)
-- Tests: `tests/winba-research.test.mjs`
-- Full diff (every changed field of every row): `docs/research/winba-deterministic-ordering-diff-2026.json`
+- Promotion proof on the real archive vs the live board: `docs/research/winba-1.0.1-promotion-proof-2026.json`
+- The board 1.0.1 must serve on that archive: `docs/research/winba-1.0.1-expected-board-2026.json`
+- Proof / post-deploy verification: `node scripts/winba-promotion-proof.mjs prove|verify`
+- Tests: `tests/winba-1.0.1.test.mjs`
+
+**Deploy:** wnba-ingest 1.4.0 (reads the season in tip order; rebuilds any stored board whose `version`
+differs from `WINBA_VERSION`, so the next run — or `POST /run/winba` — writes 1.0.1 on an unchanged
+archive; `POST /run/winba?force=1` also works). Then `node scripts/winba-promotion-proof.mjs verify`.
+
+**Rollback caveat:** wnba-ingest 1.3.0 never forces the winba task (its `POST /run/winba` passes no
+force and skips an unchanged archive signature regardless of version), so redeploying 1.3.0 alone
+leaves the 1.0.1 board in place until the next archived game. Keep a copy of `winba:v1:latest` taken
+before the 1.4.0 deploy; rollback = redeploy 1.3.0 + put that copy back.
+
+The original research notes follow.
 
 ## Why
 

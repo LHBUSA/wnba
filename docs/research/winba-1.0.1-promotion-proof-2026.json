@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-09-26T18:08:00.113Z",
+  "before": {
+    "source": "GET https://wnba-api.sales-fd3.workers.dev/v1/stats/winba (serves KV winba:v1:latest; photo stripped)",
+    "version": "winba/1.0.0",
+    "generated_at": "2026-09-25T04:26:27.869Z",
+    "archive_signature": "350:401857218",
+    "games_used": 332,
+    "rows": 238,
+    "reproduced_by": "workers/shared/winba-1.0.0.js over the archive pull in archive-index order: exact"
+  },
+  "after": {
+    "version": "winba/1.0.1",
+    "ordering": "start_utc ascending, then numeric game_id",
+    "builder": "workers/shared/winba.js",
+    "archive": "350 archived documents, signature 350:401857218",
+    "games_used": 332
+  },
+  "summary": {
+    "rows_before": 238,
+    "rows_after": 238,
+    "rows_changed": 4,
+    "fields_changed": 4,
+    "score_changes": 0,
+    "rank_changes": 0,
+    "status_changes": 0,
+    "component_changes": 0,
+    "raw_changes": 0,
+    "sample_changes": 0,
+    "average_changes": 0,
+    "team_id_changes": 4,
+    "unexpected_changes": 0,
+    "row_order_identical": true
+  },
+  "board": {
+    "games_used": [
+      332,
+      332
+    ],
+    "qualified_count": [
+      196,
+      196
+    ],
+    "provisional_count": [
+      42,
+      42
+    ]
+  },
+  "changes": [
+    {
+      "athlete_id": "3065570",
+      "field": "team_id",
+      "before": "6",
+      "after": "11",
+      "name": "Kelsey Plum"
+    },
+    {
+      "athlete_id": "4068159",
+      "field": "team_id",
+      "before": "132052",
+      "after": "3",
+      "name": "Sug Sutton"
+    },
+    {
+      "athlete_id": "4282168",
+      "field": "team_id",
+      "before": "11",
+      "after": "131935",
+      "name": "Kiana Williams"
+    },
+    {
+      "athlete_id": "4684384",
+      "field": "team_id",
+      "before": "18",
+      "after": "131935",
+      "name": "Aneesah Morrow"
+    }
+  ]
+}

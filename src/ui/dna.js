@@ -62,7 +62,7 @@ const FRACTION_KEYS = new Set(['ts_pct', 'efg_pct', 'fg3_pct', 'ft_pct', 'availa
 /** Stored already in percentage units (27.2 = 27.2%). */
 const PERCENT_KEYS = new Set(['usage_pct', 'ast_pct', 'tov_pct', 'orb_pct', 'drb_pct']);
 
-/** WinBA v1 components (winba:v1 board row): all on a 0–100 scale. Weights are the frozen winba/1.0.0 weights. */
+/** WinBA v1 components (winba:v1 board row): all on a 0–100 scale. Weights are the frozen winba/1.0 weights (unchanged in 1.0.1). */
 const WINBA_PARTS = Object.freeze([
   ['production_percentile', 'production', 'Production', 'Box Impact per 36, percentile vs the qualification-eligible league'],
   ['win_rate', 'win_rate', 'Win rate', 'team win rate in the games she played'],
@@ -415,7 +415,7 @@ export function renderWinbaBreakdown(body) {
     ${w.sample ? `<p class="note">WinBA sample: ${n0(w.sample.games)} games (${n0(w.sample.wins)}-${n0(w.sample.losses)}) · ${n0(w.sample.minutes)} min.</p>` : ''}
     ${tracks ? `<ul class="dna-wbc">${tracks}</ul>` : ''}
     ${rows ? `<div class="tbl-scroll"><table class="tbl dna-wb__tbl"><thead><tr><th>Component</th><th class="num">Value (0–100)</th><th class="num">Weight</th><th class="num">Points</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
-    <p class="note">Values and weights are the stored winba/1.0.0 row. The row does not store per-component points or the raw inputs (Box Impact per 36, minutes), so they are not shown here and nothing is re-weighted in the browser; the raw inputs are on the <a href="/winba-score">WinBA board</a>. Winning association, not a causal wins-added estimate.</p>
+    <p class="note">Values and weights are the stored canonical WinBA board row (frozen winba/1.0 formula; 1.0.1 changed only game order). The row does not store per-component points or the raw inputs (Box Impact per 36, minutes), so they are not shown here and nothing is re-weighted in the browser; the raw inputs are on the <a href="/winba-score">WinBA board</a>. Winning association, not a causal wins-added estimate.</p>
     ${w.note ? `<p class="dna-callout"><b>WINBA NOTE.</b> ${esc(w.note)}</p>` : ''}</section>`;
 }
 

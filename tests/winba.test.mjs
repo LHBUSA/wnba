@@ -13,7 +13,7 @@ import {
 } from '../workers/shared/winba.js';
 
 test('WinBA v1 constants and Box Impact are frozen', () => {
-  assert.equal(WINBA_VERSION, 'winba/1.0.0');
+  assert.equal(WINBA_VERSION, 'winba/1.0.1');
   assert.deepEqual(WINBA_WEIGHTS, {
     production: 0.45,
     win_rate: 0.25,
@@ -25,7 +25,7 @@ test('WinBA v1 constants and Box Impact are frozen', () => {
 });
 
 test('advanced context is contractually non-scoring and cannot redefine WinBA v1', () => {
-  assert.equal(WINBA_LAYER_CONTRACT.core.version, 'winba/1.0.0');
+  assert.equal(WINBA_LAYER_CONTRACT.core.version, 'winba/1.0.1');
   assert.equal(WINBA_LAYER_CONTRACT.core.deterministic, true);
   assert.equal(WINBA_LAYER_CONTRACT.context.affects_score, false);
   assert.equal(WINBA_LAYER_CONTRACT.context.affects_rank, false);

@@ -12,16 +12,8 @@
 // + 10% court share (average minutes / 40)
 //
 // This is an association-with-winning index, not a causal estimate of wins added.
-//
-// winba/1.0.1 (2026-09-26, owner-approved): games are processed in actual tip-off order
-// (start_utc ascending, then numeric game_id), so a traded player's team is the team of her
-// latest game, whatever order the archive index holds. Formula, weights, qualification,
-// percentile rule, rounding, ranking and status are byte-for-byte the winba/1.0.0 rules.
-// winba/1.0.0 is preserved unchanged in ./winba-1.0.0.js (sha256-pinned) for reproduction.
-// Evidence: docs/research/WINBA_DETERMINISTIC_ORDERING.md, docs/research/winba-1.0.1-promotion-proof-2026.json.
 
-export const WINBA_VERSION = 'winba/1.0.1';
-export const WINBA_GAME_ORDER = 'start_utc ascending, then game_id ascending (numeric)';
+export const WINBA_VERSION = 'winba/1.0.0';
 export const WINBA_WEIGHTS = Object.freeze({
   production: 0.45,
   win_rate: 0.25,
@@ -99,23 +91,10 @@ function playerPlayed(row) {
   return !row?.dnp && n(row?.min) > 0 && row?.athlete_id;
 }
 
-const tipMs = (doc) => { const t = Date.parse(doc?.summary?.game?.start_utc || ''); return Number.isFinite(t) ? t : Infinity; };
-const gameId = (doc) => String(doc?.summary?.game?.game_id ?? '');
-function cmpGameId(a, b) {
-  const x = gameId(a); const y = gameId(b);
-  if (/^\d+$/.test(x) && /^\d+$/.test(y) && x.length !== y.length) return x.length - y.length;
-  return x < y ? -1 : x > y ? 1 : 0;
-}
-
-/** Documents in WINBA_GAME_ORDER. Total, stable, never mutates the input. */
-export function winbaGameOrder(docs = []) {
-  return [...(docs || [])].filter(Boolean).sort((a, b) => (tipMs(a) - tipMs(b)) || cmpGameId(a, b));
-}
-
 export function aggregateWinbaArchives(docs = [], { season = null } = {}) {
   const byPlayer = new Map();
   let gamesUsed = 0;
-  for (const doc of winbaGameOrder(docs)) {
+  for (const doc of docs) {
     const summary = doc?.summary;
     const game = summary?.game;
     if (!game?.status?.completed || !regularSeasonOf(doc)) continue;

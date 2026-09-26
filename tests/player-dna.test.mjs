@@ -296,11 +296,11 @@ test('last-N windows stop at as_of and cross season types in tip order', () => {
 // ------------------------------------------------------------------ WinBA integrity
 
 test('WinBA v1 is untouched: constants, and winba.js source is byte-pinned', () => {
-  assert.equal(WINBA_VERSION, 'winba/1.0.0');
+  assert.equal(WINBA_VERSION, 'winba/1.0.1');
   assert.deepEqual(WINBA_WEIGHTS, { production: 0.45, win_rate: 0.25, winning_output: 0.20, court_share: 0.10 });
   const src = readFileSync(new URL('../workers/shared/winba.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
-  assert.equal(createHash('sha256').update(src).digest('hex'), 'd90539e82f8cbd043095070d05fc13cf8aa7273266bf986e6dc0123b0a77ec35',
-    'workers/shared/winba.js changed. WinBA v1 is frozen; DNA consumes it unchanged.');
+  assert.equal(createHash('sha256').update(src).digest('hex'), '699387a08855b602e5cae8b4c3d5ec3e5d3b82c0409e820ae3da61f69f110e30',
+    'workers/shared/winba.js changed. WinBA winba/1.0.1 is frozen; DNA consumes it unchanged.');
 });
 
 test('DNA winba === the canonical board value for that player (stored-board shape, All-Star included)', () => {
@@ -317,7 +317,7 @@ test('DNA winba === the canonical board value for that player (stored-board shap
     assert.equal(w.score, Math.round(row.score));
     assert.equal(w.rank, row.rank);
     assert.equal(w.winba_status, row.status);
-    assert.equal(w.version, 'winba/1.0.0');
+    assert.equal(w.version, 'winba/1.0.1');
     assert.equal(w.source, 'canonical_board');
     assert.deepEqual(Object.fromEntries(w.components.map((c) => [c.key, c.value])), row.components);
     assert.deepEqual(w.sample, row.sample);
@@ -528,7 +528,7 @@ test('contract, versions and provenance fields are present', () => {
   assert.equal(out.contract, PLAYER_DNA_CONTRACT);
   assert.equal(out.version, 'wnba-player-dna/1.0.0');
   assert.equal(PLAYER_DNA_VERSION, 'wnba-player-dna/1.0.0');
-  assert.deepEqual(out.versions, { player_dna: 'wnba-player-dna/1.0.0', winba: 'winba/1.0.0' });
+  assert.deepEqual(out.versions, { player_dna: 'wnba-player-dna/1.0.0', winba: 'winba/1.0.1' });
   assert.equal(out.as_of, AS_OF);
   assert.equal(out.season, 2026);
   assert.match(out.provenance.source, /game:v1:final/);

@@ -176,7 +176,7 @@ test('GET /v1/dna/meta: NBA-shaped methodology with per-scope qualification and 
   const d = r.body.data;
   assert.equal(d.schema, 'wnba-dna/meta');
   assert.equal(d.version, PLAYER_DNA_VERSION);
-  assert.deepEqual(d.versions, { player_dna: 'wnba-player-dna/1.0.0', winba: 'winba/1.0.0' });
+  assert.deepEqual(d.versions, { player_dna: 'wnba-player-dna/1.0.0', winba: 'winba/1.0.1' });
   assert.deepEqual(d.qualification, JSON.parse(JSON.stringify(QUALIFICATION)));
   assert.equal(d.qualification.season.reference_minutes, 1000);
   assert.equal(d.dimension_order.length, 17);

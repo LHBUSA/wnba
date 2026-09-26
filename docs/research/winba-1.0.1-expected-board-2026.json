@@ -1,0 +1,8102 @@
+{
+ "version": "winba/1.0.1",
+ "season": 2026,
+ "archive_signature": "350:401857218",
+ "games_used": 332,
+ "qualified_count": 196,
+ "provisional_count": 42,
+ "rows": [
+  {
+   "athlete_id": "4433791",
+   "name": "Olivia Miles",
+   "team_id": "8",
+   "season": 2026,
+   "score": 87,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 1,
+   "sample": {
+    "games": 41,
+    "wins": 32,
+    "losses": 9,
+    "minutes": 1265
+   },
+   "averages": {
+    "min": 30.9,
+    "pts": 19.5,
+    "reb": 4.8,
+    "ast": 6
+   },
+   "components": {
+    "production_percentile": 97.4,
+    "win_rate": 78,
+    "winning_output_share": 79.8,
+    "court_share": 77.1
+   },
+   "raw": {
+    "box_impact_per36": 40.1,
+    "box_impact_total": 1409.1,
+    "winning_box_impact": 1125,
+    "avg_minutes": 30.9
+   }
+  },
+  {
+   "athlete_id": "3149391",
+   "name": "A'ja Wilson",
+   "team_id": "17",
+   "season": 2026,
+   "score": 86.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 2,
+   "sample": {
+    "games": 42,
+    "wins": 31,
+    "losses": 11,
+    "minutes": 1327
+   },
+   "averages": {
+    "min": 31.6,
+    "pts": 25.8,
+    "reb": 9.2,
+    "ast": 3.2
+   },
+   "components": {
+    "production_percentile": 100,
+    "win_rate": 73.8,
+    "winning_output_share": 75,
+    "court_share": 79
+   },
+   "raw": {
+    "box_impact_per36": 47.45,
+    "box_impact_total": 1749.2,
+    "winning_box_impact": 1311.2,
+    "avg_minutes": 31.6
+   }
+  },
+  {
+   "athlete_id": "4433402",
+   "name": "Angel Reese",
+   "team_id": "20",
+   "season": 2026,
+   "score": 83.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 3,
+   "sample": {
+    "games": 44,
+    "wins": 30,
+    "losses": 14,
+    "minutes": 1345
+   },
+   "averages": {
+    "min": 30.6,
+    "pts": 16,
+    "reb": 12,
+    "ast": 2.8
+   },
+   "components": {
+    "production_percentile": 98.5,
+    "win_rate": 68.2,
+    "winning_output_share": 70.6,
+    "court_share": 76.4
+   },
+   "raw": {
+    "box_impact_per36": 40.74,
+    "box_impact_total": 1522.2,
+    "winning_box_impact": 1075,
+    "avg_minutes": 30.6
+   }
+  },
+  {
+   "athlete_id": "4065870",
+   "name": "Jackie Young",
+   "team_id": "17",
+   "season": 2026,
+   "score": 82.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 4,
+   "sample": {
+    "games": 45,
+    "wins": 31,
+    "losses": 14,
+    "minutes": 1434
+   },
+   "averages": {
+    "min": 31.9,
+    "pts": 18.8,
+    "reb": 4.2,
+    "ast": 6.7
+   },
+   "components": {
+    "production_percentile": 93.8,
+    "win_rate": 68.9,
+    "winning_output_share": 75.2,
+    "court_share": 79.7
+   },
+   "raw": {
+    "box_impact_per36": 38.45,
+    "box_impact_total": 1531.7,
+    "winning_box_impact": 1151.9,
+    "avg_minutes": 31.9
+   }
+  },
+  {
+   "athlete_id": "4433403",
+   "name": "Caitlin Clark",
+   "team_id": "5",
+   "season": 2026,
+   "score": 81.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 5,
+   "sample": {
+    "games": 41,
+    "wins": 25,
+    "losses": 16,
+    "minutes": 1266
+   },
+   "averages": {
+    "min": 30.9,
+    "pts": 22.1,
+    "reb": 4,
+    "ast": 8.2
+   },
+   "components": {
+    "production_percentile": 99.5,
+    "win_rate": 61,
+    "winning_output_share": 68.8,
+    "court_share": 77.2
+   },
+   "raw": {
+    "box_impact_per36": 45.76,
+    "box_impact_total": 1609.4,
+    "winning_box_impact": 1106.5,
+    "avg_minutes": 30.9
+   }
+  },
+  {
+   "athlete_id": "3906949",
+   "name": "Jessica Shepard",
+   "team_id": "3",
+   "season": 2026,
+   "score": 81.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 6,
+   "sample": {
+    "games": 43,
+    "wins": 27,
+    "losses": 16,
+    "minutes": 1352
+   },
+   "averages": {
+    "min": 31.4,
+    "pts": 14.3,
+    "reb": 11,
+    "ast": 5.3
+   },
+   "components": {
+    "production_percentile": 97.9,
+    "win_rate": 62.8,
+    "winning_output_share": 68.3,
+    "court_share": 78.6
+   },
+   "raw": {
+    "box_impact_per36": 40.56,
+    "box_impact_total": 1523.4,
+    "winning_box_impact": 1040,
+    "avg_minutes": 31.4
+   }
+  },
+  {
+   "athlete_id": "2529130",
+   "name": "Natasha Howard",
+   "team_id": "8",
+   "season": 2026,
+   "score": 81.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 7,
+   "sample": {
+    "games": 45,
+    "wins": 33,
+    "losses": 12,
+    "minutes": 1273
+   },
+   "averages": {
+    "min": 28.3,
+    "pts": 14.6,
+    "reb": 7.6,
+    "ast": 3.2
+   },
+   "components": {
+    "production_percentile": 89.2,
+    "win_rate": 73.3,
+    "winning_output_share": 77.7,
+    "court_share": 70.7
+   },
+   "raw": {
+    "box_impact_per36": 36.28,
+    "box_impact_total": 1283,
+    "winning_box_impact": 996.4,
+    "avg_minutes": 28.3
+   }
+  },
+  {
+   "athlete_id": "4398911",
+   "name": "Shakira Austin",
+   "team_id": "16",
+   "season": 2026,
+   "score": 79.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 8,
+   "sample": {
+    "games": 43,
+    "wins": 27,
+    "losses": 16,
+    "minutes": 1264
+   },
+   "averages": {
+    "min": 29.4,
+    "pts": 17,
+    "reb": 9.5,
+    "ast": 2.6
+   },
+   "components": {
+    "production_percentile": 95.9,
+    "win_rate": 62.8,
+    "winning_output_share": 65.6,
+    "court_share": 73.5
+   },
+   "raw": {
+    "box_impact_per36": 39.45,
+    "box_impact_total": 1385.1,
+    "winning_box_impact": 908.4,
+    "avg_minutes": 29.4
+   }
+  },
+  {
+   "athlete_id": "2998928",
+   "name": "Breanna Stewart",
+   "team_id": "9",
+   "season": 2026,
+   "score": 79,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 9,
+   "sample": {
+    "games": 44,
+    "wins": 27,
+    "losses": 17,
+    "minutes": 1448
+   },
+   "averages": {
+    "min": 32.9,
+    "pts": 20.6,
+    "reb": 8.5,
+    "ast": 3.4
+   },
+   "components": {
+    "production_percentile": 95.4,
+    "win_rate": 61.4,
+    "winning_output_share": 62.4,
+    "court_share": 82.3
+   },
+   "raw": {
+    "box_impact_per36": 39.14,
+    "box_impact_total": 1574.4,
+    "winning_box_impact": 981.7,
+    "avg_minutes": 32.9
+   }
+  },
+  {
+   "athlete_id": "4432831",
+   "name": "Aliyah Boston",
+   "team_id": "5",
+   "season": 2026,
+   "score": 79,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 10,
+   "sample": {
+    "games": 41,
+    "wins": 26,
+    "losses": 15,
+    "minutes": 1089
+   },
+   "averages": {
+    "min": 26.6,
+    "pts": 15.7,
+    "reb": 7.8,
+    "ast": 2.9
+   },
+   "components": {
+    "production_percentile": 96.9,
+    "win_rate": 63.4,
+    "winning_output_share": 64.5,
+    "court_share": 66.4
+   },
+   "raw": {
+    "box_impact_per36": 39.88,
+    "box_impact_total": 1206.3,
+    "winning_box_impact": 778,
+    "avg_minutes": 26.6
+   }
+  },
+  {
+   "athlete_id": "4433730",
+   "name": "Paige Bueckers",
+   "team_id": "3",
+   "season": 2026,
+   "score": 78.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 11,
+   "sample": {
+    "games": 43,
+    "wins": 27,
+    "losses": 16,
+    "minutes": 1400
+   },
+   "averages": {
+    "min": 32.6,
+    "pts": 20.7,
+    "reb": 4,
+    "ast": 5.9
+   },
+   "components": {
+    "production_percentile": 92.3,
+    "win_rate": 62.8,
+    "winning_output_share": 65.9,
+    "court_share": 81.4
+   },
+   "raw": {
+    "box_impact_per36": 38.05,
+    "box_impact_total": 1479.8,
+    "winning_box_impact": 975.4,
+    "avg_minutes": 32.6
+   }
+  },
+  {
+   "athlete_id": "3917450",
+   "name": "Napheesa Collier",
+   "team_id": "8",
+   "season": 2026,
+   "score": 78.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 12,
+   "sample": {
+    "games": 16,
+    "wins": 11,
+    "losses": 5,
+    "minutes": 470
+   },
+   "averages": {
+    "min": 29.4,
+    "pts": 16.8,
+    "reb": 6.9,
+    "ast": 2.6
+   },
+   "components": {
+    "production_percentile": 87.7,
+    "win_rate": 68.8,
+    "winning_output_share": 72.2,
+    "court_share": 73.4
+   },
+   "raw": {
+    "box_impact_per36": 35.35,
+    "box_impact_total": 461.5,
+    "winning_box_impact": 333.3,
+    "avg_minutes": 29.4
+   }
+  },
+  {
+   "athlete_id": "2987891",
+   "name": "Courtney Williams",
+   "team_id": "8",
+   "season": 2026,
+   "score": 77.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 13,
+   "sample": {
+    "games": 44,
+    "wins": 34,
+    "losses": 10,
+    "minutes": 1304
+   },
+   "averages": {
+    "min": 29.6,
+    "pts": 13.7,
+    "reb": 4.8,
+    "ast": 4.4
+   },
+   "components": {
+    "production_percentile": 78.5,
+    "win_rate": 77.3,
+    "winning_output_share": 78.4,
+    "court_share": 74.1
+   },
+   "raw": {
+    "box_impact_per36": 31.63,
+    "box_impact_total": 1145.8,
+    "winning_box_impact": 897.8,
+    "avg_minutes": 29.6
+   }
+  },
+  {
+   "athlete_id": "4898384",
+   "name": "Kiki Iriafen",
+   "team_id": "16",
+   "season": 2026,
+   "score": 77.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 14,
+   "sample": {
+    "games": 42,
+    "wins": 27,
+    "losses": 15,
+    "minutes": 1170
+   },
+   "averages": {
+    "min": 27.9,
+    "pts": 15.1,
+    "reb": 9.5,
+    "ast": 1.5
+   },
+   "components": {
+    "production_percentile": 89.7,
+    "win_rate": 64.3,
+    "winning_output_share": 71,
+    "court_share": 69.6
+   },
+   "raw": {
+    "box_impact_per36": 37.2,
+    "box_impact_total": 1209,
+    "winning_box_impact": 858.7,
+    "avg_minutes": 27.9
+   }
+  },
+  {
+   "athlete_id": "4398935",
+   "name": "Veronica Burton",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 76.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 15,
+   "sample": {
+    "games": 44,
+    "wins": 32,
+    "losses": 12,
+    "minutes": 1257
+   },
+   "averages": {
+    "min": 28.6,
+    "pts": 12.2,
+    "reb": 3.6,
+    "ast": 5.7
+   },
+   "components": {
+    "production_percentile": 79,
+    "win_rate": 72.7,
+    "winning_output_share": 76.2,
+    "court_share": 71.4
+   },
+   "raw": {
+    "box_impact_per36": 31.68,
+    "box_impact_total": 1106,
+    "winning_box_impact": 842.3,
+    "avg_minutes": 28.6
+   }
+  },
+  {
+   "athlete_id": "2999101",
+   "name": "Jonquel Jones",
+   "team_id": "9",
+   "season": 2026,
+   "score": 75.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 16,
+   "sample": {
+    "games": 45,
+    "wins": 27,
+    "losses": 18,
+    "minutes": 1268
+   },
+   "averages": {
+    "min": 28.2,
+    "pts": 14.6,
+    "reb": 9.2,
+    "ast": 2.7
+   },
+   "components": {
+    "production_percentile": 91.8,
+    "win_rate": 60,
+    "winning_output_share": 61.8,
+    "court_share": 70.4
+   },
+   "raw": {
+    "box_impact_per36": 37.81,
+    "box_impact_total": 1331.9,
+    "winning_box_impact": 822.7,
+    "avg_minutes": 28.2
+   }
+  },
+  {
+   "athlete_id": "3142191",
+   "name": "Kelsey Mitchell",
+   "team_id": "5",
+   "season": 2026,
+   "score": 74.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 17,
+   "sample": {
+    "games": 45,
+    "wins": 28,
+    "losses": 17,
+    "minutes": 1452
+   },
+   "averages": {
+    "min": 32.3,
+    "pts": 24.8,
+    "reb": 1.8,
+    "ast": 2.7
+   },
+   "components": {
+    "production_percentile": 86.2,
+    "win_rate": 62.2,
+    "winning_output_share": 62.3,
+    "court_share": 80.7
+   },
+   "raw": {
+    "box_impact_per36": 34.54,
+    "box_impact_total": 1393.3,
+    "winning_box_impact": 868,
+    "avg_minutes": 32.3
+   }
+  },
+  {
+   "athlete_id": "1054",
+   "name": "Tiffany Hayes",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 73.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 18,
+   "sample": {
+    "games": 42,
+    "wins": 31,
+    "losses": 11,
+    "minutes": 714
+   },
+   "averages": {
+    "min": 17,
+    "pts": 9,
+    "reb": 2,
+    "ast": 2.5
+   },
+   "components": {
+    "production_percentile": 81,
+    "win_rate": 73.8,
+    "winning_output_share": 72.8,
+    "court_share": 42.5
+   },
+   "raw": {
+    "box_impact_per36": 32.34,
+    "box_impact_total": 641.5,
+    "winning_box_impact": 467.2,
+    "avg_minutes": 17
+   }
+  },
+  {
+   "athlete_id": "3142250",
+   "name": "Jordin Canada",
+   "team_id": "20",
+   "season": 2026,
+   "score": 73.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 19,
+   "sample": {
+    "games": 43,
+    "wins": 30,
+    "losses": 13,
+    "minutes": 1339
+   },
+   "averages": {
+    "min": 31.1,
+    "pts": 11.6,
+    "reb": 3.5,
+    "ast": 7.3
+   },
+   "components": {
+    "production_percentile": 73.8,
+    "win_rate": 69.8,
+    "winning_output_share": 73.7,
+    "court_share": 77.8
+   },
+   "raw": {
+    "box_impact_per36": 30.91,
+    "box_impact_total": 1149.7,
+    "winning_box_impact": 847.6,
+    "avg_minutes": 31.1
+   }
+  },
+  {
+   "athlete_id": "3142328",
+   "name": "Gabby Williams",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 73.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 20,
+   "sample": {
+    "games": 40,
+    "wins": 28,
+    "losses": 12,
+    "minutes": 1001
+   },
+   "averages": {
+    "min": 25,
+    "pts": 14.5,
+    "reb": 3.3,
+    "ast": 2.3
+   },
+   "components": {
+    "production_percentile": 77.4,
+    "win_rate": 70,
+    "winning_output_share": 72.4,
+    "court_share": 62.6
+   },
+   "raw": {
+    "box_impact_per36": 31.54,
+    "box_impact_total": 877.1,
+    "winning_box_impact": 634.7,
+    "avg_minutes": 25
+   }
+  },
+  {
+   "athlete_id": "5108587",
+   "name": "Madina Okot",
+   "team_id": "20",
+   "season": 2026,
+   "score": 72.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 21,
+   "sample": {
+    "games": 42,
+    "wins": 28,
+    "losses": 14,
+    "minutes": 385
+   },
+   "averages": {
+    "min": 9.2,
+    "pts": 5.4,
+    "reb": 3.3,
+    "ast": 0.3
+   },
+   "components": {
+    "production_percentile": 93.3,
+    "win_rate": 66.7,
+    "winning_output_share": 57.8,
+    "court_share": 22.9
+   },
+   "raw": {
+    "box_impact_per36": 38.38,
+    "box_impact_total": 410.5,
+    "winning_box_impact": 237.1,
+    "avg_minutes": 9.2
+   }
+  },
+  {
+   "athlete_id": "4280892",
+   "name": "Chennedy Carter",
+   "team_id": "17",
+   "season": 2026,
+   "score": 72,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 22,
+   "sample": {
+    "games": 14,
+    "wins": 9,
+    "losses": 5,
+    "minutes": 244
+   },
+   "averages": {
+    "min": 17.4,
+    "pts": 12.6,
+    "reb": 1.9,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 87.2,
+    "win_rate": 64.3,
+    "winning_output_share": 61.5,
+    "court_share": 43.6
+   },
+   "raw": {
+    "box_impact_per36": 35.14,
+    "box_impact_total": 238.2,
+    "winning_box_impact": 146.5,
+    "avg_minutes": 17.4
+   }
+  },
+  {
+   "athlete_id": "4790264",
+   "name": "Janelle Salaun",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 71.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 23,
+   "sample": {
+    "games": 40,
+    "wins": 28,
+    "losses": 12,
+    "minutes": 881
+   },
+   "averages": {
+    "min": 22,
+    "pts": 12.7,
+    "reb": 4,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 76.9,
+    "win_rate": 70,
+    "winning_output_share": 71.5,
+    "court_share": 55.1
+   },
+   "raw": {
+    "box_impact_per36": 31.49,
+    "box_impact_total": 770.6,
+    "winning_box_impact": 551.1,
+    "avg_minutes": 22
+   }
+  },
+  {
+   "athlete_id": "2529458",
+   "name": "Cheyenne Parker-Tyus",
+   "team_id": "17",
+   "season": 2026,
+   "score": 71.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 24,
+   "sample": {
+    "games": 32,
+    "wins": 23,
+    "losses": 9,
+    "minutes": 367
+   },
+   "averages": {
+    "min": 11.5,
+    "pts": 5.5,
+    "reb": 3.1,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 80.5,
+    "win_rate": 71.9,
+    "winning_output_share": 73.6,
+    "court_share": 28.7
+   },
+   "raw": {
+    "box_impact_per36": 32.23,
+    "box_impact_total": 328.6,
+    "winning_box_impact": 241.9,
+    "avg_minutes": 11.5
+   }
+  },
+  {
+   "athlete_id": "3058901",
+   "name": "Allisha Gray",
+   "team_id": "20",
+   "season": 2026,
+   "score": 71.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 25,
+   "sample": {
+    "games": 45,
+    "wins": 31,
+    "losses": 14,
+    "minutes": 1457
+   },
+   "averages": {
+    "min": 32.4,
+    "pts": 19,
+    "reb": 3.4,
+    "ast": 2.6
+   },
+   "components": {
+    "production_percentile": 71.3,
+    "win_rate": 68.9,
+    "winning_output_share": 71.3,
+    "court_share": 80.9
+   },
+   "raw": {
+    "box_impact_per36": 30.13,
+    "box_impact_total": 1219.3,
+    "winning_box_impact": 869.5,
+    "avg_minutes": 32.4
+   }
+  },
+  {
+   "athlete_id": "3065570",
+   "name": "Kelsey Plum",
+   "team_id": "11",
+   "season": 2026,
+   "score": 71.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 26,
+   "sample": {
+    "games": 17,
+    "wins": 8,
+    "losses": 9,
+    "minutes": 521
+   },
+   "averages": {
+    "min": 30.6,
+    "pts": 21.5,
+    "reb": 2.1,
+    "ast": 5.4
+   },
+   "components": {
+    "production_percentile": 91.3,
+    "win_rate": 47.1,
+    "winning_output_share": 55.8,
+    "court_share": 76.6
+   },
+   "raw": {
+    "box_impact_per36": 37.62,
+    "box_impact_total": 544.5,
+    "winning_box_impact": 304.1,
+    "avg_minutes": 30.6
+   }
+  },
+  {
+   "athlete_id": "4281929",
+   "name": "Satou Sabally",
+   "team_id": "9",
+   "season": 2026,
+   "score": 71.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 27,
+   "sample": {
+    "games": 13,
+    "wins": 8,
+    "losses": 5,
+    "minutes": 217
+   },
+   "averages": {
+    "min": 16.7,
+    "pts": 10.4,
+    "reb": 2.8,
+    "ast": 1.9
+   },
+   "components": {
+    "production_percentile": 88.7,
+    "win_rate": 61.5,
+    "winning_output_share": 60.5,
+    "court_share": 41.7
+   },
+   "raw": {
+    "box_impact_per36": 35.78,
+    "box_impact_total": 215.7,
+    "winning_box_impact": 130.5,
+    "avg_minutes": 16.7
+   }
+  },
+  {
+   "athlete_id": "4398674",
+   "name": "Rhyne Howard",
+   "team_id": "20",
+   "season": 2026,
+   "score": 71.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 28,
+   "sample": {
+    "games": 44,
+    "wins": 31,
+    "losses": 13,
+    "minutes": 1494
+   },
+   "averages": {
+    "min": 34,
+    "pts": 17.5,
+    "reb": 3.8,
+    "ast": 3.7
+   },
+   "components": {
+    "production_percentile": 67.7,
+    "win_rate": 70.5,
+    "winning_output_share": 73.4,
+    "court_share": 84.9
+   },
+   "raw": {
+    "box_impact_per36": 29.3,
+    "box_impact_total": 1215.9,
+    "winning_box_impact": 892.9,
+    "avg_minutes": 34
+   }
+  },
+  {
+   "athlete_id": "5345478",
+   "name": "Eliska Joklova",
+   "team_id": "8",
+   "season": 2026,
+   "score": 70,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 29,
+   "sample": {
+    "games": 20,
+    "wins": 15,
+    "losses": 5,
+    "minutes": 112
+   },
+   "averages": {
+    "min": 5.6,
+    "pts": 1.8,
+    "reb": 1.1,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 74.4,
+    "win_rate": 75,
+    "winning_output_share": 82.1,
+    "court_share": 14
+   },
+   "raw": {
+    "box_impact_per36": 31.15,
+    "box_impact_total": 96.9,
+    "winning_box_impact": 79.6,
+    "avg_minutes": 5.6
+   }
+  },
+  {
+   "athlete_id": "2529205",
+   "name": "Kayla McBride",
+   "team_id": "8",
+   "season": 2026,
+   "score": 69.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 30,
+   "sample": {
+    "games": 44,
+    "wins": 33,
+    "losses": 11,
+    "minutes": 1406
+   },
+   "averages": {
+    "min": 32,
+    "pts": 17.6,
+    "reb": 3,
+    "ast": 2.2
+   },
+   "components": {
+    "production_percentile": 61.5,
+    "win_rate": 75,
+    "winning_output_share": 77.2,
+    "court_share": 79.9
+   },
+   "raw": {
+    "box_impact_per36": 27.59,
+    "box_impact_total": 1077.4,
+    "winning_box_impact": 832,
+    "avg_minutes": 32
+   }
+  },
+  {
+   "athlete_id": "2529122",
+   "name": "Chelsea Gray",
+   "team_id": "17",
+   "season": 2026,
+   "score": 69.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 31,
+   "sample": {
+    "games": 44,
+    "wins": 31,
+    "losses": 13,
+    "minutes": 1441
+   },
+   "averages": {
+    "min": 32.8,
+    "pts": 11.9,
+    "reb": 3.3,
+    "ast": 6.7
+   },
+   "components": {
+    "production_percentile": 64.6,
+    "win_rate": 70.5,
+    "winning_output_share": 74.6,
+    "court_share": 81.9
+   },
+   "raw": {
+    "box_impact_per36": 28.44,
+    "box_impact_total": 1138.5,
+    "winning_box_impact": 849.4,
+    "avg_minutes": 32.8
+   }
+  },
+  {
+   "athlete_id": "4433524",
+   "name": "Sonia Citron",
+   "team_id": "16",
+   "season": 2026,
+   "score": 69.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 32,
+   "sample": {
+    "games": 41,
+    "wins": 25,
+    "losses": 16,
+    "minutes": 1331
+   },
+   "averages": {
+    "min": 32.5,
+    "pts": 16.6,
+    "reb": 3.7,
+    "ast": 4.3
+   },
+   "components": {
+    "production_percentile": 72.8,
+    "win_rate": 61,
+    "winning_output_share": 65.7,
+    "court_share": 81.2
+   },
+   "raw": {
+    "box_impact_per36": 30.52,
+    "box_impact_total": 1128.4,
+    "winning_box_impact": 741.8,
+    "avg_minutes": 32.5
+   }
+  },
+  {
+   "athlete_id": "2988756",
+   "name": "Brittney Sykes",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 68.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 33,
+   "sample": {
+    "games": 17,
+    "wins": 8,
+    "losses": 9,
+    "minutes": 500
+   },
+   "averages": {
+    "min": 29.4,
+    "pts": 18.6,
+    "reb": 3.5,
+    "ast": 3.4
+   },
+   "components": {
+    "production_percentile": 85.1,
+    "win_rate": 47.1,
+    "winning_output_share": 55.6,
+    "court_share": 73.5
+   },
+   "raw": {
+    "box_impact_per36": 34.01,
+    "box_impact_total": 472.3,
+    "winning_box_impact": 262.7,
+    "avg_minutes": 29.4
+   }
+  },
+  {
+   "athlete_id": "5208982",
+   "name": "Carla Leite",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 68.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 34,
+   "sample": {
+    "games": 39,
+    "wins": 16,
+    "losses": 23,
+    "minutes": 1018
+   },
+   "averages": {
+    "min": 26.1,
+    "pts": 16.1,
+    "reb": 2.2,
+    "ast": 6.3
+   },
+   "components": {
+    "production_percentile": 94.4,
+    "win_rate": 41,
+    "winning_output_share": 44.2,
+    "court_share": 65.3
+   },
+   "raw": {
+    "box_impact_per36": 38.7,
+    "box_impact_total": 1094.3,
+    "winning_box_impact": 484.1,
+    "avg_minutes": 26.1
+   }
+  },
+  {
+   "athlete_id": "4066533",
+   "name": "Sabrina Ionescu",
+   "team_id": "9",
+   "season": 2026,
+   "score": 68.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 35,
+   "sample": {
+    "games": 32,
+    "wins": 17,
+    "losses": 15,
+    "minutes": 958
+   },
+   "averages": {
+    "min": 29.9,
+    "pts": 14.9,
+    "reb": 3.8,
+    "ast": 4.7
+   },
+   "components": {
+    "production_percentile": 80,
+    "win_rate": 53.1,
+    "winning_output_share": 56.4,
+    "court_share": 74.8
+   },
+   "raw": {
+    "box_impact_per36": 32.02,
+    "box_impact_total": 852.1,
+    "winning_box_impact": 480.9,
+    "avg_minutes": 29.9
+   }
+  },
+  {
+   "athlete_id": "4398776",
+   "name": "NaLyssa Smith",
+   "team_id": "17",
+   "season": 2026,
+   "score": 67.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 36,
+   "sample": {
+    "games": 39,
+    "wins": 25,
+    "losses": 14,
+    "minutes": 943
+   },
+   "averages": {
+    "min": 24.2,
+    "pts": 11.6,
+    "reb": 6.4,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 73.3,
+    "win_rate": 64.1,
+    "winning_output_share": 63.5,
+    "court_share": 60.4
+   },
+   "raw": {
+    "box_impact_per36": 30.75,
+    "box_impact_total": 805.5,
+    "winning_box_impact": 511.7,
+    "avg_minutes": 24.2
+   }
+  },
+  {
+   "athlete_id": "4433807",
+   "name": "Aziaha James",
+   "team_id": "3",
+   "season": 2026,
+   "score": 67.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 37,
+   "sample": {
+    "games": 39,
+    "wins": 24,
+    "losses": 15,
+    "minutes": 460
+   },
+   "averages": {
+    "min": 11.8,
+    "pts": 6.1,
+    "reb": 2.4,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 82.6,
+    "win_rate": 61.5,
+    "winning_output_share": 58.9,
+    "court_share": 29.5
+   },
+   "raw": {
+    "box_impact_per36": 32.98,
+    "box_impact_total": 421.4,
+    "winning_box_impact": 248.1,
+    "avg_minutes": 11.8
+   }
+  },
+  {
+   "athlete_id": "2529140",
+   "name": "Alyssa Thomas",
+   "team_id": "11",
+   "season": 2026,
+   "score": 67.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 38,
+   "sample": {
+    "games": 42,
+    "wins": 14,
+    "losses": 28,
+    "minutes": 1392
+   },
+   "averages": {
+    "min": 33.1,
+    "pts": 14.3,
+    "reb": 7.8,
+    "ast": 8.5
+   },
+   "components": {
+    "production_percentile": 96.4,
+    "win_rate": 33.3,
+    "winning_output_share": 35.9,
+    "court_share": 82.9
+   },
+   "raw": {
+    "box_impact_per36": 39.52,
+    "box_impact_total": 1528.1,
+    "winning_box_impact": 549.3,
+    "avg_minutes": 33.1
+   }
+  },
+  {
+   "athlete_id": "1068",
+   "name": "Nneka Ogwumike",
+   "team_id": "6",
+   "season": 2026,
+   "score": 66.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 39,
+   "sample": {
+    "games": 44,
+    "wins": 16,
+    "losses": 28,
+    "minutes": 1349
+   },
+   "averages": {
+    "min": 30.7,
+    "pts": 17.1,
+    "reb": 9,
+    "ast": 3.1
+   },
+   "components": {
+    "production_percentile": 92.8,
+    "win_rate": 36.4,
+    "winning_output_share": 39.3,
+    "court_share": 76.6
+   },
+   "raw": {
+    "box_impact_per36": 38.28,
+    "box_impact_total": 1434.6,
+    "winning_box_impact": 563.3,
+    "avg_minutes": 30.7
+   }
+  },
+  {
+   "athlete_id": "4433405",
+   "name": "Kamilla Cardoso",
+   "team_id": "19",
+   "season": 2026,
+   "score": 65.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 40,
+   "sample": {
+    "games": 43,
+    "wins": 15,
+    "losses": 28,
+    "minutes": 1144
+   },
+   "averages": {
+    "min": 26.6,
+    "pts": 14.7,
+    "reb": 8.6,
+    "ast": 2.4
+   },
+   "components": {
+    "production_percentile": 94.9,
+    "win_rate": 34.9,
+    "winning_output_share": 37.1,
+    "court_share": 66.5
+   },
+   "raw": {
+    "box_impact_per36": 38.78,
+    "box_impact_total": 1232.5,
+    "winning_box_impact": 457.6,
+    "avg_minutes": 26.6
+   }
+  },
+  {
+   "athlete_id": "3904577",
+   "name": "Arike Ogunbowale",
+   "team_id": "3",
+   "season": 2026,
+   "score": 65.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 41,
+   "sample": {
+    "games": 44,
+    "wins": 27,
+    "losses": 17,
+    "minutes": 1324
+   },
+   "averages": {
+    "min": 30.1,
+    "pts": 15.3,
+    "reb": 3,
+    "ast": 3.3
+   },
+   "components": {
+    "production_percentile": 65.1,
+    "win_rate": 61.4,
+    "winning_output_share": 64.6,
+    "court_share": 75.2
+   },
+   "raw": {
+    "box_impact_per36": 28.56,
+    "box_impact_total": 1050.3,
+    "winning_box_impact": 678.8,
+    "avg_minutes": 30.1
+   }
+  },
+  {
+   "athlete_id": "4432834",
+   "name": "Laeticia Amihere",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 64.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 42,
+   "sample": {
+    "games": 39,
+    "wins": 30,
+    "losses": 9,
+    "minutes": 455
+   },
+   "averages": {
+    "min": 11.7,
+    "pts": 3.9,
+    "reb": 3,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 62.1,
+    "win_rate": 76.9,
+    "winning_output_share": 73,
+    "court_share": 29.2
+   },
+   "raw": {
+    "box_impact_per36": 27.64,
+    "box_impact_total": 349.4,
+    "winning_box_impact": 255.2,
+    "avg_minutes": 11.7
+   }
+  },
+  {
+   "athlete_id": "3058893",
+   "name": "Shatori Walker-Kimbrough",
+   "team_id": "20",
+   "season": 2026,
+   "score": 64,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 43,
+   "sample": {
+    "games": 15,
+    "wins": 12,
+    "losses": 3,
+    "minutes": 46
+   },
+   "averages": {
+    "min": 3.1,
+    "pts": 1.1,
+    "reb": 0.4,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 64.1,
+    "win_rate": 80,
+    "winning_output_share": 71.8,
+    "court_share": 7.7
+   },
+   "raw": {
+    "box_impact_per36": 28.33,
+    "box_impact_total": 36.2,
+    "winning_box_impact": 26,
+    "avg_minutes": 3.1
+   }
+  },
+  {
+   "athlete_id": "2490553",
+   "name": "Brittney Griner",
+   "team_id": "18",
+   "season": 2026,
+   "score": 62.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 44,
+   "sample": {
+    "games": 18,
+    "wins": 7,
+    "losses": 11,
+    "minutes": 455
+   },
+   "averages": {
+    "min": 25.3,
+    "pts": 13.2,
+    "reb": 5.8,
+    "ast": 2.5
+   },
+   "components": {
+    "production_percentile": 85.6,
+    "win_rate": 38.9,
+    "winning_output_share": 41.8,
+    "court_share": 63.2
+   },
+   "raw": {
+    "box_impact_per36": 34.14,
+    "box_impact_total": 431.5,
+    "winning_box_impact": 180.3,
+    "avg_minutes": 25.3
+   }
+  },
+  {
+   "athlete_id": "4790260",
+   "name": "Marine Fauthoux",
+   "team_id": "9",
+   "season": 2026,
+   "score": 62.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 45,
+   "sample": {
+    "games": 20,
+    "wins": 14,
+    "losses": 6,
+    "minutes": 259
+   },
+   "averages": {
+    "min": 13,
+    "pts": 4.6,
+    "reb": 2.1,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 63.6,
+    "win_rate": 70,
+    "winning_output_share": 68,
+    "court_share": 32.4
+   },
+   "raw": {
+    "box_impact_per36": 28.13,
+    "box_impact_total": 202.4,
+    "winning_box_impact": 137.6,
+    "avg_minutes": 13
+   }
+  },
+  {
+   "athlete_id": "3904576",
+   "name": "Marina Mabrey",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 62.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 46,
+   "sample": {
+    "games": 33,
+    "wins": 10,
+    "losses": 23,
+    "minutes": 964
+   },
+   "averages": {
+    "min": 29.2,
+    "pts": 20.9,
+    "reb": 3.3,
+    "ast": 3.6
+   },
+   "components": {
+    "production_percentile": 90.3,
+    "win_rate": 30.3,
+    "winning_output_share": 36.4,
+    "court_share": 73
+   },
+   "raw": {
+    "box_impact_per36": 37.33,
+    "box_impact_total": 999.6,
+    "winning_box_impact": 363.7,
+    "avg_minutes": 29.2
+   }
+  },
+  {
+   "athlete_id": "5105737",
+   "name": "Lauren Betts",
+   "team_id": "16",
+   "season": 2026,
+   "score": 62.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 47,
+   "sample": {
+    "games": 44,
+    "wins": 28,
+    "losses": 16,
+    "minutes": 776
+   },
+   "averages": {
+    "min": 17.6,
+    "pts": 6.4,
+    "reb": 4.6,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 63.1,
+    "win_rate": 63.6,
+    "winning_output_share": 69.9,
+    "court_share": 44.1
+   },
+   "raw": {
+    "box_impact_per36": 27.98,
+    "box_impact_total": 603.1,
+    "winning_box_impact": 421.7,
+    "avg_minutes": 17.6
+   }
+  },
+  {
+   "athlete_id": "4899328",
+   "name": "Kaitlyn Chen",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 62.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 48,
+   "sample": {
+    "games": 44,
+    "wins": 32,
+    "losses": 12,
+    "minutes": 673
+   },
+   "averages": {
+    "min": 15.3,
+    "pts": 7.2,
+    "reb": 1.1,
+    "ast": 1.9
+   },
+   "components": {
+    "production_percentile": 58.5,
+    "win_rate": 72.7,
+    "winning_output_share": 71.8,
+    "court_share": 38.2
+   },
+   "raw": {
+    "box_impact_per36": 26.88,
+    "box_impact_total": 502.5,
+    "winning_box_impact": 360.6,
+    "avg_minutes": 15.3
+   }
+  },
+  {
+   "athlete_id": "981",
+   "name": "Courtney Vandersloot",
+   "team_id": "19",
+   "season": 2026,
+   "score": 61.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 49,
+   "sample": {
+    "games": 27,
+    "wins": 11,
+    "losses": 16,
+    "minutes": 607
+   },
+   "averages": {
+    "min": 22.5,
+    "pts": 9.6,
+    "reb": 2.9,
+    "ast": 5.4
+   },
+   "components": {
+    "production_percentile": 84.6,
+    "win_rate": 40.7,
+    "winning_output_share": 39.7,
+    "court_share": 56.2
+   },
+   "raw": {
+    "box_impact_per36": 33.93,
+    "box_impact_total": 572.1,
+    "winning_box_impact": 227,
+    "avg_minutes": 22.5
+   }
+  },
+  {
+   "athlete_id": "2566106",
+   "name": "Dearica Hamby",
+   "team_id": "6",
+   "season": 2026,
+   "score": 61.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 50,
+   "sample": {
+    "games": 42,
+    "wins": 15,
+    "losses": 27,
+    "minutes": 1206
+   },
+   "averages": {
+    "min": 28.7,
+    "pts": 14.5,
+    "reb": 7,
+    "ast": 2.4
+   },
+   "components": {
+    "production_percentile": 83.1,
+    "win_rate": 35.7,
+    "winning_output_share": 39.2,
+    "court_share": 71.8
+   },
+   "raw": {
+    "box_impact_per36": 33.06,
+    "box_impact_total": 1107.4,
+    "winning_box_impact": 434.5,
+    "avg_minutes": 28.7
+   }
+  },
+  {
+   "athlete_id": "5345320",
+   "name": "Pauline Astier",
+   "team_id": "9",
+   "season": 2026,
+   "score": 61.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 51,
+   "sample": {
+    "games": 45,
+    "wins": 27,
+    "losses": 18,
+    "minutes": 1056
+   },
+   "averages": {
+    "min": 23.5,
+    "pts": 9.4,
+    "reb": 2.8,
+    "ast": 3.4
+   },
+   "components": {
+    "production_percentile": 61,
+    "win_rate": 60,
+    "winning_output_share": 64.8,
+    "court_share": 58.7
+   },
+   "raw": {
+    "box_impact_per36": 27.25,
+    "box_impact_total": 799.3,
+    "winning_box_impact": 518.2,
+    "avg_minutes": 23.5
+   }
+  },
+  {
+   "athlete_id": "3913903",
+   "name": "Teaira McCowan",
+   "team_id": "8",
+   "season": 2026,
+   "score": 61.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 52,
+   "sample": {
+    "games": 10,
+    "wins": 8,
+    "losses": 2,
+    "minutes": 68
+   },
+   "averages": {
+    "min": 6.8,
+    "pts": 1.4,
+    "reb": 2.4,
+    "ast": 0.3
+   },
+   "components": {
+    "production_percentile": 47.2,
+    "win_rate": 80,
+    "winning_output_share": 90.7,
+    "court_share": 17
+   },
+   "raw": {
+    "box_impact_per36": 25.04,
+    "box_impact_total": 47.3,
+    "winning_box_impact": 42.9,
+    "avg_minutes": 6.8
+   }
+  },
+  {
+   "athlete_id": "5277552",
+   "name": "Juste Jocyte",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 61,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 53,
+   "sample": {
+    "games": 16,
+    "wins": 13,
+    "losses": 3,
+    "minutes": 128
+   },
+   "averages": {
+    "min": 8,
+    "pts": 3.1,
+    "reb": 0.8,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 48.7,
+    "win_rate": 81.3,
+    "winning_output_share": 83.8,
+    "court_share": 20
+   },
+   "raw": {
+    "box_impact_per36": 25.28,
+    "box_impact_total": 89.9,
+    "winning_box_impact": 75.3,
+    "avg_minutes": 8
+   }
+  },
+  {
+   "athlete_id": "4433404",
+   "name": "Cameron Brink",
+   "team_id": "6",
+   "season": 2026,
+   "score": 60.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 54,
+   "sample": {
+    "games": 31,
+    "wins": 12,
+    "losses": 19,
+    "minutes": 596
+   },
+   "averages": {
+    "min": 19.2,
+    "pts": 9.5,
+    "reb": 5,
+    "ast": 1.5
+   },
+   "components": {
+    "production_percentile": 84.1,
+    "win_rate": 38.7,
+    "winning_output_share": 41.7,
+    "court_share": 48.1
+   },
+   "raw": {
+    "box_impact_per36": 33.28,
+    "box_impact_total": 551,
+    "winning_box_impact": 229.6,
+    "avg_minutes": 19.2
+   }
+  },
+  {
+   "athlete_id": "4257500",
+   "name": "Cecilia Zandalasini",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 60.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 55,
+   "sample": {
+    "games": 37,
+    "wins": 27,
+    "losses": 10,
+    "minutes": 704
+   },
+   "averages": {
+    "min": 19,
+    "pts": 8.6,
+    "reb": 2.1,
+    "ast": 1.7
+   },
+   "components": {
+    "production_percentile": 53.3,
+    "win_rate": 73,
+    "winning_output_share": 67.3,
+    "court_share": 47.6
+   },
+   "raw": {
+    "box_impact_per36": 26.02,
+    "box_impact_total": 508.8,
+    "winning_box_impact": 342.4,
+    "avg_minutes": 19
+   }
+  },
+  {
+   "athlete_id": "4065780",
+   "name": "Kaila Charles",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 59.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 56,
+   "sample": {
+    "games": 44,
+    "wins": 32,
+    "losses": 12,
+    "minutes": 889
+   },
+   "averages": {
+    "min": 20.2,
+    "pts": 6.3,
+    "reb": 4.7,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 46.7,
+    "win_rate": 72.7,
+    "winning_output_share": 77.4,
+    "court_share": 50.5
+   },
+   "raw": {
+    "box_impact_per36": 24.97,
+    "box_impact_total": 616.7,
+    "winning_box_impact": 477.5,
+    "avg_minutes": 20.2
+   }
+  },
+  {
+   "athlete_id": "3142255",
+   "name": "Monique Billings",
+   "team_id": "5",
+   "season": 2026,
+   "score": 59.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 57,
+   "sample": {
+    "games": 43,
+    "wins": 28,
+    "losses": 15,
+    "minutes": 806
+   },
+   "averages": {
+    "min": 18.7,
+    "pts": 6.5,
+    "reb": 4.8,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 55.4,
+    "win_rate": 65.1,
+    "winning_output_share": 65.8,
+    "court_share": 46.9
+   },
+   "raw": {
+    "box_impact_per36": 26.15,
+    "box_impact_total": 585.5,
+    "winning_box_impact": 385.5,
+    "avg_minutes": 18.7
+   }
+  },
+  {
+   "athlete_id": "5108051",
+   "name": "Jordan Harrison",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 59,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 58,
+   "sample": {
+    "games": 16,
+    "wins": 5,
+    "losses": 11,
+    "minutes": 223
+   },
+   "averages": {
+    "min": 13.9,
+    "pts": 5.1,
+    "reb": 1.8,
+    "ast": 4.2
+   },
+   "components": {
+    "production_percentile": 86.7,
+    "win_rate": 31.3,
+    "winning_output_share": 43.6,
+    "court_share": 34.8
+   },
+   "raw": {
+    "box_impact_per36": 34.72,
+    "box_impact_total": 215.1,
+    "winning_box_impact": 93.7,
+    "avg_minutes": 13.9
+   }
+  },
+  {
+   "athlete_id": "4399415",
+   "name": "Maddy Siegrist",
+   "team_id": "3",
+   "season": 2026,
+   "score": 58.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 59,
+   "sample": {
+    "games": 41,
+    "wins": 26,
+    "losses": 15,
+    "minutes": 607
+   },
+   "averages": {
+    "min": 14.8,
+    "pts": 6.5,
+    "reb": 2.7,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 59,
+    "win_rate": 63.4,
+    "winning_output_share": 63,
+    "court_share": 37
+   },
+   "raw": {
+    "box_impact_per36": 26.93,
+    "box_impact_total": 454,
+    "winning_box_impact": 286,
+    "avg_minutes": 14.8
+   }
+  },
+  {
+   "athlete_id": "4337216",
+   "name": "Han Xu",
+   "team_id": "9",
+   "season": 2026,
+   "score": 58.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 60,
+   "sample": {
+    "games": 44,
+    "wins": 26,
+    "losses": 18,
+    "minutes": 603
+   },
+   "averages": {
+    "min": 13.7,
+    "pts": 6.3,
+    "reb": 2.5,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 60,
+    "win_rate": 59.1,
+    "winning_output_share": 67.1,
+    "court_share": 34.3
+   },
+   "raw": {
+    "box_impact_per36": 27.12,
+    "box_impact_total": 454.3,
+    "winning_box_impact": 304.8,
+    "avg_minutes": 13.7
+   }
+  },
+  {
+   "athlete_id": "5220150",
+   "name": "Dominique Malonga",
+   "team_id": "14",
+   "season": 2026,
+   "score": 58.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 61,
+   "sample": {
+    "games": 36,
+    "wins": 6,
+    "losses": 30,
+    "minutes": 942
+   },
+   "averages": {
+    "min": 26.2,
+    "pts": 17,
+    "reb": 8.9,
+    "ast": 1.6
+   },
+   "components": {
+    "production_percentile": 99,
+    "win_rate": 16.7,
+    "winning_output_share": 15.5,
+    "court_share": 65.4
+   },
+   "raw": {
+    "box_impact_per36": 41.45,
+    "box_impact_total": 1084.5,
+    "winning_box_impact": 167.8,
+    "avg_minutes": 26.2
+   }
+  },
+  {
+   "athlete_id": "4594786",
+   "name": "Sydney Taylor",
+   "team_id": "19",
+   "season": 2026,
+   "score": 58.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 62,
+   "sample": {
+    "games": 37,
+    "wins": 13,
+    "losses": 24,
+    "minutes": 761
+   },
+   "averages": {
+    "min": 20.6,
+    "pts": 13.6,
+    "reb": 1.7,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 81.5,
+    "win_rate": 35.1,
+    "winning_output_share": 38.1,
+    "court_share": 51.4
+   },
+   "raw": {
+    "box_impact_per36": 32.6,
+    "box_impact_total": 689.1,
+    "winning_box_impact": 262.4,
+    "avg_minutes": 20.6
+   }
+  },
+  {
+   "athlete_id": "5105740",
+   "name": "Indya Nivar",
+   "team_id": "20",
+   "season": 2026,
+   "score": 58.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 63,
+   "sample": {
+    "games": 21,
+    "wins": 12,
+    "losses": 9,
+    "minutes": 67
+   },
+   "averages": {
+    "min": 3.2,
+    "pts": 1,
+    "reb": 0.9,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 70,
+    "win_rate": 57.1,
+    "winning_output_share": 57.4,
+    "court_share": 8
+   },
+   "raw": {
+    "box_impact_per36": 29.87,
+    "box_impact_total": 55.6,
+    "winning_box_impact": 31.9,
+    "avg_minutes": 3.2
+   }
+  },
+  {
+   "athlete_id": "5278237",
+   "name": "Anastasiia Olairi Kosu",
+   "team_id": "8",
+   "season": 2026,
+   "score": 57.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 64,
+   "sample": {
+    "games": 30,
+    "wins": 22,
+    "losses": 8,
+    "minutes": 308
+   },
+   "averages": {
+    "min": 10.3,
+    "pts": 3.6,
+    "reb": 2,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 44.6,
+    "win_rate": 73.3,
+    "winning_output_share": 84.6,
+    "court_share": 25.7
+   },
+   "raw": {
+    "box_impact_per36": 24.41,
+    "box_impact_total": 208.8,
+    "winning_box_impact": 176.6,
+    "avg_minutes": 10.3
+   }
+  },
+  {
+   "athlete_id": "4336633",
+   "name": "Li Yueru",
+   "team_id": "3",
+   "season": 2026,
+   "score": 57.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 65,
+   "sample": {
+    "games": 33,
+    "wins": 21,
+    "losses": 12,
+    "minutes": 337
+   },
+   "averages": {
+    "min": 10.2,
+    "pts": 3.3,
+    "reb": 2.8,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 54.4,
+    "win_rate": 63.6,
+    "winning_output_share": 71.8,
+    "court_share": 25.5
+   },
+   "raw": {
+    "box_impact_per36": 26.08,
+    "box_impact_total": 244.1,
+    "winning_box_impact": 175.3,
+    "avg_minutes": 10.2
+   }
+  },
+  {
+   "athlete_id": "2998938",
+   "name": "Kahleah Copper",
+   "team_id": "11",
+   "season": 2026,
+   "score": 56.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 66,
+   "sample": {
+    "games": 41,
+    "wins": 13,
+    "losses": 28,
+    "minutes": 1330
+   },
+   "averages": {
+    "min": 32.4,
+    "pts": 21,
+    "reb": 3.7,
+    "ast": 1.9
+   },
+   "components": {
+    "production_percentile": 75.4,
+    "win_rate": 31.7,
+    "winning_output_share": 34.4,
+    "court_share": 81.1
+   },
+   "raw": {
+    "box_impact_per36": 31.39,
+    "box_impact_total": 1159.7,
+    "winning_box_impact": 398.7,
+    "avg_minutes": 32.4
+   }
+  },
+  {
+   "athlete_id": "4398768",
+   "name": "Nyara Sabally",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 56.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 67,
+   "sample": {
+    "games": 24,
+    "wins": 8,
+    "losses": 16,
+    "minutes": 574
+   },
+   "averages": {
+    "min": 23.9,
+    "pts": 12.3,
+    "reb": 5.3,
+    "ast": 1.7
+   },
+   "components": {
+    "production_percentile": 79.5,
+    "win_rate": 33.3,
+    "winning_output_share": 33.5,
+    "court_share": 59.8
+   },
+   "raw": {
+    "box_impact_per36": 31.84,
+    "box_impact_total": 507.7,
+    "winning_box_impact": 170.2,
+    "avg_minutes": 23.9
+   }
+  },
+  {
+   "athlete_id": "3142055",
+   "name": "Myisha Hines-Allen",
+   "team_id": "5",
+   "season": 2026,
+   "score": 56.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 68,
+   "sample": {
+    "games": 38,
+    "wins": 25,
+    "losses": 13,
+    "minutes": 525
+   },
+   "averages": {
+    "min": 13.8,
+    "pts": 3.8,
+    "reb": 3.3,
+    "ast": 1.5
+   },
+   "components": {
+    "production_percentile": 52.3,
+    "win_rate": 65.8,
+    "winning_output_share": 66.6,
+    "court_share": 34.5
+   },
+   "raw": {
+    "box_impact_per36": 25.92,
+    "box_impact_total": 378,
+    "winning_box_impact": 251.9,
+    "avg_minutes": 13.8
+   }
+  },
+  {
+   "athlete_id": "4066548",
+   "name": "DiJonai Carrington",
+   "team_id": "19",
+   "season": 2026,
+   "score": 56.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 69,
+   "sample": {
+    "games": 11,
+    "wins": 5,
+    "losses": 6,
+    "minutes": 178
+   },
+   "averages": {
+    "min": 16.2,
+    "pts": 8.8,
+    "reb": 3.1,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 70.8,
+    "win_rate": 45.5,
+    "winning_output_share": 44.4,
+    "court_share": 40.5
+   },
+   "raw": {
+    "box_impact_per36": 29.99,
+    "box_impact_total": 148.3,
+    "winning_box_impact": 65.8,
+    "avg_minutes": 16.2
+   }
+  },
+  {
+   "athlete_id": "4596309",
+   "name": "Liatu King",
+   "team_id": "8",
+   "season": 2026,
+   "score": 56.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 70,
+   "sample": {
+    "games": 12,
+    "wins": 8,
+    "losses": 4,
+    "minutes": 104
+   },
+   "averages": {
+    "min": 8.7,
+    "pts": 3.5,
+    "reb": 2.3,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 60.5,
+    "win_rate": 66.7,
+    "winning_output_share": 50.4,
+    "court_share": 21.7
+   },
+   "raw": {
+    "box_impact_per36": 27.21,
+    "box_impact_total": 78.6,
+    "winning_box_impact": 39.6,
+    "avg_minutes": 8.7
+   }
+  },
+  {
+   "athlete_id": "5346554",
+   "name": "Teja Oblak",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 55.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 71,
+   "sample": {
+    "games": 29,
+    "wins": 10,
+    "losses": 19,
+    "minutes": 390
+   },
+   "averages": {
+    "min": 13.4,
+    "pts": 5.6,
+    "reb": 1.6,
+    "ast": 3.2
+   },
+   "components": {
+    "production_percentile": 82.1,
+    "win_rate": 34.5,
+    "winning_output_share": 32.2,
+    "court_share": 33.6
+   },
+   "raw": {
+    "box_impact_per36": 32.7,
+    "box_impact_total": 354.2,
+    "winning_box_impact": 114.2,
+    "avg_minutes": 13.4
+   }
+  },
+  {
+   "athlete_id": "3054590",
+   "name": "Nia Brodie",
+   "team_id": "8",
+   "season": 2026,
+   "score": 55.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 72,
+   "sample": {
+    "games": 44,
+    "wins": 33,
+    "losses": 11,
+    "minutes": 982
+   },
+   "averages": {
+    "min": 22.3,
+    "pts": 6.2,
+    "reb": 4.3,
+    "ast": 1.8
+   },
+   "components": {
+    "production_percentile": 32.3,
+    "win_rate": 75,
+    "winning_output_share": 82.3,
+    "court_share": 55.8
+   },
+   "raw": {
+    "box_impact_per36": 22.47,
+    "box_impact_total": 612.9,
+    "winning_box_impact": 504.3,
+    "avg_minutes": 22.3
+   }
+  },
+  {
+   "athlete_id": "4433408",
+   "name": "Aaliyah Edwards",
+   "team_id": "18",
+   "season": 2026,
+   "score": 55.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 73,
+   "sample": {
+    "games": 30,
+    "wins": 9,
+    "losses": 21,
+    "minutes": 620
+   },
+   "averages": {
+    "min": 20.7,
+    "pts": 11.1,
+    "reb": 4.6,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 77.9,
+    "win_rate": 30,
+    "winning_output_share": 37.1,
+    "court_share": 51.7
+   },
+   "raw": {
+    "box_impact_per36": 31.58,
+    "box_impact_total": 543.8,
+    "winning_box_impact": 201.9,
+    "avg_minutes": 20.7
+   }
+  },
+  {
+   "athlete_id": "4595910",
+   "name": "Haley Jones",
+   "team_id": "3",
+   "season": 2026,
+   "score": 55.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 74,
+   "sample": {
+    "games": 10,
+    "wins": 5,
+    "losses": 5,
+    "minutes": 80
+   },
+   "averages": {
+    "min": 8,
+    "pts": 3.2,
+    "reb": 1.7,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 69.2,
+    "win_rate": 50,
+    "winning_output_share": 47,
+    "court_share": 20
+   },
+   "raw": {
+    "box_impact_per36": 29.66,
+    "box_impact_total": 65.9,
+    "winning_box_impact": 31,
+    "avg_minutes": 8
+   }
+  },
+  {
+   "athlete_id": "4398729",
+   "name": "Emily Engstler",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 54.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 75,
+   "sample": {
+    "games": 44,
+    "wins": 17,
+    "losses": 27,
+    "minutes": 1085
+   },
+   "averages": {
+    "min": 24.7,
+    "pts": 10.1,
+    "reb": 5.7,
+    "ast": 2.1
+   },
+   "components": {
+    "production_percentile": 68.2,
+    "win_rate": 38.6,
+    "winning_output_share": 41.2,
+    "court_share": 61.6
+   },
+   "raw": {
+    "box_impact_per36": 29.41,
+    "box_impact_total": 886.4,
+    "winning_box_impact": 364.9,
+    "avg_minutes": 24.7
+   }
+  },
+  {
+   "athlete_id": "4398966",
+   "name": "Olivia Nelson-Ododa",
+   "team_id": "18",
+   "season": 2026,
+   "score": 54.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 76,
+   "sample": {
+    "games": 33,
+    "wins": 8,
+    "losses": 25,
+    "minutes": 701
+   },
+   "averages": {
+    "min": 21.2,
+    "pts": 10.1,
+    "reb": 5.9,
+    "ast": 1.6
+   },
+   "components": {
+    "production_percentile": 83.6,
+    "win_rate": 24.2,
+    "winning_output_share": 28.1,
+    "court_share": 53.1
+   },
+   "raw": {
+    "box_impact_per36": 33.27,
+    "box_impact_total": 647.8,
+    "winning_box_impact": 182.1,
+    "avg_minutes": 21.2
+   }
+  },
+  {
+   "athlete_id": "2491205",
+   "name": "Skylar Diggins",
+   "team_id": "19",
+   "season": 2026,
+   "score": 54.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 77,
+   "sample": {
+    "games": 19,
+    "wins": 5,
+    "losses": 14,
+    "minutes": 553
+   },
+   "averages": {
+    "min": 29.1,
+    "pts": 14.2,
+    "reb": 3.2,
+    "ast": 4.9
+   },
+   "components": {
+    "production_percentile": 74.9,
+    "win_rate": 26.3,
+    "winning_output_share": 34.2,
+    "court_share": 72.8
+   },
+   "raw": {
+    "box_impact_per36": 31.28,
+    "box_impact_total": 480.5,
+    "winning_box_impact": 164.5,
+    "avg_minutes": 29.1
+   }
+  },
+  {
+   "athlete_id": "3142010",
+   "name": "Azura Stevens",
+   "team_id": "19",
+   "season": 2026,
+   "score": 54.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 78,
+   "sample": {
+    "games": 32,
+    "wins": 9,
+    "losses": 23,
+    "minutes": 784
+   },
+   "averages": {
+    "min": 24.5,
+    "pts": 10.6,
+    "reb": 6.4,
+    "ast": 2.1
+   },
+   "components": {
+    "production_percentile": 76.4,
+    "win_rate": 28.1,
+    "winning_output_share": 33,
+    "court_share": 61.3
+   },
+   "raw": {
+    "box_impact_per36": 31.48,
+    "box_impact_total": 685.5,
+    "winning_box_impact": 225.9,
+    "avg_minutes": 24.5
+   }
+  },
+  {
+   "athlete_id": "2566453",
+   "name": "Isabelle Harrison",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 54.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 79,
+   "sample": {
+    "games": 32,
+    "wins": 6,
+    "losses": 26,
+    "minutes": 758
+   },
+   "averages": {
+    "min": 23.7,
+    "pts": 12.8,
+    "reb": 6.9,
+    "ast": 1.5
+   },
+   "components": {
+    "production_percentile": 88.2,
+    "win_rate": 18.8,
+    "winning_output_share": 18.9,
+    "court_share": 59.2
+   },
+   "raw": {
+    "box_impact_per36": 35.38,
+    "box_impact_total": 744.9,
+    "winning_box_impact": 140.6,
+    "avg_minutes": 23.7
+   }
+  },
+  {
+   "athlete_id": "3906972",
+   "name": "Bridget Carleton",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 54,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 80,
+   "sample": {
+    "games": 40,
+    "wins": 17,
+    "losses": 23,
+    "minutes": 1235
+   },
+   "averages": {
+    "min": 30.9,
+    "pts": 14.6,
+    "reb": 4.5,
+    "ast": 2.1
+   },
+   "components": {
+    "production_percentile": 59.5,
+    "win_rate": 42.5,
+    "winning_output_share": 44.2,
+    "court_share": 77.2
+   },
+   "raw": {
+    "box_impact_per36": 26.94,
+    "box_impact_total": 924.1,
+    "winning_box_impact": 408.7,
+    "avg_minutes": 30.9
+   }
+  },
+  {
+   "athlete_id": "4038379",
+   "name": "Marine Johannes",
+   "team_id": "9",
+   "season": 2026,
+   "score": 53.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 81,
+   "sample": {
+    "games": 42,
+    "wins": 24,
+    "losses": 18,
+    "minutes": 848
+   },
+   "averages": {
+    "min": 20.2,
+    "pts": 8.2,
+    "reb": 2,
+    "ast": 2.3
+   },
+   "components": {
+    "production_percentile": 47.7,
+    "win_rate": 57.1,
+    "winning_output_share": 64.6,
+    "court_share": 50.5
+   },
+   "raw": {
+    "box_impact_per36": 25.22,
+    "box_impact_total": 594,
+    "winning_box_impact": 383.9,
+    "avg_minutes": 20.2
+   }
+  },
+  {
+   "athlete_id": "3934218",
+   "name": "Megan DiLeo",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 53.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 82,
+   "sample": {
+    "games": 41,
+    "wins": 16,
+    "losses": 25,
+    "minutes": 996
+   },
+   "averages": {
+    "min": 24.3,
+    "pts": 13.1,
+    "reb": 4.3,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 66.7,
+    "win_rate": 39,
+    "winning_output_share": 38.6,
+    "court_share": 60.7
+   },
+   "raw": {
+    "box_impact_per36": 29.06,
+    "box_impact_total": 803.9,
+    "winning_box_impact": 310.5,
+    "avg_minutes": 24.3
+   }
+  },
+  {
+   "athlete_id": "2529137",
+   "name": "Natasha Cloud",
+   "team_id": "19",
+   "season": 2026,
+   "score": 53.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 83,
+   "sample": {
+    "games": 40,
+    "wins": 14,
+    "losses": 26,
+    "minutes": 1130
+   },
+   "averages": {
+    "min": 28.3,
+    "pts": 11.1,
+    "reb": 3.4,
+    "ast": 4.8
+   },
+   "components": {
+    "production_percentile": 65.6,
+    "win_rate": 35,
+    "winning_output_share": 40.9,
+    "court_share": 70.6
+   },
+   "raw": {
+    "box_impact_per36": 28.56,
+    "box_impact_total": 896.5,
+    "winning_box_impact": 366.4,
+    "avg_minutes": 28.3
+   }
+  },
+  {
+   "athlete_id": "4703794",
+   "name": "Sarah Ashlee Barker",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 53.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 84,
+   "sample": {
+    "games": 26,
+    "wins": 10,
+    "losses": 16,
+    "minutes": 643
+   },
+   "averages": {
+    "min": 24.7,
+    "pts": 10.7,
+    "reb": 4.5,
+    "ast": 2.4
+   },
+   "components": {
+    "production_percentile": 66.2,
+    "win_rate": 38.5,
+    "winning_output_share": 38.6,
+    "court_share": 61.8
+   },
+   "raw": {
+    "box_impact_per36": 28.63,
+    "box_impact_total": 511.4,
+    "winning_box_impact": 197.5,
+    "avg_minutes": 24.7
+   }
+  },
+  {
+   "athlete_id": "4068042",
+   "name": "Natasha Mack",
+   "team_id": "11",
+   "season": 2026,
+   "score": 53.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 85,
+   "sample": {
+    "games": 36,
+    "wins": 13,
+    "losses": 23,
+    "minutes": 818
+   },
+   "averages": {
+    "min": 22.7,
+    "pts": 8.9,
+    "reb": 6.7,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 68.7,
+    "win_rate": 36.1,
+    "winning_output_share": 37.7,
+    "court_share": 56.8
+   },
+   "raw": {
+    "box_impact_per36": 29.52,
+    "box_impact_total": 670.7,
+    "winning_box_impact": 253,
+    "avg_minutes": 22.7
+   }
+  },
+  {
+   "athlete_id": "4790266",
+   "name": "Awak Kuier",
+   "team_id": "3",
+   "season": 2026,
+   "score": 53.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 86,
+   "sample": {
+    "games": 41,
+    "wins": 25,
+    "losses": 16,
+    "minutes": 761
+   },
+   "averages": {
+    "min": 18.6,
+    "pts": 6.3,
+    "reb": 3.9,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 44.1,
+    "win_rate": 61,
+    "winning_output_share": 66.8,
+    "court_share": 46.4
+   },
+   "raw": {
+    "box_impact_per36": 24.39,
+    "box_impact_total": 515.5,
+    "winning_box_impact": 344.2,
+    "avg_minutes": 18.6
+   }
+  },
+  {
+   "athlete_id": "869",
+   "name": "DeWanna Bonner",
+   "team_id": "20",
+   "season": 2026,
+   "score": 52.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 87,
+   "sample": {
+    "games": 42,
+    "wins": 18,
+    "losses": 24,
+    "minutes": 1125
+   },
+   "averages": {
+    "min": 26.8,
+    "pts": 10.4,
+    "reb": 6,
+    "ast": 1.6
+   },
+   "components": {
+    "production_percentile": 57.4,
+    "win_rate": 42.9,
+    "winning_output_share": 48.1,
+    "court_share": 67
+   },
+   "raw": {
+    "box_impact_per36": 26.8,
+    "box_impact_total": 837.4,
+    "winning_box_impact": 402.9,
+    "avg_minutes": 26.8
+   }
+  },
+  {
+   "athlete_id": "4583144",
+   "name": "Cotie McMahon",
+   "team_id": "16",
+   "season": 2026,
+   "score": 52.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 88,
+   "sample": {
+    "games": 42,
+    "wins": 27,
+    "losses": 15,
+    "minutes": 823
+   },
+   "averages": {
+    "min": 19.6,
+    "pts": 6.6,
+    "reb": 2.9,
+    "ast": 1.9
+   },
+   "components": {
+    "production_percentile": 39,
+    "win_rate": 64.3,
+    "winning_output_share": 70.7,
+    "court_share": 49
+   },
+   "raw": {
+    "box_impact_per36": 23.62,
+    "box_impact_total": 540,
+    "winning_box_impact": 381.9,
+    "avg_minutes": 19.6
+   }
+  },
+  {
+   "athlete_id": "4066546",
+   "name": "Nadia Fingall",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 52.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 89,
+   "sample": {
+    "games": 10,
+    "wins": 9,
+    "losses": 1,
+    "minutes": 33
+   },
+   "averages": {
+    "min": 3.3,
+    "pts": 1.1,
+    "reb": 0.5,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 27.7,
+    "win_rate": 90,
+    "winning_output_share": 84,
+    "court_share": 8.2
+   },
+   "raw": {
+    "box_impact_per36": 21.82,
+    "box_impact_total": 20,
+    "winning_box_impact": 16.8,
+    "avg_minutes": 3.3
+   }
+  },
+  {
+   "athlete_id": "4398938",
+   "name": "Dorka Juhasz",
+   "team_id": "8",
+   "season": 2026,
+   "score": 52,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 90,
+   "sample": {
+    "games": 21,
+    "wins": 16,
+    "losses": 5,
+    "minutes": 319
+   },
+   "averages": {
+    "min": 15.2,
+    "pts": 3.6,
+    "reb": 3.1,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 33.3,
+    "win_rate": 76.2,
+    "winning_output_share": 70.7,
+    "court_share": 38
+   },
+   "raw": {
+    "box_impact_per36": 22.59,
+    "box_impact_total": 200.2,
+    "winning_box_impact": 141.6,
+    "avg_minutes": 15.2
+   }
+  },
+  {
+   "athlete_id": "4684384",
+   "name": "Aneesah Morrow",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 51.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 91,
+   "sample": {
+    "games": 27,
+    "wins": 4,
+    "losses": 23,
+    "minutes": 601
+   },
+   "averages": {
+    "min": 22.3,
+    "pts": 11,
+    "reb": 8.3,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 90.8,
+    "win_rate": 14.8,
+    "winning_output_share": 7.7,
+    "court_share": 55.6
+   },
+   "raw": {
+    "box_impact_per36": 37.34,
+    "box_impact_total": 623.3,
+    "winning_box_impact": 48.2,
+    "avg_minutes": 22.3
+   }
+  },
+  {
+   "athlete_id": "4682855",
+   "name": "Justine Pissott",
+   "team_id": "17",
+   "season": 2026,
+   "score": 51.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 92,
+   "sample": {
+    "games": 10,
+    "wins": 8,
+    "losses": 2,
+    "minutes": 88
+   },
+   "averages": {
+    "min": 8.8,
+    "pts": 3.8,
+    "reb": 1,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 35.9,
+    "win_rate": 80,
+    "winning_output_share": 65.5,
+    "court_share": 22
+   },
+   "raw": {
+    "box_impact_per36": 22.91,
+    "box_impact_total": 56,
+    "winning_box_impact": 36.7,
+    "avg_minutes": 8.8
+   }
+  },
+  {
+   "athlete_id": "3913881",
+   "name": "Alanna Smith",
+   "team_id": "3",
+   "season": 2026,
+   "score": 51.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 93,
+   "sample": {
+    "games": 32,
+    "wins": 20,
+    "losses": 12,
+    "minutes": 573
+   },
+   "averages": {
+    "min": 17.9,
+    "pts": 6,
+    "reb": 3.9,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 46.2,
+    "win_rate": 62.5,
+    "winning_output_share": 51.9,
+    "court_share": 44.8
+   },
+   "raw": {
+    "box_impact_per36": 24.74,
+    "box_impact_total": 393.7,
+    "winning_box_impact": 204.3,
+    "avg_minutes": 17.9
+   }
+  },
+  {
+   "athlete_id": "5208985",
+   "name": "Alicia Florez",
+   "team_id": "16",
+   "season": 2026,
+   "score": 51,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 94,
+   "sample": {
+    "games": 35,
+    "wins": 23,
+    "losses": 12,
+    "minutes": 421
+   },
+   "averages": {
+    "min": 12,
+    "pts": 3.5,
+    "reb": 1.3,
+    "ast": 1.9
+   },
+   "components": {
+    "production_percentile": 40,
+    "win_rate": 65.7,
+    "winning_output_share": 67.9,
+    "court_share": 30.1
+   },
+   "raw": {
+    "box_impact_per36": 23.89,
+    "box_impact_total": 279.4,
+    "winning_box_impact": 189.8,
+    "avg_minutes": 12
+   }
+  },
+  {
+   "athlete_id": "4433546",
+   "name": "Makayla Timpson",
+   "team_id": "5",
+   "season": 2026,
+   "score": 50.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 95,
+   "sample": {
+    "games": 43,
+    "wins": 28,
+    "losses": 15,
+    "minutes": 823
+   },
+   "averages": {
+    "min": 19.1,
+    "pts": 5.7,
+    "reb": 4.9,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 36.4,
+    "win_rate": 65.1,
+    "winning_output_share": 64.3,
+    "court_share": 47.8
+   },
+   "raw": {
+    "box_impact_per36": 23.04,
+    "box_impact_total": 526.8,
+    "winning_box_impact": 338.6,
+    "avg_minutes": 19.1
+   }
+  },
+  {
+   "athlete_id": "4609797",
+   "name": "Ta'Niya Latson",
+   "team_id": "17",
+   "season": 2026,
+   "score": 49.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 96,
+   "sample": {
+    "games": 19,
+    "wins": 9,
+    "losses": 10,
+    "minutes": 108
+   },
+   "averages": {
+    "min": 5.7,
+    "pts": 3.1,
+    "reb": 0.8,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 67.2,
+    "win_rate": 47.4,
+    "winning_output_share": 32.2,
+    "court_share": 14.2
+   },
+   "raw": {
+    "box_impact_per36": 29.17,
+    "box_impact_total": 87.5,
+    "winning_box_impact": 28.2,
+    "avg_minutes": 5.7
+   }
+  },
+  {
+   "athlete_id": "4698736",
+   "name": "Flau'jae Johnson",
+   "team_id": "14",
+   "season": 2026,
+   "score": 49.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 97,
+   "sample": {
+    "games": 42,
+    "wins": 7,
+    "losses": 35,
+    "minutes": 1206
+   },
+   "averages": {
+    "min": 28.7,
+    "pts": 14.9,
+    "reb": 4.8,
+    "ast": 2.9
+   },
+   "components": {
+    "production_percentile": 75.9,
+    "win_rate": 16.7,
+    "winning_output_share": 21.7,
+    "court_share": 71.8
+   },
+   "raw": {
+    "box_impact_per36": 31.43,
+    "box_impact_total": 1052.9,
+    "winning_box_impact": 228.4,
+    "avg_minutes": 28.7
+   }
+  },
+  {
+   "athlete_id": "4565505",
+   "name": "Kiki Rice",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 49.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 98,
+   "sample": {
+    "games": 28,
+    "wins": 6,
+    "losses": 22,
+    "minutes": 760
+   },
+   "averages": {
+    "min": 27.1,
+    "pts": 13.4,
+    "reb": 3.7,
+    "ast": 3.5
+   },
+   "components": {
+    "production_percentile": 72.3,
+    "win_rate": 21.4,
+    "winning_output_share": 24.9,
+    "court_share": 67.9
+   },
+   "raw": {
+    "box_impact_per36": 30.51,
+    "box_impact_total": 644.1,
+    "winning_box_impact": 160.2,
+    "avg_minutes": 27.1
+   }
+  },
+  {
+   "athlete_id": "5208983",
+   "name": "Isobel Borlase",
+   "team_id": "20",
+   "season": 2026,
+   "score": 49.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 99,
+   "sample": {
+    "games": 44,
+    "wins": 30,
+    "losses": 14,
+    "minutes": 573
+   },
+   "averages": {
+    "min": 13,
+    "pts": 4.8,
+    "reb": 1.5,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 31.8,
+    "win_rate": 68.2,
+    "winning_output_share": 75.3,
+    "court_share": 32.6
+   },
+   "raw": {
+    "box_impact_per36": 22.46,
+    "box_impact_total": 357.5,
+    "winning_box_impact": 269.1,
+    "avg_minutes": 13
+   }
+  },
+  {
+   "athlete_id": "4398915",
+   "name": "Naz Hillmon",
+   "team_id": "20",
+   "season": 2026,
+   "score": 49.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 100,
+   "sample": {
+    "games": 43,
+    "wins": 30,
+    "losses": 13,
+    "minutes": 1237
+   },
+   "averages": {
+    "min": 28.8,
+    "pts": 9.1,
+    "reb": 4.6,
+    "ast": 1.6
+   },
+   "components": {
+    "production_percentile": 22.6,
+    "win_rate": 69.8,
+    "winning_output_share": 73.6,
+    "court_share": 71.9
+   },
+   "raw": {
+    "box_impact_per36": 21.19,
+    "box_impact_total": 728.2,
+    "winning_box_impact": 536.3,
+    "avg_minutes": 28.8
+   }
+  },
+  {
+   "athlete_id": "4433411",
+   "name": "Angela Dugalic",
+   "team_id": "16",
+   "season": 2026,
+   "score": 49.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 101,
+   "sample": {
+    "games": 37,
+    "wins": 21,
+    "losses": 16,
+    "minutes": 331
+   },
+   "averages": {
+    "min": 8.9,
+    "pts": 2.7,
+    "reb": 2.3,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 50.8,
+    "win_rate": 56.8,
+    "winning_output_share": 50.4,
+    "court_share": 22.4
+   },
+   "raw": {
+    "box_impact_per36": 25.54,
+    "box_impact_total": 234.8,
+    "winning_box_impact": 118.4,
+    "avg_minutes": 8.9
+   }
+  },
+  {
+   "athlete_id": "4398764",
+   "name": "Rae Burrell",
+   "team_id": "6",
+   "season": 2026,
+   "score": 49.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 102,
+   "sample": {
+    "games": 43,
+    "wins": 16,
+    "losses": 27,
+    "minutes": 1242
+   },
+   "averages": {
+    "min": 28.9,
+    "pts": 14.6,
+    "reb": 2.3,
+    "ast": 2.5
+   },
+   "components": {
+    "production_percentile": 55.9,
+    "win_rate": 37.2,
+    "winning_output_share": 38.1,
+    "court_share": 72.2
+   },
+   "raw": {
+    "box_impact_per36": 26.31,
+    "box_impact_total": 907.7,
+    "winning_box_impact": 346,
+    "avg_minutes": 28.9
+   }
+  },
+  {
+   "athlete_id": "2327695",
+   "name": "Rebekah Gardner",
+   "team_id": "9",
+   "season": 2026,
+   "score": 49.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 103,
+   "sample": {
+    "games": 43,
+    "wins": 26,
+    "losses": 17,
+    "minutes": 634
+   },
+   "averages": {
+    "min": 14.7,
+    "pts": 5.1,
+    "reb": 2.3,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 38.5,
+    "win_rate": 60.5,
+    "winning_output_share": 64.8,
+    "court_share": 36.9
+   },
+   "raw": {
+    "box_impact_per36": 23.58,
+    "box_impact_total": 415.2,
+    "winning_box_impact": 269.1,
+    "avg_minutes": 14.7
+   }
+  },
+  {
+   "athlete_id": "4280850",
+   "name": "Maya Caldwell",
+   "team_id": "8",
+   "season": 2026,
+   "score": 48.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 104,
+   "sample": {
+    "games": 44,
+    "wins": 33,
+    "losses": 11,
+    "minutes": 628
+   },
+   "averages": {
+    "min": 14.3,
+    "pts": 4.1,
+    "reb": 2.4,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 24.6,
+    "win_rate": 75,
+    "winning_output_share": 75.7,
+    "court_share": 35.7
+   },
+   "raw": {
+    "box_impact_per36": 21.54,
+    "box_impact_total": 375.8,
+    "winning_box_impact": 284.5,
+    "avg_minutes": 14.3
+   }
+  },
+  {
+   "athlete_id": "2529622",
+   "name": "Kayla Thornton",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 48.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 105,
+   "sample": {
+    "games": 44,
+    "wins": 32,
+    "losses": 12,
+    "minutes": 1068
+   },
+   "averages": {
+    "min": 24.3,
+    "pts": 7.7,
+    "reb": 4.5,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 20.5,
+    "win_rate": 72.7,
+    "winning_output_share": 74.2,
+    "court_share": 60.7
+   },
+   "raw": {
+    "box_impact_per36": 20.99,
+    "box_impact_total": 622.6,
+    "winning_box_impact": 462.2,
+    "avg_minutes": 24.3
+   }
+  },
+  {
+   "athlete_id": "4065760",
+   "name": "Tyasha Harris",
+   "team_id": "5",
+   "season": 2026,
+   "score": 48.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 106,
+   "sample": {
+    "games": 39,
+    "wins": 25,
+    "losses": 14,
+    "minutes": 532
+   },
+   "averages": {
+    "min": 13.6,
+    "pts": 4.1,
+    "reb": 1.1,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 29.2,
+    "win_rate": 64.1,
+    "winning_output_share": 78.8,
+    "court_share": 34.1
+   },
+   "raw": {
+    "box_impact_per36": 22.12,
+    "box_impact_total": 326.9,
+    "winning_box_impact": 257.5,
+    "avg_minutes": 13.6
+   }
+  },
+  {
+   "athlete_id": "2491214",
+   "name": "Erica Wheeler",
+   "team_id": "6",
+   "season": 2026,
+   "score": 48.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 107,
+   "sample": {
+    "games": 43,
+    "wins": 16,
+    "losses": 27,
+    "minutes": 1123
+   },
+   "averages": {
+    "min": 26.1,
+    "pts": 9,
+    "reb": 1.9,
+    "ast": 5
+   },
+   "components": {
+    "production_percentile": 52.8,
+    "win_rate": 37.2,
+    "winning_output_share": 42.4,
+    "court_share": 65.3
+   },
+   "raw": {
+    "box_impact_per36": 25.93,
+    "box_impact_total": 808.9,
+    "winning_box_impact": 343.2,
+    "avg_minutes": 26.1
+   }
+  },
+  {
+   "athlete_id": "3906753",
+   "name": "Natisha Hiedeman",
+   "team_id": "14",
+   "season": 2026,
+   "score": 47.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 108,
+   "sample": {
+    "games": 40,
+    "wins": 7,
+    "losses": 33,
+    "minutes": 1198
+   },
+   "averages": {
+    "min": 30,
+    "pts": 14.7,
+    "reb": 2.5,
+    "ast": 5
+   },
+   "components": {
+    "production_percentile": 71.8,
+    "win_rate": 17.5,
+    "winning_output_share": 18.1,
+    "court_share": 74.9
+   },
+   "raw": {
+    "box_impact_per36": 30.15,
+    "box_impact_total": 1003.3,
+    "winning_box_impact": 182,
+    "avg_minutes": 30
+   }
+  },
+  {
+   "athlete_id": "4068159",
+   "name": "Sug Sutton",
+   "team_id": "3",
+   "season": 2026,
+   "score": 47.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 109,
+   "sample": {
+    "games": 25,
+    "wins": 13,
+    "losses": 12,
+    "minutes": 260
+   },
+   "averages": {
+    "min": 10.4,
+    "pts": 3.4,
+    "reb": 0.8,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 50.3,
+    "win_rate": 52,
+    "winning_output_share": 47.1,
+    "court_share": 26
+   },
+   "raw": {
+    "box_impact_per36": 25.5,
+    "box_impact_total": 184.2,
+    "winning_box_impact": 86.8,
+    "avg_minutes": 10.4
+   }
+  },
+  {
+   "athlete_id": "2284331",
+   "name": "Emma Cannon",
+   "team_id": "6",
+   "season": 2026,
+   "score": 47.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 110,
+   "sample": {
+    "games": 18,
+    "wins": 5,
+    "losses": 13,
+    "minutes": 134
+   },
+   "averages": {
+    "min": 7.4,
+    "pts": 3.9,
+    "reb": 1.4,
+    "ast": 0.3
+   },
+   "components": {
+    "production_percentile": 70,
+    "win_rate": 27.8,
+    "winning_output_share": 35.7,
+    "court_share": 18.6
+   },
+   "raw": {
+    "box_impact_per36": 29.87,
+    "box_impact_total": 111.2,
+    "winning_box_impact": 39.7,
+    "avg_minutes": 7.4
+   }
+  },
+  {
+   "athlete_id": "4433815",
+   "name": "Lucy Olsen",
+   "team_id": "16",
+   "season": 2026,
+   "score": 46.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 111,
+   "sample": {
+    "games": 22,
+    "wins": 14,
+    "losses": 8,
+    "minutes": 145
+   },
+   "averages": {
+    "min": 6.6,
+    "pts": 2.5,
+    "reb": 0.5,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 39.5,
+    "win_rate": 63.6,
+    "winning_output_share": 57.7,
+    "court_share": 16.5
+   },
+   "raw": {
+    "box_impact_per36": 23.64,
+    "box_impact_total": 95.2,
+    "winning_box_impact": 54.9,
+    "avg_minutes": 6.6
+   }
+  },
+  {
+   "athlete_id": "2955898",
+   "name": "Damiris Dantas",
+   "team_id": "5",
+   "season": 2026,
+   "score": 46.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 112,
+   "sample": {
+    "games": 12,
+    "wins": 8,
+    "losses": 4,
+    "minutes": 99
+   },
+   "averages": {
+    "min": 8.3,
+    "pts": 3.3,
+    "reb": 1.5,
+    "ast": 0.3
+   },
+   "components": {
+    "production_percentile": 45.1,
+    "win_rate": 66.7,
+    "winning_output_share": 38.6,
+    "court_share": 20.6
+   },
+   "raw": {
+    "box_impact_per36": 24.58,
+    "box_impact_total": 67.6,
+    "winning_box_impact": 26.1,
+    "avg_minutes": 8.3
+   }
+  },
+  {
+   "athlete_id": "4282173",
+   "name": "Michaela Onyenwere",
+   "team_id": "16",
+   "season": 2026,
+   "score": 46.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 113,
+   "sample": {
+    "games": 40,
+    "wins": 26,
+    "losses": 14,
+    "minutes": 993
+   },
+   "averages": {
+    "min": 24.8,
+    "pts": 9,
+    "reb": 2.6,
+    "ast": 1.7
+   },
+   "components": {
+    "production_percentile": 22.1,
+    "win_rate": 65,
+    "winning_output_share": 71.7,
+    "court_share": 62.1
+   },
+   "raw": {
+    "box_impact_per36": 21.17,
+    "box_impact_total": 583.9,
+    "winning_box_impact": 418.5,
+    "avg_minutes": 24.8
+   }
+  },
+  {
+   "athlete_id": "4433690",
+   "name": "Holly Winterburn",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 46.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 114,
+   "sample": {
+    "games": 29,
+    "wins": 11,
+    "losses": 18,
+    "minutes": 327
+   },
+   "averages": {
+    "min": 11.3,
+    "pts": 4,
+    "reb": 1.4,
+    "ast": 1.8
+   },
+   "components": {
+    "production_percentile": 56.4,
+    "win_rate": 37.9,
+    "winning_output_share": 44.8,
+    "court_share": 28.2
+   },
+   "raw": {
+    "box_impact_per36": 26.48,
+    "box_impact_total": 240.5,
+    "winning_box_impact": 107.7,
+    "avg_minutes": 11.3
+   }
+  },
+  {
+   "athlete_id": "5017721",
+   "name": "Sika Kone",
+   "team_id": "20",
+   "season": 2026,
+   "score": 46.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 115,
+   "sample": {
+    "games": 34,
+    "wins": 23,
+    "losses": 11,
+    "minutes": 174
+   },
+   "averages": {
+    "min": 5.1,
+    "pts": 1.9,
+    "reb": 1.1,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 41.5,
+    "win_rate": 67.6,
+    "winning_output_share": 48.5,
+    "court_share": 12.8
+   },
+   "raw": {
+    "box_impact_per36": 24.14,
+    "box_impact_total": 116.7,
+    "winning_box_impact": 56.6,
+    "avg_minutes": 5.1
+   }
+  },
+  {
+   "athlete_id": "4433797",
+   "name": "Raven Johnson",
+   "team_id": "5",
+   "season": 2026,
+   "score": 45.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 116,
+   "sample": {
+    "games": 39,
+    "wins": 26,
+    "losses": 13,
+    "minutes": 429
+   },
+   "averages": {
+    "min": 11,
+    "pts": 3.1,
+    "reb": 1.7,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 35.4,
+    "win_rate": 66.7,
+    "winning_output_share": 52.8,
+    "court_share": 27.5
+   },
+   "raw": {
+    "box_impact_per36": 22.9,
+    "box_impact_total": 272.9,
+    "winning_box_impact": 144.2,
+    "avg_minutes": 11
+   }
+  },
+  {
+   "athlete_id": "4704180",
+   "name": "Georgia Amoore",
+   "team_id": "16",
+   "season": 2026,
+   "score": 45.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 117,
+   "sample": {
+    "games": 44,
+    "wins": 28,
+    "losses": 16,
+    "minutes": 1018
+   },
+   "averages": {
+    "min": 23.1,
+    "pts": 7,
+    "reb": 1.4,
+    "ast": 3.4
+   },
+   "components": {
+    "production_percentile": 24.1,
+    "win_rate": 63.6,
+    "winning_output_share": 66.1,
+    "court_share": 57.8
+   },
+   "raw": {
+    "box_impact_per36": 21.45,
+    "box_impact_total": 606.5,
+    "winning_box_impact": 400.8,
+    "avg_minutes": 23.1
+   }
+  },
+  {
+   "athlete_id": "2590093",
+   "name": "Kiah Stokes",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 45.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 118,
+   "sample": {
+    "games": 43,
+    "wins": 31,
+    "losses": 12,
+    "minutes": 958
+   },
+   "averages": {
+    "min": 22.3,
+    "pts": 3.6,
+    "reb": 5.8,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 15.4,
+    "win_rate": 72.1,
+    "winning_output_share": 76.3,
+    "court_share": 55.7
+   },
+   "raw": {
+    "box_impact_per36": 20.07,
+    "box_impact_total": 534.1,
+    "winning_box_impact": 407.4,
+    "avg_minutes": 22.3
+   }
+  },
+  {
+   "athlete_id": "3919496",
+   "name": "Valeriane Ayayi",
+   "team_id": "11",
+   "season": 2026,
+   "score": 45.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 119,
+   "sample": {
+    "games": 35,
+    "wins": 12,
+    "losses": 23,
+    "minutes": 566
+   },
+   "averages": {
+    "min": 16.2,
+    "pts": 6.3,
+    "reb": 2.8,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 51.3,
+    "win_rate": 34.3,
+    "winning_output_share": 49,
+    "court_share": 40.4
+   },
+   "raw": {
+    "box_impact_per36": 25.59,
+    "box_impact_total": 402.4,
+    "winning_box_impact": 197,
+    "avg_minutes": 16.2
+   }
+  },
+  {
+   "athlete_id": "4433790",
+   "name": "Azzi Fudd",
+   "team_id": "3",
+   "season": 2026,
+   "score": 44.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 120,
+   "sample": {
+    "games": 30,
+    "wins": 19,
+    "losses": 11,
+    "minutes": 951
+   },
+   "averages": {
+    "min": 31.7,
+    "pts": 13.1,
+    "reb": 1.7,
+    "ast": 1.8
+   },
+   "components": {
+    "production_percentile": 16.4,
+    "win_rate": 63.3,
+    "winning_output_share": 68.5,
+    "court_share": 79.3
+   },
+   "raw": {
+    "box_impact_per36": 20.36,
+    "box_impact_total": 537.9,
+    "winning_box_impact": 368.4,
+    "avg_minutes": 31.7
+   }
+  },
+  {
+   "athlete_id": "5208981",
+   "name": "Leila Lacan",
+   "team_id": "18",
+   "season": 2026,
+   "score": 44.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 121,
+   "sample": {
+    "games": 30,
+    "wins": 9,
+    "losses": 21,
+    "minutes": 841
+   },
+   "averages": {
+    "min": 28,
+    "pts": 11.4,
+    "reb": 1.9,
+    "ast": 4.4
+   },
+   "components": {
+    "production_percentile": 53.8,
+    "win_rate": 30,
+    "winning_output_share": 29.7,
+    "court_share": 70.1
+   },
+   "raw": {
+    "box_impact_per36": 26.06,
+    "box_impact_total": 608.7,
+    "winning_box_impact": 180.5,
+    "avg_minutes": 28
+   }
+  },
+  {
+   "athlete_id": "4683006",
+   "name": "Leonie Fiebich",
+   "team_id": "9",
+   "season": 2026,
+   "score": 44.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 122,
+   "sample": {
+    "games": 22,
+    "wins": 15,
+    "losses": 7,
+    "minutes": 635
+   },
+   "averages": {
+    "min": 28.9,
+    "pts": 8.5,
+    "reb": 3.3,
+    "ast": 2.1
+   },
+   "components": {
+    "production_percentile": 13.8,
+    "win_rate": 68.2,
+    "winning_output_share": 71.2,
+    "court_share": 72.2
+   },
+   "raw": {
+    "box_impact_per36": 19.35,
+    "box_impact_total": 341.4,
+    "winning_box_impact": 243.2,
+    "avg_minutes": 28.9
+   }
+  },
+  {
+   "athlete_id": "2593770",
+   "name": "Betnijah Laney-Hamilton",
+   "team_id": "16",
+   "season": 2026,
+   "score": 44.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 123,
+   "sample": {
+    "games": 30,
+    "wins": 20,
+    "losses": 10,
+    "minutes": 487
+   },
+   "averages": {
+    "min": 16.2,
+    "pts": 4.5,
+    "reb": 1.9,
+    "ast": 1.9
+   },
+   "components": {
+    "production_percentile": 21,
+    "win_rate": 66.7,
+    "winning_output_share": 71.2,
+    "court_share": 40.6
+   },
+   "raw": {
+    "box_impact_per36": 21.08,
+    "box_impact_total": 285.2,
+    "winning_box_impact": 203.2,
+    "avg_minutes": 16.2
+   }
+  },
+  {
+   "athlete_id": "5220104",
+   "name": "Mai Yamamoto",
+   "team_id": "17",
+   "season": 2026,
+   "score": 44,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 124,
+   "sample": {
+    "games": 14,
+    "wins": 11,
+    "losses": 3,
+    "minutes": 213
+   },
+   "averages": {
+    "min": 15.2,
+    "pts": 5.1,
+    "reb": 1.1,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 15.9,
+    "win_rate": 78.6,
+    "winning_output_share": 67,
+    "court_share": 38
+   },
+   "raw": {
+    "box_impact_per36": 20.32,
+    "box_impact_total": 120.2,
+    "winning_box_impact": 80.5,
+    "avg_minutes": 15.2
+   }
+  },
+  {
+   "athlete_id": "5345444",
+   "name": "Laura Juskaite",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 43.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 125,
+   "sample": {
+    "games": 44,
+    "wins": 11,
+    "losses": 33,
+    "minutes": 1118
+   },
+   "averages": {
+    "min": 25.4,
+    "pts": 11.3,
+    "reb": 4.2,
+    "ast": 1.8
+   },
+   "components": {
+    "production_percentile": 57.9,
+    "win_rate": 25,
+    "winning_output_share": 25.6,
+    "court_share": 63.5
+   },
+   "raw": {
+    "box_impact_per36": 26.85,
+    "box_impact_total": 833.7,
+    "winning_box_impact": 213.6,
+    "avg_minutes": 25.4
+   }
+  },
+  {
+   "athlete_id": "2529047",
+   "name": "Odyssey Sims",
+   "team_id": "3",
+   "season": 2026,
+   "score": 43.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 126,
+   "sample": {
+    "games": 35,
+    "wins": 23,
+    "losses": 12,
+    "minutes": 500
+   },
+   "averages": {
+    "min": 14.3,
+    "pts": 4.6,
+    "reb": 0.9,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 28.7,
+    "win_rate": 65.7,
+    "winning_output_share": 54,
+    "court_share": 35.7
+   },
+   "raw": {
+    "box_impact_per36": 22.08,
+    "box_impact_total": 306.6,
+    "winning_box_impact": 165.5,
+    "avg_minutes": 14.3
+   }
+  },
+  {
+   "athlete_id": "5105732",
+   "name": "Raegan Beers",
+   "team_id": "18",
+   "season": 2026,
+   "score": 42.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 127,
+   "sample": {
+    "games": 38,
+    "wins": 9,
+    "losses": 29,
+    "minutes": 477
+   },
+   "averages": {
+    "min": 12.6,
+    "pts": 4.6,
+    "reb": 3.2,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 62.6,
+    "win_rate": 23.7,
+    "winning_output_share": 26.3,
+    "court_share": 31.4
+   },
+   "raw": {
+    "box_impact_per36": 27.82,
+    "box_impact_total": 368.6,
+    "winning_box_impact": 96.9,
+    "avg_minutes": 12.6
+   }
+  },
+  {
+   "athlete_id": "3907781",
+   "name": "Sophie Cunningham",
+   "team_id": "5",
+   "season": 2026,
+   "score": 41.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 128,
+   "sample": {
+    "games": 43,
+    "wins": 27,
+    "losses": 16,
+    "minutes": 957
+   },
+   "averages": {
+    "min": 22.3,
+    "pts": 7.9,
+    "reb": 2.3,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 14.9,
+    "win_rate": 62.8,
+    "winning_output_share": 69.8,
+    "court_share": 55.6
+   },
+   "raw": {
+    "box_impact_per36": 20.03,
+    "box_impact_total": 532.4,
+    "winning_box_impact": 371.4,
+    "avg_minutes": 22.3
+   }
+  },
+  {
+   "athlete_id": "3099736",
+   "name": "Stephanie Talbot",
+   "team_id": "17",
+   "season": 2026,
+   "score": 41.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 129,
+   "sample": {
+    "games": 45,
+    "wins": 31,
+    "losses": 14,
+    "minutes": 774
+   },
+   "averages": {
+    "min": 17.2,
+    "pts": 3.9,
+    "reb": 2.6,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 9.7,
+    "win_rate": 68.9,
+    "winning_output_share": 79.6,
+    "court_share": 43
+   },
+   "raw": {
+    "box_impact_per36": 17.94,
+    "box_impact_total": 385.7,
+    "winning_box_impact": 306.9,
+    "avg_minutes": 17.2
+   }
+  },
+  {
+   "athlete_id": "3906769",
+   "name": "Jovana Nogic",
+   "team_id": "11",
+   "season": 2026,
+   "score": 40.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 130,
+   "sample": {
+    "games": 16,
+    "wins": 4,
+    "losses": 12,
+    "minutes": 321
+   },
+   "averages": {
+    "min": 20.1,
+    "pts": 10.4,
+    "reb": 1.1,
+    "ast": 1.6
+   },
+   "components": {
+    "production_percentile": 48.2,
+    "win_rate": 25,
+    "winning_output_share": 38.4,
+    "court_share": 50.2
+   },
+   "raw": {
+    "box_impact_per36": 25.28,
+    "box_impact_total": 225.4,
+    "winning_box_impact": 86.6,
+    "avg_minutes": 20.1
+   }
+  },
+  {
+   "athlete_id": "4433431",
+   "name": "Te-Hina Paopao",
+   "team_id": "20",
+   "season": 2026,
+   "score": 40.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 131,
+   "sample": {
+    "games": 35,
+    "wins": 23,
+    "losses": 12,
+    "minutes": 405
+   },
+   "averages": {
+    "min": 11.6,
+    "pts": 3.7,
+    "reb": 0.8,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 17.4,
+    "win_rate": 65.7,
+    "winning_output_share": 66.5,
+    "court_share": 28.9
+   },
+   "raw": {
+    "box_impact_per36": 20.48,
+    "box_impact_total": 230.4,
+    "winning_box_impact": 153.2,
+    "avg_minutes": 11.6
+   }
+  },
+  {
+   "athlete_id": "2987869",
+   "name": "Jewell Loyd",
+   "team_id": "17",
+   "season": 2026,
+   "score": 40.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 132,
+   "sample": {
+    "games": 43,
+    "wins": 29,
+    "losses": 14,
+    "minutes": 1123
+   },
+   "averages": {
+    "min": 26.1,
+    "pts": 8,
+    "reb": 2.3,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 6.2,
+    "win_rate": 67.4,
+    "winning_output_share": 69.5,
+    "court_share": 65.3
+   },
+   "raw": {
+    "box_impact_per36": 17.51,
+    "box_impact_total": 546.1,
+    "winning_box_impact": 379.4,
+    "avg_minutes": 26.1
+   }
+  },
+  {
+   "athlete_id": "4398829",
+   "name": "Lexie Hull",
+   "team_id": "5",
+   "season": 2026,
+   "score": 40,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 133,
+   "sample": {
+    "games": 44,
+    "wins": 28,
+    "losses": 16,
+    "minutes": 819
+   },
+   "averages": {
+    "min": 18.6,
+    "pts": 5.2,
+    "reb": 3,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 12.3,
+    "win_rate": 63.6,
+    "winning_output_share": 69.5,
+    "court_share": 46.5
+   },
+   "raw": {
+    "box_impact_per36": 19.01,
+    "box_impact_total": 432.4,
+    "winning_box_impact": 300.7,
+    "avg_minutes": 18.6
+   }
+  },
+  {
+   "athlete_id": "4873358",
+   "name": "Antonia Delaere",
+   "team_id": "8",
+   "season": 2026,
+   "score": 39.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 134,
+   "sample": {
+    "games": 39,
+    "wins": 30,
+    "losses": 9,
+    "minutes": 459
+   },
+   "averages": {
+    "min": 11.8,
+    "pts": 3,
+    "reb": 0.8,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 4.6,
+    "win_rate": 76.9,
+    "winning_output_share": 78.3,
+    "court_share": 29.4
+   },
+   "raw": {
+    "box_impact_per36": 17.13,
+    "box_impact_total": 218.4,
+    "winning_box_impact": 171,
+    "avg_minutes": 11.8
+   }
+  },
+  {
+   "athlete_id": "2566081",
+   "name": "Elizabeth Williams",
+   "team_id": "19",
+   "season": 2026,
+   "score": 39.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 135,
+   "sample": {
+    "games": 44,
+    "wins": 16,
+    "losses": 28,
+    "minutes": 757
+   },
+   "averages": {
+    "min": 17.2,
+    "pts": 5.2,
+    "reb": 3.6,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 42.6,
+    "win_rate": 36.4,
+    "winning_output_share": 36.2,
+    "court_share": 43
+   },
+   "raw": {
+    "box_impact_per36": 24.2,
+    "box_impact_total": 508.8,
+    "winning_box_impact": 184.4,
+    "avg_minutes": 17.2
+   }
+  },
+  {
+   "athlete_id": "4433386",
+   "name": "Jaylyn Sherrod",
+   "team_id": "14",
+   "season": 2026,
+   "score": 39.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 136,
+   "sample": {
+    "games": 13,
+    "wins": 7,
+    "losses": 6,
+    "minutes": 100
+   },
+   "averages": {
+    "min": 7.7,
+    "pts": 1.9,
+    "reb": 0.9,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 26.2,
+    "win_rate": 53.8,
+    "winning_output_share": 62.7,
+    "court_share": 19.2
+   },
+   "raw": {
+    "box_impact_per36": 21.74,
+    "box_impact_total": 60.4,
+    "winning_box_impact": 37.9,
+    "avg_minutes": 7.7
+   }
+  },
+  {
+   "athlete_id": "4432832",
+   "name": "Zia Cooke",
+   "team_id": "14",
+   "season": 2026,
+   "score": 39.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 137,
+   "sample": {
+    "games": 41,
+    "wins": 8,
+    "losses": 33,
+    "minutes": 618
+   },
+   "averages": {
+    "min": 15.1,
+    "pts": 7.5,
+    "reb": 1.7,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 56.9,
+    "win_rate": 19.5,
+    "winning_output_share": 25.8,
+    "court_share": 37.7
+   },
+   "raw": {
+    "box_impact_per36": 26.6,
+    "box_impact_total": 456.6,
+    "winning_box_impact": 117.9,
+    "avg_minutes": 15.1
+   }
+  },
+  {
+   "athlete_id": "4433433",
+   "name": "Aicha Coulibaly",
+   "team_id": "19",
+   "season": 2026,
+   "score": 39.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 138,
+   "sample": {
+    "games": 30,
+    "wins": 10,
+    "losses": 20,
+    "minutes": 405
+   },
+   "averages": {
+    "min": 13.5,
+    "pts": 5.2,
+    "reb": 2.6,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 45.6,
+    "win_rate": 33.3,
+    "winning_output_share": 34,
+    "court_share": 33.8
+   },
+   "raw": {
+    "box_impact_per36": 24.6,
+    "box_impact_total": 276.8,
+    "winning_box_impact": 94.2,
+    "avg_minutes": 13.5
+   }
+  },
+  {
+   "athlete_id": "3910470",
+   "name": "Maria Conde",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 38.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 139,
+   "sample": {
+    "games": 35,
+    "wins": 10,
+    "losses": 25,
+    "minutes": 925
+   },
+   "averages": {
+    "min": 26.4,
+    "pts": 8.5,
+    "reb": 4.5,
+    "ast": 2.5
+   },
+   "components": {
+    "production_percentile": 42.1,
+    "win_rate": 28.6,
+    "winning_output_share": 28.7,
+    "court_share": 66.1
+   },
+   "raw": {
+    "box_impact_per36": 24.17,
+    "box_impact_total": 621.1,
+    "winning_box_impact": 178,
+    "avg_minutes": 26.4
+   }
+  },
+  {
+   "athlete_id": "5345325",
+   "name": "Awa Fam",
+   "team_id": "14",
+   "season": 2026,
+   "score": 38.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 140,
+   "sample": {
+    "games": 37,
+    "wins": 6,
+    "losses": 31,
+    "minutes": 1023
+   },
+   "averages": {
+    "min": 27.6,
+    "pts": 10.3,
+    "reb": 5.9,
+    "ast": 1.8
+   },
+   "components": {
+    "production_percentile": 54.9,
+    "win_rate": 16.2,
+    "winning_output_share": 12.6,
+    "court_share": 69.1
+   },
+   "raw": {
+    "box_impact_per36": 26.15,
+    "box_impact_total": 743,
+    "winning_box_impact": 93.9,
+    "avg_minutes": 27.6
+   }
+  },
+  {
+   "athlete_id": "4565515",
+   "name": "Tonie Morgan",
+   "team_id": "6",
+   "season": 2026,
+   "score": 38.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 141,
+   "sample": {
+    "games": 12,
+    "wins": 4,
+    "losses": 8,
+    "minutes": 198
+   },
+   "averages": {
+    "min": 16.5,
+    "pts": 5.7,
+    "reb": 1.3,
+    "ast": 2.7
+   },
+   "components": {
+    "production_percentile": 43.6,
+    "win_rate": 33.3,
+    "winning_output_share": 30.8,
+    "court_share": 41.3
+   },
+   "raw": {
+    "box_impact_per36": 24.36,
+    "box_impact_total": 134,
+    "winning_box_impact": 41.3,
+    "avg_minutes": 16.5
+   }
+  },
+  {
+   "athlete_id": "5017726",
+   "name": "Jade Melbourne",
+   "team_id": "14",
+   "season": 2026,
+   "score": 38.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 142,
+   "sample": {
+    "games": 42,
+    "wins": 8,
+    "losses": 34,
+    "minutes": 1029
+   },
+   "averages": {
+    "min": 24.5,
+    "pts": 9.1,
+    "reb": 2.1,
+    "ast": 3.7
+   },
+   "components": {
+    "production_percentile": 49.7,
+    "win_rate": 19,
+    "winning_output_share": 23.9,
+    "court_share": 61.3
+   },
+   "raw": {
+    "box_impact_per36": 25.38,
+    "box_impact_total": 725.5,
+    "winning_box_impact": 173.6,
+    "avg_minutes": 24.5
+   }
+  },
+  {
+   "athlete_id": "4281190",
+   "name": "Dana Evans",
+   "team_id": "17",
+   "season": 2026,
+   "score": 37.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 143,
+   "sample": {
+    "games": 14,
+    "wins": 9,
+    "losses": 5,
+    "minutes": 214
+   },
+   "averages": {
+    "min": 15.3,
+    "pts": 3.6,
+    "reb": 1.4,
+    "ast": 2.1
+   },
+   "components": {
+    "production_percentile": 14.4,
+    "win_rate": 64.3,
+    "winning_output_share": 57,
+    "court_share": 38.2
+   },
+   "raw": {
+    "box_impact_per36": 19.73,
+    "box_impact_total": 117.3,
+    "winning_box_impact": 66.9,
+    "avg_minutes": 15.3
+   }
+  },
+  {
+   "athlete_id": "924",
+   "name": "Alysha Clark",
+   "team_id": "3",
+   "season": 2026,
+   "score": 37.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 144,
+   "sample": {
+    "games": 30,
+    "wins": 19,
+    "losses": 11,
+    "minutes": 343
+   },
+   "averages": {
+    "min": 11.4,
+    "pts": 2.6,
+    "reb": 1.7,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 9.2,
+    "win_rate": 63.3,
+    "winning_output_share": 74.5,
+    "court_share": 28.6
+   },
+   "raw": {
+    "box_impact_per36": 17.86,
+    "box_impact_total": 170.2,
+    "winning_box_impact": 126.8,
+    "avg_minutes": 11.4
+   }
+  },
+  {
+   "athlete_id": "4703609",
+   "name": "Charlisse Leger-Walker",
+   "team_id": "18",
+   "season": 2026,
+   "score": 36.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 145,
+   "sample": {
+    "games": 44,
+    "wins": 11,
+    "losses": 33,
+    "minutes": 1039
+   },
+   "averages": {
+    "min": 23.6,
+    "pts": 7.2,
+    "reb": 2.5,
+    "ast": 3.7
+   },
+   "components": {
+    "production_percentile": 41,
+    "win_rate": 25,
+    "winning_output_share": 30.2,
+    "court_share": 59
+   },
+   "raw": {
+    "box_impact_per36": 24.01,
+    "box_impact_total": 692.9,
+    "winning_box_impact": 209.2,
+    "avg_minutes": 23.6
+   }
+  },
+  {
+   "athlete_id": "3102133",
+   "name": "Rebecca Allen",
+   "team_id": "9",
+   "season": 2026,
+   "score": 36.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 146,
+   "sample": {
+    "games": 29,
+    "wins": 16,
+    "losses": 13,
+    "minutes": 529
+   },
+   "averages": {
+    "min": 18.2,
+    "pts": 5.8,
+    "reb": 2.6,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 13.3,
+    "win_rate": 55.2,
+    "winning_output_share": 61.8,
+    "court_share": 45.6
+   },
+   "raw": {
+    "box_impact_per36": 19.31,
+    "box_impact_total": 283.8,
+    "winning_box_impact": 175.3,
+    "avg_minutes": 18.2
+   }
+  },
+  {
+   "athlete_id": "5105406",
+   "name": "Frieda Buhner",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 36.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 147,
+   "sample": {
+    "games": 39,
+    "wins": 14,
+    "losses": 25,
+    "minutes": 606
+   },
+   "averages": {
+    "min": 15.5,
+    "pts": 6.3,
+    "reb": 2.1,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 34.4,
+    "win_rate": 35.9,
+    "winning_output_share": 39.5,
+    "court_share": 38.8
+   },
+   "raw": {
+    "box_impact_per36": 22.85,
+    "box_impact_total": 384.7,
+    "winning_box_impact": 151.9,
+    "avg_minutes": 15.5
+   }
+  },
+  {
+   "athlete_id": "4433633",
+   "name": "Kierstan Bell",
+   "team_id": "17",
+   "season": 2026,
+   "score": 36.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 148,
+   "sample": {
+    "games": 29,
+    "wins": 21,
+    "losses": 8,
+    "minutes": 284
+   },
+   "averages": {
+    "min": 9.8,
+    "pts": 2.1,
+    "reb": 1.5,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 5.1,
+    "win_rate": 72.4,
+    "winning_output_share": 66,
+    "court_share": 24.5
+   },
+   "raw": {
+    "box_impact_per36": 17.19,
+    "box_impact_total": 135.6,
+    "winning_box_impact": 89.5,
+    "avg_minutes": 9.8
+   }
+  },
+  {
+   "athlete_id": "4858656",
+   "name": "Gabriela Jaquez",
+   "team_id": "19",
+   "season": 2026,
+   "score": 35.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 149,
+   "sample": {
+    "games": 39,
+    "wins": 15,
+    "losses": 24,
+    "minutes": 760
+   },
+   "averages": {
+    "min": 19.5,
+    "pts": 7.1,
+    "reb": 3,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 30.3,
+    "win_rate": 38.5,
+    "winning_output_share": 38.6,
+    "court_share": 48.7
+   },
+   "raw": {
+    "box_impact_per36": 22.25,
+    "box_impact_total": 469.7,
+    "winning_box_impact": 181.2,
+    "avg_minutes": 19.5
+   }
+  },
+  {
+   "athlete_id": "4704594",
+   "name": "Marta Suarez",
+   "team_id": "11",
+   "season": 2026,
+   "score": 35.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 150,
+   "sample": {
+    "games": 19,
+    "wins": 8,
+    "losses": 11,
+    "minutes": 179
+   },
+   "averages": {
+    "min": 9.4,
+    "pts": 3.5,
+    "reb": 1.5,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 29.7,
+    "win_rate": 42.1,
+    "winning_output_share": 47.5,
+    "court_share": 23.6
+   },
+   "raw": {
+    "box_impact_per36": 22.14,
+    "box_impact_total": 110.1,
+    "winning_box_impact": 52.3,
+    "avg_minutes": 9.4
+   }
+  },
+  {
+   "athlete_id": "4597509",
+   "name": "Aaliyah Nye",
+   "team_id": "6",
+   "season": 2026,
+   "score": 35.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 151,
+   "sample": {
+    "games": 18,
+    "wins": 10,
+    "losses": 8,
+    "minutes": 56
+   },
+   "averages": {
+    "min": 3.1,
+    "pts": 1.1,
+    "reb": 0.3,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 23.6,
+    "win_rate": 55.6,
+    "winning_output_share": 52.4,
+    "court_share": 7.8
+   },
+   "raw": {
+    "box_impact_per36": 21.34,
+    "box_impact_total": 33.2,
+    "winning_box_impact": 17.4,
+    "avg_minutes": 3.1
+   }
+  },
+  {
+   "athlete_id": "4420318",
+   "name": "Ezi Magbegor",
+   "team_id": "14",
+   "season": 2026,
+   "score": 35.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 152,
+   "sample": {
+    "games": 14,
+    "wins": 3,
+    "losses": 11,
+    "minutes": 285
+   },
+   "averages": {
+    "min": 20.4,
+    "pts": 6.9,
+    "reb": 4,
+    "ast": 1.8
+   },
+   "components": {
+    "production_percentile": 49.2,
+    "win_rate": 21.4,
+    "winning_output_share": 13.9,
+    "court_share": 50.9
+   },
+   "raw": {
+    "box_impact_per36": 25.35,
+    "box_impact_total": 200.7,
+    "winning_box_impact": 27.8,
+    "avg_minutes": 20.4
+   }
+  },
+  {
+   "athlete_id": "4433635",
+   "name": "Diamond Miller",
+   "team_id": "18",
+   "season": 2026,
+   "score": 35.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 153,
+   "sample": {
+    "games": 43,
+    "wins": 11,
+    "losses": 32,
+    "minutes": 975
+   },
+   "averages": {
+    "min": 22.7,
+    "pts": 9.8,
+    "reb": 2.7,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 40.5,
+    "win_rate": 25.6,
+    "winning_output_share": 24.6,
+    "court_share": 56.7
+   },
+   "raw": {
+    "box_impact_per36": 23.93,
+    "box_impact_total": 648,
+    "winning_box_impact": 159.4,
+    "avg_minutes": 22.7
+   }
+  },
+  {
+   "athlete_id": "3142086",
+   "name": "Brianna Turner",
+   "team_id": "17",
+   "season": 2026,
+   "score": 35.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 154,
+   "sample": {
+    "games": 42,
+    "wins": 30,
+    "losses": 12,
+    "minutes": 553
+   },
+   "averages": {
+    "min": 13.2,
+    "pts": 1.5,
+    "reb": 2.3,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 0.5,
+    "win_rate": 71.4,
+    "winning_output_share": 69.2,
+    "court_share": 32.9
+   },
+   "raw": {
+    "box_impact_per36": 12.47,
+    "box_impact_total": 191.5,
+    "winning_box_impact": 132.5,
+    "avg_minutes": 13.2
+   }
+  },
+  {
+   "athlete_id": "3146151",
+   "name": "Ariel Atkins",
+   "team_id": "6",
+   "season": 2026,
+   "score": 34.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 155,
+   "sample": {
+    "games": 42,
+    "wins": 15,
+    "losses": 27,
+    "minutes": 1130
+   },
+   "averages": {
+    "min": 26.9,
+    "pts": 8.5,
+    "reb": 2.9,
+    "ast": 2.8
+   },
+   "components": {
+    "production_percentile": 25.6,
+    "win_rate": 35.7,
+    "winning_output_share": 38.4,
+    "court_share": 67.3
+   },
+   "raw": {
+    "box_impact_per36": 21.65,
+    "box_impact_total": 679.5,
+    "winning_box_impact": 261,
+    "avg_minutes": 26.9
+   }
+  },
+  {
+   "athlete_id": "5108550",
+   "name": "Serah Williams",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 34.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 156,
+   "sample": {
+    "games": 39,
+    "wins": 15,
+    "losses": 24,
+    "minutes": 513
+   },
+   "averages": {
+    "min": 13.2,
+    "pts": 4.3,
+    "reb": 2.7,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 32.8,
+    "win_rate": 38.5,
+    "winning_output_share": 32.2,
+    "court_share": 32.9
+   },
+   "raw": {
+    "box_impact_per36": 22.54,
+    "box_impact_total": 321.2,
+    "winning_box_impact": 103.3,
+    "avg_minutes": 13.2
+   }
+  },
+  {
+   "athlete_id": "4001679",
+   "name": "Julie Allemand",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 33.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 157,
+   "sample": {
+    "games": 33,
+    "wins": 8,
+    "losses": 25,
+    "minutes": 936
+   },
+   "averages": {
+    "min": 28.4,
+    "pts": 6,
+    "reb": 3.2,
+    "ast": 5.5
+   },
+   "components": {
+    "production_percentile": 33.8,
+    "win_rate": 24.2,
+    "winning_output_share": 27.8,
+    "court_share": 70.9
+   },
+   "raw": {
+    "box_impact_per36": 22.84,
+    "box_impact_total": 593.8,
+    "winning_box_impact": 165.2,
+    "avg_minutes": 28.4
+   }
+  },
+  {
+   "athlete_id": "5274110",
+   "name": "Monique Akoa Makani",
+   "team_id": "6",
+   "season": 2026,
+   "score": 33.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 158,
+   "sample": {
+    "games": 30,
+    "wins": 11,
+    "losses": 19,
+    "minutes": 653
+   },
+   "averages": {
+    "min": 21.8,
+    "pts": 7.6,
+    "reb": 1.8,
+    "ast": 2.2
+   },
+   "components": {
+    "production_percentile": 26.7,
+    "win_rate": 36.7,
+    "winning_output_share": 36.3,
+    "court_share": 54.4
+   },
+   "raw": {
+    "box_impact_per36": 21.8,
+    "box_impact_total": 395.5,
+    "winning_box_impact": 143.5,
+    "avg_minutes": 21.8
+   }
+  },
+  {
+   "athlete_id": "3922628",
+   "name": "Kennedy Burke",
+   "team_id": "18",
+   "season": 2026,
+   "score": 33.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 159,
+   "sample": {
+    "games": 37,
+    "wins": 10,
+    "losses": 27,
+    "minutes": 883
+   },
+   "averages": {
+    "min": 23.9,
+    "pts": 8.8,
+    "reb": 3.2,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 30.8,
+    "win_rate": 27,
+    "winning_output_share": 36.1,
+    "court_share": 59.7
+   },
+   "raw": {
+    "box_impact_per36": 22.31,
+    "box_impact_total": 547.3,
+    "winning_box_impact": 197.5,
+    "avg_minutes": 23.9
+   }
+  },
+  {
+   "athlete_id": "4433643",
+   "name": "Mackenzie Holmes",
+   "team_id": "14",
+   "season": 2026,
+   "score": 33.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 160,
+   "sample": {
+    "games": 29,
+    "wins": 5,
+    "losses": 24,
+    "minutes": 289
+   },
+   "averages": {
+    "min": 10,
+    "pts": 2.8,
+    "reb": 2.9,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 51.8,
+    "win_rate": 17.2,
+    "winning_output_share": 16.8,
+    "court_share": 24.9
+   },
+   "raw": {
+    "box_impact_per36": 25.85,
+    "box_impact_total": 207.5,
+    "winning_box_impact": 34.9,
+    "avg_minutes": 10
+   }
+  },
+  {
+   "athlete_id": "887",
+   "name": "Sami Whitcomb",
+   "team_id": "11",
+   "season": 2026,
+   "score": 33.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 161,
+   "sample": {
+    "games": 21,
+    "wins": 7,
+    "losses": 14,
+    "minutes": 367
+   },
+   "averages": {
+    "min": 17.5,
+    "pts": 5.3,
+    "reb": 1.7,
+    "ast": 2.1
+   },
+   "components": {
+    "production_percentile": 28.2,
+    "win_rate": 33.3,
+    "winning_output_share": 38.9,
+    "court_share": 43.7
+   },
+   "raw": {
+    "box_impact_per36": 21.85,
+    "box_impact_total": 222.7,
+    "winning_box_impact": 86.7,
+    "avg_minutes": 17.5
+   }
+  },
+  {
+   "athlete_id": "4790258",
+   "name": "Raquel Carrera",
+   "team_id": "9",
+   "season": 2026,
+   "score": 32.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 162,
+   "sample": {
+    "games": 25,
+    "wins": 13,
+    "losses": 12,
+    "minutes": 161
+   },
+   "averages": {
+    "min": 6.4,
+    "pts": 1.7,
+    "reb": 1.2,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 20,
+    "win_rate": 52,
+    "winning_output_share": 44.9,
+    "court_share": 16.1
+   },
+   "raw": {
+    "box_impact_per36": 20.86,
+    "box_impact_total": 93.3,
+    "winning_box_impact": 41.9,
+    "avg_minutes": 6.4
+   }
+  },
+  {
+   "athlete_id": "4433412",
+   "name": "Hailey Van Lith",
+   "team_id": "18",
+   "season": 2026,
+   "score": 32.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 163,
+   "sample": {
+    "games": 22,
+    "wins": 4,
+    "losses": 18,
+    "minutes": 347
+   },
+   "averages": {
+    "min": 15.8,
+    "pts": 5.5,
+    "reb": 1.6,
+    "ast": 2.1
+   },
+   "components": {
+    "production_percentile": 43.1,
+    "win_rate": 18.2,
+    "winning_output_share": 22.1,
+    "court_share": 39.4
+   },
+   "raw": {
+    "box_impact_per36": 24.25,
+    "box_impact_total": 233.7,
+    "winning_box_impact": 51.6,
+    "avg_minutes": 15.8
+   }
+  },
+  {
+   "athlete_id": "4433523",
+   "name": "Rori Harmon",
+   "team_id": "16",
+   "season": 2026,
+   "score": 32.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 164,
+   "sample": {
+    "games": 15,
+    "wins": 9,
+    "losses": 6,
+    "minutes": 77
+   },
+   "averages": {
+    "min": 5.1,
+    "pts": 0.8,
+    "reb": 0.6,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 16.9,
+    "win_rate": 60,
+    "winning_output_share": 41.8,
+    "court_share": 12.8
+   },
+   "raw": {
+    "box_impact_per36": 20.48,
+    "box_impact_total": 43.8,
+    "winning_box_impact": 18.3,
+    "avg_minutes": 5.1
+   }
+  },
+  {
+   "athlete_id": "4873359",
+   "name": "Kyara Linskens",
+   "team_id": "11",
+   "season": 2026,
+   "score": 32.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 165,
+   "sample": {
+    "games": 19,
+    "wins": 6,
+    "losses": 13,
+    "minutes": 201
+   },
+   "averages": {
+    "min": 10.6,
+    "pts": 3,
+    "reb": 2.4,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 36.9,
+    "win_rate": 31.6,
+    "winning_output_share": 25.1,
+    "court_share": 26.4
+   },
+   "raw": {
+    "box_impact_per36": 23.1,
+    "box_impact_total": 129,
+    "winning_box_impact": 32.4,
+    "avg_minutes": 10.6
+   }
+  },
+  {
+   "athlete_id": "4433514",
+   "name": "Saniya Rivers",
+   "team_id": "18",
+   "season": 2026,
+   "score": 31.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 166,
+   "sample": {
+    "games": 38,
+    "wins": 8,
+    "losses": 30,
+    "minutes": 857
+   },
+   "averages": {
+    "min": 22.6,
+    "pts": 6.9,
+    "reb": 2.5,
+    "ast": 3.1
+   },
+   "components": {
+    "production_percentile": 37.9,
+    "win_rate": 21.1,
+    "winning_output_share": 18.4,
+    "court_share": 56.4
+   },
+   "raw": {
+    "box_impact_per36": 23.24,
+    "box_impact_total": 553.2,
+    "winning_box_impact": 101.6,
+    "avg_minutes": 22.6
+   }
+  },
+  {
+   "athlete_id": "2566186",
+   "name": "Rachel Banham",
+   "team_id": "19",
+   "season": 2026,
+   "score": 31.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 167,
+   "sample": {
+    "games": 40,
+    "wins": 15,
+    "losses": 25,
+    "minutes": 551
+   },
+   "averages": {
+    "min": 13.8,
+    "pts": 5,
+    "reb": 1.2,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 25.1,
+    "win_rate": 37.5,
+    "winning_output_share": 38,
+    "court_share": 34.4
+   },
+   "raw": {
+    "box_impact_per36": 21.57,
+    "box_impact_total": 330.2,
+    "winning_box_impact": 125.4,
+    "avg_minutes": 13.8
+   }
+  },
+  {
+   "athlete_id": "5122345",
+   "name": "Cassandre Prosper",
+   "team_id": "16",
+   "season": 2026,
+   "score": 31.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 168,
+   "sample": {
+    "games": 37,
+    "wins": 23,
+    "losses": 14,
+    "minutes": 364
+   },
+   "averages": {
+    "min": 9.8,
+    "pts": 2.1,
+    "reb": 1,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 1,
+    "win_rate": 62.2,
+    "winning_output_share": 66.2,
+    "court_share": 24.6
+   },
+   "raw": {
+    "box_impact_per36": 14.85,
+    "box_impact_total": 150.1,
+    "winning_box_impact": 99.3,
+    "avg_minutes": 9.8
+   }
+  },
+  {
+   "athlete_id": "5105731",
+   "name": "Grace VanSlooten",
+   "team_id": "5",
+   "season": 2026,
+   "score": 31.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 169,
+   "sample": {
+    "games": 18,
+    "wins": 11,
+    "losses": 7,
+    "minutes": 94
+   },
+   "averages": {
+    "min": 5.2,
+    "pts": 1.9,
+    "reb": 0.7,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 19.5,
+    "win_rate": 61.1,
+    "winning_output_share": 31.8,
+    "court_share": 13.1
+   },
+   "raw": {
+    "box_impact_per36": 20.83,
+    "box_impact_total": 54.4,
+    "winning_box_impact": 17.3,
+    "avg_minutes": 5.2
+   }
+  },
+  {
+   "athlete_id": "4399342",
+   "name": "Lexi Held",
+   "team_id": "11",
+   "season": 2026,
+   "score": 30.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 170,
+   "sample": {
+    "games": 42,
+    "wins": 18,
+    "losses": 24,
+    "minutes": 646
+   },
+   "averages": {
+    "min": 15.4,
+    "pts": 5.4,
+    "reb": 1.1,
+    "ast": 1.4
+   },
+   "components": {
+    "production_percentile": 17.9,
+    "win_rate": 42.9,
+    "winning_output_share": 41.5,
+    "court_share": 38.5
+   },
+   "raw": {
+    "box_impact_per36": 20.63,
+    "box_impact_total": 370.2,
+    "winning_box_impact": 153.7,
+    "avg_minutes": 15.4
+   }
+  },
+  {
+   "athlete_id": "4682797",
+   "name": "Luisa Geiselsoder",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 30.6,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 171,
+   "sample": {
+    "games": 21,
+    "wins": 8,
+    "losses": 13,
+    "minutes": 348
+   },
+   "averages": {
+    "min": 16.6,
+    "pts": 4.5,
+    "reb": 2.6,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 18.5,
+    "win_rate": 38.1,
+    "winning_output_share": 43.2,
+    "court_share": 41.4
+   },
+   "raw": {
+    "box_impact_per36": 20.74,
+    "box_impact_total": 200.5,
+    "winning_box_impact": 86.6,
+    "avg_minutes": 16.6
+   }
+  },
+  {
+   "athlete_id": "5355509",
+   "name": "Tima Pouye",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 30.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 172,
+   "sample": {
+    "games": 19,
+    "wins": 6,
+    "losses": 13,
+    "minutes": 180
+   },
+   "averages": {
+    "min": 9.5,
+    "pts": 3.2,
+    "reb": 0.8,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 31.3,
+    "win_rate": 31.6,
+    "winning_output_share": 28.9,
+    "court_share": 23.7
+   },
+   "raw": {
+    "box_impact_per36": 22.44,
+    "box_impact_total": 112.2,
+    "winning_box_impact": 32.4,
+    "avg_minutes": 9.5
+   }
+  },
+  {
+   "athlete_id": "5345319",
+   "name": "Nell Angloma",
+   "team_id": "18",
+   "season": 2026,
+   "score": 29.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 173,
+   "sample": {
+    "games": 39,
+    "wins": 10,
+    "losses": 29,
+    "minutes": 504
+   },
+   "averages": {
+    "min": 12.9,
+    "pts": 4.5,
+    "reb": 2,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 34.9,
+    "win_rate": 25.6,
+    "winning_output_share": 20.2,
+    "court_share": 32.3
+   },
+   "raw": {
+    "box_impact_per36": 22.86,
+    "box_impact_total": 320.1,
+    "winning_box_impact": 64.8,
+    "avg_minutes": 12.9
+   }
+  },
+  {
+   "athlete_id": "2569044",
+   "name": "Temi Fagbenle",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 28.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 174,
+   "sample": {
+    "games": 25,
+    "wins": 3,
+    "losses": 22,
+    "minutes": 444
+   },
+   "averages": {
+    "min": 17.8,
+    "pts": 5.9,
+    "reb": 3.4,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 37.4,
+    "win_rate": 12,
+    "winning_output_share": 20.8,
+    "court_share": 44.4
+   },
+   "raw": {
+    "box_impact_per36": 23.11,
+    "box_impact_total": 285,
+    "winning_box_impact": 59.3,
+    "avg_minutes": 17.8
+   }
+  },
+  {
+   "athlete_id": "4432865",
+   "name": "Jacy Sheldon",
+   "team_id": "19",
+   "season": 2026,
+   "score": 27.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 175,
+   "sample": {
+    "games": 44,
+    "wins": 16,
+    "losses": 28,
+    "minutes": 908
+   },
+   "averages": {
+    "min": 20.6,
+    "pts": 6.4,
+    "reb": 1.4,
+    "ast": 1.8
+   },
+   "components": {
+    "production_percentile": 10.3,
+    "win_rate": 36.4,
+    "winning_output_share": 44.5,
+    "court_share": 51.6
+   },
+   "raw": {
+    "box_impact_per36": 18.66,
+    "box_impact_total": 470.7,
+    "winning_box_impact": 209.6,
+    "avg_minutes": 20.6
+   }
+  },
+  {
+   "athlete_id": "5345524",
+   "name": "Noemie Brochant",
+   "team_id": "11",
+   "season": 2026,
+   "score": 27.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 176,
+   "sample": {
+    "games": 43,
+    "wins": 15,
+    "losses": 28,
+    "minutes": 1012
+   },
+   "averages": {
+    "min": 23.5,
+    "pts": 6.3,
+    "reb": 2.1,
+    "ast": 1.9
+   },
+   "components": {
+    "production_percentile": 8.7,
+    "win_rate": 34.9,
+    "winning_output_share": 45.8,
+    "court_share": 58.8
+   },
+   "raw": {
+    "box_impact_per36": 17.78,
+    "box_impact_total": 499.8,
+    "winning_box_impact": 228.9,
+    "avg_minutes": 23.5
+   }
+  },
+  {
+   "athlete_id": "5107404",
+   "name": "Quionche Carter",
+   "team_id": "11",
+   "season": 2026,
+   "score": 26.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 177,
+   "sample": {
+    "games": 12,
+    "wins": 6,
+    "losses": 6,
+    "minutes": 81
+   },
+   "averages": {
+    "min": 6.8,
+    "pts": 1.3,
+    "reb": 0.8,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 2.1,
+    "win_rate": 50,
+    "winning_output_share": 59,
+    "court_share": 16.9
+   },
+   "raw": {
+    "box_impact_per36": 16.13,
+    "box_impact_total": 36.3,
+    "winning_box_impact": 21.4,
+    "avg_minutes": 6.8
+   }
+  },
+  {
+   "athlete_id": "4398907",
+   "name": "Kate Martin",
+   "team_id": "19",
+   "season": 2026,
+   "score": 24.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 178,
+   "sample": {
+    "games": 19,
+    "wins": 7,
+    "losses": 12,
+    "minutes": 145
+   },
+   "averages": {
+    "min": 7.6,
+    "pts": 2.6,
+    "reb": 1,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 19,
+    "win_rate": 36.8,
+    "winning_output_share": 25.8,
+    "court_share": 19.1
+   },
+   "raw": {
+    "box_impact_per36": 20.81,
+    "box_impact_total": 83.8,
+    "winning_box_impact": 21.6,
+    "avg_minutes": 7.6
+   }
+  },
+  {
+   "athlete_id": "4432830",
+   "name": "Jordan Horston",
+   "team_id": "14",
+   "season": 2026,
+   "score": 24.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 179,
+   "sample": {
+    "games": 37,
+    "wins": 6,
+    "losses": 31,
+    "minutes": 650
+   },
+   "averages": {
+    "min": 17.6,
+    "pts": 4.5,
+    "reb": 3.5,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 27.2,
+    "win_rate": 16.2,
+    "winning_output_share": 17.4,
+    "court_share": 43.9
+   },
+   "raw": {
+    "box_impact_per36": 21.8,
+    "box_impact_total": 393.7,
+    "winning_box_impact": 68.4,
+    "avg_minutes": 17.6
+   }
+  },
+  {
+   "athlete_id": "3056730",
+   "name": "Karlie Samuelson",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 23.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 180,
+   "sample": {
+    "games": 32,
+    "wins": 12,
+    "losses": 20,
+    "minutes": 514
+   },
+   "averages": {
+    "min": 16.1,
+    "pts": 4.8,
+    "reb": 1.5,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 7.7,
+    "win_rate": 37.5,
+    "winning_output_share": 32.2,
+    "court_share": 40.2
+   },
+   "raw": {
+    "box_impact_per36": 17.71,
+    "box_impact_total": 252.8,
+    "winning_box_impact": 81.5,
+    "avg_minutes": 16.1
+   }
+  },
+  {
+   "athlete_id": "3142327",
+   "name": "Kia Nurse",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 23,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 181,
+   "sample": {
+    "games": 43,
+    "wins": 11,
+    "losses": 32,
+    "minutes": 617
+   },
+   "averages": {
+    "min": 14.3,
+    "pts": 5.5,
+    "reb": 1.2,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 23.1,
+    "win_rate": 25.6,
+    "winning_output_share": 13.4,
+    "court_share": 35.9
+   },
+   "raw": {
+    "box_impact_per36": 21.27,
+    "box_impact_total": 364.5,
+    "winning_box_impact": 48.7,
+    "avg_minutes": 14.3
+   }
+  },
+  {
+   "athlete_id": "5105729",
+   "name": "Chance Gray",
+   "team_id": "6",
+   "season": 2026,
+   "score": 22.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 182,
+   "sample": {
+    "games": 40,
+    "wins": 13,
+    "losses": 27,
+    "minutes": 457
+   },
+   "averages": {
+    "min": 11.4,
+    "pts": 3.1,
+    "reb": 1.1,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 11.3,
+    "win_rate": 32.5,
+    "winning_output_share": 31.5,
+    "court_share": 28.6
+   },
+   "raw": {
+    "box_impact_per36": 18.68,
+    "box_impact_total": 237.1,
+    "winning_box_impact": 74.6,
+    "avg_minutes": 11.4
+   }
+  },
+  {
+   "athlete_id": "5209202",
+   "name": "Nyadiew Puoch",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 21.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 183,
+   "sample": {
+    "games": 42,
+    "wins": 15,
+    "losses": 27,
+    "minutes": 775
+   },
+   "averages": {
+    "min": 18.5,
+    "pts": 4.3,
+    "reb": 2.2,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 1.5,
+    "win_rate": 35.7,
+    "winning_output_share": 37.2,
+    "court_share": 46.1
+   },
+   "raw": {
+    "box_impact_per36": 15.71,
+    "box_impact_total": 338.2,
+    "winning_box_impact": 125.9,
+    "avg_minutes": 18.5
+   }
+  },
+  {
+   "athlete_id": "3058892",
+   "name": "Lexie Brown",
+   "team_id": "14",
+   "season": 2026,
+   "score": 21.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 184,
+   "sample": {
+    "games": 10,
+    "wins": 3,
+    "losses": 7,
+    "minutes": 149
+   },
+   "averages": {
+    "min": 14.9,
+    "pts": 3.8,
+    "reb": 1.3,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 3.6,
+    "win_rate": 30,
+    "winning_output_share": 44.5,
+    "court_share": 37.3
+   },
+   "raw": {
+    "box_impact_per36": 16.94,
+    "box_impact_total": 70.1,
+    "winning_box_impact": 31.2,
+    "avg_minutes": 14.9
+   }
+  },
+  {
+   "athlete_id": "4898898",
+   "name": "Gianna Kneepkens",
+   "team_id": "18",
+   "season": 2026,
+   "score": 21.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 185,
+   "sample": {
+    "games": 35,
+    "wins": 8,
+    "losses": 27,
+    "minutes": 368
+   },
+   "averages": {
+    "min": 10.5,
+    "pts": 3.6,
+    "reb": 1.4,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 21.5,
+    "win_rate": 22.9,
+    "winning_output_share": 16.9,
+    "court_share": 26.3
+   },
+   "raw": {
+    "box_impact_per36": 21.13,
+    "box_impact_total": 216,
+    "winning_box_impact": 36.4,
+    "avg_minutes": 10.5
+   }
+  },
+  {
+   "athlete_id": "4281930",
+   "name": "Anneli Maley",
+   "team_id": "9",
+   "season": 2026,
+   "score": 21.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 186,
+   "sample": {
+    "games": 10,
+    "wins": 4,
+    "losses": 6,
+    "minutes": 83
+   },
+   "averages": {
+    "min": 8.3,
+    "pts": 0.8,
+    "reb": 1.2,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 0,
+    "win_rate": 40,
+    "winning_output_share": 45.8,
+    "court_share": 20.8
+   },
+   "raw": {
+    "box_impact_per36": 12.32,
+    "box_impact_total": 28.4,
+    "winning_box_impact": 13,
+    "avg_minutes": 8.3
+   }
+  },
+  {
+   "athlete_id": "4433424",
+   "name": "Maddy Westbeld",
+   "team_id": "11",
+   "season": 2026,
+   "score": 20.4,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 187,
+   "sample": {
+    "games": 10,
+    "wins": 3,
+    "losses": 7,
+    "minutes": 122
+   },
+   "averages": {
+    "min": 12.2,
+    "pts": 2.6,
+    "reb": 1.8,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 3.1,
+    "win_rate": 30,
+    "winning_output_share": 42.2,
+    "court_share": 30.5
+   },
+   "raw": {
+    "box_impact_per36": 16.7,
+    "box_impact_total": 56.6,
+    "winning_box_impact": 23.9,
+    "avg_minutes": 12.2
+   }
+  },
+  {
+   "athlete_id": "2529183",
+   "name": "Stefanie Dolson",
+   "team_id": "14",
+   "season": 2026,
+   "score": 19.1,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 188,
+   "sample": {
+    "games": 44,
+    "wins": 8,
+    "losses": 36,
+    "minutes": 659
+   },
+   "averages": {
+    "min": 15,
+    "pts": 3.3,
+    "reb": 2.4,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 11.8,
+    "win_rate": 18.2,
+    "winning_output_share": 27.8,
+    "court_share": 37.4
+   },
+   "raw": {
+    "box_impact_per36": 18.99,
+    "box_impact_total": 347.7,
+    "winning_box_impact": 96.5,
+    "avg_minutes": 15
+   }
+  },
+  {
+   "athlete_id": "4874375",
+   "name": "Jihyun Park",
+   "team_id": "6",
+   "season": 2026,
+   "score": 18.5,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 189,
+   "sample": {
+    "games": 36,
+    "wins": 12,
+    "losses": 24,
+    "minutes": 327
+   },
+   "averages": {
+    "min": 9.1,
+    "pts": 2.2,
+    "reb": 1,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 4.1,
+    "win_rate": 33.3,
+    "winning_output_share": 30.4,
+    "court_share": 22.7
+   },
+   "raw": {
+    "box_impact_per36": 17,
+    "box_impact_total": 154.4,
+    "winning_box_impact": 46.9,
+    "avg_minutes": 9.1
+   }
+  },
+  {
+   "athlete_id": "3917453",
+   "name": "Katie Lou Samuelson",
+   "team_id": "14",
+   "season": 2026,
+   "score": 18.3,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 190,
+   "sample": {
+    "games": 32,
+    "wins": 5,
+    "losses": 27,
+    "minutes": 489
+   },
+   "averages": {
+    "min": 15.3,
+    "pts": 4.4,
+    "reb": 2.1,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 12.8,
+    "win_rate": 15.6,
+    "winning_output_share": 24.1,
+    "court_share": 38.2
+   },
+   "raw": {
+    "box_impact_per36": 19.24,
+    "box_impact_total": 261.4,
+    "winning_box_impact": 63,
+    "avg_minutes": 15.3
+   }
+  },
+  {
+   "athlete_id": "4898400",
+   "name": "Taylor Thierry",
+   "team_id": "14",
+   "season": 2026,
+   "score": 17.9,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 191,
+   "sample": {
+    "games": 17,
+    "wins": 5,
+    "losses": 12,
+    "minutes": 166
+   },
+   "averages": {
+    "min": 9.8,
+    "pts": 1.9,
+    "reb": 1.7,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 5.6,
+    "win_rate": 29.4,
+    "winning_output_share": 27.9,
+    "court_share": 24.4
+   },
+   "raw": {
+    "box_impact_per36": 17.31,
+    "box_impact_total": 79.8,
+    "winning_box_impact": 22.3,
+    "avg_minutes": 9.8
+   }
+  },
+  {
+   "athlete_id": "5106232",
+   "name": "Ashlon Jackson",
+   "team_id": "18",
+   "season": 2026,
+   "score": 17.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 192,
+   "sample": {
+    "games": 19,
+    "wins": 5,
+    "losses": 14,
+    "minutes": 258
+   },
+   "averages": {
+    "min": 13.6,
+    "pts": 3.4,
+    "reb": 1.3,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 2.6,
+    "win_rate": 26.3,
+    "winning_output_share": 33,
+    "court_share": 33.9
+   },
+   "raw": {
+    "box_impact_per36": 16.3,
+    "box_impact_total": 116.8,
+    "winning_box_impact": 38.6,
+    "avg_minutes": 13.6
+   }
+  },
+  {
+   "athlete_id": "4282168",
+   "name": "Kiana Williams",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 17.2,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 193,
+   "sample": {
+    "games": 24,
+    "wins": 5,
+    "losses": 19,
+    "minutes": 311
+   },
+   "averages": {
+    "min": 13,
+    "pts": 4.1,
+    "reb": 0.4,
+    "ast": 1.2
+   },
+   "components": {
+    "production_percentile": 8.2,
+    "win_rate": 20.8,
+    "winning_output_share": 25.3,
+    "court_share": 32.4
+   },
+   "raw": {
+    "box_impact_per36": 17.77,
+    "box_impact_total": 153.5,
+    "winning_box_impact": 38.9,
+    "avg_minutes": 13
+   }
+  },
+  {
+   "athlete_id": "4434020",
+   "name": "Teonni Key",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 16.8,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 194,
+   "sample": {
+    "games": 38,
+    "wins": 10,
+    "losses": 28,
+    "minutes": 433
+   },
+   "averages": {
+    "min": 11.4,
+    "pts": 2.2,
+    "reb": 2.2,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 7.2,
+    "win_rate": 26.3,
+    "winning_output_share": 21,
+    "court_share": 28.5
+   },
+   "raw": {
+    "box_impact_per36": 17.66,
+    "box_impact_total": 212.4,
+    "winning_box_impact": 44.5,
+    "avg_minutes": 11.4
+   }
+  },
+  {
+   "athlete_id": "5364343",
+   "name": "Ornella Bankole",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 13.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 195,
+   "sample": {
+    "games": 14,
+    "wins": 2,
+    "losses": 12,
+    "minutes": 208
+   },
+   "averages": {
+    "min": 14.9,
+    "pts": 3.4,
+    "reb": 2.3,
+    "ast": 1.1
+   },
+   "components": {
+    "production_percentile": 10.8,
+    "win_rate": 14.3,
+    "winning_output_share": 8.1,
+    "court_share": 37.1
+   },
+   "raw": {
+    "box_impact_per36": 18.68,
+    "box_impact_total": 107.9,
+    "winning_box_impact": 8.7,
+    "avg_minutes": 14.9
+   }
+  },
+  {
+   "athlete_id": "5106222",
+   "name": "Taina Mair",
+   "team_id": "14",
+   "season": 2026,
+   "score": 7.7,
+   "status": "QUALIFIED",
+   "qualified": true,
+   "rank": 196,
+   "sample": {
+    "games": 10,
+    "wins": 1,
+    "losses": 9,
+    "minutes": 52
+   },
+   "averages": {
+    "min": 5.2,
+    "pts": 1.3,
+    "reb": 0.4,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 6.7,
+    "win_rate": 10,
+    "winning_output_share": 4.7,
+    "court_share": 13
+   },
+   "raw": {
+    "box_impact_per36": 17.52,
+    "box_impact_total": 25.3,
+    "winning_box_impact": 1.2,
+    "avg_minutes": 5.2
+   }
+  },
+  {
+   "athlete_id": "3916514",
+   "name": "Kalani Brown",
+   "team_id": "17",
+   "season": 2026,
+   "score": 91.4,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 3,
+    "losses": 0,
+    "minutes": 17
+   },
+   "averages": {
+    "min": 5.7,
+    "pts": 6,
+    "reb": 1.7,
+    "ast": 0.3
+   },
+   "components": {
+    "production_percentile": 100,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 14.2
+   },
+   "raw": {
+    "box_impact_per36": 54,
+    "box_impact_total": 25.5,
+    "winning_box_impact": 25.5,
+    "avg_minutes": 5.7
+   }
+  },
+  {
+   "athlete_id": "5106145",
+   "name": "Darianna Littlepage-Buggs",
+   "team_id": "16",
+   "season": 2026,
+   "score": 81.6,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 3,
+    "losses": 0,
+    "minutes": 7
+   },
+   "averages": {
+    "min": 2.3,
+    "pts": 1.7,
+    "reb": 0.3,
+    "ast": 0
+   },
+   "components": {
+    "production_percentile": 80,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 5.8
+   },
+   "raw": {
+    "box_impact_per36": 31.89,
+    "box_impact_total": 6.2,
+    "winning_box_impact": 6.2,
+    "avg_minutes": 2.3
+   }
+  },
+  {
+   "athlete_id": "3058895",
+   "name": "Brionna Jones",
+   "team_id": "20",
+   "season": 2026,
+   "score": 81.2,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 9,
+    "wins": 7,
+    "losses": 2,
+    "minutes": 152
+   },
+   "averages": {
+    "min": 16.9,
+    "pts": 8.2,
+    "reb": 5.6,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 92.8,
+    "win_rate": 77.8,
+    "winning_output_share": 78.7,
+    "court_share": 42.2
+   },
+   "raw": {
+    "box_impact_per36": 38.13,
+    "box_impact_total": 161,
+    "winning_box_impact": 126.7,
+    "avg_minutes": 16.9
+   }
+  },
+  {
+   "athlete_id": "4433630",
+   "name": "Rickea Jackson",
+   "team_id": "19",
+   "season": 2026,
+   "score": 76,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 4,
+    "wins": 3,
+    "losses": 1,
+    "minutes": 118
+   },
+   "averages": {
+    "min": 29.5,
+    "pts": 18,
+    "reb": 4.8,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 81.5,
+    "win_rate": 75,
+    "winning_output_share": 66.1,
+    "court_share": 73.8
+   },
+   "raw": {
+    "box_impact_per36": 32.58,
+    "box_impact_total": 106.8,
+    "winning_box_impact": 70.6,
+    "avg_minutes": 29.5
+   }
+  },
+  {
+   "athlete_id": "2566110",
+   "name": "Julie Vanloo",
+   "team_id": "9",
+   "season": 2026,
+   "score": 73.7,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 5,
+    "wins": 3,
+    "losses": 2,
+    "minutes": 81
+   },
+   "averages": {
+    "min": 16.2,
+    "pts": 5.8,
+    "reb": 2,
+    "ast": 5.4
+   },
+   "components": {
+    "production_percentile": 89.2,
+    "win_rate": 60,
+    "winning_output_share": 72.5,
+    "court_share": 40.5
+   },
+   "raw": {
+    "box_impact_per36": 36.22,
+    "box_impact_total": 81.5,
+    "winning_box_impact": 59.1,
+    "avg_minutes": 16.2
+   }
+  },
+  {
+   "athlete_id": "4433416",
+   "name": "Madison Scott",
+   "team_id": "9",
+   "season": 2026,
+   "score": 70.6,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 1,
+    "losses": 1,
+    "minutes": 6
+   },
+   "averages": {
+    "min": 3,
+    "pts": 2,
+    "reb": 0,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 83.1,
+    "win_rate": 50,
+    "winning_output_share": 100,
+    "court_share": 7.5
+   },
+   "raw": {
+    "box_impact_per36": 33,
+    "box_impact_total": 5.5,
+    "winning_box_impact": 5.5,
+    "avg_minutes": 3
+   }
+  },
+  {
+   "athlete_id": "4433634",
+   "name": "Ashten Prechtel",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 64.1,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 6,
+    "wins": 6,
+    "losses": 0,
+    "minutes": 44
+   },
+   "averages": {
+    "min": 7.3,
+    "pts": 1.8,
+    "reb": 1.8,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 38.5,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 18.3
+   },
+   "raw": {
+    "box_impact_per36": 23.48,
+    "box_impact_total": 28.7,
+    "winning_box_impact": 28.7,
+    "avg_minutes": 7.3
+   }
+  },
+  {
+   "athlete_id": "4068161",
+   "name": "Joyner Holmes",
+   "team_id": "14",
+   "season": 2026,
+   "score": 64,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 1,
+    "wins": 1,
+    "losses": 0,
+    "minutes": 15
+   },
+   "averages": {
+    "min": 15,
+    "pts": 2,
+    "reb": 5,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 33.8,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 37.5
+   },
+   "raw": {
+    "box_impact_per36": 22.8,
+    "box_impact_total": 9.5,
+    "winning_box_impact": 9.5,
+    "avg_minutes": 15
+   }
+  },
+  {
+   "athlete_id": "4898383",
+   "name": "Bree Hall",
+   "team_id": "5",
+   "season": 2026,
+   "score": 61,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 5,
+    "wins": 3,
+    "losses": 2,
+    "minutes": 27
+   },
+   "averages": {
+    "min": 5.4,
+    "pts": 3.2,
+    "reb": 1.2,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 82.6,
+    "win_rate": 60,
+    "winning_output_share": 37.2,
+    "court_share": 13.5
+   },
+   "raw": {
+    "box_impact_per36": 32.93,
+    "box_impact_total": 24.7,
+    "winning_box_impact": 9.2,
+    "avg_minutes": 5.4
+   }
+  },
+  {
+   "athlete_id": "4688629",
+   "name": "Shay Ciezki",
+   "team_id": "11",
+   "season": 2026,
+   "score": 60,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 8,
+    "wins": 4,
+    "losses": 4,
+    "minutes": 125
+   },
+   "averages": {
+    "min": 15.6,
+    "pts": 8.5,
+    "reb": 1.5,
+    "ast": 1.6
+   },
+   "components": {
+    "production_percentile": 68.2,
+    "win_rate": 50,
+    "winning_output_share": 64.4,
+    "court_share": 39.1
+   },
+   "raw": {
+    "box_impact_per36": 29.35,
+    "box_impact_total": 101.9,
+    "winning_box_impact": 65.6,
+    "avg_minutes": 15.6
+   }
+  },
+  {
+   "athlete_id": "4068346",
+   "name": "Kamiah Smalls",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 59.6,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 1,
+    "losses": 1,
+    "minutes": 30
+   },
+   "averages": {
+    "min": 15,
+    "pts": 7.5,
+    "reb": 0,
+    "ast": 3
+   },
+   "components": {
+    "production_percentile": 66.7,
+    "win_rate": 50,
+    "winning_output_share": 66.7,
+    "court_share": 37.5
+   },
+   "raw": {
+    "box_impact_per36": 28.8,
+    "box_impact_total": 24,
+    "winning_box_impact": 16,
+    "avg_minutes": 15
+   }
+  },
+  {
+   "athlete_id": "5345322",
+   "name": "Emma Cechova",
+   "team_id": "8",
+   "season": 2026,
+   "score": 58.2,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 2,
+    "losses": 1,
+    "minutes": 52
+   },
+   "averages": {
+    "min": 17.3,
+    "pts": 8.3,
+    "reb": 3.7,
+    "ast": 0
+   },
+   "components": {
+    "production_percentile": 56.4,
+    "win_rate": 66.7,
+    "winning_output_share": 59.2,
+    "court_share": 43.3
+   },
+   "raw": {
+    "box_impact_per36": 26.45,
+    "box_impact_total": 38.2,
+    "winning_box_impact": 22.6,
+    "avg_minutes": 17.3
+   }
+  },
+  {
+   "athlete_id": "4066553",
+   "name": "Aari McDonald",
+   "team_id": "8",
+   "season": 2026,
+   "score": 53.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 2,
+    "losses": 1,
+    "minutes": 46
+   },
+   "averages": {
+    "min": 15.3,
+    "pts": 7.3,
+    "reb": 0.7,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 54.9,
+    "win_rate": 66.7,
+    "winning_output_share": 40.4,
+    "court_share": 38.3
+   },
+   "raw": {
+    "box_impact_per36": 26.14,
+    "box_impact_total": 33.4,
+    "winning_box_impact": 13.5,
+    "avg_minutes": 15.3
+   }
+  },
+  {
+   "athlete_id": "4698730",
+   "name": "Kara Dunn",
+   "team_id": "11",
+   "season": 2026,
+   "score": 52.6,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 4,
+    "wins": 3,
+    "losses": 1,
+    "minutes": 60
+   },
+   "averages": {
+    "min": 15,
+    "pts": 6.5,
+    "reb": 1.5,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 26.2,
+    "win_rate": 75,
+    "winning_output_share": 91.7,
+    "court_share": 37.5
+   },
+   "raw": {
+    "box_impact_per36": 21.72,
+    "box_impact_total": 36.2,
+    "winning_box_impact": 33.2,
+    "avg_minutes": 15
+   }
+  },
+  {
+   "athlete_id": "4068104",
+   "name": "Peyton Williams",
+   "team_id": "11",
+   "season": 2026,
+   "score": 51.1,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 1,
+    "wins": 1,
+    "losses": 0,
+    "minutes": 6
+   },
+   "averages": {
+    "min": 6,
+    "pts": 0,
+    "reb": 0,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 10.3,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 15
+   },
+   "raw": {
+    "box_impact_per36": 18,
+    "box_impact_total": 3,
+    "winning_box_impact": 3,
+    "avg_minutes": 6
+   }
+  },
+  {
+   "athlete_id": "5105752",
+   "name": "Alissa Pili",
+   "team_id": "6",
+   "season": 2026,
+   "score": 47.9,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 5,
+    "wins": 2,
+    "losses": 3,
+    "minutes": 39
+   },
+   "averages": {
+    "min": 7.8,
+    "pts": 2,
+    "reb": 2.2,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 60,
+    "win_rate": 40,
+    "winning_output_share": 44.5,
+    "court_share": 19.5
+   },
+   "raw": {
+    "box_impact_per36": 26.95,
+    "box_impact_total": 29.2,
+    "winning_box_impact": 13,
+    "avg_minutes": 7.8
+   }
+  },
+  {
+   "athlete_id": "4432844",
+   "name": "Aubrey Griffin",
+   "team_id": "9",
+   "season": 2026,
+   "score": 47.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 2,
+    "losses": 0,
+    "minutes": 7
+   },
+   "averages": {
+    "min": 3.5,
+    "pts": 1,
+    "reb": 0.5,
+    "ast": 0
+   },
+   "components": {
+    "production_percentile": 3.1,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 8.8
+   },
+   "raw": {
+    "box_impact_per36": 16.46,
+    "box_impact_total": 3.2,
+    "winning_box_impact": 3.2,
+    "avg_minutes": 3.5
+   }
+  },
+  {
+   "athlete_id": "4398965",
+   "name": "Christyn Williams",
+   "team_id": "3",
+   "season": 2026,
+   "score": 47.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 2,
+    "losses": 0,
+    "minutes": 11
+   },
+   "averages": {
+    "min": 5.5,
+    "pts": 0.5,
+    "reb": 1,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 2.1,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 13.8
+   },
+   "raw": {
+    "box_impact_per36": 16.04,
+    "box_impact_total": 4.9,
+    "winning_box_impact": 4.9,
+    "avg_minutes": 5.5
+   }
+  },
+  {
+   "athlete_id": "5345473",
+   "name": "Costanza Verona",
+   "team_id": "3",
+   "season": 2026,
+   "score": 46.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 1,
+    "wins": 0,
+    "losses": 1,
+    "minutes": 6
+   },
+   "averages": {
+    "min": 6,
+    "pts": 4,
+    "reb": 0,
+    "ast": 2
+   },
+   "components": {
+    "production_percentile": 99.5,
+    "win_rate": 0,
+    "winning_output_share": 0,
+    "court_share": 15
+   },
+   "raw": {
+    "box_impact_per36": 42,
+    "box_impact_total": 7,
+    "winning_box_impact": 0,
+    "avg_minutes": 6
+   }
+  },
+  {
+   "athlete_id": "4398577",
+   "name": "Miela Sowah",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 45.9,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 7,
+    "wins": 7,
+    "losses": 0,
+    "minutes": 25
+   },
+   "averages": {
+    "min": 3.6,
+    "pts": 0.3,
+    "reb": 0.7,
+    "ast": 0
+   },
+   "components": {
+    "production_percentile": 0,
+    "win_rate": 100,
+    "winning_output_share": 100,
+    "court_share": 8.9
+   },
+   "raw": {
+    "box_impact_per36": 11.52,
+    "box_impact_total": 8,
+    "winning_box_impact": 8,
+    "avg_minutes": 3.6
+   }
+  },
+  {
+   "athlete_id": "3920741",
+   "name": "Kitija Laksa",
+   "team_id": "3",
+   "season": 2026,
+   "score": 45.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 4,
+    "wins": 3,
+    "losses": 1,
+    "minutes": 39
+   },
+   "averages": {
+    "min": 9.8,
+    "pts": 3,
+    "reb": 1.8,
+    "ast": 0
+   },
+   "components": {
+    "production_percentile": 11.8,
+    "win_rate": 75,
+    "winning_output_share": 94.1,
+    "court_share": 24.4
+   },
+   "raw": {
+    "box_impact_per36": 18.83,
+    "box_impact_total": 20.4,
+    "winning_box_impact": 19.2,
+    "avg_minutes": 9.8
+   }
+  },
+  {
+   "athlete_id": "4280877",
+   "name": "Chloe Bibby",
+   "team_id": "8",
+   "season": 2026,
+   "score": 44,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 9,
+    "wins": 5,
+    "losses": 4,
+    "minutes": 106
+   },
+   "averages": {
+    "min": 11.8,
+    "pts": 4.9,
+    "reb": 1,
+    "ast": 0.9
+   },
+   "components": {
+    "production_percentile": 33.8,
+    "win_rate": 55.6,
+    "winning_output_share": 59.4,
+    "court_share": 29.4
+   },
+   "raw": {
+    "box_impact_per36": 22.69,
+    "box_impact_total": 66.8,
+    "winning_box_impact": 39.7,
+    "avg_minutes": 11.8
+   }
+  },
+  {
+   "athlete_id": "3913680",
+   "name": "Emese Hof",
+   "team_id": "8",
+   "season": 2026,
+   "score": 43.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 1,
+    "losses": 2,
+    "minutes": 21
+   },
+   "averages": {
+    "min": 7,
+    "pts": 2.3,
+    "reb": 1.7,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 61.5,
+    "win_rate": 33.3,
+    "winning_output_share": 27.5,
+    "court_share": 17.5
+   },
+   "raw": {
+    "box_impact_per36": 27.43,
+    "box_impact_total": 16,
+    "winning_box_impact": 4.4,
+    "avg_minutes": 7
+   }
+  },
+  {
+   "athlete_id": "4433293",
+   "name": "Charisma Osborne",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 42.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 1,
+    "losses": 2,
+    "minutes": 59
+   },
+   "averages": {
+    "min": 19.7,
+    "pts": 9.7,
+    "reb": 1.7,
+    "ast": 1.3
+   },
+   "components": {
+    "production_percentile": 47.2,
+    "win_rate": 33.3,
+    "winning_output_share": 39.3,
+    "court_share": 49.2
+   },
+   "raw": {
+    "box_impact_per36": 25.02,
+    "box_impact_total": 41,
+    "winning_box_impact": 16.1,
+    "avg_minutes": 19.7
+   }
+  },
+  {
+   "athlete_id": "4433744",
+   "name": "Michelle Onyiah",
+   "team_id": "5",
+   "season": 2026,
+   "score": 42.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 1,
+    "losses": 1,
+    "minutes": 13
+   },
+   "averages": {
+    "min": 6.5,
+    "pts": 2,
+    "reb": 2.5,
+    "ast": 0
+   },
+   "components": {
+    "production_percentile": 62.6,
+    "win_rate": 50,
+    "winning_output_share": 0,
+    "court_share": 16.3
+   },
+   "raw": {
+    "box_impact_per36": 27.69,
+    "box_impact_total": 10,
+    "winning_box_impact": 0,
+    "avg_minutes": 6.5
+   }
+  },
+  {
+   "athlete_id": "3056672",
+   "name": "Mercedes Russell",
+   "team_id": "5",
+   "season": 2026,
+   "score": 38,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 7,
+    "wins": 5,
+    "losses": 2,
+    "minutes": 68
+   },
+   "averages": {
+    "min": 9.7,
+    "pts": 1.6,
+    "reb": 1.1,
+    "ast": 0.6
+   },
+   "components": {
+    "production_percentile": 1,
+    "win_rate": 71.4,
+    "winning_output_share": 86.5,
+    "court_share": 24.3
+   },
+   "raw": {
+    "box_impact_per36": 14.08,
+    "box_impact_total": 26.6,
+    "winning_box_impact": 23,
+    "avg_minutes": 9.7
+   }
+  },
+  {
+   "athlete_id": "5106170",
+   "name": "Ndjakalenga Mwenentanda",
+   "team_id": "6",
+   "season": 2026,
+   "score": 37.5,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 7,
+    "wins": 5,
+    "losses": 2,
+    "minutes": 45
+   },
+   "averages": {
+    "min": 6.4,
+    "pts": 1.3,
+    "reb": 1.3,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 14.4,
+    "win_rate": 71.4,
+    "winning_output_share": 58,
+    "court_share": 16.1
+   },
+   "raw": {
+    "box_impact_per36": 19.44,
+    "box_impact_total": 24.3,
+    "winning_box_impact": 14.1,
+    "avg_minutes": 6.4
+   }
+  },
+  {
+   "athlete_id": "4595823",
+   "name": "Alex Fowler",
+   "team_id": "9",
+   "season": 2026,
+   "score": 37.2,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 1,
+    "losses": 1,
+    "minutes": 32
+   },
+   "averages": {
+    "min": 16,
+    "pts": 6,
+    "reb": 0,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 1.5,
+    "win_rate": 50,
+    "winning_output_share": 100,
+    "court_share": 40
+   },
+   "raw": {
+    "box_impact_per36": 15.19,
+    "box_impact_total": 13.5,
+    "winning_box_impact": 13.5,
+    "avg_minutes": 16
+   }
+  },
+  {
+   "athlete_id": "4599199",
+   "name": "Morgan Maly",
+   "team_id": "19",
+   "season": 2026,
+   "score": 35.6,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 5,
+    "wins": 1,
+    "losses": 4,
+    "minutes": 70
+   },
+   "averages": {
+    "min": 14,
+    "pts": 5,
+    "reb": 2.8,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 45.6,
+    "win_rate": 20,
+    "winning_output_share": 33.1,
+    "court_share": 35
+   },
+   "raw": {
+    "box_impact_per36": 24.58,
+    "box_impact_total": 47.8,
+    "winning_box_impact": 15.8,
+    "avg_minutes": 14
+   }
+  },
+  {
+   "athlete_id": "3142242",
+   "name": "Amy Okonkwo",
+   "team_id": "132052",
+   "season": 2026,
+   "score": 32.3,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 5,
+    "wins": 1,
+    "losses": 4,
+    "minutes": 50
+   },
+   "averages": {
+    "min": 10,
+    "pts": 5.2,
+    "reb": 1.2,
+    "ast": 0.2
+   },
+   "components": {
+    "production_percentile": 47.2,
+    "win_rate": 20,
+    "winning_output_share": 17.9,
+    "court_share": 25
+   },
+   "raw": {
+    "box_impact_per36": 24.98,
+    "box_impact_total": 34.7,
+    "winning_box_impact": 6.2,
+    "avg_minutes": 10
+   }
+  },
+  {
+   "athlete_id": "4874475",
+   "name": "Nikolina Milic",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 30.7,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 7,
+    "wins": 3,
+    "losses": 4,
+    "minutes": 63
+   },
+   "averages": {
+    "min": 9,
+    "pts": 3,
+    "reb": 1.3,
+    "ast": 0.4
+   },
+   "components": {
+    "production_percentile": 19,
+    "win_rate": 42.9,
+    "winning_output_share": 46,
+    "court_share": 22.5
+   },
+   "raw": {
+    "box_impact_per36": 20.74,
+    "box_impact_total": 36.3,
+    "winning_box_impact": 16.7,
+    "avg_minutes": 9
+   }
+  },
+  {
+   "athlete_id": "5107515",
+   "name": "Laura Ziegler",
+   "team_id": "6",
+   "season": 2026,
+   "score": 29.6,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 1,
+    "losses": 2,
+    "minutes": 29
+   },
+   "averages": {
+    "min": 9.7,
+    "pts": 2.7,
+    "reb": 1.3,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 24.6,
+    "win_rate": 33.3,
+    "winning_output_share": 38.7,
+    "court_share": 24.2
+   },
+   "raw": {
+    "box_impact_per36": 21.48,
+    "box_impact_total": 17.3,
+    "winning_box_impact": 6.7,
+    "avg_minutes": 9.7
+   }
+  },
+  {
+   "athlete_id": "4433792",
+   "name": "Rayah Marshall",
+   "team_id": "18",
+   "season": 2026,
+   "score": 29.4,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 5,
+    "wins": 0,
+    "losses": 5,
+    "minutes": 35
+   },
+   "averages": {
+    "min": 7,
+    "pts": 2,
+    "reb": 1.8,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 61.5,
+    "win_rate": 0,
+    "winning_output_share": 0,
+    "court_share": 17.5
+   },
+   "raw": {
+    "box_impact_per36": 27.57,
+    "box_impact_total": 26.8,
+    "winning_box_impact": 0,
+    "avg_minutes": 7
+   }
+  },
+  {
+   "athlete_id": "5447776",
+   "name": "Aminata Gueye",
+   "team_id": "129689",
+   "season": 2026,
+   "score": 26,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 1,
+    "wins": 1,
+    "losses": 0,
+    "minutes": 4
+   },
+   "averages": {
+    "min": 4,
+    "pts": 0,
+    "reb": 0,
+    "ast": 0
+   },
+   "components": {
+    "production_percentile": 0,
+    "win_rate": 100,
+    "winning_output_share": 0,
+    "court_share": 10
+   },
+   "raw": {
+    "box_impact_per36": 0,
+    "box_impact_total": 0,
+    "winning_box_impact": 0,
+    "avg_minutes": 4
+   }
+  },
+  {
+   "athlete_id": "5278157",
+   "name": "Alex Wilson",
+   "team_id": "16",
+   "season": 2026,
+   "score": 24.9,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 4,
+    "wins": 2,
+    "losses": 2,
+    "minutes": 58
+   },
+   "averages": {
+    "min": 14.5,
+    "pts": 3,
+    "reb": 1.8,
+    "ast": 0.8
+   },
+   "components": {
+    "production_percentile": 1.5,
+    "win_rate": 50,
+    "winning_output_share": 40.6,
+    "court_share": 36.3
+   },
+   "raw": {
+    "box_impact_per36": 15.46,
+    "box_impact_total": 24.9,
+    "winning_box_impact": 10.1,
+    "avg_minutes": 14.5
+   }
+  },
+  {
+   "athlete_id": "4434015",
+   "name": "JJ Quinerly",
+   "team_id": "3",
+   "season": 2026,
+   "score": 22.9,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 1,
+    "losses": 1,
+    "minutes": 13
+   },
+   "averages": {
+    "min": 6.5,
+    "pts": 1,
+    "reb": 0.5,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 5.1,
+    "win_rate": 50,
+    "winning_output_share": 32.3,
+    "court_share": 16.3
+   },
+   "raw": {
+    "box_impact_per36": 17.17,
+    "box_impact_total": 6.2,
+    "winning_box_impact": 2,
+    "avg_minutes": 6.5
+   }
+  },
+  {
+   "athlete_id": "4433808",
+   "name": "Shyanne Sellers",
+   "team_id": "6",
+   "season": 2026,
+   "score": 22.4,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 2,
+    "wins": 1,
+    "losses": 1,
+    "minutes": 21
+   },
+   "averages": {
+    "min": 10.5,
+    "pts": 2,
+    "reb": 1,
+    "ast": 1
+   },
+   "components": {
+    "production_percentile": 2.1,
+    "win_rate": 50,
+    "winning_output_share": 31.9,
+    "court_share": 26.3
+   },
+   "raw": {
+    "box_impact_per36": 16.11,
+    "box_impact_total": 9.4,
+    "winning_box_impact": 3,
+    "avg_minutes": 10.5
+   }
+  },
+  {
+   "athlete_id": "4433542",
+   "name": "Saylor Poffenbarger",
+   "team_id": "11",
+   "season": 2026,
+   "score": 22.1,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 7,
+    "wins": 3,
+    "losses": 4,
+    "minutes": 48
+   },
+   "averages": {
+    "min": 6.9,
+    "pts": 0.4,
+    "reb": 1.4,
+    "ast": 0.1
+   },
+   "components": {
+    "production_percentile": 0.5,
+    "win_rate": 42.9,
+    "winning_output_share": 47.3,
+    "court_share": 17.1
+   },
+   "raw": {
+    "box_impact_per36": 12.38,
+    "box_impact_total": 16.5,
+    "winning_box_impact": 7.8,
+    "avg_minutes": 6.9
+   }
+  },
+  {
+   "athlete_id": "2491232",
+   "name": "Kayla Alexander",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 17.7,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 4,
+    "wins": 0,
+    "losses": 4,
+    "minutes": 40
+   },
+   "averages": {
+    "min": 10,
+    "pts": 2.3,
+    "reb": 2.8,
+    "ast": 0.5
+   },
+   "components": {
+    "production_percentile": 33.8,
+    "win_rate": 0,
+    "winning_output_share": 0,
+    "court_share": 25
+   },
+   "raw": {
+    "box_impact_per36": 22.68,
+    "box_impact_total": 25.2,
+    "winning_box_impact": 0,
+    "avg_minutes": 10
+   }
+  },
+  {
+   "athlete_id": "3904479",
+   "name": "Mariella Fasoula",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 13.9,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 0,
+    "losses": 3,
+    "minutes": 15
+   },
+   "averages": {
+    "min": 5,
+    "pts": 1.3,
+    "reb": 1,
+    "ast": 0.3
+   },
+   "components": {
+    "production_percentile": 28.2,
+    "win_rate": 0,
+    "winning_output_share": 0,
+    "court_share": 12.5
+   },
+   "raw": {
+    "box_impact_per36": 21.84,
+    "box_impact_total": 9.1,
+    "winning_box_impact": 0,
+    "avg_minutes": 5
+   }
+  },
+  {
+   "athlete_id": "4398766",
+   "name": "Zaay Green",
+   "team_id": "131935",
+   "season": 2026,
+   "score": 2.9,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 7,
+    "wins": 0,
+    "losses": 7,
+    "minutes": 67
+   },
+   "averages": {
+    "min": 9.6,
+    "pts": 2.1,
+    "reb": 1,
+    "ast": 0.1
+   },
+   "components": {
+    "production_percentile": 1,
+    "win_rate": 0,
+    "winning_output_share": 0,
+    "court_share": 23.9
+   },
+   "raw": {
+    "box_impact_per36": 13.38,
+    "box_impact_total": 24.9,
+    "winning_box_impact": 0,
+    "avg_minutes": 9.6
+   }
+  },
+  {
+   "athlete_id": "4433795",
+   "name": "Sania Feagin",
+   "team_id": "6",
+   "season": 2026,
+   "score": 1.5,
+   "status": "PROVISIONAL",
+   "qualified": false,
+   "rank": null,
+   "sample": {
+    "games": 3,
+    "wins": 0,
+    "losses": 3,
+    "minutes": 10
+   },
+   "averages": {
+    "min": 3.3,
+    "pts": 0,
+    "reb": 0.3,
+    "ast": 0.7
+   },
+   "components": {
+    "production_percentile": 1.5,
+    "win_rate": 0,
+    "winning_output_share": 0,
+    "court_share": 8.3
+   },
+   "raw": {
+    "box_impact_per36": 15.12,
+    "box_impact_total": 4.2,
+    "winning_box_impact": 0,
+    "avg_minutes": 3.3
+   }
+  }
+ ]
+}

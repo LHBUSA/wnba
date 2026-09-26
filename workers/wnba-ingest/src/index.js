@@ -24,12 +24,12 @@ import { upsert, insert, supabaseConfigured } from '../../shared/supabase.js';
 import { etCompact, addDays, etHour } from '../../shared/time.js';
 import { pbeTask } from './pbe-runner.js';
 import { playoffsTask, playoffsDue } from './playoffs-task.js';
-import { buildWinbaSnapshot, buildWinbaSnapshotAsOf } from '../../shared/winba.js';
+import { buildWinbaSnapshot, buildWinbaSnapshotAsOf, WINBA_VERSION } from '../../shared/winba.js';
 import { dnaTask, DNA_FORCE_HOUR_ET, DNA_FORCE_MINUTE } from './dna-task.js';
 import { readIndex, resolveCatalog, readArchive, latestRegularSeason } from '../../shared/archive-reader.js';
 
 const SERVICE = 'wnba-ingest';
-const VERSION = '1.3.0'; // 1.3.0: WinBA + history-dryrun read the archive through the bounded season-aware reader (no slice(-500)). 1.2.0: dna task (Player DNA V1 derive). 1.1.0: playoffs task (postseason bracket snapshot)
+const VERSION = '1.4.0'; // 1.4.0: WinBA winba/1.0.1 (tip-order reader + builder); the board rebuilds when its version differs, POST /run/winba?force=1. 1.3.0: WinBA + history-dryrun read the archive through the bounded season-aware reader (no slice(-500)). 1.2.0: dna task (Player DNA V1 derive). 1.1.0: playoffs task (postseason bracket snapshot)
 const PBE_RELEASE = 'pbe-live-final-sync-2026-09-20';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
@@ -84,7 +84,7 @@ export default {
       const seasonParam = url.searchParams.get('season');
       if (m[1] === 'playoffs' && seasonParam && !/^20\d\d$/.test(seasonParam)) return j({ ok: false, error: 'bad_season' }, 400);
       const opts = m[1] === 'playoffs' ? { season: seasonParam ? Number(seasonParam) : null, force: url.searchParams.get('force') === '1' }
-        : m[1] === 'dna' ? { force: url.searchParams.get('force') === '1' } : undefined;
+        : m[1] === 'dna' || m[1] === 'winba' ? { force: url.searchParams.get('force') === '1' } : undefined;
       const result = await runTasks(env, ctx, [m[1]], 'manual', opts);
       return j({ ok: true, result });
     }
@@ -219,7 +219,8 @@ async function runTasks(env, ctx, tasks, trigger, opts) {
 
 // pbe: PBE WNBA runner (pbe-runner.js). PBE_MODE off | dry_run | armed; it decides per game whether anything is due.
 const TASKS = {
-  live, availability, backfill, winba, schedule, reference, odds,
+  live, availability, backfill, schedule, reference, odds,
+  winba: (env, ctx, opts) => winba(env, { force: Boolean(opts?.force) }),
   pbe: (env) => pbeTask(env),
   playoffs: (env, ctx, opts) => playoffsTask(env, opts || {}),
   dna: (env, ctx, opts, results) => dnaTask(env, { force: Boolean(opts?.force), results }),
@@ -386,7 +387,9 @@ async function winba(env, { force = false } = {}) {
 
   const signature = `${ids.length}:${ids.at(-1) || ''}`;
   const existing = await env.WNBA_KV.get('winba:v1:latest', 'json');
-  if (!force && existing?.archive_signature === signature) {
+  // A board stamped by another WinBA version is rebuilt even on an unchanged archive (promotion and
+  // rollback both take effect on the next run, with no KV surgery).
+  if (!force && existing?.archive_signature === signature && existing?.version === WINBA_VERSION) {
     return {
       skipped: 'unchanged_archive',
       season: existing.season,
@@ -396,14 +399,15 @@ async function winba(env, { force = false } = {}) {
     };
   }
 
-  // Every archived regular-season game of the latest season, in archive-index order (the order
-  // every published board was built in: the aggregate takes a player's team from the last game it
-  // processes). Fails closed on an unreadable game; other seasons are never read.
+  // Every archived regular-season game of the latest season, in tip-off order (winba/1.0.1: the
+  // aggregate takes a player's team from her latest game; the builder re-sorts by the same rule, so
+  // the board is independent of archive-index order). Fails closed on an unreadable game; other
+  // seasons are never read. Boards up to winba/1.0.0 were built in archive-index order.
   const index = await readIndex(env.WNBA_KV);
   const catalog = await resolveCatalog(env.WNBA_KV, index, { writeCatalog: true });
   const season = latestRegularSeason(catalog.entries);
   if (season === null) return { skipped: 'no_regular_season_archives' };
-  const { docs, docs_read: docsRead } = await readArchive(env.WNBA_KV, { ids: index, catalog, select: (e) => e.s === season && e.t === 2, order: 'index' });
+  const { docs, docs_read: docsRead } = await readArchive(env.WNBA_KV, { ids: index, catalog, select: (e) => e.s === season && e.t === 2, order: 'tip' });
   const snapshot = buildWinbaSnapshot(docs, { season });
   const stored = {
     ...snapshot,

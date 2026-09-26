@@ -333,6 +333,7 @@ export function lineTotals(row, g, oppStrength) {
 export function aggregatePlayers(games) {
   const { byTeam, out: oppStrength } = opponentStrength(games);
   const players = new Map();
+  const noAppearanceIdentity = new Map();
   const get = (id) => {
     if (!players.has(id)) players.set(id, { records: [], seasons: new Map(), apps: new Map(), name: null, team_id: null, last_tip: -Infinity });
     return players.get(id);
@@ -350,7 +351,14 @@ export function aggregatePlayers(games) {
       const p = get(id);
       const b = bucketsFor(p, g.season);
       b[g.season_type] = mergeTotals(b[g.season_type], t);
-      if (!t.games) continue;
+      if (!t.games) {
+        // A played row with `min: null` is not an appearance, but it does put the player in the DNA set
+        // (sample.excluded_no_minutes). Remember her latest such box row so a player with no appearance
+        // still carries her box-score identity; an appearance always wins (below).
+        const prev = noAppearanceIdentity.get(id);
+        if (!prev || g.tip_ms >= prev.tip_ms) noAppearanceIdentity.set(id, { tip_ms: g.tip_ms, name: row.name ?? null, team_id: row.team_id != null ? String(row.team_id) : null, position: row.position ?? null });
+        continue;
+      }
       p.records.push({ game_id: g.game_id, tip_ms: g.tip_ms, season: g.season, season_type: g.season_type, totals: t });
       if (g.tip_ms >= p.last_tip) { p.last_tip = g.tip_ms; p.team_id = String(row.team_id); p.name = row.name ?? p.name; p.position = row.position ?? p.position ?? null; }
       if (g.season_type === 'regular') {
@@ -363,6 +371,11 @@ export function aggregatePlayers(games) {
         p.apps.set(key, a);
       }
     }
+  }
+  // identity (display only, never a calculation input) for players whose only rows were not appearances
+  for (const [id, x] of noAppearanceIdentity) {
+    const p = players.get(id);
+    if (p.name == null && !p.records.length) { p.name = x.name; p.team_id = x.team_id; p.position = x.position; }
   }
   // availability tenure: the team's archived regular-season games between first and last appearance, per team-season
   for (const p of players.values()) {
