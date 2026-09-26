@@ -10,6 +10,7 @@
 import { routeMeta } from '../seo/meta.js';
 import { SITE } from '../seo/site.js';
 import { ROUTE_TABLE, resolveRoute } from './routes.js';
+import { reloadOnceForStaleChunk, installStaleBuildRecovery } from './stale-build.js';
 
 const PAGES = {
   today: () => import('../pages/today.js'),
@@ -105,6 +106,7 @@ function whenPainted(el) {
 }
 
 export function createRouter({ outlet, onRoute, onMounted }) {
+  if (typeof window !== 'undefined') installStaleBuildRecovery(window); // vite:preloadError -> reload once
   let current = null;
   let token = 0;
   let firstMount = true;
@@ -132,6 +134,7 @@ export function createRouter({ outlet, onRoute, onMounted }) {
     try {
       mod = await route.load();
     } catch (e) {
+      if (reloadOnceForStaleChunk(e)) return; // tab spans a deploy: old hashed chunk is gone -> reload once
       outlet.innerHTML = '<div class="empty err"><h3>Page failed to load</h3><p>Refresh to try again.</p></div>';
       return;
     }
