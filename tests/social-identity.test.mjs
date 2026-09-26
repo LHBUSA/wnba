@@ -49,3 +49,15 @@ test('no stale PropBetEdge X identity or legacy share intent in production sourc
     for (const re of STALE) assert.doesNotMatch(text, re, `${path.relative(ROOT, file)} contains ${re}`);
   }
 });
+
+test('footer: exactly one visible PropBetEdge X link, new tab, safe rel, accessible name', async () => {
+  const { shellHtml } = await import('../src/ui/shell.js');
+  const doc = String(shellHtml());
+  const footer = doc.slice(doc.indexOf('<footer'), doc.indexOf('</footer>'));
+  const anchors = [...footer.matchAll(/<a [^>]*href="https:\/\/x\.com\/PROPBETEDGE"[^>]*>[\s\S]*?<\/a>/g)].map((m) => m[0]);
+  assert.equal(anchors.length, 1);
+  assert.match(anchors[0], /target="_blank" rel="noopener noreferrer"/);
+  assert.match(anchors[0], /aria-label="Follow PropBetEdge on X \(@PROPBETEDGE\)"/);
+  assert.match(anchors[0], /<\/span> @PROPBETEDGE<\/a>$/);
+  assert.equal((doc.match(/x\.com\/PROPBETEDGE/g) || []).length, 1, 'no duplicate PropBetEdge X control anywhere in the shell');
+});

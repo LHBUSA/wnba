@@ -1,6 +1,8 @@
 // PropBetEdge network registry (shape follows LHBUSA/UFC web/lib/network.ts).
 // Discord invite is defined exactly once, network-wide.
 
+import { PROPBETEDGE_X_URL, PROPBETEDGE_X_HANDLE } from '../seo/site.js';
+
 export const PROPBETEDGE_DISCORD_URL = 'https://discord.gg/kb5zCTHbME';
 export const CURRENT_SPORT = 'wnba';
 
@@ -12,6 +14,8 @@ export const NETWORK = Object.freeze({
   // Network education layer: first-party, canonical, same-tab.
   learn: { label: 'Learn', href: 'https://learn.propbetedge.ai/' },
   discord: { label: 'Discord', href: PROPBETEDGE_DISCORD_URL },
+  // PropBetEdge's own X account: external, so it opens in a new tab (noopener noreferrer).
+  x: { label: PROPBETEDGE_X_HANDLE, href: PROPBETEDGE_X_URL, title: 'Follow PropBetEdge on X' },
   sports: [
     { key: 'mlb', label: 'MLB', name: 'Baseball Intelligence', href: 'https://mlb.propbetedge.ai/' },
     { key: 'nfl', label: 'NFL', name: 'Football Intelligence', href: 'https://nfl.propbetedge.ai/' },
