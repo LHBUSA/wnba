@@ -100,7 +100,8 @@ export async function renderRoute(pathname, api) {
     }
     case 'player-dna': {
       // Client-rendered from /v1/dna/* (prepared KV documents); the server sends a noindex placeholder the SPA replaces.
-      return out(200, routeMeta(id, { path, params }), html`<div class="dna-page"><div class="skel" style="height:320px"></div></div>`, null);
+      // dna-page--loading reserves height so the footer stays below the fold until the profile paints (no CLS).
+      return out(200, routeMeta(id, { path, params }), html`<div class="dna-page dna-page--loading"><div class="skel" style="height:320px"></div></div>`, null);
     }
     case 'team': {
       const data = await loadTeam(api, params.teamId);
