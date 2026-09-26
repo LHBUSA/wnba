@@ -2,7 +2,7 @@
 // WebSite) are always present and every page entity links to them by @id. Only facts present in the
 // data are emitted — nothing is invented to fill a schema property.
 
-import { SITE, SITE_NAME, NEWSROOM_NAME, PUBLICATION_NAME, IDS, LOGO, LANG, DESKS, TRUST_PAGES, abs } from './site.js';
+import { SITE, SITE_NAME, NEWSROOM_NAME, PUBLICATION_NAME, IDS, LOGO, LANG, DESKS, TRUST_PAGES, PROPBETEDGE_X_URL, abs } from './site.js';
 import { deskOf, articleShareImage } from './meta.js';
 import { careerMetaLine } from '../lib/player-career.js';
 import { logoEntry } from '../ui/logo.js';
@@ -22,7 +22,7 @@ export const LEAGUE = { '@type': 'SportsOrganization', name: 'Women’s National
 
 export function siteEntities() {
   return [
-    { '@type': 'Organization', '@id': IDS.org, name: 'PropBetEdge', url: 'https://propbetedge.ai/' },
+    { '@type': 'Organization', '@id': IDS.org, name: 'PropBetEdge', url: 'https://propbetedge.ai/', sameAs: [PROPBETEDGE_X_URL] },
     {
       '@type': 'NewsMediaOrganization',
       '@id': IDS.newsroom,

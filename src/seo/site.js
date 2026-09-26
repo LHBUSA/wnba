@@ -7,6 +7,10 @@ export const SITE_NAME = 'PropBetEdge WNBA';
 export const PUBLICATION_NAME = 'PropBetEdge WNBA';
 export const NEWSROOM_NAME = 'PropBetEdge WNBA Newsroom';
 export const LANG = 'en-US';
+// PropBetEdge's own network X account (official 2026-09-26). Publisher identity only:
+// league, team and player X accounts are third-party and never go here.
+export const PROPBETEDGE_X_URL = 'https://x.com/PROPBETEDGE';
+export const PROPBETEDGE_X_HANDLE = '@PROPBETEDGE';
 
 export const IDS = Object.freeze({
   org: 'https://propbetedge.ai/#org',

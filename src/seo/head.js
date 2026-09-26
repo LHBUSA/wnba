@@ -1,7 +1,7 @@
 // Server-visible <head> block. The wnba-web Worker replaces the shell's <!--seo:start-->…<!--seo:end-->
 // region with this output; the static shell keeps a site-default copy of the same block for local dev.
 
-import { SITE_NAME, SITE, LANG } from './site.js';
+import { SITE_NAME, SITE, LANG, PROPBETEDGE_X_HANDLE } from './site.js';
 import { jsonLdText } from './jsonld.js';
 
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -44,6 +44,7 @@ export function headTags(meta, graph) {
     if (meta.profile.username) tag(`<meta property="profile:username" content="${esc(meta.profile.username)}" />`);
   }
   tag('<meta name="twitter:card" content="summary_large_image" />');
+  tag(`<meta name="twitter:site" content="${PROPBETEDGE_X_HANDLE}" />`);
   tag(`<meta name="twitter:url" content="${esc(meta.url)}" />`);
   tag(`<meta name="twitter:title" content="${esc(meta.title)}" />`);
   tag(`<meta name="twitter:description" content="${esc(meta.description)}" />`);
