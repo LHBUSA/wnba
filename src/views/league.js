@@ -24,7 +24,7 @@ export function injuryList(items, tIdx, meta, state = { team: '', status: '' }) 
         <div class="who"><a href="${i.athlete_id ? `/players/${i.athlete_id}` : '#'}"><b>${i.name}</b></a> ${statusBadge(i.status)}
           <small>${[i.position, [i.side, i.body_part].filter(Boolean).join(' '), i.detail].filter(Boolean).join(' · ') || 'No detail published'}</small>
           ${i.short_comment ? html`<blockquote>${i.short_comment}</blockquote>` : ''}
-          ${i.source_return_date ? html`<small style="margin-top:6px">ESPN lists an expected return of ${fmtDateET(i.source_return_date + 'T16:00:00Z', { month: 'short', day: 'numeric' })} — source-reported, not a PropBetEdge estimate.</small>` : ''}
+          ${i.source_return_date ? html`<small style="margin-top:6px">The source lists an expected return of ${fmtDateET(i.source_return_date + 'T16:00:00Z', { month: 'short', day: 'numeric' })} — source-reported, not a PropBetEdge estimate.</small>` : ''}
         </div>
         <div class="when">Source updated<br />${fmtDateTimeET(i.source_updated_at)}<br /><span>Captured ${relTime(meta?.fetched_at)}</span></div>
       </div>`)}</div>`;
@@ -41,7 +41,7 @@ export function injuriesView({ res, teams }) {
     <div class="tiles" style="margin-bottom:16px">
       <div class="tile"><small>Listed</small><b>${items.length}</b><span>players on feed</span></div>
       <div class="tile"><small>Out</small><b>${items.filter((i) => /out/i.test(i.status || '')).length}</b><span>incl. out for season</span></div>
-      <div class="tile"><small>Day-to-day</small><b>${items.filter((i) => /day/i.test(i.status || '')).length}</b><span>status per ESPN</span></div>
+      <div class="tile"><small>Day-to-day</small><b>${items.filter((i) => /day/i.test(i.status || '')).length}</b><span>status per PropSports</span></div>
       <div class="tile"><small>Changes logged</small><b>${res.data.changes.length}</b><span>before → after</span></div>
     </div>
     <div class="controls">
@@ -59,7 +59,7 @@ export function injuriesView({ res, teams }) {
         </section>
       </aside>
     </div>
-    <div style="margin-top:16px">${sourceLine(res.meta, { label: 'ESPN injury feed' })}</div>
+    <div style="margin-top:16px">${sourceLine(res.meta, { label: 'PropSports injury feed' })}</div>
   `;
 }
 
@@ -77,11 +77,11 @@ export function standingsView({ res }) {
       ${d.groups.map((g) => html`<section class="card">
         <div class="card-head"><span class="card-title">${g.name}</span></div>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Team</th><th>W</th><th>L</th><th>PCT</th><th>GB</th><th>L10</th><th>STRK</th><th>HOME</th><th>ROAD</th><th>DIFF</th></tr></thead><tbody>
-          ${g.entries.map((t) => html`<tr><td><a class="pname" href="/teams/${t.team_id}"><span class="mono faint" style="width:16px">${t.seed ?? ''}</span>${teamLogo(t, 26)}${t.name}${t.clincher ? html`<span class="clinch" title="ESPN clinch mark">${t.clincher}</span>` : ''}</a></td><td>${t.wins}</td><td>${t.losses}</td><td>${num(t.win_pct, 3).replace(/^0/, '')}</td><td>${t.games_behind}</td><td>${t.last_ten || '—'}</td><td>${t.streak || '—'}</td><td>${t.home || '—'}</td><td>${t.road || '—'}</td><td>${signed(t.differential)}</td></tr>`)}
+          ${g.entries.map((t) => html`<tr><td><a class="pname" href="/teams/${t.team_id}"><span class="mono faint" style="width:16px">${t.seed ?? ''}</span>${teamLogo(t, 26)}${t.name}${t.clincher ? html`<span class="clinch" title="Source clinch mark">${t.clincher}</span>` : ''}</a></td><td>${t.wins}</td><td>${t.losses}</td><td>${num(t.win_pct, 3).replace(/^0/, '')}</td><td>${t.games_behind}</td><td>${t.last_ten || '—'}</td><td>${t.streak || '—'}</td><td>${t.home || '—'}</td><td>${t.road || '—'}</td><td>${signed(t.differential)}</td></tr>`)}
         </tbody></table></div>
       </section>`)}
     </div>
-    <p class="note" style="margin-top:12px">Clinch marks are ESPN’s (x = clinched a playoff berth; e/o = eliminated). Seeds as published by the source. Differential is average point margin per game. <a href="/matchups">Upcoming matchups →</a></p>
+    <p class="note" style="margin-top:12px">Clinch marks are the source’s (x = clinched a playoff berth; e/o = eliminated). Seeds as published by the source. Differential is average point margin per game. <a href="/matchups">Upcoming matchups →</a></p>
     <div style="margin-top:12px">${sourceLine(res.meta)}</div>
   `;
 }
@@ -126,7 +126,7 @@ export function playersView({ res }, state = { q: '', team: '', pos: '' }) {
   const cov = res.data.photo_coverage;
   const grid = playerGrid(all, state);
   return html`
-    ${pageHead({ eyebrow: 'Player intelligence', title: 'Players', sub: `${all.length} players on the ${res.data.teams} current WNBA rosters. Identity comes from ESPN athlete IDs; photos appear only where the image license and the person are both verified.` })}
+    ${pageHead({ eyebrow: 'Player intelligence', title: 'Players', sub: `${all.length} players on the ${res.data.teams} current WNBA rosters. Identity comes from provider athlete IDs; photos appear only where the image license and the person are both verified.` })}
     <div class="controls">
       <label class="search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search players" value="${state.q}" data-q aria-label="Search players" /></label>
       <select class="select" data-team aria-label="Team"><option value="">All teams</option>${teams.map((t) => html`<option value="${t.team_id}">${t.name}</option>`)}</select>
@@ -166,7 +166,7 @@ export function statsBody({ pl, tm, teams }, state) {
         if (k === 'winbaScore') return html`<td class="${k === state.sort ? 'hi' : ''}" title="${r.winbaScore == null ? 'WinBA unavailable' : r.winbaQualified ? `WinBA league rank #${r.winbaRank || '—'}` : 'WinBA provisional'}">${r.winbaScore == null ? '—' : num(r.winbaScore, 1)}</td>`;
         return html`<td class="${k === state.sort ? 'hi' : ''}">${num(r[k], k === 'gamesPlayed' ? 0 : 1)}</td>`;
       })}</tr>`)}
-    </tbody></table></div><div class="card-body"><p class="note">ESPN’s season leaders list includes qualified players only (${rows.length} this season). WINBA is PropBetEdge’s season winning-impact score. <a href="/winba-score">How WinBA works →</a> Provisional or unavailable scores do not replace source stats.</p>${sourceLine(pl.meta)}</div></section>`;
+    </tbody></table></div><div class="card-body"><p class="note">The season leaders list includes qualified players only (${rows.length} this season). WINBA is PropBetEdge’s season winning-impact score. <a href="/winba-score">How WinBA works →</a> Provisional or unavailable scores do not replace source stats.</p>${sourceLine(pl.meta)}</div></section>`;
   }
 
   if (!tm?.ok) return errorState(tm, 'Team stats');

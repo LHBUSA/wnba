@@ -65,7 +65,7 @@ export function teamView({ id, res, arts, wire }) {
           </tbody></table></div><div class="card-body"><p class="note">${d.rotation?.method || ''}</p></div></div>
         </section>
         <section class="section">
-          <div class="sec-head"><h2 class="sec-title bc">Season profile</h2><span class="note">per game · ESPN team totals · <a href="/stats">league stats →</a></span></div>
+          <div class="sec-head"><h2 class="sec-title bc">Season profile</h2><span class="note">per game · PropSports team totals · <a href="/stats">league stats →</a></span></div>
           <div class="tiles">
             ${[['FG%', s.fieldGoalPct], ['3P%', s.threePointFieldGoalPct], ['3PA', s.avgThreePointFieldGoalsAttempted], ['REB', s.avgRebounds], ['AST', s.avgAssists], ['TOV', s.avgTurnovers], ['STL', s.avgSteals], ['BLK', s.avgBlocks]].map(([k, v]) => html`<div class="tile"><small>${k}</small><b>${num(v)}</b></div>`)}
           </div>
@@ -75,7 +75,7 @@ export function teamView({ id, res, arts, wire }) {
         <section class="card"><div class="card-head"><span class="card-title">Availability</span><a class="sec-link" href="/injuries">Desk →</a></div><div class="card-body">
           ${d.availability?.length ? d.availability.map((i) => html`<div class="change-row">${avatar({ name: i.name }, { teamColor: t.color })}<div><a href="/players/${i.athlete_id}"><b>${i.name}</b></a><div class="note">${[i.side, i.body_part].filter(Boolean).join(' ')} · ${fmtDateET(i.source_updated_at, { month: 'short', day: 'numeric' })}</div></div>${statusBadge(i.status)}</div>`) : html`<p class="note">No players on the injury feed.</p>`}
         </div></section>
-        <section class="card"><div class="card-head"><span class="card-title">Coach</span></div><div class="card-body"><b>${d.coach?.[0] || '—'}</b><p class="note">per ESPN roster</p></div></section>
+        <section class="card"><div class="card-head"><span class="card-title">Coach</span></div><div class="card-body"><b>${d.coach?.[0] || '—'}</b><p class="note">per PropSports roster</p></div></section>
         ${recent.length ? html`<section class="card"><div class="card-head"><span class="card-title">Recent matchups</span><a class="sec-link" href="/matchups">All →</a></div><div class="card-body">
           ${recent.slice(0, 5).map((x) => { const them = x.home?.team_id === id ? x.away : x.home; return html`<p><a href="/matchups/${x.game_id}">${fmtDateET(x.start_utc, { month: 'short', day: 'numeric' })} ${x.home?.team_id === id ? 'vs' : '@'} ${them?.name || them?.abbr || ''}</a></p>`; })}
         </div></section>` : ''}

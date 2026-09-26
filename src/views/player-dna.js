@@ -176,7 +176,7 @@ export function renderCareerTrajectory(career) {
 
 export function renderFreshness(body) {
   if (!body) return '';
-  return `<div class="dna-src"><p class="note">Source: ${esc(body.source || '')}. As of ${esc(String(body.as_of || '').slice(0, 16).replace('T', ' '))} UTC · <span class="mono">${esc(body.versions?.player_dna || '')}</span> · <span class="mono">${esc(body.versions?.winba || '')}</span>.</p></div>`;
+  return `<div class="dna-src"><p class="note">Data · <a href="https://propsports.proptechusa.ai" target="_blank" rel="noopener">PropSports</a>. As of ${esc(String(body.as_of || '').slice(0, 16).replace('T', ' '))} UTC · <span class="mono">${esc(body.versions?.player_dna || '')}</span> · <span class="mono">${esc(body.versions?.winba || '')}</span>.</p></div>`;
 }
 
 /**

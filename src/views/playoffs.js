@@ -95,7 +95,7 @@ function contextCallout(d) {
   }
   const named = (d.rounds || []).flatMap((r) => r.series).filter((s) => s.status !== 'TBD').length;
   if (d.status === 'NOT_STARTED' && tbd && !named) {
-    return html`<div class="callout po-callout">ESPN has published the ${d.season} postseason schedule — ${d.provenance?.postseason_game_count ?? 0} games across ${d.rounds.length} rounds — but has not named the matchups. A series appears the moment the source lists both teams; until then every slot stays TBD. The seed table below is the final league standing as published.</div>`;
+    return html`<div class="callout po-callout">The source has published the ${d.season} postseason schedule — ${d.provenance?.postseason_game_count ?? 0} games across ${d.rounds.length} rounds — but has not named the matchups. A series appears the moment the source lists both teams; until then every slot stays TBD. The seed table below is the final league standing as published.</div>`;
   }
   if (tbd) return html`<div class="callout po-callout">${d.status === 'NOT_STARTED' ? `${named} series ${named === 1 ? 'is' : 'are'} set by the source. ` : ''}Later-round slots stay TBD until the source names both teams. PropBetEdge never projects who advances.</div>`;
   return '';
@@ -114,7 +114,7 @@ function pictureModule(d) {
         <span class="po-state po-state--${t.key}" title="${t.clinch_label ? `Source mark: ${t.clinch_code} — ${t.clinch_label}` : 'No clinch mark published'}">${t.state}</span>
       </li>`)}
     </ol>
-    <p class="note po-foot">Seeds are the league seed table (ESPN league standings, playoffSeed) and clinch states are the source’s own marks. Active / Out states come only from completed series.</p>
+    <p class="note po-foot">Seeds are the league seed table (PropSports league standings, playoffSeed) and clinch states are the source’s own marks. Active / Out states come only from completed series.</p>
   </section>`;
 }
 
@@ -202,7 +202,7 @@ export function playoffsView({ res, arts, cov }, { season = null } = {}) {
         right: html`<div class="po-head-r">${statusBadge(d.status === 'COMPLETE' ? 'FINAL' : d.status === 'IN_PROGRESS' ? (allGames(d).some((g) => g.status === 'LIVE') ? 'LIVE' : 'IN_PROGRESS') : 'UPCOMING')}<span class="po-state-l">${STATE_COPY[d.status] || d.status}</span></div>`
       })}
       ${statusTiles(d, res.meta)}
-      <div class="po-src">${sourceLine(res.meta, { label: `${d.season} postseason · bracket derived by PropBetEdge from ESPN game records` })}</div>
+      <div class="po-src">${sourceLine(res.meta, { label: `${d.season} postseason · bracket derived by PropBetEdge from PropSports game records` })}</div>
       ${contextCallout(d)}
       ${d.champion ? html`<div class="po-champ-banner"><span>${d.season} WNBA Champion</span>${teamLogo({ team_id: d.champion.team_id, abbr: d.champion.abbreviation, name: d.champion.team_name }, 40)}<b><a href="/teams/${d.champion.team_id}">${d.champion.team_name}</a></b><em>${d.champion.series_score} over ${d.champion.opponent?.team_name || ''}</em></div>` : ''}
       <section class="po-sec" id="bracket" aria-label="Bracket">${bracketBoard(d, wnbaOpts) || ''}</section>
@@ -218,7 +218,7 @@ export function playoffsView({ res, arts, cov }, { season = null } = {}) {
         ${others.map((y) => html`<a href="/playoffs?season=${y}">${y} playoffs${Number(y) < Number(d.current_season) ? ' (final)' : ''} →</a>`)}
         <a href="/cast">WNBACast →</a>
       </nav>
-      <p class="note po-method">Method: every series is built from ESPN postseason game records (round and game number from each game’s note, wins counted from final scores and checked against the source’s own series record). A matchup exists only when the source names both teams. Best-of comes from the published schedule. Seeds are the league seed table. Nothing is projected.</p>
+      <p class="note po-method">Method: every series is built from PropSports postseason game records (round and game number from each game’s note, wins counted from final scores and checked against the source’s own series record). A matchup exists only when the source names both teams. Best-of comes from the published schedule. Seeds are the league seed table. Nothing is projected.</p>
     </div>
   `;
 }

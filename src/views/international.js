@@ -66,7 +66,7 @@ export function gameTile(g, { showRound = true } = {}) {
 export function freshnessLine(meta) {
   if (!meta) return '';
   const stale = meta.stale || meta.freshness === 'STALE' || meta.freshness === 'ERROR';
-  return html`<p class="ifresh ${stale ? 'ifresh--stale' : ''}" data-fresh="${meta.fetched_at || ''}">Data: ${meta.source?.name || 'ESPN'} public data (not an official FIBA feed) · ${meta.fetched_at ? `updated ${relTime(meta.fetched_at)}` : 'update time unknown'}${stale ? ' · STALE — the provider has not refreshed recently' : ''}</p>`;
+  return html`<p class="ifresh ${stale ? 'ifresh--stale' : ''}" data-fresh="${meta.fetched_at || ''}">Data: <a href="https://propsports.proptechusa.ai" target="_blank" rel="noopener">PropSports</a> (not an official FIBA feed) · ${meta.fetched_at ? `updated ${relTime(meta.fetched_at)}` : 'update time unknown'}${stale ? ' · STALE — the provider has not refreshed recently' : ''}</p>`;
 }
 
 const intlNav = (c, here) => html`<nav class="desk-nav" aria-label="${c.short_name} sections">
@@ -110,7 +110,7 @@ export function leadersView(leaders, { compact = false } = {}) {
 export function wnbaModule(players, { title = 'WNBA at the World Cup' } = {}) {
   if (!players?.length) return '';
   return html`<section class="section iwnba">
-    <div class="sec-head"><div><h2 class="sec-title bc">${title}</h2><p class="desk-sub">${players.length} tournament players are on current WNBA rosters — matched by identical ESPN athlete ID, never by guesswork.</p></div></div>
+    <div class="sec-head"><div><h2 class="sec-title bc">${title}</h2><p class="desk-sub">${players.length} tournament players are on current WNBA rosters — matched by identical provider athlete ID, never by guesswork.</p></div></div>
     <div class="iwnba-grid">${[...players].sort((a, b) => (b.averages?.pts || 0) - (a.averages?.pts || 0)).map((p) => html`<article class="iwnba-card">
       <a class="iwnba-who" href="${playerHref(p)}">${avatar({ name: p.name, photo: p.wnba.photo || null })}<span><b>${p.name}</b><small>${flag(p.team, 12)} ${p.team.name}</small></span></a>
       <div class="iwnba-stats"><span><b>${num(p.averages?.pts)}</b> PTS</span><span><b>${num(p.averages?.reb)}</b> REB</span><span><b>${num(p.averages?.ast)}</b> AST</span><span class="note">${p.games} g</span></div>
@@ -298,7 +298,7 @@ export function intlPlayerView({ res, wnba }) {
       <h2 class="sec-title">${p.name} plays for the ${w.wnba_team?.name || 'WNBA'}</h2>
       ${wGames.length ? html`<div class="tiles" style="margin-top:12px"><div class="tile"><small>${wSeason.name}</small><b>${num(wAvg('pts'))}</b><span>PTS · ${wGames.length} games</span></div><div class="tile"><small>Rebounds</small><b>${num(wAvg('reb'))}</b><span>per game</span></div><div class="tile"><small>Assists</small><b>${num(wAvg('ast'))}</b><span>per game</span></div><div class="tile"><small>Minutes</small><b>${num(wAvg('min'))}</b><span>per game</span></div></div>` : ''}
       <p class="pill-row" style="margin-top:12px"><a class="pill on" href="/players/${w.wnba_player_id}">WNBA profile & game log</a>${w.wnba_team ? html`<a class="pill" href="/teams/${w.wnba_team.team_id}">${w.wnba_team.name}</a>` : ''}<a class="pill" href="/injuries">WNBA Injury Desk</a><a class="pill" href="/news">WNBA News</a></p>
-      <p class="note">Linked by ${w.mapping_method === 'provider_athlete_id' ? 'identical ESPN athlete ID' : w.mapping_method.replace(/_/g, ' ')} (${w.mapping_confidence} confidence).</p>
+      <p class="note">Linked by ${w.mapping_method === 'provider_athlete_id' ? 'identical provider athlete ID' : w.mapping_method.replace(/_/g, ' ')} (${w.mapping_confidence} confidence).</p>
     </section>` : ''}
     ${d.competitions.map((c) => html`<section class="section">
       <div class="sec-head"><h2 class="sec-title bc">${c.competition.name}</h2><a class="sec-link" href="/international/${c.competition.slug}">Competition →</a></div>

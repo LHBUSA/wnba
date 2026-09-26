@@ -15,8 +15,8 @@ import { relTime, fmtDateTimeET } from '../lib/format.js';
 import { storyPublishedAt } from '../lib/news-ranking.js';
 
 export const DESKS = [
-  ['injury', 'Injury Desk', 'Status changes from ESPN’s injury feed and attributed reporting: the minutes at stake and what argues against the obvious read.'],
-  ['transaction', 'Roster Moves', 'Signings, waivers, trades and hardship contracts from ESPN’s transactions log and attributed reporting.'],
+  ['injury', 'Injury Desk', 'Status changes from the PropSports injury feed and attributed reporting: the minutes at stake and what argues against the obvious read.'],
+  ['transaction', 'Roster Moves', 'Signings, waivers, trades and hardship contracts from the PropSports transactions log and attributed reporting.'],
   ['league', 'League', 'Awards, coaching and front-office changes, the playoff picture, expansion and labor — material league events, attributed and checked against PropBetEdge’s records.'],
   ['preview', 'Previews', 'Form, rest, availability and the stored market for the next slate.'],
   ['performance', 'Performances', 'Box-score stories: who carried the night and how it compares with her season.'],

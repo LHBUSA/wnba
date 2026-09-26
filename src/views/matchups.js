@@ -121,7 +121,7 @@ export function matchupView({ res, arts, winba }) {
     </section>
 
     <section class="card card-pad" style="margin-bottom:16px">
-      <div class="sec-head"><h2 class="sec-title">Season profile · ${A.team.abbr} vs ${H.team.abbr}</h2><span class="note">per game, ESPN team totals</span></div>
+      <div class="sec-head"><h2 class="sec-title">Season profile · ${A.team.abbr} vs ${H.team.abbr}</h2><span class="note">per game, PropSports team totals</span></div>
       <div class="cmp">
         ${cmp('Points scored', 'avgPoints')}
         ${cmp('Points allowed', 'opp_avgPoints', { higher: false })}
