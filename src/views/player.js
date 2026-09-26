@@ -99,6 +99,8 @@ export function playerView({ id, res, news, props, arts, intl }) {
       </div>
     </section>
 
+    <div class="dna-slot" data-dna-slot hidden></div>
+
     ${career.available ? html`<section class="card section career-card" aria-labelledby="career-totals-title">
       <div class="card-head">
         <div><span class="eyebrow">WNBA career</span><h2 class="card-title" id="career-totals-title">Career totals</h2></div>

@@ -15,6 +15,7 @@ import './styles/international.css';
 import './styles/pbe.css';
 import './styles/pbe-flagship.css';
 import './styles/player-load.css';
+import './styles/player-dna.css';
 import './styles/pro-intelligence.css';
 import './styles/prop-edge.css';
 import './styles/pbe-membership.css';

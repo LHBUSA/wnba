@@ -8,6 +8,7 @@ export const ROUTE_TABLE = [
   { id: 'matchups', re: /^\/matchups(?:\/(\d{6,12}))?$/, keys: ['gameId'] },
   { id: 'players', re: /^\/players$/ },
   { id: 'player', re: /^\/players\/(\d{3,12})$/, keys: ['playerId'] },
+  { id: 'player-dna', re: /^\/players\/(\d{3,12})\/dna$/, keys: ['playerId'] },
   { id: 'injuries', re: /^\/injuries$/ },
   { id: 'news', re: /^\/news$/ },
   { id: 'news-archive', re: /^\/news\/archive$/ },

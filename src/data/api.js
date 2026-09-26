@@ -19,6 +19,17 @@ function privateAvailable() {
   return privateReady;
 }
 
+// Player DNA (/v1/dna/*) exists only once the wnba-api release that serves it is deployed. Until /health lists the
+// route, DNA calls resolve locally as unavailable, so the browser never requests a route that does not exist
+// (no 404 noise, no console error) and every DNA surface stays inert.
+export const DNA_ROUTE = '/v1/dna/players/:id';
+let dnaReady = null;
+export function dnaAvailable() {
+  if (!dnaReady) dnaReady = getJson(`${API_BASE}/health`).then((r) => Boolean(r?.ok && Array.isArray(r.routes) && r.routes.includes(DNA_ROUTE))).catch(() => false);
+  return dnaReady;
+}
+const DNA_OFF = Object.freeze({ ok: false, data: null, error: { code: 'dna_api_unavailable' } });
+
 // Concurrent identical private GETs (the shell's boot read + the page's read of /v1/account) share one request.
 // Nothing is remembered after it settles: every later call asks the server again.
 const privateInflight = new Map();
@@ -169,6 +180,8 @@ export const api = {
   pbeGame: (id) => privateJson(`/v1/pbe/games/${encodeURIComponent(id)}`),
   pbeTeam: (id) => privateJson(`/v1/pbe/teams/${encodeURIComponent(id)}`),
   playerLoad: () => privateJson('/v1/player-load'),
+  dnaPlayer: async (id) => ((await dnaAvailable()) ? getJson(`${API_BASE}/v1/dna/players/${encodeURIComponent(id)}`) : DNA_OFF),
+  dnaMeta: async () => ((await dnaAvailable()) ? getJson(`${API_BASE}/v1/dna/meta`) : DNA_OFF),
   playerLoadPlayer: (id) => privateJson(`/v1/player-load/${encodeURIComponent(id)}`),
   propEdge: () => privateJson('/v1/pro/prop-edge'),
   trackRecordLedger: () => privateJson('/v1/track-record/ledger'),

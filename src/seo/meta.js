@@ -183,6 +183,15 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       return m({ title: `PBE Picks: WNBA Model Win Probabilities & PBE Edge | ${BRAND}`, description: 'PBE WNBA model calls: an independent win probability for every covered game, the de-vigged sportsbook consensus beside it, PBE Edge, confidence and the model reasoning. Locked 15 minutes before tip.', image: pageShareImage('pbe-picks', 'PBE Picks: WNBA Model Win Probabilities & PBE Edge — PropBetEdge WNBA') });
     case 'history':
       return m({ title: `WNBA History: Eras, Championships, Franchises & Records | ${BRAND}`, description: 'WNBA history from 1997 to today: eras, milestones, championships, franchise lineage and the PropBetEdge historical intelligence archive.', image: pageShareImage('history', 'WNBA History — eras, championships, franchises and records') });
+    case 'player-dna': {
+      // Not indexed in V1 (owner decision pending): the profile is reachable from the player page only.
+      const name = data?.player?.name;
+      return m({
+        title: name ? `${name} Player DNA: 17-Dimension WNBA Profile | ${BRAND}` : `WNBA Player DNA | ${BRAND}`,
+        description: clip(`${name ? `${name}: ` : ''}PropBetEdge WNBA Player DNA — 17 explainable dimensions as percentiles against qualified WNBA players, with sample, confidence, proxies and the canonical WinBA score.`, 300),
+        robots: NOINDEX_ROBOTS
+      });
+    }
     case 'player-load':
       return m({ title: `WNBA Player Load Intelligence: Workload, Rest & Rotation Pressure | ${BRAND}`, description: 'WNBA Pro Player Load Intelligence: a 0–100 workload and schedule-pressure index built from recent minutes, game density, turnaround, overtime and rotation context.', image: pageShareImage('player-load', 'WNBA Player Load Intelligence — PropBetEdge') });
     case 'daily-brief':

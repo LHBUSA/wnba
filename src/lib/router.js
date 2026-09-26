@@ -18,6 +18,7 @@ const PAGES = {
   matchups: () => import('../pages/matchups.js'),
   players: () => import('../pages/players.js'),
   player: () => import('../pages/player.js'),
+  'player-dna': () => import('../pages/player-dna.js'),
   injuries: () => import('../pages/injuries.js'),
   news: () => import('../pages/news.js'),
   'news-archive': () => import('../pages/news-archive.js'),

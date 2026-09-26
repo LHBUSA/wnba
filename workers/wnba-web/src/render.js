@@ -98,6 +98,10 @@ export async function renderRoute(pathname, api) {
       if (!data.res?.ok) return unavailable('This player', data.res);
       return out(200, routeMeta(id, { path, params, data: data.res.data }), playerView(data), data.res.data);
     }
+    case 'player-dna': {
+      // Client-rendered from /v1/dna/* (prepared KV documents); the server sends a noindex placeholder the SPA replaces.
+      return out(200, routeMeta(id, { path, params }), html`<div class="dna-page"><div class="skel" style="height:320px"></div></div>`, null);
+    }
     case 'team': {
       const data = await loadTeam(api, params.teamId);
       if (!data.res?.ok) {
