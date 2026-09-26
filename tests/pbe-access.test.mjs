@@ -311,11 +311,11 @@ const acctFor = async (env, email) => resolveAccount(req('/v1/account', email ? 
 const FREE_MEMBERSHIP = (email) => ({ state: 'free', label: 'FREE', entitled: false, access_source: null, product_key: null, plan: null, email, current_period_end: null, cancel_at_period_end: false, show_purchase_cta: true, show_all_access_upgrade: false, show_manage: false });
 const pickM = (m) => ({ state: m.state, label: m.label, entitled: m.entitled, access_source: m.access_source, product_key: m.product_key, plan: m.plan, email: m.email, current_period_end: m.current_period_end, cancel_at_period_end: m.cancel_at_period_end, show_purchase_cta: m.show_purchase_cta, show_all_access_upgrade: m.show_all_access_upgrade, show_manage: m.show_manage });
 
-test('membership: the Worker copy of the contract is byte-identical to the client copy and pinned to 1.1.0', () => {
+test('membership: the Worker copy of the contract is byte-identical to the client copy and pinned to 1.2.0', () => {
   const worker = fs.readFileSync(new URL('../workers/wnba-api/src/pbe-membership.js', import.meta.url), 'utf8');
   const client = fs.readFileSync(new URL('../src/lib/pbe-membership.js', import.meta.url), 'utf8');
   assert.equal(worker, client);
-  assert.equal(CONTRACT_VERSION, '1.1.0');
+  assert.equal(CONTRACT_VERSION, '1.2.0');
   assert.ok(fs.existsSync(new URL('../src/styles/pbe-membership.css', import.meta.url)));
   assert.match(fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'), /import '\.\/styles\/pbe-membership\.css';/);
 });

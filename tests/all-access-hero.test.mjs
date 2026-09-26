@@ -33,8 +33,8 @@ test('the hero carries the approved offer exactly: title, price, sports line, pr
   assert.match(hero, /<span class="wnba-aa-price" aria-label="\$29\/month"><strong>\$29<\/strong>\/month<\/span>/);
   assert.equal(ALL_ACCESS_OFFER.price, '$29/month');
   assert.match(hero, />Every current and future PropBetEdge Pro sport\.</);
-  assert.match(hero, /<b>MLB · NFL · NBA · NHL · WNBA · UFC<\/b> <span>plus every Pro sport added next\.<\/span>/);
-  assert.equal(ALL_ACCESS_SPORTS, 'MLB · NFL · NBA · NHL · WNBA · UFC');
+  assert.match(hero, /<b>MLB · NFL · NBA · NHL · WNBA · UFC · Tennis<\/b> <span>plus every Pro sport added next\.<\/span>/);
+  assert.equal(ALL_ACCESS_SPORTS, 'MLB · NFL · NBA · NHL · WNBA · UFC · Tennis');
   assert.equal(ALL_ACCESS_NEXT, 'plus every Pro sport added next.');
   assert.match(hero, /Launch offer: 25% off while active with code <b class="wnba-aa-code">THEEDGE25<\/b>/);
   assert.equal(ALL_ACCESS_OFFER.promoCode, 'THEEDGE25');

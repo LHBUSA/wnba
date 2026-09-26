@@ -30,8 +30,8 @@ const SRC = walk(SRC_DIR).filter((p) => !p.endsWith('pbe-membership.js'));
 const acct = (data) => ({ ok: true, data });
 const serverMembership = (o) => deriveMembership({ sport: 'wnba', ...o });
 
-test('client copy of the contract is the canonical 1.1.0 vocabulary', () => {
-  assert.equal(CONTRACT_VERSION, '1.1.0');
+test('client copy of the contract is the canonical 1.2.0 vocabulary', () => {
+  assert.equal(CONTRACT_VERSION, '1.2.0');
   assert.equal(read('src/lib/pbe-membership.js'), read('workers/wnba-api/src/pbe-membership.js'));
   assert.equal(membershipBadgeHtml(serverMembership({ entitled: true, accessSource: 'sport' })), '<span class="pbe-mbr-badge is-sport_pro" data-pbe-membership="sport_pro">WNBA PRO ACTIVE</span>');
   assert.match(membershipBadgeHtml(serverMembership({ entitled: true, accessSource: 'all_access' })), />ALL ACCESS ACTIVE</);

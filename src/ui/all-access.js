@@ -11,7 +11,7 @@
 import { html, raw, esc } from '../lib/dom.js';
 import { ALL_ACCESS_OFFER } from '../lib/pbe-membership.js';
 
-export const ALL_ACCESS_SPORTS = 'MLB · NFL · NBA · NHL · WNBA · UFC';
+export const ALL_ACCESS_SPORTS = 'MLB · NFL · NBA · NHL · WNBA · UFC · Tennis';
 export const ALL_ACCESS_NEXT = 'plus every Pro sport added next.';
 export const ALL_ACCESS_BADGE = 'BEST VALUE · MOST COMPLETE';
 export const WNBA_ONLY_LABEL = 'ONLY WANT WNBA?';
