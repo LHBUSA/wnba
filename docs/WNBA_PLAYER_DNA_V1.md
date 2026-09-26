@@ -309,11 +309,18 @@ over the full archive: ~0.3 s in Node.
    why. It is not Player Load and not an injury signal.
 6. The deployed `wnba-ingest` predates commit 37cc43d (its WinBA board has no `formula.layer_contract`). Scores are
    identical; noted for deploy hygiene.
-7. `ids.slice(-500)` in the WinBA / Player Load / dry-run readers will silently drop the oldest games once the
-   archive exceeds 500 games (2027 season). The DNA reader reads every id (tested with 600). **Follow-up (not done,
-   out of scope):** fix the WinBA, Player Load and history-dryrun readers. Note that once WinBA drops games, its
-   board `games_used` stops matching the archive and DNA will (correctly) refuse to attach it and stop publishing
-   (§12.1 fail-closed) — the follow-up must land before the archive passes 500 games.
+7. **Fixed in source (not deployed): `ids.slice(-500)`** in the WinBA task, the WinBA history dry-run and Player
+   Load is replaced by the bounded, season-aware reader `workers/shared/archive-reader.js`: a per-game catalog
+   (`archive:v1:catalog`: season, type, tip, completed; written only by wnba-ingest, resolved from the documents
+   once) selects exactly the documents each feature needs — WinBA: every regular-season game of the latest season,
+   in archive-index order; dry-run: the completed regular-season games of that season; Player Load: games tipped
+   inside its 28-day window. An unreadable required game fails closed. Proven byte-identical on the real 2026
+   archive (WinBA board 125,944 bytes, identical; Player Load snapshot identical at four clocks; dry-run identical
+   except the diagnostic `docs_loaded`, 350 → 332, now the documents actually read). Tested with 630 games.
+   **Owner decision open:** the WinBA aggregate takes a traded player's team from the last game it processes, and
+   the archive index is in archive order, not tip order. Switching WinBA to tip order would make it independent of
+   index order and change `team_id` for 4 traded players on the 2026 board (e.g. Kelsey Plum 6 → 11); scores are
+   unchanged. Not switched (outputs preserved exactly).
 8. **Deploying `wnba-ingest` from main also ships `winba.js` at 37cc43d** (adds `formula.layer_contract`; scores
    unchanged, verified: recomputing from the archive reproduces all 238 published scores exactly in index order).
 
@@ -357,7 +364,7 @@ winba}, …`. Nothing is computed per request; the only decoration is the photo 
 | `GET /v1/dna/index` | `schema: wnba-dna/index`, `players[]` (id, name, position, team_id, games, minutes, season_calculated, role, winba, winba_value, winba_canonical, traits, calculated scopes, headshot) sorted by canonical WinBA → minutes → name, `teams{}`, `counts` | 503 `not_derived` |
 | `GET /v1/dna/players/:id` | `schema: wnba-dna/player`, `player{id, espn_athlete_id, name, position, headshot}`, `team_id`, `team{abbr, name, short_name, color, alt_color}`, `season`, `coverage_from`, `coverage`, `versions`, `dimension_order`, `scopes` (all 9), `movement`, `winba` (canonical row, player level), `content_hash`, `archive_signature`, `provenance` | 400 `bad_request` (non-numeric id), 404 `no_snapshot` with `data.state: "UNAVAILABLE"` |
 
-`wnba-api` VERSION 1.3.0; `wnba-ingest` VERSION 1.2.0.
+`wnba-api` VERSION 1.3.0; `wnba-ingest` VERSION 1.3.0 (1.2.0 added the dna task; 1.3.0 the bounded archive reader); `wnba-player-load` VERSION 1.0.4.
 
 ### 12.3 UI rules (for the UI build)
 
@@ -392,7 +399,7 @@ node --test tests/player-dna.test.mjs tests/player-dna-derive.test.mjs
 cd workers/wnba-ingest; npx wrangler deployments list --name wnba-ingest | Select-Object -First 20   # record current version id = ROLLBACK_INGEST
 cd ../wnba-api;        npx wrangler deployments list --name wnba-api    | Select-Object -First 20   # record ROLLBACK_API
 cd ../..
-Invoke-RestMethod https://wnba-ingest.sales-fd3.workers.dev/health   # expect version 1.1.0 (pre-deploy)
+Invoke-RestMethod https://wnba-ingest.sales-fd3.workers.dev/health   # pre-deploy version (1.1.0 at the time of writing)
 ```
 
 **2. Deploy wnba-ingest (existing fail-closed script)**
@@ -400,8 +407,10 @@ Invoke-RestMethod https://wnba-ingest.sales-fd3.workers.dev/health   # expect ve
 pwsh -NoProfile -File scripts/deploy-wnba-ingest.ps1
 ```
 It refuses unless on clean pushed main, runs the PBE/playoffs tests, deploys, polls `/health` until version
-**1.2.0**, and runs the PBE and playoffs canaries. It does not run DNA. (Add `tests/player-dna*.test.mjs` to its
-test list in the same change if the owner wants it in the gate.)
+**1.3.0**, and runs the PBE and playoffs canaries. Its test gate now also runs `tests/archive-reader.test.mjs` and
+`tests/player-dna*.test.mjs`. It does not run DNA. The first `winba` run after deploy reads every indexed game once to
+build `archive:v1:catalog` (350 reads today), then only the season's games.
+Also deploy `wnba-player-load` (1.0.4) from the same SHA: `cd workers/wnba-player-load; npx wrangler deploy`.
 
 **3. First DNA run (admin, forced)**
 ```powershell

@@ -7,9 +7,10 @@ import { fetchJsonWithTimeout } from '../../shared/fetcher.js';
 import { ESPN, normalizeScoreboard } from '../../shared/espn.js';
 import { etCompact, addDays } from '../../shared/time.js';
 import { buildPlayerLoadSnapshot, PLAYER_LOAD_VERSION } from '../../shared/player-load.js';
+import { readWindowGames } from '../../shared/archive-reader.js';
 
 const SERVICE = 'wnba-player-load';
-const VERSION = '1.0.3';
+const VERSION = '1.0.4'; // 1.0.4: reads only archived games inside the lookback window (bounded reader, no slice(-500))
 const SNAPSHOT_KEY = 'player-load:v1:latest';
 const STATUS_KEY = 'player-load:v1:status';
 const REFRESH_MS = 15 * 60e3;
@@ -114,21 +115,9 @@ async function runScheduled(env) {
 }
 
 async function loadRecentArchives(env, now) {
-  const index = await env.WNBA_KV.get('archive:v1:index', 'json');
-  const ids = Array.isArray(index) ? [...new Set(index.map(String).filter(Boolean))] : [];
-  if (!ids.length) return { games: [], indexTotal: 0, scanned: 0 };
-
-  // A WNBA season is small enough to scan the persisted archive index directly.
-  // This avoids depending on a large ESPN scoreboard date-range request just to
-  // rediscover finals that PropBetEdge has already archived and verified.
-  const docs = await Promise.all(ids.slice(-500).map((id) => env.WNBA_KV.get(`game:v1:final:${id}`, 'json')));
-  const cutoff = now - WINDOW_DAYS * 86400e3;
-  const games = docs
-    .filter((a) => a?.summary?.game && Array.isArray(a.summary?.box?.players))
-    .map((a) => ({ ...a.summary.game, players: a.summary.box.players }))
-    .filter((g) => Number.isFinite(Date.parse(g.start_utc)) && Date.parse(g.start_utc) >= cutoff && Date.parse(g.start_utc) <= now)
-    .sort((a, b) => Date.parse(a.start_utc) - Date.parse(b.start_utc));
-  return { games, indexTotal: ids.length, scanned: Math.min(ids.length, 500) };
+  // Only archived finals whose tip falls inside the lookback window are read (bounded reader in
+  // workers/shared/archive-reader.js; fails closed on an unreadable game, never drops one silently).
+  return readWindowGames(env.WNBA_KV, { now, windowDays: WINDOW_DAYS });
 }
 
 async function loadUpcomingSchedule(now) {
@@ -158,7 +147,7 @@ async function refresh(env, { force = false } = {}) {
   }
 
   const now = Date.now();
-  const [{ games: recentGames, indexTotal, scanned }, upcoming] = await Promise.all([
+  const [{ games: recentGames, indexTotal, scanned, read }, upcoming] = await Promise.all([
     loadRecentArchives(env, now),
     loadUpcomingSchedule(now)
   ]);
@@ -193,7 +182,7 @@ async function refresh(env, { force = false } = {}) {
   };
   await env.WNBA_KV.put(SNAPSHOT_KEY, JSON.stringify(snapshot));
   console.log(`[${SERVICE}] ${PLAYER_LOAD_VERSION} players=${snapshot.summary.players} finals=${recentGames.length} upcoming=${upcoming.length}`);
-  return { generated_at: snapshot.generated_at, players: snapshot.summary.players, finals_archived_recent: recentGames.length, upcoming_games: upcoming.length, archive_index_total: indexTotal };
+  return { generated_at: snapshot.generated_at, players: snapshot.summary.players, finals_archived_recent: recentGames.length, upcoming_games: upcoming.length, archive_index_total: indexTotal, archives_read: read };
 }
 
 export { refresh, runScheduled };

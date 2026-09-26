@@ -37,8 +37,8 @@ $expectedVersion = [regex]::Match($ingestSrc, "const VERSION = '([^']+)'").Group
 $expectedRelease = [regex]::Match($ingestSrc, "const PBE_RELEASE = '([^']+)'").Groups[1].Value
 if (-not $expectedVersion -or -not $expectedRelease) { throw 'Could not read VERSION / PBE_RELEASE from workers/wnba-ingest/src/index.js.' }
 
-Write-Host 'Running PBE runner/runtime + playoffs tests...' -ForegroundColor Cyan
-node --test tests/pbe-runner.test.mjs tests/pbe-runtime.test.mjs tests/playoffs-normalize.test.mjs tests/playoffs-ingest.test.mjs
+Write-Host 'Running PBE runner/runtime + playoffs + archive-reader + Player DNA tests...' -ForegroundColor Cyan
+node --test tests/pbe-runner.test.mjs tests/pbe-runtime.test.mjs tests/playoffs-normalize.test.mjs tests/playoffs-ingest.test.mjs tests/archive-reader.test.mjs tests/player-dna.test.mjs tests/player-dna-derive.test.mjs
 if ($LASTEXITCODE -ne 0) { throw 'Ingest tests failed. Refusing production deploy.' }
 
 Write-Host "Deploying pushed main $local with Wrangler..." -ForegroundColor Green

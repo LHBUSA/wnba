@@ -559,3 +559,30 @@ test('empty archive or no games before as_of returns an empty, well-formed resul
   assert.deepEqual(out.players, {});
   assert.equal(out.provenance.games_used, 0);
 });
+
+// ------------------------------------------------------------------ trait-duplication regression (NBA-inherited rule)
+
+test('trait regression: the NBA player-dna/1.0.0 rule repeats a strength as a weakness with 4-5 eligible dims; wnba-player-dna/1.0.0 never does', () => {
+  assert.equal(PLAYER_DNA_VERSION, 'wnba-player-dna/1.0.0', 'this fix ships inside 1.0.0; no version change');
+  // NBA rule, reproduced for documentation: weakest = the last two eligible, even when they are also in the top 3.
+  const nbaWeakest = (eligibleKeysByScore) => eligibleKeysByScore.slice(-2).reverse();
+  const keys = ['scoring', 'efficiency', 'playmaking', 'rebounding', 'creation', 'ft_pressure', 'shooting_profile', 'defensive_activity'];
+  for (let n = 0; n <= keys.length; n += 1) {
+    const dims = Object.fromEntries(keys.slice(0, n).map((k, i) => [k, { score: 90 - i * 10, status: i % 2 ? 'PROXY' : 'LIVE', confidence: 0.9 }]));
+    dims.role = { score: 100, status: 'LIVE', confidence: 1 }; // descriptive: never a trait
+    const t = traits(dims);
+    const ranked = keys.slice(0, n);
+    assert.deepEqual(t.strongest, ranked.slice(0, 3), `n=${n} strongest`);
+    assert.ok(!t.weakest.some((k) => t.strongest.includes(k)), `n=${n}: no dimension is both a strength and a weakness`);
+    assert.equal(t.weakest.length, Math.max(0, Math.min(2, n - 3)), `n=${n} weakest count`);
+    const nbaOverlap = nbaWeakest(ranked).filter((k) => ranked.slice(0, 3).includes(k)).length;
+    if (n === 4) assert.equal(nbaOverlap, 1, 'NBA rule: one overlap with 4 eligible');
+    if (n <= 3 && n >= 2) assert.equal(nbaOverlap, 2, 'NBA rule: both weakest are strengths with 2-3 eligible');
+    if (n >= 5) assert.equal(nbaOverlap, 0);
+  }
+  // the real 2026 documents served by /v1/dna never list a dimension in both
+  for (const f of ['4433791', '5346554', '3058895']) {
+    const doc = JSON.parse(readFileSync(new URL(`./fixtures/dna/${f}.json`, import.meta.url), 'utf8')).data;
+    for (const s of Object.values(doc.scopes)) if (s.calculated) assert.ok(!s.traits.weakest.some((k) => s.traits.strongest.includes(k)), `${f} ${s.scope}`);
+  }
+});

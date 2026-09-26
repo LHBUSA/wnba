@@ -26,9 +26,10 @@ import { pbeTask } from './pbe-runner.js';
 import { playoffsTask, playoffsDue } from './playoffs-task.js';
 import { buildWinbaSnapshot, buildWinbaSnapshotAsOf } from '../../shared/winba.js';
 import { dnaTask, DNA_FORCE_HOUR_ET, DNA_FORCE_MINUTE } from './dna-task.js';
+import { readIndex, resolveCatalog, readArchive, latestRegularSeason } from '../../shared/archive-reader.js';
 
 const SERVICE = 'wnba-ingest';
-const VERSION = '1.2.0'; // 1.2.0: dna task (Player DNA V1 derive). 1.1.0: playoffs task (postseason bracket snapshot)
+const VERSION = '1.3.0'; // 1.3.0: WinBA + history-dryrun read the archive through the bounded season-aware reader (no slice(-500)). 1.2.0: dna task (Player DNA V1 derive). 1.1.0: playoffs task (postseason bracket snapshot)
 const PBE_RELEASE = 'pbe-live-final-sync-2026-09-20';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
@@ -108,16 +109,18 @@ async function winbaHistoryDryRun(env, { top = 25, only = null } = {}) {
   const ids = (await env.WNBA_KV.get('archive:v1:index', 'json')) || [];
   if (!Array.isArray(ids) || !ids.length) return { error: 'no_archives' };
 
-  const docs = (await Promise.all(ids.slice(-500).map((id) => env.WNBA_KV.get(`game:v1:final:${id}`, 'json')))).filter(Boolean);
+  // Read-only: the catalog is resolved in memory and never written from this route.
+  const index = await readIndex(env.WNBA_KV);
+  const catalog = await resolveCatalog(env.WNBA_KV, index, { writeCatalog: false });
+  const season = latestRegularSeason(Object.fromEntries(Object.entries(catalog.entries).filter(([, e]) => e.c)));
+  if (season === null) return { error: 'no_regular_season_archives' };
+  // Exactly the completed regular-season games of that season; nothing from other seasons is read.
+  const { docs } = await readArchive(env.WNBA_KV, { ids: index, catalog, select: (e) => e.s === season && e.t === 2 && e.c });
   // The aggregate takes a player's team from the LAST game it processes, so the
   // docs must be in chronological order for "team at snapshot" to mean the team
   // she last played for inside the window rather than whatever order KV listed.
-  docs.sort((a, b) => String(a?.summary?.game?.start_utc || '').localeCompare(String(b?.summary?.game?.start_utc || '')));
-  const regular = docs.filter((d) => Number(d?.summary?.game?.season?.type) === 2 && d?.summary?.game?.status?.completed);
-  const seasons = regular.map((d) => Number(d?.summary?.game?.season?.year)).filter(Number.isFinite);
-  if (!seasons.length) return { error: 'no_regular_season_archives' };
-  const season = Math.max(...seasons);
-  const inSeason = regular.filter((d) => Number(d?.summary?.game?.season?.year) === season);
+  docs.sort((a, b) => String(a?.summary?.game?.start_utc || '').localeCompare(String(b?.summary?.game?.start_utc || '')) || String(a?.summary?.game?.game_id || '').localeCompare(String(b?.summary?.game?.game_id || '')));
+  const inSeason = docs.filter((d) => Number(d?.summary?.game?.season?.type) === 2 && d?.summary?.game?.status?.completed && Number(d?.summary?.game?.season?.year) === season);
 
   const tips = inSeason.map((d) => Date.parse(d.summary.game.start_utc)).filter(Number.isFinite).sort((a, b) => a - b);
   const et = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit' }).format(new Date(ms)).slice(0, 7);
@@ -393,13 +396,15 @@ async function winba(env, { force = false } = {}) {
     };
   }
 
-  const docs = await Promise.all(ids.slice(-500).map((id) => env.WNBA_KV.get(`game:v1:final:${id}`, 'json')));
-  const seasons = docs
-    .map((d) => Number(d?.summary?.game?.season?.type) === 2 ? Number(d?.summary?.game?.season?.year) : null)
-    .filter(Number.isFinite);
-  if (!seasons.length) return { skipped: 'no_regular_season_archives' };
-  const season = Math.max(...seasons);
-  const snapshot = buildWinbaSnapshot(docs.filter(Boolean), { season });
+  // Every archived regular-season game of the latest season, in archive-index order (the order
+  // every published board was built in: the aggregate takes a player's team from the last game it
+  // processes). Fails closed on an unreadable game; other seasons are never read.
+  const index = await readIndex(env.WNBA_KV);
+  const catalog = await resolveCatalog(env.WNBA_KV, index, { writeCatalog: true });
+  const season = latestRegularSeason(catalog.entries);
+  if (season === null) return { skipped: 'no_regular_season_archives' };
+  const { docs, docs_read: docsRead } = await readArchive(env.WNBA_KV, { ids: index, catalog, select: (e) => e.s === season && e.t === 2, order: 'index' });
+  const snapshot = buildWinbaSnapshot(docs, { season });
   const stored = {
     ...snapshot,
     archive_index_count: ids.length,
@@ -413,6 +418,9 @@ async function winba(env, { force = false } = {}) {
     provisional: snapshot.provisional_count,
     games_used: snapshot.games_used,
     archive_index_count: ids.length,
+    season_games_read: docs.length,
+    docs_read: docsRead,
+    catalog_resolved: catalog.resolved,
     generated_at: snapshot.generated_at
   };
 }
