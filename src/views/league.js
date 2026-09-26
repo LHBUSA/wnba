@@ -2,6 +2,7 @@
 // publishing Worker. Interactive pages (filters, sorting, tabs) render their full default list here so the
 // first HTTP response carries every row; the SPA re-draws the same list when a reader filters it.
 import { html } from '../lib/dom.js';
+import { customerSource } from '../lib/brand.js';
 import { pageHead, sourceLine, errorState, avatar, statusBadge, empty, teamDot, badge, playerCard, safeColor } from '../ui/components.js';
 import { fmtDateET, fmtDateTimeET, relTime, num, signed } from '../lib/format.js';
 import { teamLogo } from '../ui/logo.js';
@@ -37,7 +38,7 @@ export function injuriesView({ res, teams }) {
   const items = res.data.items;
   return html`
     ${pageHead({ eyebrow: 'Availability desk', title: 'Injuries', sub: 'Every status carries its source, when the source last updated it, and when PropBetEdge captured it. Reported notes stay attributed. Return dates appear only when the source publishes one — and are labelled as the source’s.' })}
-    <div class="callout" style="margin-bottom:16px"><b>Authority:</b> ${res.data.authority} The league’s official game-day injury report is a separate document and is not yet ingested. <a href="/news/c/injury">Injury stories from the newsroom →</a></div>
+    <div class="callout" style="margin-bottom:16px"><b>Authority:</b> ${customerSource(res.data.authority)} The league’s official game-day injury report is a separate document and is not yet ingested. <a href="/news/c/injury">Injury stories from the newsroom →</a></div>
     <div class="tiles" style="margin-bottom:16px">
       <div class="tile"><small>Listed</small><b>${items.length}</b><span>players on feed</span></div>
       <div class="tile"><small>Out</small><b>${items.filter((i) => /out/i.test(i.status || '')).length}</b><span>incl. out for season</span></div>
