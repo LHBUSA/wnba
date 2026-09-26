@@ -325,6 +325,7 @@ test('mobile structure: short radar labels behind a container query, tables scro
   const css = readFileSync(new URL('../src/styles/player-dna.css', import.meta.url), 'utf8');
   assert.match(css, /@container \(max-width: 400px\) \{ \.dna-ax--long \{ display: none; \} \.dna-ax--short \{ display: inline; \} \}/);
   assert.match(css, /container-type: inline-size/);
+  assert.match(css, /\.dna-cmp > \.dna-radar, \.dna-pc > \.dna-radar \{ width: 100%; \}/, 'compare radars stretch (size containment has no intrinsic width)');
   for (const m of css.matchAll(/font(?:-size)?:[^;]*?(\d+(?:\.\d+)?)px/g)) assert.ok(Number(m[1]) >= 10, `font ${m[0]}`);
   // SVG labels: long 14 units shown only when the radar is > 400px wide (>= 11.7px); short 23 units at a 256px mini radar (>= 12.2px)
   assert.match(css, /\.dna-ax \{[^}]*font: 700 14px/);
@@ -342,4 +343,88 @@ test('areas to watch never repeat a strength', () => {
   assert.deepEqual(U.watchKeys(s), ['rebounding']);
   const h = U.renderSignals({ ...M, scopes: { ...M.scopes, season: s } }, 'season');
   assert.equal(h.split('dna-sigs--watch')[1].includes('data-dim="playmaking"'), false);
+});
+
+/* ── compare (ported from NBA dna-ui: scope compare, player compare, URL state) ── */
+
+test('comparable scopes: calculated only, never playoffs, career or clutch, never itself', () => {
+  assert.deepEqual(U.comparableScopes(M, 'season'), ['last5', 'last10', 'last15', 'home', 'away']);
+  assert.ok(!U.comparableScopes(M, 'last10').includes('last10'));
+  for (const b of [M, O, J]) for (const [s] of U.SCOPE_TABS) for (const k of U.comparableScopes(b, s)) {
+    assert.ok(!['playoffs', 'career', 'clutch'].includes(k));
+    assert.equal(b.scopes[k].calculated, true);
+  }
+  assert.deepEqual(U.comparableScopes(J, 'last5'), [], 'Jones: nothing else calculated');
+  assert.equal(V.renderCompareControls(J, 'season'), '', 'no compare controls on an uncalculated scope');
+  const ctl = V.renderCompareControls(M, 'season', { cmp: 'last10' });
+  assert.match(ctl, /<select data-ctl="cmp"><option value="">None<\/option>/);
+  assert.match(ctl, /<option value="last10" selected>Last 10<\/option>/);
+  assert.ok(!/value="(playoffs|career|clutch)"/.test(ctl));
+  assert.match(ctl, /<input type="search" data-ctl="vs" list="dna-vs-list"/);
+});
+
+test('scope compare, season vs last 10: the stored movement, labelled "Change (stored)"', () => {
+  const h = U.renderScopeCompare(M, 'season', 'last10');
+  assert.match(h, /<th class="num">Change \(stored\)<\/th>/);
+  // last 10 does not measure the season-only axes (availability, adaptability, WinBA): overlay drawn as points, never at 0
+  assert.ok(!/dna-shape dna-shape--b/.test(h));
+  assert.equal((h.match(/class="dna-pt dna-pt--b"/g) || []).length, U.radarRows(M, 'season').filter((d) => typeof M.scopes.last10.dimensions[d.key]?.score === 'number').length);
+  assert.match(h, /<span class="dna-key dna-key--b"><\/span>Last 10/);
+  for (const [k, v] of Object.entries(M.movement.deltas)) {
+    const row = h.split(`<tr data-dim="${k}">`)[1]?.split('</tr>')[0];
+    assert.ok(row, k);
+    assert.ok(row.endsWith(`<td class="num">${signed(-v)}</td>`), `${k} season−last10 = −(stored last10−season)`);
+  }
+  const rev = U.renderScopeCompare(M, 'last10', 'season');
+  for (const [k, v] of Object.entries(M.movement.deltas)) assert.ok(rev.split(`<tr data-dim="${k}">`)[1].split('</tr>')[0].endsWith(`<td class="num">${signed(v)}</td>`), k);
+  assert.match(text(h), /Change = Season − Last 10, read from the stored last 10 − season movement \(not recomputed\)/);
+  assert.match(text(rev), /Change = Last 10 − Season/);
+});
+
+test('scope compare, other pairs: labelled "Difference" of the stored scores, each scope ranked in its own population', () => {
+  const h = U.renderScopeCompare(M, 'season', 'home');
+  assert.match(h, /<th class="num">Difference<\/th>/);
+  const a = M.scopes.season.dimensions.scoring.score; const b = M.scopes.home.dimensions.scoring.score;
+  assert.ok(h.split('<tr data-dim="scoring">')[1].split('</tr>')[0].endsWith(`<td class="num">${signed(a - b)}</td>`));
+  assert.match(text(h), /Each scope is ranked against its own qualified population/);
+  assert.ok(!/<tr data-dim="pressure_clutch">/.test(h));
+  assert.match(U.renderScopeCompare(J, 'last5', 'season'), /Not enough sample for Season/);
+});
+
+test('player compare: two stored payloads, overlay radar with both names, expandable components, no winner', () => {
+  const h = U.renderPlayerCompare(M, O, 'season');
+  assert.match(h, /dna-shape dna-shape--b/);
+  assert.match(h, /dna-key--a"><\/span>Olivia Miles <span class="dna-key dna-key--b"><\/span>Teja Oblak/);
+  assert.match(text(h), /no winner is declared/);
+  const row = h.split('<li class="dna-pc__row" data-dim="scoring">')[1].split('</li>\n')[0];
+  assert.ok(row.includes(`<b class="num">${M.scopes.season.dimensions.scoring.score}</b>`) && row.includes(`<b class="num">${O.scopes.season.dimensions.scoring.score}</b>`));
+  assert.match(row, /<details><summary>/);
+  assert.ok(row.includes(U.fmtComponent('pts_per36', O.scopes.season.dimensions.scoring.components[0].value)));
+  assert.match(h.split('data-dim="winba">')[1], /<b class="num">87<\/b>[\s\S]*?<b class="num">55\.4<\/b>/, 'WinBA as the stored canonical values');
+  assert.match(text(U.renderPlayerCompare(M, J, 'season')), /Brionna Jones: Not enough sample for Season/);
+});
+
+test('profile renders the compare panels only for valid state', () => {
+  const p = V.renderProfile(M, 'season', { meta: META, cmp: 'last10', vsBody: O });
+  assert.match(p, /id="dna-cmp"[\s\S]*Season vs Last 10/);
+  assert.match(p, /id="dna-vs"[\s\S]*Olivia Miles vs Teja Oblak/);
+  assert.ok(!/id="dna-cmp"/.test(V.renderProfile(M, 'season', { meta: META, cmp: 'playoffs' })));
+  assert.ok(!/id="dna-cmp"/.test(V.renderProfile(M, 'season', { meta: META, cmp: 'season' })));
+});
+
+test('URL state: ?scope=&cmp=&vs= is shareable, validated, and scope tabs keep the compared player', () => {
+  assert.equal(U.profileUrl('4433791', { scope: 'last10', cmp: 'season', vs: '5346554' }), '/players/4433791/dna?scope=last10&cmp=season&vs=5346554');
+  assert.equal(U.profileUrl('4433791', { scope: 'season' }), '/players/4433791/dna');
+  assert.deepEqual(V.stateFromQuery({ scope: 'last10', cmp: 'season', vs: '5346554' }, M, '4433791'), { scope: 'last10', cmp: 'season', vs: '5346554' });
+  for (const cmp of ['playoffs', 'career', 'clutch', 'last10', 'nope']) assert.equal(V.stateFromQuery({ scope: 'last10', cmp }, M, '4433791').cmp, '', cmp);
+  assert.equal(V.stateFromQuery({ scope: 'career' }, M, '4433791').scope, 'season');
+  assert.equal(V.stateFromQuery({ scope: 'last10' }, J, '3058895').scope, 'season', 'uncalculated scope falls back');
+  assert.equal(V.stateFromQuery({ vs: '4433791' }, M, '4433791').vs, '', 'never compare a player with herself');
+  assert.equal(V.stateFromQuery({ vs: 'x<script>' }, M, '4433791').vs, '');
+  assert.match(V.renderScopeTabs(M, 'season', { vs: '5346554' }), /href="\/players\/4433791\/dna\?scope=last10&vs=5346554" data-scope="last10"/);
+  const page = readFileSync(new URL('../src/pages/player-dna.js', import.meta.url), 'utf8');
+  assert.match(page, /history\.replaceState\(\{\}, '', profileUrl\(id, state\)\)/);
+  assert.match(page, /stateFromQuery\(ctx\.query, body, id\)/, 'a reload restores state from the URL');
+  assert.match(page, /api\.dnaIndex\(\)/);
+  assert.match(page, /addEventListener\('focusin', onFocus\)/, 'the index is loaded on focus only');
 });

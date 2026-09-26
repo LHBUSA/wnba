@@ -333,3 +333,34 @@
 .dna-wb__tbl td small { font-family: var(--f-ui); }
 @media (max-width: 520px) { .dna-wb__tbl td:first-child { min-width: 11em; } }
 .dna-tab.is-off.is-cur { color: var(--paper-2); border-color: var(--ip-gold); border-style: dashed; }
+
+/* ── compare (scope overlay, player vs player) ───────────────────────── */
+.dna-page { --dna-b: #7fb4e6; }
+.dna-shape--b { fill: rgba(127, 180, 230, .08); stroke: var(--dna-b); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.dna-pt--b { fill: var(--dna-b); }
+.dna-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; align-items: center; margin: 6px 0 0; font-size: 12px; color: var(--ip-dim); }
+.dna-key { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--ip-gold); vertical-align: middle; margin-right: -8px; }
+.dna-key--b { border-top: 2px dashed var(--dna-b); }
+.dna-ctl { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 4px 0 10px; }
+.dna-ctl label { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--ip-dim); }
+.dna-ctl select, .dna-ctl input { min-height: 36px; background: var(--ip-card); color: var(--paper); border: 1px solid var(--ip-line); border-radius: 8px; padding: 4px 8px; font: 14px/1.2 var(--f-ui); max-width: 100%; }
+.dna-ctl input { width: 15em; }
+.dna-cmp, .dna-pc { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 960px) { .dna-cmp, .dna-pc { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .dna-cmp > .note, .dna-pc > .note { grid-column: 1 / -1; } }
+.dna-cmp__tbl { font-size: 12px; }
+.dna-pc__hdr, .dna-pc__row summary, .dna-pc__sum { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 6.5em) minmax(0, 6.5em); gap: 8px; align-items: center; }
+.dna-pc__hdr { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ip-faint); padding-bottom: 6px; border-bottom: 1px solid var(--ip-line); }
+.dna-pc__hdr span { overflow-wrap: anywhere; }
+.dna-pc__hdr span:nth-child(2) { color: var(--ip-gold); }
+.dna-pc__hdr span:nth-child(3) { color: var(--dna-b); }
+.dna-pc__tbl ul { list-style: none; margin: 0; padding: 0; }
+.dna-pc__row { border-bottom: 1px solid var(--ip-line); font-size: 13px; }
+.dna-pc__row summary { list-style: none; cursor: pointer; padding: 8px 0; }
+.dna-pc__row summary::-webkit-details-marker { display: none; }
+.dna-pc__sum { padding: 8px 0; }
+.dna-pc__comps { list-style: none; margin: 0 0 8px; padding: 0 0 0 10px; }
+.dna-pc__comps li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 6.5em) minmax(0, 6.5em); gap: 8px; font-size: 12px; color: var(--ip-dim); padding: 2px 0; }
+.dna-pc__comps small { color: var(--ip-faint); font-size: 10px; }
+.dna-pc__row small.note { font-size: 10px; }
+.dna-cmp > .dna-radar, .dna-pc > .dna-radar { width: 100%; }
+.dna-cmp__tbl td:first-child { white-space: normal; min-width: 7em; } .dna-cmp__tbl th { white-space: normal; overflow-wrap: normal; word-break: keep-all; } .dna-cmp__tbl th, .dna-cmp__tbl td { padding-left: 6px; padding-right: 6px; }

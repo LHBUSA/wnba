@@ -205,7 +205,7 @@ export function radarRows(body, scope, keys = null) {
  * Pure SVG radar of the scored dimensions (null dimensions are left out, never drawn at 0).
  * Proxy axes are dashed and italic. Axes are keyboard-focusable buttons.
  */
-export function renderRadar(body, scope, { keys = null, mini = false, caption = true } = {}) {
+export function renderRadar(body, scope, { keys = null, mini = false, caption = true, overlay = null, overlayLabel = '', primaryLabel = '' } = {}) {
   const rows = radarRows(body, scope, keys);
   if (rows.length < 3) return '';
   const N = rows.length; const R = 128; const CX = 240; const CY = 200;
@@ -213,6 +213,14 @@ export function renderRadar(body, scope, { keys = null, mini = false, caption = 
   const f1 = ([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`;
   const ring = (f) => rows.map((_, i) => f1(pt(i, R * f))).join(' ');
   const poly = rows.map((d, i) => f1(pt(i, (R * d.score) / 100))).join(' ');
+  // overlay = another stored scope ({ dimensions }) drawn as a muted outline; axes it does not measure get no point
+  let over = '';
+  if (overlay?.dimensions) {
+    const ov = rows.map((d, i) => { const v = overlay.dimensions[d.key]?.score; return isNum(v) ? pt(i, (R * v) / 100) : null; });
+    over = ov.every(Boolean)
+      ? `<polygon class="dna-shape dna-shape--b" points="${ov.map(f1).join(' ')}"/>`
+      : ov.filter(Boolean).map(([x, y]) => `<circle class="dna-pt dna-pt--b" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/>`).join('');
+  }
   const axes = rows.map((d, i) => { const [x, y] = pt(i, R); return `<line class="${d.proxy ? 'is-proxy' : ''}" x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('');
   const axisGroups = rows.map((d, i) => {
     const [x, y] = pt(i, R + 30);
@@ -229,7 +237,8 @@ export function renderRadar(body, scope, { keys = null, mini = false, caption = 
   }).join('');
   return `<figure class="dna-radar${mini ? ' dna-radar--mini' : ''}"><svg viewBox="0 0 480 400" role="group" aria-label="DNA fingerprint: ${rows.map((d) => `${esc(labelOf(d, d.key))} ${d.key === 'winba' ? esc(winbaText(d.value ?? d.score)) : d.score}`).join(', ')}">
     <g class="dna-web">${[0.25, 0.5, 0.75, 1].map((f) => `<polygon points="${ring(f)}"/>`).join('')}${axes}</g>
-    <polygon class="dna-shape" points="${poly}"/>${axisGroups}</svg>
+    ${over}<polygon class="dna-shape" points="${poly}"/>${axisGroups}</svg>
+    ${overlay ? `<p class="dna-legend"><span class="dna-key dna-key--a"></span>${esc(primaryLabel || SCOPE_LABEL[scope] || scope)} <span class="dna-key dna-key--b"></span>${esc(overlayLabel)}</p>` : ''}
     ${caption ? '<figcaption class="note">0–100 score vs qualified WNBA players in this scope. Dashed, italic axes are proxies. Role, form and volatility are descriptive and shown separately.</figcaption>' : ''}</figure>`;
 }
 
@@ -498,6 +507,79 @@ export function renderMatrix(body, scope, meta = null) {
   return `<section class="dna-sec" id="dna-matrix"><div class="dna-sec__head"><h2 class="dna-h2">Full dimension matrix</h2><span class="note">${dimRows(body, scope).length} dimensions · tap a row for components, percentiles and confidence drivers</span></div>
     <div class="dna-mx"><div class="dna-mx__hdr" aria-hidden="true"><span>Dimension</span><span>Score</span><span>League context</span><span>Conf.</span><span>Status</span><span>${esc(mvHead)}</span></div>
     <ul class="dna-mx__list">${rows}</ul></div></section>`;
+}
+
+/* ── comparison ──────────────────────────────────────────────────────── */
+
+export function sampleLine(s) {
+  if (!s?.sample) return '';
+  const x = s.sample;
+  const bits = [`${x.games} games`, `${n0(x.minutes)} min`];
+  if (x.first_date && x.last_date) bits.push(`${x.first_date} → ${x.last_date}`);
+  if (s.population?.n) bits.push(`vs ${s.population.n} qualified players`);
+  if (s.flags?.includes('LOW_POPULATION')) bits.push('small peer group: low confidence');
+  return bits.join(' · ');
+}
+
+/** Scopes this player's `scope` can be compared with: calculated, never playoffs/career/clutch, never itself. */
+const NEVER_COMPARE = new Set(['playoffs', 'career', 'clutch']);
+export function comparableScopes(body, scope) {
+  return SCOPE_TABS.map(([k]) => k).filter((k) => k !== scope && !NEVER_COMPARE.has(k) && body?.scopes?.[k]?.calculated);
+}
+const shownScore = (key, d) => (isNum(d?.score) ? (key === 'winba' ? winbaText(d.value ?? d.score) : String(d.score)) : null);
+
+/**
+ * Two calculated scopes of one player: radar overlay + side-by-side scores. For season vs the stored
+ * movement window (last 10) the change column is the payload's own movement ("Change (stored)");
+ * otherwise it is the plain difference of the two stored scores, labelled "Difference".
+ */
+export function renderScopeCompare(body, scopeA, scopeB) {
+  const a = body?.scopes?.[scopeA]; const b = body?.scopes?.[scopeB];
+  if (!a?.calculated || !b?.calculated) return `<p class="note">${esc(scopeUnavailable(body, a?.calculated ? scopeB : scopeA))}</p>`;
+  const mvs = movementScope(body);
+  const server = Boolean(body.movement?.deltas) && ((scopeA === mvs && scopeB === 'season') || (scopeA === 'season' && scopeB === mvs));
+  const dsign = scopeA === mvs ? 1 : -1;
+  const rows = dimRows(body, scopeA).filter((d) => d.key !== 'pressure_clutch').map((d) => {
+    const va = d.score; const vb = b.dimensions?.[d.key]?.score;
+    let diff = '—';
+    if (server) { const m = body.movement.deltas[d.key]; if (isNum(m)) diff = sign(dsign * m); } else if (isNum(va) && isNum(vb) && d.key !== 'winba') diff = sign(va - vb);
+    return `<tr data-dim="${esc(d.key)}"><td>${esc(labelOf(d, d.key))}${d.proxy ? ' <span class="dna-proxy">PROXY</span>' : ''}</td><td class="num">${esc(shownScore(d.key, d) ?? '—')}</td><td class="num">${esc(shownScore(d.key, b.dimensions?.[d.key]) ?? '—')}</td><td class="num">${diff}</td></tr>`;
+  }).join('');
+  return `<div class="dna-cmp">
+    ${renderRadar(body, scopeA, { overlay: b, overlayLabel: SCOPE_LABEL[scopeB], caption: false })}
+    <div class="tbl-scroll"><table class="tbl dna-cmp__tbl"><thead><tr><th>Dimension</th><th class="num">${esc(SCOPE_LABEL[scopeA])}</th><th class="num">${esc(SCOPE_LABEL[scopeB])}</th><th class="num">${server ? 'Change (stored)' : 'Difference'}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="note">${esc(SCOPE_LABEL[scopeA])}: ${esc(sampleLine(a))}. ${esc(SCOPE_LABEL[scopeB])}: ${esc(sampleLine(b))}. Each scope is ranked against its own qualified population, so a difference is a change in league standing, not in raw production.${server ? ` Change = ${esc(SCOPE_LABEL[scopeA])} − ${esc(SCOPE_LABEL[scopeB])}, read from the stored ${esc(movementLabel(body).toLowerCase())} − season movement (not recomputed).` : ''}</p></div>`;
+}
+
+/** Two stored player payloads, same scope: overlay radar + per-dimension rows with expandable components. No winner. */
+export function renderPlayerCompare(a, b, scope) {
+  const sa = a?.scopes?.[scope]; const sb = b?.scopes?.[scope];
+  const na = a?.player?.name || 'Player A'; const nb = b?.player?.name || 'Player B';
+  if (!sa?.calculated || !sb?.calculated) return `<p class="note">${esc(!sa?.calculated ? na : nb)}: ${esc(scopeUnavailable(!sa?.calculated ? a : b, scope))}</p>`;
+  const cell = (key, x) => (isNum(x?.score) ? `<b class="num">${esc(shownScore(key, x))}</b>${x.confidence_label ? ` <small class="note">${esc(x.confidence_label)}</small>` : ''}` : '<span class="note">—</span>');
+  const rows = dimRows(a, scope).filter((d) => d.key !== 'pressure_clutch').map((d) => {
+    const db = sb.dimensions?.[d.key];
+    const comps = d.key === 'winba' ? '' : (d.components || []).map((c) => {
+      const cb = (db?.components || []).find((x) => x.key === c.key);
+      return `<li><span>${esc(COMPONENT_LABEL[c.key] || c.key)}</span><span class="num">${esc(fmtComponent(c.key, c.value))}${isNum(c.percentile) ? ` <small>${ordinal(c.percentile)}</small>` : ''}</span><span class="num">${esc(fmtComponent(c.key, cb?.value))}${isNum(cb?.percentile) ? ` <small>${ordinal(cb.percentile)}</small>` : ''}</span></li>`;
+    }).join('');
+    const sum = `<span>${esc(labelOf(d, d.key))}${d.proxy ? ' <span class="dna-proxy">PROXY</span>' : ''}</span><span>${cell(d.key, d)}</span><span>${cell(d.key, db)}</span>`;
+    return `<li class="dna-pc__row" data-dim="${esc(d.key)}">${comps ? `<details><summary>${sum}</summary><ul class="dna-pc__comps">${comps}</ul></details>` : `<div class="dna-pc__sum">${sum}</div>`}</li>`;
+  }).join('');
+  return `<div class="dna-pc">
+    ${renderRadar(a, scope, { overlay: sb, primaryLabel: na, overlayLabel: nb, caption: false })}
+    <div class="dna-pc__tbl"><div class="dna-pc__hdr"><span>Dimension</span><span>${esc(na)}</span><span>${esc(nb)}</span></div><ul>${rows}</ul></div>
+    <p class="note">${esc(na)}: ${esc(sampleLine(sa))}. ${esc(nb)}: ${esc(sampleLine(sb))}. Both are ranked against the same scope population. A descriptive comparison of two stored profiles — no winner is declared.</p></div>`;
+}
+
+/** Shareable profile URL: /players/:id/dna?scope=&cmp=&vs= (defaults omitted). */
+export function profileUrl(id, { scope = 'season', cmp = '', vs = '' } = {}) {
+  const q = new URLSearchParams();
+  if (scope && scope !== 'season') q.set('scope', scope);
+  if (cmp) q.set('cmp', cmp);
+  if (vs) q.set('vs', vs);
+  const qs = q.toString();
+  return `/players/${encodeURIComponent(id)}/dna${qs ? `?${qs}` : ''}`;
 }
 
 /* ── trust drawer ────────────────────────────────────────────────────── */

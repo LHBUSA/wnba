@@ -8,7 +8,8 @@ import { careerSeasonRows } from '../lib/player-career.js';
 import {
   SCOPE_TABS, UNAVAILABLE_SCOPES, SCOPE_LABEL, OFFENSE, DEFENSE, renderRadar, sampleBadge, scopeUnavailable, renderSignals, renderMovementChart,
   renderGroup, renderPossessionProfile, renderCreatorMap, renderWinbaBreakdown, renderContextCards, renderPlayoffTranslation, renderMatrix,
-  renderTrustDrawer, renderDnaCompact, calculatedScopes, movementLabel, winbaRow, winbaText, profileHref, bindDnaInteractions
+  renderTrustDrawer, renderDnaCompact, calculatedScopes, movementLabel, winbaRow, winbaText, profileHref, bindDnaInteractions,
+  comparableScopes, renderScopeCompare, renderPlayerCompare, profileUrl, isScope
 } from '../ui/dna.js';
 
 /** Exact wording required on every Player Load surface that sits beside DNA. */
@@ -114,15 +115,46 @@ export function renderHero(body, photo = null) {
 }
 
 /** Scope tabs: calculated scopes are links; uncalculated scopes stay visible but disabled with the reason. */
-export function renderScopeTabs(body, scope) {
+export function renderScopeTabs(body, scope, { vs = '' } = {}) {
   const id = body?.player?.id || body?.player?.espn_athlete_id || '';
   const tab = ([k, l]) => {
     const on = body?.scopes?.[k]?.calculated;
     if (!on) return `<span class="dna-tab is-off${scope === k ? ' is-cur' : ''}" aria-disabled="true"${scope === k ? ' aria-current="page"' : ''} title="${esc(scopeUnavailable(body, k))}">${esc(l)}</span>`;
-    return `<a class="dna-tab${scope === k ? ' is-on' : ''}" href="${profileHref(id, k)}" data-scope="${k}"${scope === k ? ' aria-current="page"' : ''}>${esc(l)}</a>`;
+    return `<a class="dna-tab${scope === k ? ' is-on' : ''}" href="${profileUrl(id, { scope: k, vs })}" data-scope="${k}"${scope === k ? ' aria-current="page"' : ''}>${esc(l)}</a>`;
   };
   return `<nav class="dna-tabs" aria-label="DNA scope">${SCOPE_TABS.map(tab).join('')}${UNAVAILABLE_SCOPES.map(tab).join('')}</nav>
     <p class="note dna-tabs__na">${UNAVAILABLE_SCOPES.map(([k]) => esc(scopeUnavailable(body, k))).join(' ')}</p>`;
+}
+
+const PLAYER_ID = /^\d{1,12}$/;
+
+/**
+ * URL state (?scope=&cmp=&vs=) validated against the stored payload: an uncalculated scope falls back to
+ * season; cmp must be a comparable scope (calculated; never playoffs, career or clutch); vs a numeric id
+ * other than this player.
+ */
+export function stateFromQuery(query = {}, body = null, id = '') {
+  let scope = isScope(query.scope) ? query.scope : 'season';
+  if (body && !body.scopes?.[scope]?.calculated) scope = 'season';
+  const cmp = body && comparableScopes(body, scope).includes(query.cmp) ? query.cmp : '';
+  const vs = PLAYER_ID.test(String(query.vs || '')) && String(query.vs) !== String(id) ? String(query.vs) : '';
+  return { scope, cmp, vs };
+}
+
+/**
+ * Compare controls: "Compare scope" (only calculated, comparable scopes; never playoffs, career or clutch)
+ * and "Compare player" (name search; the datalist is filled from /v1/dna/index on first focus).
+ */
+export function renderCompareControls(body, scope, { cmp = '', vs = '', vsName = '' } = {}) {
+  const opts = body?.scopes?.[scope]?.calculated ? comparableScopes(body, scope) : [];
+  const cmpSel = opts.length
+    ? `<label>Compare scope <select data-ctl="cmp"><option value="">None</option>${opts.map((k) => `<option value="${k}"${cmp === k ? ' selected' : ''}>${esc(SCOPE_LABEL[k])}</option>`).join('')}</select></label>`
+    : '';
+  const vsCtl = body?.scopes?.[scope]?.calculated
+    ? `<label class="dna-vs">Compare player <input type="search" data-ctl="vs" list="dna-vs-list" value="${esc(vsName)}" placeholder="Player name" autocomplete="off" enterkeyhint="go"><datalist id="dna-vs-list"></datalist></label>${vs ? '<button type="button" class="pill" data-action="vs-clear">Clear</button>' : ''}`
+    : '';
+  if (!cmpSel && !vsCtl) return '';
+  return `<div class="dna-ctl">${cmpSel}${vsCtl}</div>`;
 }
 
 /** Career per-game trajectory from the sourced career record. No DNA or WinBA exists for past seasons. */
@@ -151,7 +183,7 @@ export function renderFreshness(body) {
  * The full report: headline + base, fingerprint + traits, movement, offense, rebounding + defensive
  * activity, WinBA, context, playoff translation, matrix, career trajectory, trust drawer.
  */
-export function renderProfile(body, scope, { meta = null, career = null } = {}) {
+export function renderProfile(body, scope, { meta = null, career = null, cmp = '', vsBody = null } = {}) {
   const s = body?.scopes?.[scope];
   const traj = renderCareerTrajectory(career);
   if (!s?.calculated) {
@@ -163,12 +195,17 @@ export function renderProfile(body, scope, { meta = null, career = null } = {}) 
   }
   const headline = `<div class="dna-headline">${sampleBadge(s, scope)}<p class="note">${esc(s.sample?.first_date || '')} → ${esc(s.sample?.last_date || '')} · every score is 0–100 against the qualified players of this scope</p></div>`;
   const mv = scope === 'season' ? renderMovementChart(body) : body.movement ? `<p class="note dna-mv-note">Recent movement (${esc(movementLabel(body).toLowerCase())} vs season) is shown on the Season scope.</p>` : '';
+  const cmpPanel = cmp && comparableScopes(body, scope).includes(cmp)
+    ? `<section class="dna-sec" id="dna-cmp"><div class="dna-sec__head"><h2 class="dna-h2">${esc(SCOPE_LABEL[scope])} vs ${esc(SCOPE_LABEL[cmp])}</h2><span class="note">dashed outline = ${esc(SCOPE_LABEL[cmp])}</span></div>${renderScopeCompare(body, scope, cmp)}</section>` : '';
+  const vsPanel = vsBody
+    ? `<section class="dna-sec" id="dna-vs"><div class="dna-sec__head"><h2 class="dna-h2">${esc(body.player?.name || '')} vs ${esc(vsBody.player?.name || '')}</h2><span class="note">${esc(SCOPE_LABEL[scope])} · ${esc(String(body.season || ''))}</span></div>${renderPlayerCompare(body, vsBody, scope)}</section>` : '';
   return `<div class="dna-report">
     ${headline}
     <div class="dna-top">
       <div class="dna-top__radar">${renderRadar(body, scope)}</div>
       <div class="dna-top__side">${renderSignals(body, scope)}${mv}</div>
     </div>
+    ${cmpPanel}${vsPanel}
     ${renderGroup(body, scope, OFFENSE, { meta, title: 'Offensive DNA', sub: 'how this player creates offense · tap for components', extra: `<div class="dna-offx">${renderPossessionProfile(body, scope)}${renderCreatorMap(body, scope)}</div>` })}
     ${renderGroup(body, scope, DEFENSE, { meta, title: 'Rebounding & defensive activity', sub: 'rebound shares and box-score defensive events', note: '<b>DEFENSIVE ACTIVITY · PROXY.</b> Box-score activity only (steals, blocks, fouls). No individual matchup, on/off or tracking data — a high score is not a complete defensive rating.' })}
     ${scope === 'season' ? renderWinbaBreakdown(body) : ''}

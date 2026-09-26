@@ -181,6 +181,7 @@ export const api = {
   pbeTeam: (id) => privateJson(`/v1/pbe/teams/${encodeURIComponent(id)}`),
   playerLoad: () => privateJson('/v1/player-load'),
   dnaPlayer: async (id) => ((await dnaAvailable()) ? getJson(`${API_BASE}/v1/dna/players/${encodeURIComponent(id)}`) : DNA_OFF),
+  dnaIndex: async () => ((await dnaAvailable()) ? getJson(`${API_BASE}/v1/dna/index`, { timeoutMs: 20000 }) : DNA_OFF),
   dnaMeta: async () => ((await dnaAvailable()) ? getJson(`${API_BASE}/v1/dna/meta`) : DNA_OFF),
   playerLoadPlayer: (id) => privateJson(`/v1/player-load/${encodeURIComponent(id)}`),
   propEdge: () => privateJson('/v1/pro/prop-edge'),
