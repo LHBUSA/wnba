@@ -23,7 +23,8 @@ import {
   mergeTotals,
   traits,
   buildPlayerDna,
-  playerDnaFor
+  playerDnaFor,
+  canonicalWinbaBoardAsOf
 } from '../workers/shared/player-dna.js';
 import {
   WINBA_VERSION,
@@ -32,131 +33,17 @@ import {
   buildWinbaSnapshotAsOf,
   winbaForPlayer
 } from '../workers/shared/winba.js';
+import { FRANCHISES, makeDoc, playerLine, league, ALL_STAR } from './fixtures/player-dna-league.mjs';
 
 // ------------------------------------------------------------------ fixtures
 
-const FRANCHISES = ['1', '2', '3', '4'];
 const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
-
-function teamStats(rows) {
-  const s = (k) => rows.reduce((a, r) => a + (r.dnp ? 0 : Number(r[k]) || 0), 0);
-  return {
-    'fieldGoalsMade-fieldGoalsAttempted': `${s('fgm')}-${s('fga')}`,
-    'threePointFieldGoalsMade-threePointFieldGoalsAttempted': `${s('fg3m')}-${s('fg3a')}`,
-    'freeThrowsMade-freeThrowsAttempted': `${s('ftm')}-${s('fta')}`,
-    totalRebounds: String(s('reb')),
-    offensiveRebounds: String(s('oreb')),
-    defensiveRebounds: String(s('dreb')),
-    assists: String(s('ast')),
-    turnovers: String(s('tov')),
-    totalTurnovers: String(s('tov')),
-    fouls: String(s('pf'))
-  };
-}
-
-function makeDoc({ id, tip, season = 2026, type = 2, home, away, rows, periods = 4, stats = null, completed = true }) {
-  const pts = (tid) => rows.filter((r) => r.team_id === tid && !r.dnp).reduce((a, r) => a + (r.pts || 0), 0);
-  const line = (n) => Array.from({ length: n }, () => 20);
-  return {
-    archived_at: tip,
-    checksum: `ck-${id}`,
-    summary: {
-      game: {
-        game_id: id,
-        season: { year: season, type },
-        start_utc: tip,
-        status: { completed, state: completed ? 'post' : 'in' },
-        home: { team_id: home, name: `Team ${home}`, score: pts(home), linescores: line(periods) },
-        away: { team_id: away, name: `Team ${away}`, score: pts(away), linescores: line(periods) }
-      },
-      box: {
-        teams: stats || [
-          { team_id: home, stats: teamStats(rows.filter((r) => r.team_id === home)) },
-          { team_id: away, stats: teamStats(rows.filter((r) => r.team_id === away)) }
-        ],
-        players: rows
-      },
-      injuries: [],
-      plays: []
-    }
-  };
-}
-
-// Deterministic pseudo-random ints (no Math.random).
-function lcg(seed) {
-  let s = seed >>> 0;
-  return (lo, hi) => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return lo + (s % (hi - lo + 1));
-  };
-}
-
-function playerLine(pid, teamId, gi, k) {
-  const rnd = lcg(Number(pid) * 7919 + gi * 104729);
-  const baseMin = [32, 30, 28, 26, 24, 14, 6][k];
-  const min = Math.max(1, baseMin + rnd(-4, 4));
-  const fga = Math.max(0, Math.round(min / 3) + rnd(-3, 3) + (k === 0 ? 4 : 0));
-  const fgm = Math.min(fga, Math.round(fga * (0.35 + rnd(0, 20) / 100)));
-  const fg3a = k === 4 ? 0 : Math.min(fga, rnd(0, k === 1 ? 8 : 4)); // k=4: a non-shooting big
-  const fg3m = Math.min(fg3a, fgm, rnd(0, 3));
-  const fta = rnd(0, k === 0 ? 9 : 4);
-  const ftm = Math.min(fta, rnd(0, fta));
-  const oreb = rnd(0, k >= 3 ? 4 : 2);
-  const dreb = rnd(0, k >= 3 ? 8 : 4);
-  return {
-    athlete_id: pid, name: `P${pid}`, team_id: teamId, starter: k < 5, dnp: false, dnp_reason: null, active: true,
-    min, pts: 2 * (fgm - fg3m) + 3 * fg3m + ftm, fgm, fga, fg3m, fg3a, ftm, fta,
-    oreb, dreb, reb: oreb + dreb, ast: rnd(0, k === 1 ? 9 : 4), stl: rnd(0, 3), blk: rnd(0, k >= 3 ? 3 : 1),
-    tov: rnd(0, 4), pf: rnd(0, 5), plus_minus: rnd(-15, 15)
-  };
-}
-
-/** Round-robin league over FRANCHISES: 7 players per team, `rounds` rounds of 2 games. */
-function league({ season = 2026, rounds = 24, start = Date.UTC(2026, 4, 10, 23), type = 2, idBase = 1000 } = {}) {
-  const pairings = [[['1', '2'], ['3', '4']], [['1', '3'], ['2', '4']], [['1', '4'], ['2', '3']]];
-  const docs = [];
-  let gi = 0;
-  for (let r = 0; r < rounds; r += 1) {
-    for (const [j, [a, b]] of pairings[r % 3].entries()) {
-      const [home, away] = r % 2 ? [b, a] : [a, b];
-      const rows = [];
-      for (const t of [home, away]) {
-        for (let k = 0; k < 7; k += 1) {
-          const pid = `${t}${k}${season % 100}`;
-          // player k=5 of team 4 misses every third game (DNP) -> availability < 1
-          if (t === '4' && k === 5 && r % 3 === 0) { rows.push({ athlete_id: pid, name: `P${pid}`, team_id: t, starter: false, dnp: true, dnp_reason: 'COACH\'S DECISION', min: null }); continue; }
-          rows.push(playerLine(pid, t, gi, k));
-        }
-      }
-      const tip = new Date(start + r * 2 * 86400e3 + j * 3600e3).toISOString();
-      const doc = makeDoc({ id: String(idBase + gi), tip, season, type, home, away, rows });
-      // no ties: WNBA games cannot end level
-      if (doc.summary.game.home.score === doc.summary.game.away.score) {
-        rows.find((x) => x.team_id === home && !x.dnp).pts += 1;
-        doc.summary.game.home.score += 1;
-      }
-      docs.push(doc);
-      gi += 1;
-    }
-  }
-  return docs;
-}
 
 const DOCS = league();
 const LAST_TIP = Math.max(...DOCS.map((d) => Date.parse(d.summary.game.start_utc)));
 const AS_OF = new Date(LAST_TIP + 1000).toISOString();
 const MID = new Date(Date.parse(DOCS[29].summary.game.start_utc)).toISOString(); // exclusive: games 0..28 (+ same-tip none)
 const OPTS = { franchiseTeamIds: FRANCHISES };
-
-const ALL_STAR = makeDoc({
-  id: '401857320', tip: '2026-06-20T00:30:00Z', season: 2026, type: 2, home: '133384', away: '133383',
-  rows: [
-    { ...playerLine('1026', '133384', 999, 0) },
-    { ...playerLine('2126', '133383', 998, 1) },
-    { ...playerLine('3026', '133384', 997, 0) },
-    { ...playerLine('4326', '133383', 996, 3) }
-  ]
-});
 
 const deepFreeze = (o) => {
   if (o && typeof o === 'object' && !Object.isFrozen(o)) { Object.freeze(o); for (const v of Object.values(o)) deepFreeze(v); }
@@ -364,19 +251,38 @@ test('a game tipping exactly at as_of is excluded (exclusive cutoff)', () => {
   assert.equal(sel.games.length, 10);
 });
 
-test('historical WinBA is the as-of WinBA, never the latest board attached to the past', () => {
-  const past = buildPlayerDna(DOCS, { asOf: MID, ...OPTS });
-  const now = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS });
-  const pastSnap = buildWinbaSnapshotAsOf(DOCS, { season: 2026, asOf: MID, generatedAt: MID });
+test('historical WinBA: the as-of canonical board is attached; a later board is refused', () => {
+  const pastBoard = canonicalWinbaBoardAsOf(DOCS, { season: 2026, asOf: MID });
+  const nowBoard = canonicalWinbaBoardAsOf(DOCS, { season: 2026, asOf: AS_OF });
+  const past = buildPlayerDna(DOCS, { asOf: MID, ...OPTS, winbaBoard: pastBoard });
+  let n = 0;
   let differs = false;
   for (const [id, p] of Object.entries(past.players)) {
     const w = p.scopes.season.calculated ? p.scopes.season.dimensions.winba : null;
     if (!w || w.score == null) continue;
-    assert.equal(w.value, winbaForPlayer(pastSnap, id).score);
-    if (now.players[id].scopes.season.dimensions.winba.value !== w.value) differs = true;
+    assert.equal(w.value, winbaForPlayer(pastBoard, id).score);
+    if (winbaForPlayer(nowBoard, id).score !== w.value) differs = true;
+    n += 1;
   }
-  assert.ok(differs, 'the fixture has movement between the two dates');
-  assert.equal(past.winba.as_of, new Date(MID).toISOString());
+  assert.ok(n > 0 && differs, 'the fixture has WinBA movement between the two dates');
+  // today's board on a past snapshot: refused by the archive-state check, never attached
+  const wrong = buildPlayerDna(DOCS, { asOf: MID, ...OPTS, winbaBoard: nowBoard });
+  assert.equal(wrong.winba.reason, 'CANONICAL_BOARD_OTHER_ARCHIVE_STATE');
+  assert.equal(wrong.winba.expected_games_used, 29);
+  for (const p of Object.values(wrong.players)) if (p.scopes.season.calculated) {
+    assert.equal(p.scopes.season.dimensions.winba.score, null);
+    assert.equal(p.scopes.season.dimensions.winba.reason, 'CANONICAL_BOARD_OTHER_ARCHIVE_STATE');
+  }
+  // a board of another season is refused too
+  const other = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS, winbaBoard: { ...nowBoard, season: 2025 } });
+  assert.equal(other.winba.reason, 'CANONICAL_BOARD_OTHER_SEASON');
+  // no board: winba is INSUFFICIENT_DATA, the rest of the vector is unaffected
+  const none = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS });
+  assert.equal(none.players['1026'].scopes.season.dimensions.winba.reason, 'NO_CANONICAL_BOARD');
+  const withB = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS, winbaBoard: nowBoard });
+  for (const k of Object.keys(none.players['1026'].scopes.season.dimensions)) {
+    if (k !== 'winba') assert.deepEqual(withB.players['1026'].scopes.season.dimensions[k], none.players['1026'].scopes.season.dimensions[k]);
+  }
 });
 
 test('last-N windows stop at as_of and cross season types in tip order', () => {
@@ -397,36 +303,59 @@ test('WinBA v1 is untouched: constants, and winba.js source is byte-pinned', () 
     'workers/shared/winba.js changed. WinBA v1 is frozen; DNA consumes it unchanged.');
 });
 
-test('DNA winba === the canonical WinBA function on the same inputs at the same as_of', () => {
-  const out = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS });
-  const snap = buildWinbaSnapshotAsOf(DOCS, { season: 2026, asOf: AS_OF, generatedAt: AS_OF });
+test('DNA winba === the canonical board value for that player (stored-board shape, All-Star included)', () => {
+  // The stored board is what the winba lane writes: buildWinbaSnapshot over the raw archive + signature fields.
+  const raw = [...DOCS, ALL_STAR];
+  const board = { ...buildWinbaSnapshot(raw, { season: 2026, generatedAt: '2026-09-25T04:26:27.869Z' }), archive_index_count: raw.length, archive_signature: `${raw.length}:x` };
+  const out = buildPlayerDna(raw, { asOf: AS_OF, ...OPTS, winbaBoard: board });
   let n = 0;
   for (const [id, p] of Object.entries(out.players)) {
     if (!p.scopes.season.calculated) continue;
     const w = p.scopes.season.dimensions.winba;
-    const row = winbaForPlayer(snap, id);
+    const row = winbaForPlayer(board, id);
     assert.equal(w.value, row.score);
     assert.equal(w.score, Math.round(row.score));
     assert.equal(w.rank, row.rank);
     assert.equal(w.winba_status, row.status);
     assert.equal(w.version, 'winba/1.0.0');
+    assert.equal(w.source, 'canonical_board');
     assert.deepEqual(Object.fromEntries(w.components.map((c) => [c.key, c.value])), row.components);
+    assert.deepEqual(w.sample, row.sample);
+    assert.match(w.note, /401857320/);
     n += 1;
   }
   assert.ok(n > 10);
-  assert.equal(out.winba.games_used, snap.games_used);
+  // the board counts the All-Star Game (open owner finding) and DNA says so
+  assert.equal(out.winba.games_used, DOCS.length + 1);
+  assert.deepEqual(out.winba.includes_dna_excluded_games, ['401857320']);
+  assert.equal(out.winba.archive_signature, `${raw.length}:x`);
+  // an All-Star player's canonical sample includes that game; DNA's own season sample does not
+  const star = out.players['1026'];
+  assert.equal(star.scopes.season.dimensions.winba.sample.games, star.scopes.season.sample.games + 1);
+  // without a non-team fixture there is no note
+  const clean = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS, winbaBoard: canonicalWinbaBoardAsOf(DOCS, { season: 2026, asOf: AS_OF }) });
+  assert.equal(clean.players['1026'].scopes.season.dimensions.winba.note, undefined);
+  assert.equal(clean.winba.note, null);
 });
 
-test('running DNA does not mutate archive docs, so WinBA output is byte-identical before and after', () => {
+test('the canonical as-of board reproduces the stored board exactly and is independent of input order', () => {
+  const stored = buildWinbaSnapshot(DOCS, { season: 2026, generatedAt: 'g' });
+  const asOf = canonicalWinbaBoardAsOf([...DOCS].reverse(), { season: 2026, asOf: AS_OF });
+  assert.equal(JSON.stringify(asOf.rows.map((r) => [r.athlete_id, r.score, r.rank, r.components])), JSON.stringify(stored.rows.map((r) => [r.athlete_id, r.score, r.rank, r.components])));
+});
+
+test('running DNA never writes WinBA: docs and board are deep-frozen and WinBA output is byte-identical', () => {
   const docs = deepFreeze(structuredClone([...DOCS, ALL_STAR]));
+  const board = deepFreeze(buildWinbaSnapshot(docs, { season: 2026, generatedAt: 'fixed' }));
   const before = JSON.stringify(buildWinbaSnapshot(docs, { season: 2026, generatedAt: 'fixed' }));
-  buildPlayerDna(docs, { asOf: AS_OF, ...OPTS }); // would throw on a frozen object if it wrote
-  const after = JSON.stringify(buildWinbaSnapshot(docs, { season: 2026, generatedAt: 'fixed' }));
-  assert.equal(after, before);
+  const boardBefore = JSON.stringify(board);
+  buildPlayerDna(docs, { asOf: AS_OF, ...OPTS, winbaBoard: board }); // throws on a frozen object if it wrote
+  assert.equal(JSON.stringify(buildWinbaSnapshot(docs, { season: 2026, generatedAt: 'fixed' })), before);
+  assert.equal(JSON.stringify(board), boardBefore);
 });
 
 test('WinBA appears in the season scope only; never inside another dimension', () => {
-  const out = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS });
+  const out = buildPlayerDna(DOCS, { asOf: AS_OF, ...OPTS, winbaBoard: canonicalWinbaBoardAsOf(DOCS, { season: 2026, asOf: AS_OF }) });
   const p = out.players['1026'];
   assert.equal(p.scopes.season.dimensions.winba.status, 'LIVE');
   for (const s of ['last5', 'last10', 'last15', 'home', 'away']) assert.equal(p.scopes[s].dimensions.winba.status, 'NOT_IN_SCOPE');
@@ -466,9 +395,8 @@ test('All-Star-like fixture (tagged regular season, non-franchise team ids) is e
   const withAs = buildPlayerDna([...DOCS, ALL_STAR], { asOf: AS_OF, ...OPTS });
   assert.equal(withAs.provenance.excluded.non_franchise, 1);
   assert.deepEqual(withAs.provenance.excluded_games.non_franchise, ['401857320']);
-  assert.equal(JSON.stringify(withAs.players), JSON.stringify(base.players));
-  assert.equal(withAs.winba.games_used, base.winba.games_used, 'WinBA inside DNA reads the same filtered games');
-  // the published-board path (canonical WinBA over the raw archive) DOES count it: documented open finding
+  assert.equal(JSON.stringify(withAs.players), JSON.stringify(base.players), 'every non-WinBA dimension ignores the fixture');
+  // the canonical board (raw archive) DOES count it: documented open finding, carried as a note on winba
   assert.equal(buildWinbaSnapshot([...DOCS, ALL_STAR], { season: 2026, generatedAt: 'x' }).games_used, DOCS.length + 1);
 });
 
@@ -514,7 +442,10 @@ test('scopes: clutch unavailable, career needs prior coverage, playoffs from pos
   assert.deepEqual(two.coverage.seasons, [2025, 2026]);
   assert.equal(two.coverage.postseason_games, 12);
   // WinBA stays regular-season only (canonical rule) even with postseason docs present
-  assert.equal(two.winba.games_used, 48);
+  const all3 = [...prior, ...DOCS, ...post];
+  const two2 = buildPlayerDna(all3, { asOf, ...OPTS, winbaBoard: canonicalWinbaBoardAsOf(all3, { season: 2026, asOf }) });
+  assert.equal(two2.winba.games_used, 48);
+  assert.equal(two2.players['1026'].scopes.season.dimensions.winba.status, 'LIVE');
   // last-5 now crosses into the postseason
   assert.ok(q.scopes.last5.sample.first_date > new Date(LAST_TIP).toISOString().slice(0, 10));
 });
@@ -603,7 +534,8 @@ test('contract, versions and provenance fields are present', () => {
   assert.match(out.provenance.source, /game:v1:final/);
   assert.match(out.provenance.lines_hash, /^[0-9a-f]{8}$/);
   assert.deepEqual(out.provenance.franchise_team_ids, ['1', '2', '3', '4']);
-  for (const k of ['player_load', 'injuries', 'winba_stored_board']) assert.ok(out.provenance.not_inputs.includes(k));
+  for (const k of ['player_load', 'injuries', 'availability_feed', 'dnp_reason']) assert.ok(out.provenance.not_inputs.includes(k));
+  assert.match(out.provenance.winba_source, /canonical WinBA board/);
   const p = playerDnaFor(out, '1026');
   assert.equal(p.athlete_id, '1026');
   assert.equal(p.team_id, '1');

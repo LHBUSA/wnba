@@ -40,9 +40,10 @@ import { requestLink, verifyPage, verifyConsume, logout, privateJson, credential
 import { resolveAccount } from './account.js';
 import { pbeStatus, pbeCoverage, pbeFreeSample, pbePicks, pbeGame, pbeTeam, trackRecordPublic, trackRecordLedger } from './pbe.js';
 import { playoffs as playoffsRoute } from './playoffs.js';
+import { dnaMetaRoute, dnaIndexRoute, dnaPlayerRoute } from './dna.js';
 
 const SERVICE = 'wnba-api';
-const VERSION = '1.2.0'; // 1.2.0: /v1/playoffs (postseason bracket). 1.1.0: /v1/account carries the shared membership contract
+const VERSION = '1.3.0'; // 1.3.0: /v1/dna/meta, /v1/dna/index, /v1/dna/players/:id (Player DNA V1, prepared KV reads). 1.2.0: /v1/playoffs (postseason bracket). 1.1.0: /v1/account carries the shared membership contract
 
 // Freshness windows (seconds). Live data is short; season aggregates are long.
 const TTL = {
@@ -114,6 +115,9 @@ const ROUTES = [
   ['/v1/injuries', injuries],
   ['/v1/transactions', transactions],
   ['/v1/stats/winba', statsWinba],
+  ['/v1/dna/meta', (c) => dnaMetaRoute(c, { service: SERVICE, version: VERSION })],
+  ['/v1/dna/index', (c) => dnaIndexRoute(c, { service: SERVICE, version: VERSION })],
+  ['/v1/dna/players/:id', (c) => dnaPlayerRoute(c, { service: SERVICE, version: VERSION })],
   ['/v1/stats/players', statsPlayers],
   ['/v1/stats/teams', statsTeams],
   ['/v1/odds', odds],

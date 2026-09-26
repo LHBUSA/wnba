@@ -12,8 +12,9 @@
 // Explicitly NOT inputs (proved by tests/player-dna.test.mjs):
 //   - Player Load (workers/shared/player-load.js) and anything derived from it
 //   - injuries / availability feeds, `summary.injuries`, DNP reasons
-//   - the stored WinBA board (`winba:v1:latest`): WinBA is recomputed with the frozen
-//     canonical function from the same filtered archive documents at `asOf`
+//   - no DNA metric, Player Load or injury value ever reaches WinBA. The `winba` dimension
+//     is the CANONICAL WinBA board row for the player (the stored `winba:v1:latest` board,
+//     passed in as `winbaBoard`), attached unchanged (owner decision, docs §5.17)
 //   - odds, props, PBE picks, roster/bio snapshots, position
 
 import { buildWinbaSnapshotAsOf, winbaForPlayer, WINBA_VERSION } from './winba.js';
@@ -74,7 +75,7 @@ export const DIMENSIONS = Object.freeze([
   { key: 'form', label: 'Form', status: 'LIVE', descriptive: true, components: [['form_gmsc36_delta', 1]], desc: 'Last 10 games of the scope minus the whole scope (Game Score per 36)' },
   { key: 'matchup_adaptability', label: 'Matchup adaptability', status: 'PROXY', proxy_reason: 'Team-level opponent strength only (opponent record before the game); no individual matchup data', components: [['vs_winning_gmsc36_delta', 1]], desc: 'Game Score per 36 vs .500+ opponents minus overall' },
   { key: 'volatility', label: 'Volatility', status: 'LIVE', descriptive: true, components: [['gmsc_sd', 1]], desc: 'Game-to-game spread of Game Score (higher = more volatile, not better)' },
-  { key: 'winba', label: 'WinBA', status: 'LIVE', components: [], desc: `Canonical ${WINBA_VERSION} score, consumed unchanged (season scope only)` }
+  { key: 'winba', label: 'WinBA', status: 'LIVE', components: [], desc: `Canonical ${WINBA_VERSION} board score, attached unchanged (season scope only)` }
 ]);
 
 export const DESCRIPTIVE_DIMENSIONS = Object.freeze(DIMENSIONS.filter((d) => d.descriptive).map((d) => d.key));
@@ -177,6 +178,8 @@ export function selectDnaGames(docs = [], { asOf, franchiseTeamIds, excludeGameI
   const excludeIds = new Set((excludeGameIds || []).map(String));
   const excluded = { malformed: 0, after_as_of: 0, not_completed: 0, preseason_or_other: 0, non_franchise: 0, excluded_by_id: 0, duplicate: 0 };
   const excludedGames = { non_franchise: [], excluded_by_id: [] };
+  const excludedRegularBySeason = {};
+  const canonicalRegular = {};
   // Stable order independent of input order: by game id, then archived_at, then checksum.
   const ordered = [...(docs || [])].filter(Boolean).sort((a, b) =>
     cmp(String(a?.summary?.game?.game_id ?? ''), String(b?.summary?.game?.game_id ?? ''))
@@ -195,10 +198,13 @@ export function selectDnaGames(docs = [], { asOf, franchiseTeamIds, excludeGameI
     if (!(tipMs < cutoff)) { excluded.after_as_of += 1; continue; }
     if (!g.status?.completed) { excluded.not_completed += 1; continue; }
     const seasonType = SEASON_TYPE[Number(g.season?.type)];
+    // What the canonical WinBA aggregator counts (completed, type 2, has box players), before any DNA filter.
+    if (seasonType === 'regular' && (s.box?.players || []).length) canonicalRegular[Number(g.season?.year)] = (canonicalRegular[Number(g.season?.year)] || 0) + 1;
     if (seasonType !== 'regular' && seasonType !== 'postseason') { excluded.preseason_or_other += 1; continue; }
     if (!franchises.has(String(g.home.team_id)) || !franchises.has(String(g.away.team_id))) {
       excluded.non_franchise += 1;
       excludedGames.non_franchise.push(id);
+      if (seasonType === 'regular') (excludedRegularBySeason[Number(g.season?.year)] ||= []).push(id);
       continue;
     }
     if (excludeIds.has(id)) { excluded.excluded_by_id += 1; excludedGames.excluded_by_id.push(id); continue; }
@@ -228,7 +234,7 @@ export function selectDnaGames(docs = [], { asOf, franchiseTeamIds, excludeGameI
       players: s.box?.players || []
     };
   }).sort((a, b) => a.tip_ms - b.tip_ms || cmp(a.game_id, b.game_id));
-  return { games, excluded, excluded_games: excludedGames, as_of: new Date(cutoff).toISOString() };
+  return { games, excluded, excluded_games: excludedGames, excluded_regular_by_season: excludedRegularBySeason, canonical_regular_games: canonicalRegular, as_of: new Date(cutoff).toISOString() };
 }
 
 // ------------------------------------------------------------------ totals
@@ -346,7 +352,7 @@ export function aggregatePlayers(games) {
       b[g.season_type] = mergeTotals(b[g.season_type], t);
       if (!t.games) continue;
       p.records.push({ game_id: g.game_id, tip_ms: g.tip_ms, season: g.season, season_type: g.season_type, totals: t });
-      if (g.tip_ms >= p.last_tip) { p.last_tip = g.tip_ms; p.team_id = String(row.team_id); p.name = row.name ?? p.name; }
+      if (g.tip_ms >= p.last_tip) { p.last_tip = g.tip_ms; p.team_id = String(row.team_id); p.name = row.name ?? p.name; p.position = row.position ?? p.position ?? null; }
       if (g.season_type === 'regular') {
         const side = String(row.team_id) === g.home_id ? 'home' : 'away';
         b[side] = mergeTotals(b[side], t);
@@ -485,7 +491,7 @@ export function scoreScope(entries, scope, { winbaRows = null } = {}) {
       if (d.status === 'UNAVAILABLE') { dims[d.key] = { score: null, status: 'UNAVAILABLE', reason: d.reason, label: d.label }; continue; }
       if (d.key === 'winba') {
         const w = winbaRows?.get(r.id) || null;
-        if (!w || !Number.isFinite(w.score)) { dims.winba = { score: null, status: 'INSUFFICIENT_DATA', label: d.label, version: WINBA_VERSION }; continue; }
+        if (!w || !Number.isFinite(w.score)) { dims.winba = { score: null, status: 'INSUFFICIENT_DATA', reason: winbaRows?.missingReason || 'NOT_ON_CANONICAL_BOARD', label: d.label, version: WINBA_VERSION }; continue; }
         const c = capped(sampleConf);
         dims.winba = {
           score: Math.round(w.score),
@@ -499,8 +505,10 @@ export function scoreScope(entries, scope, { winbaRows = null } = {}) {
           winba_status: w.status,
           rank: w.rank,
           components: Object.entries(w.components).map(([key, value]) => ({ key, value })),
-          sample: w.sample
+          sample: w.sample,
+          source: 'canonical_board'
         };
+        if (winbaRows.note) dims.winba.note = winbaRows.note;
         continue;
       }
       const comps = d.components.map(([key, dir]) => {
@@ -557,8 +565,10 @@ function linesHash(games) {
  * @param franchiseTeamIds WNBA franchise team ids (required; e.g. ref:v1:athletes.teams)
  * @param excludeGameIds  explicit game ids to drop (recorded in provenance)
  * @param season          season S; default = latest season with a selected game before asOf
+ * @param winbaBoard      canonical WinBA board for season S at this archive state (winba:v1:latest), or
+ *                        canonicalWinbaBoardAsOf(docs, ...) for a historical as_of. Attached unchanged.
  */
-export function buildPlayerDna(docs = [], { asOf, franchiseTeamIds, excludeGameIds = [], season = null } = {}) {
+export function buildPlayerDna(docs = [], { asOf, franchiseTeamIds, excludeGameIds = [], season = null, winbaBoard = null } = {}) {
   const sel = selectDnaGames(docs, { asOf, franchiseTeamIds, excludeGameIds });
   const games = sel.games;
   const seasonsInWindow = [...new Set(games.map((g) => g.season))].filter(Number.isFinite).sort((a, b) => a - b);
@@ -583,7 +593,8 @@ export function buildPlayerDna(docs = [], { asOf, franchiseTeamIds, excludeGameI
       excluded_games: sel.excluded_games,
       franchise_team_ids: [...new Set((franchiseTeamIds || []).map(String))].sort(),
       lines_hash: linesHash(games),
-      not_inputs: ['player_load', 'injuries', 'availability_feed', 'dnp_reason', 'winba_stored_board', 'odds', 'props', 'position', 'roster_bio']
+      not_inputs: ['player_load', 'injuries', 'availability_feed', 'dnp_reason', 'odds', 'props', 'position', 'roster_bio'],
+      winba_source: 'canonical WinBA board passed as winbaBoard (winba:v1:latest in production); attached to the winba dimension only'
     },
     versions: { player_dna: PLAYER_DNA_VERSION, winba: WINBA_VERSION },
     dimension_definitions: DIMENSION_DEFINITIONS,
@@ -642,9 +653,19 @@ export function buildPlayerDna(docs = [], { asOf, franchiseTeamIds, excludeGameI
     entries[`last${n}`] = ids.map((id) => ({ id, totals: mergeTotals(...players.get(id).records.slice(-n).map((r) => r.totals)), extra: poExtra(id) }));
   }
 
-  // WinBA: the frozen canonical function over exactly the regular-season documents DNA selected, at asOf.
-  const winbaSnapshot = buildWinbaSnapshotAsOf(games.filter((g) => g.season === S && g.season_type === 'regular').map((g) => g.doc), { season: S, asOf: sel.as_of, generatedAt: sel.as_of });
-  const winbaRows = new Map(ids.map((id) => [id, winbaForPlayer(winbaSnapshot, id)]).filter(([, w]) => w));
+  // WinBA: the canonical board, attached unchanged. Never attach a board of another season.
+  // The board must describe exactly this archive state: same season, and the same number of canonical
+  // regular-season games before as_of (so a later board can never be attached to an earlier snapshot).
+  const expectedGames = sel.canonical_regular_games[S] || 0;
+  const boardSeasonOk = winbaBoard && Array.isArray(winbaBoard.rows) && Number(winbaBoard.season) === S;
+  const boardUsable = boardSeasonOk && Number(winbaBoard.games_used) === expectedGames;
+  const winbaRows = new Map(boardUsable ? ids.map((id) => [id, winbaForPlayer(winbaBoard, id)]).filter(([, w]) => w) : []);
+  winbaRows.missingReason = !winbaBoard ? 'NO_CANONICAL_BOARD' : !boardSeasonOk ? 'CANONICAL_BOARD_OTHER_SEASON' : !boardUsable ? 'CANONICAL_BOARD_OTHER_ARCHIVE_STATE' : 'NOT_ON_CANONICAL_BOARD';
+  // The canonical board reads every ESPN regular-season game; say so when it counts games DNA excludes.
+  const boardExtra = sel.excluded_regular_by_season[S] || [];
+  if (boardUsable && boardExtra.length) {
+    winbaRows.note = `The canonical WinBA board counts ESPN regular-season game(s) that the other DNA dimensions exclude as non-team fixtures: ${boardExtra.join(', ')}. Open owner finding; WinBA v1 is unchanged.`;
+  }
 
   const scored = {};
   for (const [scope, list] of Object.entries(entries)) scored[scope] = scoreScope(list, scope, { winbaRows: scope === 'season' ? winbaRows : null });
@@ -671,10 +692,27 @@ export function buildPlayerDna(docs = [], { asOf, franchiseTeamIds, excludeGameI
       }
       movement = { vs: MOVEMENT_WINDOW, deltas };
     }
-    base.players[id] = { athlete_id: id, name: p.name, team_id: p.team_id, season: S, as_of: sel.as_of, scopes, movement };
+    // position: display only (latest box row), never a calculation input
+    // Canonical WinBA row at player level, independent of DNA qualification (WinBA has its own rule).
+    const w = winbaRows.get(id) || null;
+    const winba = w ? { score: w.score, rank: w.rank, status: w.status, sample: w.sample, components: w.components, version: w.version, source: 'canonical_board', ...(winbaRows.note ? { note: winbaRows.note } : {}) } : null;
+    base.players[id] = { athlete_id: id, name: p.name, position: p.position ?? null, team_id: p.team_id, season: S, as_of: sel.as_of, scopes, movement, winba };
   }
-  base.winba = { version: WINBA_VERSION, games_used: winbaSnapshot.games_used, qualified_count: winbaSnapshot.qualified_count, as_of: winbaSnapshot.as_of };
+  base.winba = boardUsable
+    ? { source: 'canonical_board', version: winbaBoard.version ?? null, season: Number(winbaBoard.season), generated_at: winbaBoard.generated_at ?? null, games_used: winbaBoard.games_used ?? null, qualified_count: winbaBoard.qualified_count ?? null, archive_signature: winbaBoard.archive_signature ?? null, includes_dna_excluded_games: boardExtra, note: winbaRows.note ?? null }
+    : { source: null, reason: winbaRows.missingReason, expected_games_used: expectedGames, board_games_used: winbaBoard?.games_used ?? null };
   return base;
+}
+
+/**
+ * The board the canonical WinBA lane would have produced at a historical `asOf`: the frozen
+ * function over the RAW archive (no DNA filter), in tip order (the ingest's index order and tip
+ * order both reproduce the published board exactly; see docs §11.3).
+ */
+export function canonicalWinbaBoardAsOf(docs = [], { season, asOf }) {
+  const ordered = [...(docs || [])].filter(Boolean).sort((a, b) =>
+    (Date.parse(a?.summary?.game?.start_utc || '') - Date.parse(b?.summary?.game?.start_utc || '')) || cmp(String(a?.summary?.game?.game_id ?? ''), String(b?.summary?.game?.game_id ?? '')));
+  return buildWinbaSnapshotAsOf(ordered, { season, asOf, generatedAt: new Date(Date.parse(asOf)).toISOString() });
 }
 
 export function playerDnaFor(result, athleteId) {

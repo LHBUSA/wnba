@@ -35,7 +35,7 @@ function envWith({ s26 = snap(2026, recent()), s25 = snap(2025, recent()), check
 test('/health lists /v1/playoffs', async () => {
   const r = await call('/health', { WNBA_KV: memKV() });
   assert.ok(r.body.routes.includes('/v1/playoffs'));
-  assert.equal(r.body.version, '1.2.0');
+  assert.equal(r.body.version, '1.3.0');
 });
 
 test('current postseason not started: envelope, CACHED, POSTSEASON_NOT_STARTED, season 2026, CORS open', async () => {

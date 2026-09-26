@@ -1,15 +1,18 @@
 # WNBA Player DNA V1 — specification (`wnba_player_dna.v1`)
 
 Contract `wnba_player_dna.v1` · calculation version **`wnba-player-dna/1.0.0`** · WinBA dimension `winba/1.0.0`
-(frozen, consumed unchanged). Implementation: `workers/shared/player-dna.js`. Tests: `tests/player-dna.test.mjs`.
+(frozen; the canonical board is attached unchanged). Model: `workers/shared/player-dna.js`; views:
+`workers/shared/player-dna-views.js`; derive: `workers/wnba-ingest/src/dna-task.js`; API: `workers/wnba-api/src/dna.js`.
+Tests: `tests/player-dna.test.mjs`, `tests/player-dna-derive.test.mjs`.
 
 Commissioned by the owner as an exception to maintenance mode (`docs/STATUS.md`) for this feature only.
 Pattern source: NBA Player DNA V1 (`nba-propbetedge/docs/nba-dna/PLAYER_DNA_V1_SPEC.md`, `player-dna/1.0.0`). The
 method and output shape are adapted; no NBA code is imported and no NBA number (gate, weight, threshold) is reused
 as a WNBA input without being re-sized for a 44-game, 40-minute league.
 
-Status of this document: **Phase 3 (spec + pure model + tests)**. Nothing is derived, stored or served yet. No
-Worker, endpoint, KV key or UI exists for DNA. Phase 4 recommendations are in §12.
+Status: **Phase 4 BUILT, NOT DEPLOYED** (2026-09-26). The derive task, KV documents and read endpoints exist in
+source and are tested; no Worker has been deployed, no `POST /run` has been made, and no DNA key exists in KV yet.
+Owner decisions for this build: §13. Deploy procedure: §14. No UI yet.
 
 ---
 
@@ -58,7 +61,7 @@ Null rate is over the 7,060 played lines with minutes.
 | `summary.injuries` | same documents | — | — | **never** (explicitly excluded, tested) |
 | Player season stats / game logs / career (`/v1/players/:id`, `/gamelog`) | **not stored**: wnba-api proxies ESPN live with an edge/KV cache | current only | — | **no** — not a durable, as-of-reproducible store |
 | Supabase `wnba_player_game_stats` | written by `archiveGame` only when Supabase is configured | not measured (no read access used) | — | **no** — the KV archive is the canonical source WinBA reads |
-| `winba:v1:latest` | KV | current board | — | **no** — WinBA is recomputed from the archive at `as_of` (§5.17) |
+| `winba:v1:latest` | KV (written by the `winba` task) | current board, `archive_signature` | — | **winba dimension only**: the canonical board row, attached unchanged (§5, dimension 17; decision §13a) |
 | Player Load (`pbe-player-load/1.0.0`) | its own Worker/KV | — | — | **never** (tested) |
 | `avail:v1:snapshot` / injury feeds | KV | — | — | **never** (tested) |
 
@@ -158,12 +161,26 @@ Role thresholds are the NBA ones scaled by 40/48 (15 → 12.5, 8 → 6.5). ROTAT
 `defensive_impact`. The WNBA keys are deliberately renamed because the NBA labels overclaim what a box score
 measures. `dimension_definitions[].nba_key` carries the mapping so one UI can render both leagues.
 
-**Dimension 17 — WinBA, consumed unchanged.** DNA calls the frozen canonical
-`buildWinbaSnapshotAsOf(docs, { season: S, asOf, generatedAt: asOf })` on exactly the regular-season documents DNA
-selected (so the All-Star Game is out, §3), then `winbaForPlayer`. It returns `value` (the canonical score, 1
-decimal), `score` (rounded), `rank`, `winba_status` (QUALIFIED / PROVISIONAL), the four canonical components and
-WinBA's sample. `winba.js` is byte-pinned by sha256 in the tests; DNA never passes any DNA metric, Player Load or
-injury value into it. Not calculated in other scopes: WinBA v1 is defined per season.
+**Dimension 17 — WinBA = the canonical board, attached unchanged (owner decision §13a).** The `winba` dimension is
+the player's row on the **canonical WinBA board** — the same number the WinBA page shows. In production that is
+`winba:v1:latest`, written by the existing `winba` task; the model receives it as `winbaBoard` and never recomputes
+it. For a historical `as_of`, `canonicalWinbaBoardAsOf(docs, { season, asOf })` produces what the winba lane would
+have written (the frozen function over the **raw** archive in tip order; reproduces the stored board exactly).
+It returns `value` (canonical score, 1 decimal), `score` (rounded), `rank`, `winba_status` (QUALIFIED /
+PROVISIONAL), the four canonical components, WinBA's own sample, `source: "canonical_board"`, and a `note` whenever
+the board counts games the other DNA dimensions exclude. Today the note reads: *the canonical WinBA board counts
+ESPN regular-season game(s) that the other DNA dimensions exclude as non-team fixtures: 401857320. Open owner
+finding; WinBA v1 is unchanged.* So an All-Star's WinBA `sample.games` is one more than their DNA season sample —
+by design, and labelled.
+
+Guards (all tested): the board must be for season S **and** its `games_used` must equal the number of canonical
+regular-season games (completed, ESPN type 2, with box players) in the input before `as_of`; otherwise it is refused
+(`CANONICAL_BOARD_OTHER_SEASON` / `CANONICAL_BOARD_OTHER_ARCHIVE_STATE`) and never attached — so today's board can
+never be attached to a past snapshot. No board → `NO_CANONICAL_BOARD`, and the rest of the vector is unaffected.
+The same canonical row is also carried at player level (`player.winba`) regardless of DNA qualification, because
+WinBA has its own rule (≥ 10 games **or** ≥ 250 min). `winba.js` is byte-pinned by sha256; DNA never writes the
+board (deep-frozen in tests) and never passes a DNA metric, Player Load or injury value into WinBA. The dimension
+exists in the `season` scope only.
 
 ## 6. Confidence
 
@@ -183,8 +200,9 @@ percentages, rates in [0, 1], availability and start rate 3 decimals; confidence
 
 ## 8. Output
 
-`buildPlayerDna(docs, { asOf, franchiseTeamIds, excludeGameIds?, season? })` returns one object for all players
-of S. One player (real data, A'ja Wilson, `as_of` 2026-09-25T02:00:01Z, abridged):
+`buildPlayerDna(docs, { asOf, franchiseTeamIds, excludeGameIds?, season?, winbaBoard? })` returns one object for
+all players of S. One player (real data, A'ja Wilson, `as_of` 2026-09-25T02:00:01Z, abridged). The served
+`/v1/dna/players/:id` body wraps this per-player object in the envelope described in §12.2.
 
 ```json
 {
@@ -202,7 +220,7 @@ of S. One player (real data, A'ja Wilson, `as_of` 2026-09-25T02:00:01Z, abridged
     "not_inputs": ["player_load", "injuries", "availability_feed", "dnp_reason", "winba_stored_board", "odds", "props", "position", "roster_bio"]
   },
   "versions": { "player_dna": "wnba-player-dna/1.0.0", "winba": "winba/1.0.0" },
-  "winba": { "version": "winba/1.0.0", "games_used": 331, "qualified_count": 196, "as_of": "2026-09-25T02:00:01.000Z" },
+  "winba": { "source": "canonical_board", "version": "winba/1.0.0", "season": 2026, "generated_at": "2026-09-25T04:26:27.869Z", "games_used": 332, "qualified_count": 196, "archive_signature": "350:401857218", "includes_dna_excluded_games": ["401857320"], "note": "…" },
   "dimension_definitions": ["… 17 entries: key, nba_key, label, status, proxy, proxy_reason, reason, descriptive, components, desc"],
   "players": {
     "3149391": {
@@ -218,7 +236,7 @@ of S. One player (real data, A'ja Wilson, `as_of` 2026-09-25T02:00:01Z, abridged
             "ft_pressure": { "score": 96, "status": "PROXY", "proxy": true, "proxy_reason": "Foul-drawing and two-point volume only. This is NOT rim pressure: …", "…": "…" },
             "pressure_clutch": { "score": null, "status": "UNAVAILABLE", "reason": "CLUTCH_NOT_BUILT", "label": "Pressure / clutch" },
             "playoff_translation": { "score": null, "status": "INSUFFICIENT_DATA", "…": "…" },
-            "winba": { "score": 86, "value": 86.2, "status": "LIVE", "version": "winba/1.0.0", "winba_status": "QUALIFIED", "rank": 2,
+            "winba": { "score": 86, "value": 86.3, "status": "LIVE", "version": "winba/1.0.0", "winba_status": "QUALIFIED", "rank": 2, "source": "canonical_board", "note": "The canonical WinBA board counts … 401857320 …",
                        "components": [ { "key": "production_percentile", "value": 100 }, { "key": "win_rate", "value": 73.2 },
                                        { "key": "winning_output_share", "value": 74.7 }, { "key": "court_share", "value": 80.1 } ],
                        "confidence": 1, "confidence_label": "HIGH" }
@@ -271,16 +289,16 @@ over the full archive: ~0.3 s in Node.
 
 ## 11. Known limits and open findings
 
-1. **All-Star Game in the published WinBA board (OPEN, owner decision).** `winba:v1:latest` (games_used 332)
-   includes 401857320 because the canonical aggregator trusts season type 2. DNA's WinBA excludes it, so for the
-   same player DNA's WinBA can differ from the WinBA page. Measured: excluding only the All-Star Game changes 34
-   of 238 WinBA scores (max 1.2 points) and 33 ranks. Recommended fix: filter the WinBA *input set* to franchise
-   games in the ingest task (formula unchanged, `winba/1.0.0` stays) — but that changes published scores and
-   frozen boards, so it needs owner sign-off. Until then the page must show one WinBA number (see §12).
+1. **All-Star Game in the canonical WinBA board (OPEN, owner finding).** `winba:v1:latest` (games_used 332)
+   includes 401857320 because the canonical aggregator trusts ESPN season type 2. Per §13a the DNA `winba`
+   dimension shows the canonical number anyway (one WinBA number site-wide) and carries a `note`; every other DNA
+   dimension excludes the game. Measured: excluding only the All-Star Game would change 34 of 238 WinBA scores (max
+   1.2 points) and 33 ranks. The clean fix — filter the WinBA *input set* to franchise games in the ingest task,
+   formula unchanged — changes published scores and frozen boards, so it stays an owner decision.
 2. **Commissioner's Cup final (401857321, LV @ NY 2026-06-30).** Tagged regular season, has no team record, and
    is a real game between franchises on the players' own teams, so the franchise rule keeps it. The official WNBA
-   does not count the Cup final in regular-season stats. DNA supports dropping it via `excludeGameIds`; default is
-   keep. Excluding it too moves 70 WinBA scores (max 2.6). Owner decision.
+   does not count the Cup final in regular-season stats. **Decision §13b: kept.** `DNA_EXCLUDE_GAME_IDS` in
+   `dna-task.js` (empty) is the one place to drop it. Excluding it too would move 70 WinBA scores (max 2.6).
 3. **WinBA is input-order sensitive at the rounding boundary.** Float summation order in `aggregateWinbaArchives`
    flips 2 of 238 published scores by 0.1 depending on document order. The ingest's index order and tip order both
    reproduce the published board exactly; DNA always passes tip order, so DNA is deterministic. Not fixed (frozen
@@ -291,30 +309,149 @@ over the full archive: ~0.3 s in Node.
    why. It is not Player Load and not an injury signal.
 6. The deployed `wnba-ingest` predates commit 37cc43d (its WinBA board has no `formula.layer_contract`). Scores are
    identical; noted for deploy hygiene.
-7. `ids.slice(-500)` in the WinBA / Player Load / dry-run readers will silently drop the oldest seasons once the
-   archive exceeds 500 games (2027 season). A DNA derive must not copy that pattern (§12).
+7. `ids.slice(-500)` in the WinBA / Player Load / dry-run readers will silently drop the oldest games once the
+   archive exceeds 500 games (2027 season). The DNA reader reads every id (tested with 600). **Follow-up (not done,
+   out of scope):** fix the WinBA, Player Load and history-dryrun readers. Note that once WinBA drops games, its
+   board `games_used` stops matching the archive and DNA will (correctly) refuse to attach it and stop publishing
+   (§12.1 fail-closed) — the follow-up must land before the archive passes 500 games.
+8. **Deploying `wnba-ingest` from main also ships `winba.js` at 37cc43d** (adds `formula.layer_contract`; scores
+   unchanged, verified: recomputing from the archive reproduces all 238 published scores exactly in index order).
 
-## 12. Phase 4 recommendation (not built)
+## 12. Phase 4 — derive, storage and API (built, not deployed)
 
-- **Where:** `wnba-ingest`, as a new task `dna` next to `winba` (same KV binding, same archive reads, same Cloudflare
-  Cron; no new Worker, no GitHub Action). Trigger exactly like `winba`: only when `archive:v1:index` signature
-  changes, plus a daily forced run at a fixed ET hour. Read **all** archive ids (no `slice(-500)`), in tip order.
-- **Inputs:** `archive:v1:index` → `game:v1:final:<id>`; `franchiseTeamIds` from `ref:v1:athletes.teams` (15 ids),
-  failing closed if absent; `excludeGameIds` from a checked-in constant once the owner rules on 401857321.
-- **`as_of`:** last archived tip + 1 s (deterministic). Historical month-end snapshots (like the WinBA Index) use
-  `as_of` = first instant of the next month.
-- **KV (append-only by version):** `dna:v1:meta` (as_of, version, coverage, provenance, dimension_definitions,
-  counts), `dna:v1:index` (per player: id, name, team, season-scope scores only — small), and
-  `dna:v1:player:<athlete_id>` (one player, all scopes, ~27 KB). Optional frozen history
-  `dna:v1:asof:<YYYY-MM>:player:<id>` for monthly editions. Never overwrite a different `version`.
-- **API (wnba-api, read-only, mirrors NBA):** `GET /v1/dna/meta`, `GET /v1/dna/index`,
-  `GET /v1/dna/players/:id` → the prepared player object plus the meta envelope. Nothing computed on request.
-  Premium gating decision is the owner's (NBA DNA is paid-derived).
-- **UI:** `#player-dna/<id>` and a compact block on the player page; never show `career` today; show "2026 season
-  archive" as coverage; label PROXY dimensions with their reasons; show `ft_pressure` as "Free-throw pressure".
-- **Owner decisions before Phase 4 ships:** (a) All-Star in the WinBA board (§11.1) — until decided, the DNA page
-  should display DNA's WinBA with a note, or omit the WinBA dimension, rather than show two numbers; (b)
-  Commissioner's Cup final (§11.2); (c) whether DNA is Pro-gated; (d) historical seasons (rights, §10).
-- **Gates:** this test file; a production canary that `/v1/dna/players/:id` returns the contract, `clutch` and
-  `pressure_clutch` unavailable, `career` NO_PRIOR_SEASON_COVERAGE, every calculated scope meeting its gates, and
-  `provenance.excluded_games.non_franchise` containing 401857320.
+### 12.1 Derive: `wnba-ingest` task `dna` (`workers/wnba-ingest/src/dna-task.js`)
+
+- **Schedule:** Cloudflare Cron (existing `* * * * *`), queued after `winba` every minute. The task is a cheap
+  signature check unless the archive changed. Daily forced run (`dna_daily`) at **06:07 ET** re-reads every archived
+  document ignoring the cache and rewrites everything. No new Worker, no GitHub Action.
+- **Skip rules, in order:** no archive → `no_archives`; `dna:v1:meta.archive_signature` equals
+  `${ids.length}:${ids.at(-1)}` (the winba signature rule) and version unchanged → `unchanged_archive` (0 writes);
+  WinBA rebuilt in this same invocation → `deferred_after_winba_rebuild` (one heavy archive pass per invocation);
+  no board → `no_winba_board`; board signature ≠ archive signature → `winba_board_stale` (wait for winba).
+- **Fail closed (throws, writes nothing):** franchise list missing (`ref:v1:athletes.teams`); any indexed game
+  unreadable; canonical board not attachable to this archive state.
+- **Inputs:** **all** ids in `archive:v1:index` (no `slice(-500)`), each document slimmed on read to the fields DNA
+  uses (play-by-play, injuries and odds are dropped before the model); `winba:v1:latest`; `ref:v1:athletes`.
+  `as_of` = last completed archived tip + 1 s.
+- **Slim cache** `dna:v1:slim` (~2.2 MB today): box fields of every archived game, so a steady-state run reads only
+  newly archived games (1 doc instead of 350). The daily forced run ignores it; cache path and forced path produce
+  byte-identical documents (tested).
+- **Writes, in order:** `dna:v1:player:<id>` for every player (239 today, ~27-32 KB each), then `dna:v1:index`
+  (~110 KB), then `dna:v1:meta` (~9 KB; the commit marker), then `dna:v1:slim`. Nothing else. Never `winba:*`,
+  `archive:*`, `game:*`, `ref:*` or Supabase (tested: every write key starts with `dna:v1:`).
+- **Measured offline on the real archive** (in-memory KV loaded with the pulled data): 0.9 s in Node, 242 writes,
+  350 document reads on a cold run; board attached (games_used 332 = canonical count 332).
+- Append-only as-of snapshots: **not built** (not cheap in KV; the monthly-edition pattern can add
+  `dna:v1:asof:<YYYY-MM>:player:<id>` later with `canonicalWinbaBoardAsOf`).
+
+### 12.2 API: `wnba-api` (public), prepared data only (`workers/wnba-api/src/dna.js`)
+
+All three return the standard WNBA envelope `{ ok, data, meta }`; `data` is the stored document, shaped like NBA
+nba-intel `/v1/dna/*`: `schema, version, source, as_of, captured_at, partial, unavailable[], versions{player_dna,
+winba}, …`. Nothing is computed per request; the only decoration is the photo from the existing `photoFor`.
+`Cache-Control: public, max-age=300`; `meta.cache = "kv"`, `meta.stale_after_s = 129600`.
+
+| Route | `data` | Errors |
+|---|---|---|
+| `GET /v1/dna/meta` | `schema: wnba-dna/meta`, `scopes`, `qualification` (per scope: games, minutes, **reference_minutes**), `dimension_order`, `dimensions` (definitions incl. `nba_key`), `descriptive_dimensions`, `method` (percentile rule, per 36, last-N, movement, low-population cap, proxy factor, confidence labels, gates), `decisions`, `winba` (board summary + note), `coverage`, `counts`, `archive_signature`, `lines_hash`, `run` | 503 `not_derived` |
+| `GET /v1/dna/index` | `schema: wnba-dna/index`, `players[]` (id, name, position, team_id, games, minutes, season_calculated, role, winba, winba_value, winba_canonical, traits, calculated scopes, headshot) sorted by canonical WinBA → minutes → name, `teams{}`, `counts` | 503 `not_derived` |
+| `GET /v1/dna/players/:id` | `schema: wnba-dna/player`, `player{id, espn_athlete_id, name, position, headshot}`, `team_id`, `team{abbr, name, short_name, color, alt_color}`, `season`, `coverage_from`, `coverage`, `versions`, `dimension_order`, `scopes` (all 9), `movement`, `winba` (canonical row, player level), `content_hash`, `archive_signature`, `provenance` | 400 `bad_request` (non-numeric id), 404 `no_snapshot` with `data.state: "UNAVAILABLE"` |
+
+`wnba-api` VERSION 1.3.0; `wnba-ingest` VERSION 1.2.0.
+
+### 12.3 UI rules (for the UI build)
+
+Never render `career` (always `NO_PRIOR_SEASON_COVERAGE`); say "2026 season archive". Show PROXY dimensions with
+`proxy_reason`; show `ft_pressure` as "Free-throw pressure", never "rim pressure". Show the winba `note` wherever the
+DNA WinBA number appears. Render descriptive dimensions (role, form, volatility) without good/bad colouring.
+
+## 13. Owner decisions for this build (defaults; owner may override)
+
+| # | Decision | Default taken | Where it lives |
+|---|---|---|---|
+| a | WinBA inside DNA | The **canonical published board** value, unchanged, with a note that the board counts the 2026 All-Star Game. All other dimensions keep the franchise-only filter. | model `winbaBoard`; `DNA_DECISIONS.winba_source` |
+| b | Commissioner's Cup final 401857321 | **Kept** (real franchise game); documented | `DNA_EXCLUDE_GAME_IDS = []` |
+| c | Access | **Public**, not Pro-gated (same as NBA `/v1/dna/*`) | base `wnba-api` router (not the credentialed premium layer) |
+| d | History seasons | **None** — 2026 archive only; career DNA is never rendered | `career` returns `NO_PRIOR_SEASON_COVERAGE` |
+
+## 14. Deploy (procedure only — NOT run)
+
+Order: **ingest first** (so KV has DNA documents), **then the API**, then the frontend (already auto-deploys from
+main; it does not use DNA yet). Run from `D:\Workers\wnba` on a clean `main` equal to `origin/main`.
+Admin token: `.admin-token` (repo root, gitignored) or `C:\projects\wnba\.admin-token`; never print it.
+
+**0. Pre-flight**
+```powershell
+git -c safe.directory=* fetch origin main; git -c safe.directory=* status -sb    # must be "## main...origin/main", clean
+npm run guard; npm test                                                          # all green
+node --test tests/player-dna.test.mjs tests/player-dna-derive.test.mjs
+```
+
+**1. Capture rollback versions (before any deploy)**
+```powershell
+cd workers/wnba-ingest; npx wrangler deployments list --name wnba-ingest | Select-Object -First 20   # record current version id = ROLLBACK_INGEST
+cd ../wnba-api;        npx wrangler deployments list --name wnba-api    | Select-Object -First 20   # record ROLLBACK_API
+cd ../..
+Invoke-RestMethod https://wnba-ingest.sales-fd3.workers.dev/health   # expect version 1.1.0 (pre-deploy)
+```
+
+**2. Deploy wnba-ingest (existing fail-closed script)**
+```powershell
+pwsh -NoProfile -File scripts/deploy-wnba-ingest.ps1
+```
+It refuses unless on clean pushed main, runs the PBE/playoffs tests, deploys, polls `/health` until version
+**1.2.0**, and runs the PBE and playoffs canaries. It does not run DNA. (Add `tests/player-dna*.test.mjs` to its
+test list in the same change if the owner wants it in the gate.)
+
+**3. First DNA run (admin, forced)**
+```powershell
+$t = (Get-Content .admin-token -Raw).Trim()
+$h = @{ Authorization = "Bearer $t"; 'Cache-Control' = 'no-cache' }
+$r = Invoke-RestMethod -Method Post -Uri "https://wnba-ingest.sales-fd3.workers.dev/run/dna?force=1" -Headers $h
+$r.result.dna    # expect ok=true, season=2026, players≈239, calculated.season≈166, games_used=331,
+                 # winba_games_used=332, excluded.non_franchise=1, fetched_docs=350, player_docs_written=players
+```
+If it returns `skipped: winba_board_stale`, run `POST /run/winba` once (it no-ops if unchanged) and retry.
+Any thrown error (`franchise list missing`, `unreadable`, `CANONICAL_BOARD_OTHER_ARCHIVE_STATE`) means nothing was
+published — investigate, do not force around it.
+
+**4. Verify KV read-only**
+```powershell
+cd workers/wnba-ingest
+npx wrangler kv key get "dna:v1:meta" --binding WNBA_KV --remote | ConvertFrom-Json | Select-Object version, as_of, archive_signature, counts
+cd ../..
+```
+
+**5. Deploy wnba-api**
+```powershell
+cd workers/wnba-api; npx wrangler deploy; cd ../..
+```
+
+**6. Canaries (read-only)**
+```powershell
+$api = 'https://wnba-api.propbetedge.ai'
+$h = Invoke-RestMethod "$api/health";                           # version 1.3.0; routes include /v1/dna/meta, /v1/dna/index, /v1/dna/players/:id
+$m = (Invoke-RestMethod "$api/v1/dna/meta").data                # schema wnba-dna/meta; versions.player_dna wnba-player-dna/1.0.0; versions.winba winba/1.0.0
+                                                                # qualification.season = {games:10, minutes:200, reference_minutes:1000}; dimension_order.Count = 17
+                                                                # decisions.winba_source = canonical_board; winba.includes_dna_excluded_games contains 401857320
+$i = (Invoke-RestMethod "$api/v1/dna/index").data               # players.Count = meta.counts.players; no player has 'career' in scopes
+$p = (Invoke-RestMethod "$api/v1/dna/players/4433791").data     # Olivia Miles: scopes.season.calculated; scopes.career.reason NO_PRIOR_SEASON_COVERAGE;
+                                                                # scopes.clutch.reason CLUTCH_NOT_BUILT; dimensions.pressure_clutch.status UNAVAILABLE
+$w = (Invoke-RestMethod "$api/v1/stats/winba").data.rows | Where-Object athlete_id -eq '4433791'
+if ($p.scopes.season.dimensions.winba.value -ne $w.score) { throw 'DNA WinBA != WinBA page' }   # one WinBA number site-wide
+try { Invoke-RestMethod "$api/v1/dna/players/1" } catch { $_.Exception.Response.StatusCode }   # 404
+```
+Also check every calculated scope meets its gates (`sample.games ≥ qualification.games`, `sample.minutes ≥
+qualification.minutes`) for the three sample players, and that `provenance.excluded_games.non_franchise` contains
+401857320.
+
+**7. Watch** `GET https://wnba-ingest.sales-fd3.workers.dev/status` → `status.dna` over the next archive change:
+expect one run with `fetched_docs = 1`, then `skipped: unchanged_archive` every minute.
+
+**Rollback**
+- API: `cd workers/wnba-api; npx wrangler rollback <ROLLBACK_API>` — the DNA routes disappear; nothing else changes.
+- Ingest: `cd workers/wnba-ingest; npx wrangler rollback <ROLLBACK_INGEST>` — the `dna` task stops. Note this also
+  rolls `winba.js` back to the pre-37cc43d build (scores identical).
+- DNA KV keys are inert without the API; delete only on owner instruction:
+  `npx wrangler kv key delete "dna:v1:meta" --binding WNBA_KV --remote` (and `dna:v1:index`, `dna:v1:slim`,
+  `dna:v1:player:*`). No other key is touched by DNA.

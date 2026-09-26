@@ -13,6 +13,8 @@
 //   odds         08/13/18 ET    featured markets + near-term props (credit-bounded)
 //   pbe          every minute   PBE WNBA model runner (PBE_MODE; dry_run = shadow ledger only)
 //   playoffs     every 10 min   postseason bracket snapshot (every 2 min while a playoff game is live/near)
+//   dna          every minute   Player DNA derive, only when the archive signature changed and the WinBA
+//                               board matches it; forced full re-read daily 06:07 ET (dna-task.js)
 
 import { fetchJsonWithTimeout, cachedJson } from '../../shared/fetcher.js';
 import { ESPN, normalizeScoreboard, normalizeSummary, normalizeInjuries, normalizeTeams, normalizeRoster, normalizeStandings } from '../../shared/espn.js';
@@ -23,9 +25,10 @@ import { etCompact, addDays, etHour } from '../../shared/time.js';
 import { pbeTask } from './pbe-runner.js';
 import { playoffsTask, playoffsDue } from './playoffs-task.js';
 import { buildWinbaSnapshot, buildWinbaSnapshotAsOf } from '../../shared/winba.js';
+import { dnaTask, DNA_FORCE_HOUR_ET, DNA_FORCE_MINUTE } from './dna-task.js';
 
 const SERVICE = 'wnba-ingest';
-const VERSION = '1.1.0'; // 1.1.0: playoffs task (postseason bracket snapshot)
+const VERSION = '1.2.0'; // 1.2.0: dna task (Player DNA V1 derive). 1.1.0: playoffs task (postseason bracket snapshot)
 const PBE_RELEASE = 'pbe-live-final-sync-2026-09-20';
 const ODDS_HOURS_ET = [8, 13, 18];
 const PROP_MARKETS = ['player_points', 'player_rebounds', 'player_assists', 'player_threes'];
@@ -47,6 +50,8 @@ export default {
     // only when a newly archived final changes archive:v1:index.
     tasks.push('winba');
     if (await playoffsDue(env, minute)) tasks.push('playoffs');
+    // After winba: DNA attaches the canonical board, so it must see the board for the same archive state.
+    tasks.push(minute === DNA_FORCE_MINUTE && etHour(d) === DNA_FORCE_HOUR_ET ? 'dna_daily' : 'dna');
     ctx.waitUntil(runTasks(env, ctx, tasks, 'cron'));
   },
 
@@ -71,13 +76,14 @@ export default {
       const top = Math.min(Math.max(Number(url.searchParams.get('top') || 25), 1), 50);
       return j({ ok: true, data: await winbaHistoryDryRun(env, { top, only: url.searchParams.get('periods') || null }) });
     }
-    const m = url.pathname.match(/^\/run\/(live|availability|backfill|winba|schedule|reference|odds|pbe|playoffs)$/);
+    const m = url.pathname.match(/^\/run\/(live|availability|backfill|winba|schedule|reference|odds|pbe|playoffs|dna)$/);
     if (m && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       // playoffs accepts ?season=YYYY (backfill a completed postseason) and ?force=1 (re-verify a frozen bracket).
       const seasonParam = url.searchParams.get('season');
       if (m[1] === 'playoffs' && seasonParam && !/^20\d\d$/.test(seasonParam)) return j({ ok: false, error: 'bad_season' }, 400);
-      const opts = m[1] === 'playoffs' ? { season: seasonParam ? Number(seasonParam) : null, force: url.searchParams.get('force') === '1' } : undefined;
+      const opts = m[1] === 'playoffs' ? { season: seasonParam ? Number(seasonParam) : null, force: url.searchParams.get('force') === '1' }
+        : m[1] === 'dna' ? { force: url.searchParams.get('force') === '1' } : undefined;
       const result = await runTasks(env, ctx, [m[1]], 'manual', opts);
       return j({ ok: true, result });
     }
@@ -191,7 +197,7 @@ async function runTasks(env, ctx, tasks, trigger, opts) {
   for (const t of tasks) {
     const t0 = Date.now();
     try {
-      results[t] = { ok: true, ...(await TASKS[t](env, ctx, opts)), ms: Date.now() - t0 };
+      results[t] = { ok: true, ...(await TASKS[t](env, ctx, opts, results)), ms: Date.now() - t0 };
     } catch (e) {
       console.error(`[${SERVICE}] task ${t} failed`, e?.stack || e);
       results[t] = { ok: false, error: e.message || String(e), ms: Date.now() - t0 };
@@ -209,7 +215,13 @@ async function runTasks(env, ctx, tasks, trigger, opts) {
 }
 
 // pbe: PBE WNBA runner (pbe-runner.js). PBE_MODE off | dry_run | armed; it decides per game whether anything is due.
-const TASKS = { live, availability, backfill, winba, schedule, reference, odds, pbe: (env) => pbeTask(env), playoffs: (env, ctx, opts) => playoffsTask(env, opts || {}) };
+const TASKS = {
+  live, availability, backfill, winba, schedule, reference, odds,
+  pbe: (env) => pbeTask(env),
+  playoffs: (env, ctx, opts) => playoffsTask(env, opts || {}),
+  dna: (env, ctx, opts, results) => dnaTask(env, { force: Boolean(opts?.force), results }),
+  dna_daily: (env) => dnaTask(env, { force: true })
+};
 
 // ---------------------------------------------------------------- rows
 
