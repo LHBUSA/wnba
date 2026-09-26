@@ -8,6 +8,11 @@
     padding-inline: 30px;
   }
 
+  /* The canonical PBE mark is 2:1, so the desktop lockup is tuned to the old square mark's footprint:
+     eight primary destinations must still fit from 1181px. */
+  .hdr .brand-mark { height: 26px; }
+  .hdr .brand-txt b { font-size: 17px; }
+
   .hdr .brand {
     padding-right: 22px;
     margin-right: 18px;
@@ -320,7 +325,7 @@ nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child .btn-pro:
 .foot-pro-cta span { font-size: 17px; line-height: 0; }
 
 .foot-brand-col .brand { width: fit-content; }
-.foot-brand-col .brand-mark { width: 36px; height: 36px; }
+.foot-brand-col .brand-mark { height: 38px; width: auto; }
 .foot-brand-col .brand-txt b { font-size: 21px; }
 .foot-brand-note { margin-top: 17px; max-width: 46ch; line-height: 1.65; }
 .foot-trust-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
@@ -422,4 +427,25 @@ nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child .btn-pro:
   .foot-brand-col, .foot-network-col { grid-column: auto; }
   .foot-security { align-items: flex-start; flex-direction: column; padding: 17px; }
   .foot .foot-mother-badge { width: min(236px, 100%); }
+}
+
+/* ------------------------------------------------------------ share actions (X · LinkedIn · Copy) */
+.share-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.share-bar__label { font: 700 10.5px/1 var(--f-data); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-right: 4px; }
+.share-btn {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 13px;
+  border: 1px solid var(--line-2); border-radius: 999px; background: var(--ink-2);
+  font: 600 12.5px/1 var(--f-ui); color: var(--paper-2); cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.share-btn svg { width: 15px; height: 15px; flex: none; }
+.share-btn:hover { color: var(--paper); border-color: var(--gold-line, rgba(212,175,55,.45)); background: var(--ink-3); }
+.share-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.share-btn.is-copied { color: var(--gold-bright); border-color: var(--gold); }
+.share-row { display: flex; justify-content: flex-end; margin-top: 10px; }
+.share-row .share-bar { margin-top: 0; }
+.dna-hero .share-bar { margin-top: 10px; }
+@media (max-width: 480px) {
+  .share-btn { padding: 0 11px; }
+  .share-row { justify-content: flex-start; }
 }

@@ -1,5 +1,6 @@
 import { html, render } from '../lib/dom.js';
 import { api } from '../data/api.js';
+import { routeMeta } from '../seo/meta.js';
 import { errorState, skeleton, badge, entityChips } from '../ui/components.js';
 import { fmtDateTimeET } from '../lib/format.js';
 
@@ -11,7 +12,7 @@ export async function mount(root, ctx) {
   if (!ctx.isCurrent()) return;
   if (!res.ok) return render(root, errorState(res, 'This story'));
   const s = res.data;
-  ctx.setMeta({ title: s.headline, description: String(s.body).split('\n\n')[0].slice(0, 200) });
+  ctx.setMeta({ ...routeMeta('story', { path: ctx.path }), title: s.headline, description: String(s.body).split('\n\n')[0].slice(0, 200) });
   render(root, html`
     <article style="max-width:780px">
       <div class="nmeta" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${badge('pbe', 'PBE Desk')}<span class="note">${fmtDateTimeET(s.published_at)}</span><span class="note">${s.generator_version}</span></div>

@@ -9,7 +9,7 @@
 }
 .hdr-in { max-width: var(--maxw); margin: 0 auto; height: 100%; display: flex; align-items: center; gap: var(--s4); padding-inline: var(--s4); }
 .brand { display: flex; align-items: center; gap: 10px; flex: none; }
-.brand-mark { width: 30px; height: 30px; }
+.brand-mark { height: 30px; width: auto; aspect-ratio: 65 / 32; flex: none; display: block; }
 .brand-txt { display: flex; flex-direction: column; line-height: 1; }
 .brand-txt b { font: 800 19px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
 .brand-txt b span { color: var(--gold); }

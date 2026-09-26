@@ -2,7 +2,7 @@
 // excludes superseded stories and collapsed duplicates. Every publication date is the story's immutable
 // editorial origin (first_published_at): a revision never makes a story newly eligible or newly dated.
 
-import { SITE, PUBLICATION_NAME, NEWSROOM_NAME, DESKS, TRUST_PAGES } from './site.js';
+import { SITE, PUBLICATION_NAME, NEWSROOM_NAME, DESKS, TRUST_PAGES, LOGO } from './site.js';
 import { deskOf, articleShareImage } from './meta.js';
 
 export const NEWS_SITEMAP_WINDOW_MS = 48 * 3600e3;
@@ -112,7 +112,7 @@ export function rssXml(items, { limit = 50, now = Date.now() } = {}) {
     <copyright>© PropBetEdge</copyright>
     <ttl>10</ttl>
     ${list[0] ? `<lastBuildDate>${rfc822(list.map((c) => c.revised_at && ms(c.revised_at) > ms(origin(c)) ? c.revised_at : origin(c)).sort((a, b) => ms(b) - ms(a))[0])}</lastBuildDate>` : ''}
-    <image><url>${SITE}/share/propbetedge-wnba-logo-512.png</url><title>${xml(`${PUBLICATION_NAME} Newsroom`)}</title><link>${SITE}/news</link></image>
+    <image><url>${LOGO.url}</url><title>${xml(`${PUBLICATION_NAME} Newsroom`)}</title><link>${SITE}/news</link></image>
 ${entries.join('\n')}
   </channel>
 </rss>

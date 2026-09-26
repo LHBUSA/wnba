@@ -1,4 +1,5 @@
 import { html } from '../lib/dom.js';
+import { shareBar } from '../ui/share.js';
 import { winbaCurrentEditionModule } from './winba-leaderboard.js';
 import { currentWinbaEdition } from './winba-index.js';
 import { pageHead, avatar } from '../ui/components.js';
@@ -69,6 +70,7 @@ export function winbaScoreView({ winba = null, players = null, index = null } = 
   const updated = d?.generated_at ? fmtDateTimeET(d.generated_at) : null;
   return html`
     ${pageHead({ eyebrow: 'PropBetEdge original metric', title: 'WinBA Score', sub: 'A 0–100 WNBA winning-impact index built to show how player production, playing time and team results fit together across the regular season.' })}
+    ${shareBar({ path: '/winba-score', title: 'WinBA Score: WNBA Winning-Impact Metric & Rankings' })}
 
     <section class="winba-authority-hero section">
       <div class="winba-authority-hero__copy">

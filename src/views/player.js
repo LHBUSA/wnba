@@ -1,5 +1,7 @@
 // Player intelligence view — shared by the SPA page and the wnba-web publishing Worker.
 import { html, raw } from '../lib/dom.js';
+import { shareBar } from '../ui/share.js';
+import { routeMeta } from '../seo/meta.js';
 import { sourceLine, errorState, statusBadge, badge, safeColor } from '../ui/components.js';
 import { fmtDateET, relTime, num, initials, american, bookName } from '../lib/format.js';
 import { sparkline } from '../ui/charts.js';
@@ -87,6 +89,7 @@ export function playerView({ id, res, news, props, arts, intl }) {
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           ${inj ? html`${statusBadge(inj.status)}<span class="note">${[inj.side, inj.body_part].filter(Boolean).join(' ')} · PropSports feed updated ${fmtDateET(inj.source_updated_at, { month: 'short', day: 'numeric' })} · <a href="/injuries">Injury Desk →</a></span>` : d.availability ? badge('final', 'Not on injury feed') : badge('stale', 'Availability unknown')}
         </div>
+        ${shareBar({ path: `/players/${p.athlete_id}`, title: routeMeta('player', { path: `/players/${p.athlete_id}`, data: d }).title })}
         ${inj?.short_comment ? html`<blockquote class="callout" style="margin:12px 0 0">${inj.short_comment}<div class="note" style="margin-top:6px">Source injury note${inj.source_return_date ? ` · the source lists an expected return of ${fmtDateET(inj.source_return_date + 'T16:00:00Z', { month: 'short', day: 'numeric' })} (source-reported, not a PropBetEdge estimate)` : ''}</div></blockquote>` : ''}
         <div class="tiles" style="margin-top:18px">
           ${[['Season', r?.season], ['Last 10', r?.last10], ['Last 5', r?.last5]].map(([lbl, w]) => html`<div class="tile"><small>${lbl}${w ? ` · ${w.games} g` : ''}</small><b>${w ? num(w.pts) : '—'}</b><span>${w ? `${num(w.reb)} reb · ${num(w.ast)} ast · ${num(w.min)} min` : 'no games'}</span></div>`)}

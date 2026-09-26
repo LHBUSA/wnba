@@ -5,6 +5,7 @@
 //   opening section when a verified official video exists) → story links → bettor modules → evidence & method
 //   (trust layer) → related coverage.
 import { html } from '../lib/dom.js';
+import { shareBar } from '../ui/share.js';
 import { marketStrip, avatar } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
 import { KIND_LABEL, DESK, articleCard, headlineText } from '../ui/articles.js';
@@ -230,6 +231,7 @@ export function articleView({ article: a, related = [], series = [] }) {
           ${revised ? html`<span>Updated <time datetime="${revised}">${fmtDateTimeET(revised)}</time></span>` : ''}
           ${observed ? html`<span>Source data as of ${fmtDateTimeET(observed)}</span>` : ''}
         </div>
+        ${shareBar({ path: `/news/${a.slug}`, title: a.headline })}
         ${players.length || teams.length ? html`<nav class="story-entity-rail" aria-label="Players and teams in this story">
           <span>In this story</span>
           ${players.map((p) => html`<a href="/players/${p.id}">${p.name}</a>`)}

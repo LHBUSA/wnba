@@ -5,6 +5,8 @@
 
 import { html, render, raw, esc } from '../lib/dom.js';
 import { api } from '../data/api.js';
+import { routeMeta } from '../seo/meta.js';
+import { shareBar } from '../ui/share.js';
 import { approvedPlayerPhoto } from '../data/player-photo-map.js';
 import { createPoller } from '../lib/poller.js';
 import { gameState, badge, sourceLine, empty, errorState, skeleton, avatar, safeColor, teamDot, periodName, startFreshTicker } from '../ui/components.js';
@@ -264,7 +266,9 @@ export async function mount(root, ctx) {
     const st = gameState(g, { replay: v.replay });
     const home = g.home;
     const away = g.away;
-    ctx.setMeta({ title: `${away?.abbr} @ ${home?.abbr} · WNBACast`, description: `WNBACast for ${away?.name} at ${home?.name}, ${fmtDateET(g.start_utc, { month: 'long', day: 'numeric', year: 'numeric' })}: real play-by-play, shots, runs and box score.` });
+    // One metadata authority: the same routeMeta the publishing Worker used for the first response.
+    const castMeta = routeMeta('cast', { path: `/cast/${g.game_id}`, params: { gameId: g.game_id }, data: { game: g } });
+    ctx.setMeta(castMeta);
 
     const liveEventClock = g.status?.state === 'in' && v.last?.period
       ? [periodName(v.last.period), v.last.clock].filter(Boolean).join(' ')
@@ -317,6 +321,7 @@ export async function mount(root, ctx) {
         </tbody></table></div>` : ''}
         <div class="card-body" style="padding-top:10px;padding-bottom:12px">${sourceLine(state.meta, { label: semLabel })}</div>
       </section>
+      <div class="share-row">${shareBar({ path: `/cast/${g.game_id}`, title: castMeta.title })}</div>
 
       ${v.replay ? html`<section class="card replay-bar" style="margin-top:12px" aria-label="Replay controls">
         <button class="rb-btn play" type="button" data-play aria-label="${state.playing ? 'Pause replay' : 'Play replay'}">${state.playing ? '❚❚' : '▶'}</button>

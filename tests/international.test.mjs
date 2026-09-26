@@ -210,7 +210,7 @@ test('international routes render server-visible HTML with canonical, title and 
   assert.equal(ev.homeTeam.name, 'United States women’s national basketball team');
   assert.equal(ev.superEvent.url, 'https://wnba.propbetedge.ai/international/world-cup-2026');
   assert.match(gm.doc, /Awa Fam/);
-  assert.match(gm.doc, /property="og:image" content="https:\/\/wnba\.propbetedge\.ai\/og\/intl-games\/401917257\.png"/);
+  assert.match(gm.doc, /property="og:image" content="https:\/\/wnba\.propbetedge\.ai\/og\/intl-games\/401917257\.png\?v=3"/);
 
   const tm = await page('/international/teams/usa');
   assert.match(tm.doc, /<title>USA Women’s Basketball: Roster, Schedule &amp; Results \| PropBetEdge<\/title>/);

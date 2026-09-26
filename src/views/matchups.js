@@ -1,5 +1,7 @@
 // Matchup research views (list + game) — shared by the SPA page and the wnba-web publishing Worker.
 import { html, raw } from '../lib/dom.js';
+import { shareBar } from '../ui/share.js';
+import { routeMeta } from '../seo/meta.js';
 import { pageHead, gameCard, sourceLine, empty, errorState, avatar, statusBadge, marketStrip } from '../ui/components.js';
 import { fmtDateET, fmtTimeET, fmtDateTimeET, num, signed } from '../lib/format.js';
 import { versusBar, sparkline } from '../ui/charts.js';
@@ -117,6 +119,7 @@ export function matchupView({ res, arts, winba }) {
           <div class="mu-team home" style="display:flex;gap:14px;align-items:center;justify-content:flex-end"><span><b><a href="/teams/${g.home?.team_id}">${g.home?.name}</a></b><small>${g.home?.record || ''} · home${g.venue?.name ? ` · ${g.venue.name}` : ''}</small></span>${teamLogo(g.home, 72)}</div>
         </div>
         <div class="pill-row" style="margin-top:16px"><a class="pill on" href="/cast/${g.game_id}">WNBACast</a><a class="pill" href="/props">Best line board</a><a class="pill" href="/injuries">Injury Desk</a>${d.season_series?.[0]?.summary ? html`<span class="chip">${d.season_series[0].summary}</span>` : ''}</div>
+        ${shareBar({ path: `/matchups/${g.game_id}`, title: routeMeta('matchups', { path: `/matchups/${g.game_id}`, params: { gameId: g.game_id }, data: { game: g } }).title })}
       </div>
     </section>
 

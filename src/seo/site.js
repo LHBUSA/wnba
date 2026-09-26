@@ -18,16 +18,24 @@ export const IDS = Object.freeze({
   website: `${SITE}/#website`
 });
 
+// Identity V3 (2026-09-26). Assets are built from the canonical PropBetEdge artwork by
+// scripts/brand/build-brand-assets.py (docs/BRAND.md). Social networks cache cards by URL, so a new
+// card design always ships at a new URL — never overwrite a published card in place.
+export const SOCIAL_CARD_PATH = '/share/propbetedge-wnba-social-v3.jpg';
 export const DEFAULT_IMAGE = Object.freeze({
-  url: `${SITE}/share/propbetedge-wnba-social-v2.jpg`,
+  url: `${SITE}${SOCIAL_CARD_PATH}`,
   width: 1200,
   height: 630,
-  alt: 'PropBetEdge WNBA — WNBA intelligence desk: WNBACast, props, matchups and newsroom.'
+  alt: 'PropBetEdge WNBA — live sports intelligence: WNBACast, Player DNA, WinBA, matchups and news. @PROPBETEDGE'
 });
 
-export const LOGO = Object.freeze({ url: `${SITE}/share/propbetedge-wnba-logo-512.png`, width: 512, height: 512 });
+// Dynamic /og/* card design revision. Bump it whenever the card chrome changes so X and LinkedIn refetch.
+export const OG_REV = '3';
 
-export const DEFAULT_DESCRIPTION = 'PropBetEdge WNBA is the independent WNBA intelligence desk: live WNBACast, sourced injuries, matchup context, sportsbook odds, player research and original WNBA newsroom coverage.';
+// The PropBetEdge mark (canonical artwork) on the site ink: Organization and publisher logo everywhere.
+export const LOGO = Object.freeze({ url: `${SITE}/share/propbetedge-logo-v3-512.png`, width: 512, height: 512 });
+
+export const DEFAULT_DESCRIPTION = 'Live WNBA intelligence from PropBetEdge: WNBACast, Player DNA, WinBA, matchups, availability, analytics and original data-backed news.';
 
 export const abs = (path) => (/^https?:\/\//.test(String(path || '')) ? String(path) : `${SITE}${String(path || '/').startsWith('/') ? '' : '/'}${path || ''}`);
 

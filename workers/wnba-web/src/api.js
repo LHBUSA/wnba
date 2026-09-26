@@ -42,6 +42,7 @@ export function bindingApi(env, { timeoutMs = 9000 } = {}) {
     team: (id) => A(`/v1/teams/${encodeURIComponent(id)}`),
     players: () => A('/v1/players'),
     player: (id) => A(`/v1/players/${encodeURIComponent(id)}`),
+    dna: (id) => A(`/v1/dna/players/${encodeURIComponent(id)}`),
     injuries: () => A('/v1/injuries'),
     statsWinba: () => A('/v1/stats/winba'),
     statsPlayers: () => A('/v1/stats/players'),

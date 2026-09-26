@@ -5,7 +5,7 @@ import { isMember } from '../lib/membership.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-26.4';
+export const SHELL_REV = '2026-09-26.5';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -47,7 +47,9 @@ const ICON = {
 };
 const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
 
-const BRAND_MARK = `<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1813"/><circle cx="32" cy="32" r="19" fill="none" stroke="#d4af37" stroke-width="3.5"/><path d="M13 32h38M32 13v38M19 18c7 6 7 22 0 28M45 18c-7 6-7 22 0 28" fill="none" stroke="#ff7a2f" stroke-width="2.6" stroke-linecap="round"/></svg>`;
+// The canonical PropBetEdge mark (network artwork, built by scripts/brand/build-brand-assets.py — docs/BRAND.md).
+// Decorative next to the visible "PropBetEdge WNBA" wordmark, so alt is empty; the link carries the name.
+const BRAND_MARK = '<img class="brand-mark" src="/brand/pbe-mark-32.webp" srcset="/brand/pbe-mark-32.webp 1x, /brand/pbe-mark-64.webp 2x, /brand/pbe-mark-96.webp 3x" width="65" height="32" alt="" decoding="async" />';
 
 /** Short header badge for phones; the full label stays in the contract badge and the link's aria-label. */
 const SHORT_LABEL = (m) => m.state === 'owner' ? 'OWNER' : m.state === 'all_access' ? 'ALL ACCESS' : m.legacy_tier === 'founding' ? 'FOUNDING' : m.legacy_tier === 'season_pass' ? 'PASS' : 'WNBA PRO';
@@ -64,7 +66,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
       <div class="hdr-in">
         <a class="brand" href="/" aria-label="PropBetEdge WNBA home">
           ${raw(BRAND_MARK)}
-          <span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>WNBA intelligence desk</small></span>
+          <span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>WNBA Intelligence</small></span>
         </a>
         <nav class="nav" aria-label="Primary">
           ${PRIMARY_NAV.map(([id, href, label]) => id === 'pbe-picks'
@@ -110,7 +112,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         </section>
 
         <div class="foot-brand-col">
-          <a class="brand" href="/" aria-label="PropBetEdge WNBA home">${raw(BRAND_MARK)}<span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>Independent WNBA intelligence</small></span></a>
+          <a class="brand" href="/" aria-label="PropBetEdge WNBA home">${raw(BRAND_MARK)}<span class="brand-txt"><b>PropBetEdge <span>WNBA</span></b><small>WNBA Intelligence</small></span></a>
           <p class="note foot-brand-note">Built from real WNBA source data with visible source and freshness on volatile numbers. Sportsbook prices, market consensus and PropBetEdge model outputs stay clearly separated.</p>
           <div class="foot-trust-chips" aria-label="PropBetEdge WNBA trust principles">
             <span>Independent</span><span>Source-linked</span><span>Auditable</span>

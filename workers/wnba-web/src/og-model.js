@@ -1,7 +1,7 @@
 // Share-card content models. Pure: decides what each card says from the same API records the pages use.
 // Kept separate from og.js (satori/resvg) so it is testable without the renderer.
 
-import { DESKS } from '../../../src/seo/site.js';
+import { DESKS, SOCIAL_CARD_PATH } from '../../../src/seo/site.js';
 import { deskOf, regularSeasonLine } from '../../../src/seo/meta.js';
 import { teamColors, logoEntry } from '../../../src/ui/logo.js';
 import { careerSummary } from '../../../src/lib/player-career.js';
@@ -12,7 +12,23 @@ const dayTime = (iso) => `${new Date(iso).toLocaleDateString('en-US', { timeZone
 const clip = (s, n) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); return t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t; };
 const one = (v) => (Number.isFinite(Number(v)) ? Number(v).toFixed(1) : null);
 const color = (c, fb) => (/^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : fb);
-export const DEFAULT_SHARE = '/share/propbetedge-wnba-social-v2.jpg';
+export const DEFAULT_SHARE = SOCIAL_CARD_PATH;
+const SKILL_DIMS = Object.freeze(['scoring', 'efficiency', 'creation', 'playmaking', 'ball_security', 'rebounding', 'defensive_activity', 'shooting_profile', 'ft_pressure']);
+const whole = (v) => (v !== null && v !== undefined && Number.isFinite(Number(v)) ? Math.round(Number(v)).toLocaleString('en-US') : null);
+
+/** PNG twin of a self-hosted team mark (the renderer cannot decode WebP), or null for an unknown team. */
+export const teamMarkPath = (team) => { const e = logoEntry(team); return e ? `/media/teams/${e.team_id}/og.png` : null; };
+
+/**
+ * The approved newsroom composite (/media/news/players/<id>/og.jpg) exists only for players with a licensed
+ * (Commons, identity-verified) portrait. Hotlinked provider headshots (WNBA CDN, ESPN) are never re-published
+ * inside a generated card.
+ */
+export function approvedCardPhoto(athleteId, photo) {
+  const selfHosted = !photo?.provider && photo?.license && /^\/media\/players\//.test(photo?.portrait || ''); // pre-resolver shape
+  const licensed = photo?.licensed || (photo?.provider === 'commons' ? photo : null) || (photo?.sources || []).find((x) => x?.provider === 'commons' && x?.rights === 'licensed') || (selfHosted ? photo : null);
+  return licensed && athleteId ? `/media/news/players/${athleteId}/og.jpg` : null;
+}
 const FLAG_PATH = /^\/media\/flags\/[a-z]{3}\.svg$/;
 
 const PAGE_CARDS = Object.freeze({
@@ -50,14 +66,33 @@ const PAGE_CARDS = Object.freeze({
 function pageModel(key) {
   if (key.startsWith('news-')) {
     const desk = key.slice(5);
-    return { kicker: 'WNBA newsroom', title: DESKS[desk] || 'WNBA News', detail: 'Source-grounded PropBetEdge WNBA coverage.', footer: 'wnba.propbetedge.ai · newsroom', colors: ['#35270f', '#1b2230'], fallback: DEFAULT_SHARE };
+    return { kicker: 'WNBA newsroom', title: DESKS[desk] || 'WNBA News', titleFont: 'display', detail: 'Source-grounded PropBetEdge WNBA coverage.', tag: 'News', footer: 'wnba.propbetedge.ai/news', colors: ['#35270f', '#1b2230'], fallback: DEFAULT_SHARE };
   }
   const p = PAGE_CARDS[key];
   if (!p) return null;
-  return { kicker: p[0], title: p[1], titleFont: 'display', detail: p[2], footer: 'wnba.propbetedge.ai · PropBetEdge WNBA', colors: ['#35270f', '#1b2230'], fallback: DEFAULT_SHARE };
+  return { kicker: p[0], title: p[1], titleFont: 'display', detail: p[2], tag: PAGE_TAGS[key] || null, footer: 'wnba.propbetedge.ai', colors: ['#35270f', '#1b2230'], fallback: DEFAULT_SHARE };
+}
+
+const PAGE_TAGS = Object.freeze({ cast: 'WNBACast', 'pbe-picks': 'PBE Picks', 'pbe-model': 'PBE Picks', 'track-record': 'PBE Picks', news: 'News', international: 'International', matchups: 'Matchups', players: 'Players', teams: 'Teams', injuries: 'Availability', props: 'Markets', standings: 'Standings', playoffs: 'Playoffs', stats: 'Stats', history: 'History', pro: 'WNBA Pro', 'player-load': 'WNBA Pro', 'edge-timeline': 'WNBA Pro', 'rotation-impact': 'WNBA Pro', 'scenario-lab': 'WNBA Pro', watchlist: 'WNBA Pro', brief: 'Daily Brief' });
+
+/** WinBA Score page: the metric's own card with the current top of the canonical board. */
+async function winbaPageModel(api) {
+  const [res, teams] = await Promise.all([Promise.resolve(api.statsWinba?.()).catch(() => null), Promise.resolve(api.teams?.()).catch(() => null)]);
+  const d = res?.ok ? res.data : null;
+  const rows = (d?.rows || []).filter((r) => r.qualified && Number.isFinite(Number(r.score))).sort((a, b) => a.rank - b.rank).slice(0, 3);
+  const teamName = new Map((teams?.ok ? teams.data.teams : []).map((t) => [String(t.team_id), t.name]));
+  return {
+    winbaBoard: true,
+    title: 'WinBA Score',
+    board: rows.map((r) => ({ rank: r.rank, name: r.name, team: teamName.get(String(r.team_id)) || null, score: one(r.score) })),
+    boardLabel: d?.season ? `${d.season} leaders · ${d.qualified_count} qualified` : 'Current leaders',
+    footer: 'wnba.propbetedge.ai/winba-score',
+    fallback: DEFAULT_SHARE
+  };
 }
 
 export async function cardModel(kind, key, api) {
+  if (kind === 'pages' && key === 'winba-score') return winbaPageModel(api);
   if (kind === 'pages') return pageModel(key);
   if (kind === 'news') {
     const res = await api.article(key);
@@ -70,7 +105,7 @@ export async function cardModel(kind, key, api) {
       return {
         kicker: [v.medal ? `${v.medal === 'gold' ? 'Gold' : 'Bronze'} medal` : v.round, 'International'].filter(Boolean).join(' · '),
         title: clip(a.headline, 150),
-        footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
+        footer: `PropBetEdge WNBA News · ${day(a.first_published_at || a.published_at)}`,
         photoPath,
         scoreboard: { competition: v.competition_name || v.competition, rows: v.teams.map((t) => ({ name: t.name, score: t.score, flagPath: FLAG_PATH.test(t.flag || '') ? t.flag : null })) },
         colors: [color(v.teams[0].color, '#2a241c'), color(v.teams[1].color, '#3a2f22')],
@@ -91,7 +126,7 @@ export async function cardModel(kind, key, api) {
         titleFont: 'display',
         sub: top.map((r) => `${r.rank}. ${r.player_name} ${Math.round(r.score)}`).join(' · '),
         detail: `${a.winba_board.qualified_count || ''} qualified players ranked`.trim(),
-        footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
+        footer: `PropBetEdge WNBA News · ${day(a.first_published_at || a.published_at)}`,
         // The premium treatment: the board's top three, each with her own
         // approved photograph. The generator only attaches a podium when ALL
         // three resolve to approved subjects, so there is never a blank cell
@@ -130,7 +165,7 @@ export async function cardModel(kind, key, api) {
         title: clip(a.headline, 150),
         sub: `No. ${ref.rank} · ${one(ref.score)} WinBA`,
         detail: ranks.length >= 2 ? `Monthly ranks ${ranks.join(' · ')}` : null,
-        footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
+        footer: `PropBetEdge WNBA News · ${day(a.first_published_at || a.published_at)}`,
         photoPath: photo,
         colors: [color(teamColor, '#2a241c'), color(teamColor, '#3a2f22')],
         fallback: photo || DEFAULT_SHARE
@@ -141,8 +176,8 @@ export async function cardModel(kind, key, api) {
     const naturalNews = a.commission?.presentation === 'natural_news';
     return {
       kicker: naturalNews ? (a.category || 'Game Analysis') : `${DESKS[deskOf(a.kind)] || 'Newsroom'}`,
-      title: clip(a.headline, 150),
-      footer: `wnba.propbetedge.ai · Published ${day(a.first_published_at || a.published_at)}`,
+      title: clip(a.headline, 140),
+      footer: `PropBetEdge WNBA News · ${day(a.first_published_at || a.published_at)}`,
       photoPath,
       colors: [color(teams[0], '#2a241c'), color(teams[1] || teams[0], '#3a2f22')],
       fallback: photoPath || DEFAULT_SHARE
@@ -154,24 +189,71 @@ export async function cardModel(kind, key, api) {
     const p = res.data.player;
     const s = regularSeasonLine(res.data);
     const career = careerSummary(res.data.career);
-    const photoPath = res.data.photo ? `/media/news/players/${p.athlete_id}/og.jpg` : null;
-    const whole = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : null;
-    const careerDetail = career.available
-      ? [career.games !== null ? `${whole(career.games)} GP` : null, career.points !== null ? `${whole(career.points)} PTS` : null, career.rebounds !== null ? `${whole(career.rebounds)} REB` : null, career.assists !== null ? `${whole(career.assists)} AST` : null].filter(Boolean).join(' · ')
-      : null;
-    const current = s ? `${s.year} · ${one(s.pts)} PPG · ${one(s.reb)} RPG · ${one(s.ast)} APG` : null;
-    const winba = res.data.winba?.score !== null && res.data.winba?.score !== undefined ? `WinBA ${one(res.data.winba.score)}` : null;
+    const photoPath = approvedCardPhoto(p.athlete_id, res.data.photo);
+    const w = res.data.winba;
+    const winba = w && w.score !== null && w.score !== undefined && Number.isFinite(Number(w.score)) ? one(w.score) : null;
+    const stats = s
+      ? [{ label: 'PPG', value: one(s.pts) }, { label: 'RPG', value: one(s.reb) }, { label: 'APG', value: one(s.ast) }]
+      : career.available ? [{ label: 'Career GP', value: whole(career.games) }, { label: 'Career PTS', value: whole(career.points) }].filter((x) => x.value) : [];
+    if (winba) stats.push({ label: w.qualified && w.rank ? `WinBA · No. ${w.rank}` : 'WinBA', value: winba, accent: true });
+    const sample = s ? `${s.year} regular season · ${s.games} games` : null;
+    const careerLine = career.available ? [career.games !== null ? `${whole(career.games)} career GP` : null, career.points !== null ? `${whole(career.points)} PTS` : null].filter(Boolean).join(' · ') : null;
+    const markPath = teamMarkPath(p.team);
     return {
       kicker: 'WNBA player profile',
       title: p.name,
-      titleFont: 'display',
       sub: [p.team?.name, p.position_name].filter(Boolean).join(' · ') || null,
-      detail: careerDetail || current,
-      footer: [current, winba, 'wnba.propbetedge.ai'].filter(Boolean).join(' · '),
+      stats,
+      detail: [sample, careerLine].filter(Boolean).join('  ·  ') || null,
+      footer: 'wnba.propbetedge.ai/players',
       photoPath,
-      markPath: photoPath ? null : logoEntry(p.team)?.files?.['320'] || null,
+      markPath: photoPath ? null : markPath,
+      fallbackMarkPath: markPath,
       colors: [color(p.team?.color, '#2a241c'), color(p.team?.alt_color, '#3a2f22')],
-      fallback: photoPath || DEFAULT_SHARE
+      fallback: DEFAULT_SHARE
+    };
+  }
+  if (kind === 'dna') {
+    const [dres, pres] = await Promise.all([api.dna(key), api.player(key)]);
+    const d = dres?.ok ? dres.data : null;
+    if (!d?.player) return null;
+    const season = d.scopes?.season;
+    // The card names her three strongest SKILL dimensions: descriptive ones (volatility), context (role, form,
+    // availability) and WinBA itself (shown on its own) are not strengths. Directly measured dimensions lead;
+    // proxies only fill the set.
+    const dims = season?.calculated
+      ? SKILL_DIMS
+        .map((k) => season.dimensions?.[k])
+        .filter((x) => x && !x.descriptive && x.status !== 'UNAVAILABLE' && x.score !== null && x.score !== undefined && Number.isFinite(Number(x.score)))
+        .sort((a, b) => Number(Boolean(a.proxy)) - Number(Boolean(b.proxy)) || b.score - a.score)
+        .slice(0, 3)
+        .sort((a, b) => b.score - a.score)
+        .map((x) => ({ label: x.label, score: Math.round(x.score) }))
+      : [];
+    const w = d.winba;
+    const winba = w && w.score !== null && w.score !== undefined && Number.isFinite(Number(w.score))
+      ? { score: one(w.score), context: w.status === 'QUALIFIED' ? (w.rank ? `No. ${w.rank} in the WNBA · ${d.season}` : `Qualified · ${d.season}`) : `Provisional · ${d.season}` }
+      : null;
+    if (!dims.length && !winba) return null;
+    const p = pres?.ok ? pres.data.player : null;
+    const team = p?.team || d.team || null;
+    const photoPath = approvedCardPhoto(d.player.id, d.player.headshot);
+    const markPath = teamMarkPath(team);
+    const smp = season?.calculated ? season.sample : null;
+    const pop = season?.population?.n;
+    return {
+      kicker: 'Player DNA',
+      title: d.player.name,
+      sub: [team?.name, p?.position_name || d.player.position].filter(Boolean).join(' · ') || null,
+      winba,
+      dims,
+      detail: smp ? `${d.season} season · ${smp.games} GP · ${whole(smp.minutes)} MIN${pop ? ` · vs ${pop} qualified players` : ''}` : null,
+      footer: 'wnba.propbetedge.ai · Player DNA',
+      photoPath,
+      markPath: photoPath ? null : markPath,
+      fallbackMarkPath: markPath,
+      colors: [color(team?.color, '#2a241c'), color(team?.alt_color, '#3a2f22')],
+      fallback: DEFAULT_SHARE
     };
   }
   if (kind === 'teams') {
@@ -186,30 +268,18 @@ export async function cardModel(kind, key, api) {
       titleFont: 'display',
       sub: st ? `${st.wins}-${st.losses}${st.seed ? ` · No. ${st.seed} seed` : ''}${st.conference_name ? ` · ${st.conference_name}` : ''}` : null,
       detail: 'Roster, schedule, observed rotation, injuries & news',
-      footer: 'wnba.propbetedge.ai · team profile',
+      tag: 'Team',
+      footer: 'wnba.propbetedge.ai/teams',
       photoPath: null,
-      markPath: logoEntry(t)?.files?.['320'] || null,
+      markPath: teamMarkPath(t),
       colors: [color(c.color, '#2a241c'), color(c.alt, '#3a2f22')],
       fallback: DEFAULT_SHARE
     };
   }
-  if (kind === 'matchups') {
+  if (kind === 'matchups' || kind === 'cast') {
     const res = await api.game(key);
     if (!res?.ok) return null;
-    const g = res.data.game;
-    const a = teamColors(g.away);
-    const hc = teamColors(g.home);
-    return {
-      kicker: g.status?.state === 'post' ? 'Final · matchup' : 'Matchup',
-      title: `${g.away?.short_name || g.away?.name} at ${g.home?.short_name || g.home?.name}`,
-      titleFont: 'display',
-      sub: g.status?.state === 'post' && Number.isFinite(g.away?.score) ? `${g.away.abbr} ${g.away.score} · ${g.home.abbr} ${g.home.score}` : dayTime(g.start_utc),
-      detail: g.venue?.name ? `${g.venue.name}${g.venue.city ? `, ${g.venue.city}` : ''}` : 'Form, rest, rotations & availability',
-      footer: 'wnba.propbetedge.ai · matchup research',
-      photoPath: null,
-      colors: [color(a.color, '#2a241c'), color(hc.color, '#3a2f22')],
-      fallback: DEFAULT_SHARE
-    };
+    return versusModel(res.data.game, kind);
   }
   if (kind === 'intl-comps') {
     const [slug, section = 'overview'] = String(key).split('--');
@@ -224,7 +294,7 @@ export async function cardModel(kind, key, api) {
       titleFont: 'display',
       sub: labels[section] || section,
       detail: [c.host?.city, c.season].filter(Boolean).join(' · ') || c.name,
-      footer: 'wnba.propbetedge.ai · international',
+      footer: 'wnba.propbetedge.ai/international',
       colors: ['#17243a', '#35270f'],
       fallback: DEFAULT_SHARE
     };
@@ -286,4 +356,34 @@ export async function cardModel(kind, key, api) {
     };
   }
   return null;
+}
+
+/** WNBACast and matchup cards: both teams with their marks; the score only once the game has one. */
+export function versusModel(g, kind) {
+  if (!g?.away || !g?.home) return null;
+  const state = g.status?.state;
+  const scored = (state === 'in' || state === 'post') && Number.isFinite(g.away.score) && Number.isFinite(g.home.score);
+  const status = state === 'in' ? 'live' : state === 'post' ? (kind === 'cast' ? 'replay' : 'final') : 'pre';
+  const row = (t, other) => ({
+    name: t.name || t.short_name || t.abbr,
+    abbr: t.abbr,
+    record: t.record ? `${t.record} · ${t.home_away === 'home' ? 'Home' : 'Away'}` : null,
+    score: scored ? t.score : null,
+    win: scored && t.score > other.score,
+    color: color(teamColors(t).color, null),
+    logoPath: teamMarkPath(t)
+  });
+  const when = state === 'pre' ? dayTime(g.start_utc) : day(g.start_utc);
+  const live = state === 'in' && g.status?.short_detail ? g.status.short_detail : null;
+  return {
+    versus: {
+      status,
+      rows: [row(g.away, g.home), row(g.home, g.away)],
+      when: live ? `${live} · ${when}` : when,
+      context: [g.season?.label && /post/i.test(g.season.label) ? g.season.label : null, g.venue?.name || null].filter(Boolean).join(' · ') || null
+    },
+    tag: kind === 'cast' ? 'WNBACast' : 'Matchup',
+    footer: kind === 'cast' ? 'wnba.propbetedge.ai/cast' : 'wnba.propbetedge.ai/matchups',
+    fallback: DEFAULT_SHARE
+  };
 }

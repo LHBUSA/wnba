@@ -22,7 +22,7 @@ export const LEAGUE = { '@type': 'SportsOrganization', name: 'Women’s National
 
 export function siteEntities() {
   return [
-    { '@type': 'Organization', '@id': IDS.org, name: 'PropBetEdge', url: 'https://propbetedge.ai/', sameAs: [PROPBETEDGE_X_URL] },
+    { '@type': 'Organization', '@id': IDS.org, name: 'PropBetEdge', url: 'https://propbetedge.ai/', logo: { '@type': 'ImageObject', url: LOGO.url, width: LOGO.width, height: LOGO.height }, sameAs: [PROPBETEDGE_X_URL] },
     {
       '@type': 'NewsMediaOrganization',
       '@id': IDS.newsroom,

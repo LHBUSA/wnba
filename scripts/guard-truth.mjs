@@ -96,7 +96,7 @@ if (fs.existsSync(newsDir)) for (const d of fs.readdirSync(newsDir)) if (!news.p
 
 // 6c. The shipped page shell references no third-party host (fonts are self-hosted; data comes from owned Workers).
 const shell = read(path.join(ROOT, 'index.html')).replace(/<meta[^>]+>/g, '').replace(/<link rel="canonical"[^>]*>/g, '');
-if (/(src|href)="https?:\/\//i.test(shell)) fail('third-party-host', 'index.html loads an outside host');
+if (/(src|href)="https?:\/\/(?!wnba\.propbetedge\.ai\/)/i.test(shell)) fail('third-party-host', 'index.html loads an outside host');
 
 // 6b. Team logos: every manifest entry is served from our origin and present on disk.
 const logos = JSON.parse(read(path.join(ROOT, 'data', 'team-logos.json')));

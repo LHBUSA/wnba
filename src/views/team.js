@@ -1,5 +1,7 @@
 // Team view — shared by the SPA page and the wnba-web publishing Worker.
 import { html, raw } from '../lib/dom.js';
+import { shareBar } from '../ui/share.js';
+import { routeMeta } from '../seo/meta.js';
 import { sourceLine, errorState, playerCard, gameCard, statusBadge, avatar, badge } from '../ui/components.js';
 import { logoEntry, teamColors } from '../ui/logo.js';
 import { articleList } from '../ui/articles.js';
@@ -41,6 +43,7 @@ export function teamView({ id, res, arts, wire }) {
           <div class="tile"><small>Net</small><b>${st?.differential !== null && st?.differential !== undefined ? `${st.differential > 0 ? '+' : ''}${st.differential}` : '—'}</b><span>avg margin</span></div>
         </div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:14px" aria-label="Last 10 results">${res10.map((x) => html`<a href="/cast/${x.g.game_id}" title="${fmtDateET(x.g.start_utc, { month: 'short', day: 'numeric' })} ${x.g.home?.team_id === id ? 'vs' : '@'} ${x.them?.abbr} ${x.us?.score}-${x.them?.score}" class="badge" style="${x.w ? 'color:var(--pos);border-color:rgba(82,181,127,.4)' : 'color:var(--neg);border-color:rgba(224,90,90,.4)'}">${x.w ? 'W' : 'L'} ${x.them?.abbr}</a>`)}</div>
+        ${shareBar({ path: `/teams/${t.team_id}`, title: routeMeta('team', { path: `/teams/${t.team_id}`, data: d }).title })}
       </div>
     </section>
 

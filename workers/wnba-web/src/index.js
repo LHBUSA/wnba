@@ -8,11 +8,11 @@
 import { bindingApi } from './api.js';
 import { renderRoute, composeDocument } from './render.js';
 import { newsSitemapXml, sitemapXml, rssXml } from '../../../src/seo/feeds.js';
-import { DESKS } from '../../../src/seo/site.js';
+import { DESKS, SOCIAL_CARD_PATH } from '../../../src/seo/site.js';
 import { etCompact, addDays } from '../../shared/time.js';
 
 export const SERVICE = 'wnba-web';
-export const VERSION = '1.1.0';
+export const VERSION = '1.2.0';
 const SITE = 'https://wnba.propbetedge.ai';
 
 const SECURITY_HEADERS = {
@@ -111,7 +111,7 @@ async function feeds(env, url) {
 }
 
 async function og(request, env, url, ctx) {
-  const m = url.pathname.match(/^\/og\/(news|players|teams|matchups|pages|intl-games|intl-comps|intl-teams|intl-players)\/([a-z0-9-]{1,180})\.png$/);
+  const m = url.pathname.match(/^\/og\/(news|players|dna|teams|matchups|cast|pages|intl-games|intl-comps|intl-teams|intl-players)\/([a-z0-9-]{1,180})\.png$/);
   if (!m) return respond('not found', 404, { 'content-type': 'text/plain' });
   const cache = caches.default;
   const cacheKey = new Request(`https://wnba-web.internal${url.pathname}${url.search}`);
@@ -121,13 +121,16 @@ async function og(request, env, url, ctx) {
   try {
     const { ogResponse } = await import('./og.js');
     const out = await ogResponse(m[1], m[2], { api: bindingApi(env), fetchAsset: (p) => fetch(`${SITE}${p}`, { cf: { cacheTtl: 86400 } }) });
-    if (!out) return fallback('/share/propbetedge-wnba-social-v2.jpg');
-    const res = respond(out.png, 200, { 'content-type': 'image/png', 'cache-control': url.searchParams.has('v') ? 'public, max-age=86400, s-maxage=604800, immutable' : 'public, max-age=3600, s-maxage=21600' });
+    if (!out) return fallback(SOCIAL_CARD_PATH);
+    // Content-keyed URLs (?v=<rev>-<content key>: articles, WNBACast state) never change, so they are immutable.
+    // A design-only ?v=<rev> still refreshes with the data (stats, records) on the normal schedule.
+    const immutable = /^[0-9]+-[a-z0-9-]+$/.test(url.searchParams.get('v') || '');
+    const res = respond(out.png, 200, { 'content-type': 'image/png', 'cache-control': immutable ? 'public, max-age=86400, s-maxage=604800, immutable' : 'public, max-age=3600, s-maxage=21600' });
     ctx.waitUntil(cache.put(cacheKey, res.clone()));
     return res;
   } catch (e) {
     console.error('og failed', url.pathname, e?.stack || e);
-    return fallback('/share/propbetedge-wnba-social-v2.jpg');
+    return fallback(SOCIAL_CARD_PATH);
   }
 }
 

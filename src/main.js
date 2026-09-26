@@ -26,6 +26,7 @@ import './styles/no-scrollbars.css';
 import { mountShell } from './ui/shell.js';
 import { installPhotoFallback } from './ui/photo.js';
 import { enhanceProMore } from './ui/pro-more.js';
+import { bindShareActions } from './ui/share.js';
 import { createRouter } from './lib/router.js';
 import { initAnalytics, trackPageView } from './analytics.js';
 import { api } from './data/api.js';
@@ -35,6 +36,7 @@ initAnalytics();
 installPhotoFallback();
 const shell = mountShell(document.getElementById('app'));
 enhanceProMore(document);
+bindShareActions(document);
 // One account read on boot: the header/footer follow the server's membership verdict (members see their badge;
 // free visitors keep the neutral "WNBA Pro" link, so nothing flickers while the read is in flight).
 api.account().then((res) => shell.setMembership(membershipFrom(res)));

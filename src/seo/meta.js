@@ -3,7 +3,7 @@
 // the same result on client-side navigation, so a crawler and a reader see the same page identity.
 // Titles describe what is actually on the page; descriptions only state numbers present in the data.
 
-import { SITE, DEFAULT_DESCRIPTION, DEFAULT_IMAGE, DESKS, abs, canonicalPath } from './site.js';
+import { SITE, DEFAULT_DESCRIPTION, DEFAULT_IMAGE, DESKS, OG_REV, abs, canonicalPath } from './site.js';
 import { careerMetaLine } from '../lib/player-career.js';
 
 const BRAND = 'PropBetEdge';
@@ -51,14 +51,18 @@ const DESK_DESCRIPTIONS = {
   market: 'WNBA line-movement stories from PropBetEdge’s stored multi-book market captures.'
 };
 
-/** A share-image object for a path on this domain. */
-export const shareImage = (path, alt, { width = 1200, height = 630 } = {}) => ({ url: abs(path), width, height, alt });
+/**
+ * A share-image object for a path on this domain. Dynamic /og/ cards carry the card design revision
+ * (?v=OG_REV) so a redesign reaches X and LinkedIn at a new URL; content-keyed cards pass their own v.
+ */
+const versioned = (path) => (String(path).startsWith('/og/') && !String(path).includes('?') ? `${path}?v=${OG_REV}` : path);
+export const shareImage = (path, alt, { width = 1200, height = 630 } = {}) => ({ url: abs(versioned(path)), width, height, alt });
 export const pageShareImage = (key, alt) => shareImage(`/og/pages/${key}.png`, alt);
 
 export function articleShareImage(a) {
   if (!a?.slug) return DEFAULT_IMAGE;
   const v = Date.parse(a.revised_at || a.first_published_at || a.published_at || '') || 0;
-  return shareImage(`/og/news/${a.slug}.png?v=${v.toString(36)}`, `${a.headline} — PropBetEdge WNBA ${DESKS[deskOf(a.kind)] || 'Newsroom'}`);
+  return shareImage(`/og/news/${a.slug}.png?v=${OG_REV}-${v.toString(36)}`, `${a.headline} — PropBetEdge WNBA ${DESKS[deskOf(a.kind)] || 'Newsroom'}`);
 }
 
 export const deskOf = (kind) => (kind === 'result' ? 'performance' : kind);
@@ -72,7 +76,8 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
   const m = (x) => ({ ...base, ...x, url: `${SITE}${(x.path ?? base.path) === '/' ? '/' : x.path ?? base.path}` });
   switch (route) {
     case 'today':
-      return m({ title: 'PropBetEdge WNBA — WNBA News, Injuries, Odds & Live Game Intelligence', description: 'Independent WNBA intelligence: today’s slate, WNBACast live games, sourced injuries, standings, original newsroom coverage and WinBA — PropBetEdge’s 0–100 winning-impact score.', image: pageShareImage('home', 'PropBetEdge WNBA — live WNBA intelligence') });
+      // The homepage shares the master identity card (static V3), not a generated page card.
+      return m({ title: 'PropBetEdge WNBA — Live WNBA Intelligence, Player DNA & WNBACast', description: DEFAULT_DESCRIPTION, image: DEFAULT_IMAGE });
     case 'news':
       return m({ title: `WNBA News Today, Injuries, Transactions & Analysis | ${BRAND}`, description: 'The PropBetEdge WNBA newsroom: original, source-grounded WNBA news briefs, injury and roster-move stories, game previews, recaps and market analysis, updated every 10 minutes.', image: pageShareImage('news', 'PropBetEdge WNBA Newsroom') });
     case 'news-archive':
@@ -159,10 +164,12 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
       if (!params.gameId) return m({ title: `WNBACast: Live WNBA Scores & Play-by-Play | ${BRAND}`, description: 'WNBACast follows every WNBA game live: scoreboard, play-by-play, published shot locations and replay of completed games from the persisted event stream.', image: pageShareImage('cast', 'WNBACast — live WNBA scores and play-by-play') });
       if (!g) return m({ title: `WNBACast | ${BRAND}`, robots: NOINDEX_ROBOTS });
       const final = g.status?.state === 'post';
+      // Content-keyed: a live score or a final changes the card URL, so shares never show a stale state.
+      const castKey = `${OG_REV}-${g.status?.state || 'pre'}${Number.isFinite(g.away?.score) ? `${g.away.score}-${g.home?.score}` : ''}`;
       return m({
         title: `${g.away?.name} vs ${g.home?.name} ${final ? 'Replay & Play-by-Play' : 'Live Score & Play-by-Play'}: WNBACast | ${BRAND}`,
         description: clip(`${g.away?.name} at ${g.home?.name}, ${dayET(g.start_utc)}: ${final ? 'final score, full play-by-play replay' : 'live scoreboard and play-by-play'} in WNBACast.`, 300),
-        image: shareImage(`/og/matchups/${g.game_id}.png`, `${g.away?.name} at ${g.home?.name} — WNBACast`)
+        image: shareImage(`/og/cast/${g.game_id}.png?v=${castKey}`, `${g.away?.name} at ${g.home?.name}, ${dayET(g.start_utc)} — WNBACast ${final ? 'final and replay' : g.status?.state === 'in' ? 'live' : 'game center'} by PropBetEdge WNBA`)
       });
     }
     case 'injuries':
@@ -186,9 +193,11 @@ export function routeMeta(route, { path = '/', params = {}, data = null, empty =
     case 'player-dna': {
       // Not indexed in V1 (owner decision pending): the profile is reachable from the player page only.
       const name = data?.player?.name;
+      const id = params.playerId || data?.player?.id;
       return m({
         title: name ? `${name} Player DNA: 17-Dimension WNBA Profile | ${BRAND}` : `WNBA Player DNA | ${BRAND}`,
         description: clip(`${name ? `${name}: ` : ''}PropBetEdge WNBA Player DNA — 17 explainable dimensions as percentiles against qualified WNBA players, with sample, confidence, proxies and the canonical WinBA score.`, 300),
+        ...(id ? { image: shareImage(`/og/dna/${id}.png`, `${name ? `${name} — ` : ''}Player DNA and WinBA Score — PropBetEdge WNBA`) } : {}),
         robots: NOINDEX_ROBOTS
       });
     }

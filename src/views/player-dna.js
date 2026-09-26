@@ -2,6 +2,8 @@
 // Pure string renders over the stored wnba-dna/player document; nothing is computed here.
 
 import { esc, raw } from '../lib/dom.js';
+import { shareBar } from '../ui/share.js';
+import { routeMeta } from '../seo/meta.js';
 import { num, initials, fmtDateTimeET } from '../lib/format.js';
 import { photoImg } from '../ui/photo.js';
 import { careerSeasonRows } from '../lib/player-career.js';
@@ -129,7 +131,8 @@ export function renderHero(body, photo = null) {
         ${role?.category ? `<span><small>Role</small><b>${esc(role.category)}</b></span>` : ''}
         ${s?.calculated ? `<span><small>Season sample</small><b class="num">${esc(String(s.sample.games))} G · ${Number(s.sample.minutes).toLocaleString('en-US')} min</b></span>` : ''}
       </div>
-      <p><a class="note" href="/players/${encodeURIComponent(p.id || p.espn_athlete_id || '')}">Player page: game log, career, news →</a></p></div></header>`;
+      <p><a class="note" href="/players/${encodeURIComponent(p.id || p.espn_athlete_id || '')}">Player page: game log, career, news →</a></p>
+      ${String(shareBar({ path: `/players/${p.id || p.espn_athlete_id}/dna`, title: routeMeta('player-dna', { path: `/players/${p.id || p.espn_athlete_id}/dna`, data: body }).title }))}</div></header>`;
 }
 
 /** Scope tabs: calculated scopes are links; uncalculated scopes stay visible but disabled with the reason. */
