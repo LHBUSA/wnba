@@ -469,10 +469,8 @@ export function renderPlayoffTranslation(body, meta = null) {
   const gate = methodOf(meta).gates?.playoff_translation;
   const po = body?.scopes?.playoffs;
   const sample = po?.sample ? `${n0(po.sample.games)} playoff games · ${n0(po.sample.minutes)} min stored` : '';
-  if (!d || !isNum(d.score)) {
-    return `<section class="dna-sec" data-dim="playoff_translation"><div class="dna-sec__head"><h2 class="dna-h2">Playoff translation</h2></div>
-      <p class="note">Not measured${gate ? `: needs ≥ ${gate.games} archived playoff games and ${gate.minutes} min` : ''}.${sample ? ` ${esc(sample)}.` : ''}</p></section>`;
-  }
+  // No playoff data -> no section (the matrix row carries the reason). Never a placeholder playoff card.
+  if (!d || !isNum(d.score)) return '';
   const gms = (d.components || []).find((c) => c.key === 'playoff_gmsc36_delta');
   const ts = (d.components || []).find((c) => c.key === 'playoff_ts_delta');
   return `<section class="dna-sec" data-dim="playoff_translation"><div class="dna-sec__head"><h2 class="dna-h2">Playoff translation</h2><span class="note">archived postseason minus regular season</span></div>

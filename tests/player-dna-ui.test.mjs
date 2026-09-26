@@ -428,3 +428,11 @@ test('URL state: ?scope=&cmp=&vs= is shareable, validated, and scope tabs keep t
   assert.match(page, /api\.dnaIndex\(\)/);
   assert.match(page, /addEventListener\('focusin', onFocus\)/, 'the index is loaded on focus only');
 });
+
+test('playoff translation: no section at all when the archive has no playoff data (matrix row keeps the reason)', () => {
+  const body = fx('4433791').data ?? fx('4433791');
+  assert.equal(body.scopes.season.dimensions.playoff_translation.score ?? null, null);
+  assert.equal(U.renderPlayoffTranslation(body), '');
+  const scored = { ...body, scopes: { ...body.scopes, season: { ...body.scopes.season, dimensions: { ...body.scopes.season.dimensions, playoff_translation: { score: 60, status: 'LIVE', components: [{ key: 'playoff_gmsc36_delta', value: 1.2, percentile: 70 }] } } } } };
+  assert.match(U.renderPlayoffTranslation(scored), /Playoff translation/);
+});
