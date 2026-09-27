@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { articleView } from '../src/views/article.js';
 import { visualsFailures } from '../workers/wnba-news/src/visuals.js';
+import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from '../workers/wnba-news/src/identity.js';
 
 import {
   PLAYOFF_OPENING_ID,
@@ -138,4 +139,35 @@ test('force migration repairs the previously published unroutable legacy slug', 
   assert.equal(article.slug, PLAYOFF_OPENING_SLUG);
   assert.deepEqual(article.aliases, [PLAYOFF_OPENING_LEGACY_SLUG]);
   assert.equal(article.first_published_at, '2026-09-27T14:30:00.000Z');
+});
+
+
+test('league-wide playoff feature survives the scheduled full-catalog identity audit', async () => {
+  const article = playoffOpeningArticle('2026-09-27T14:30:00.000Z');
+  assert.deepEqual(articleIdentityFailures(article, { dict: null }), []);
+
+  const card = {
+    id: article.id,
+    slug: article.slug,
+    kind: article.kind,
+    status: 'published',
+    quality_state: 'current_quality',
+    first_published_at: article.first_published_at,
+    published_at: article.published_at,
+    revised_at: article.revised_at,
+    entities: article.entities,
+    identity_mode: article.identity_mode
+  };
+  let stored = structuredClone(article);
+  const out = await auditStoredIdentity([card], {
+    dict: null,
+    at: '2026-09-27T15:10:00.000Z',
+    getItem: async () => stored,
+    putItem: async (next) => { stored = next; }
+  });
+  assert.equal(out.retired, 0);
+  assert.equal(out.passed, 1);
+  assert.equal(card.quality_state, 'current_quality');
+  assert.equal(card.identity_audit.version, IDENTITY_VERSION);
+  assert.equal(card.identity_audit.ok, true);
 });
