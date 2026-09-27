@@ -114,6 +114,33 @@ const DESK_LINKS = {
   commissioned_feature: [['/winba-score', 'WinBA Score: the full methodology'], ['/news/winba-index', 'The WinBA Index: every monthly edition']]
 };
 
+
+const ARTICLE_LINK_LABELS = {
+  playoffs: 'WNBA Playoffs',
+  picks: 'PBE Picks',
+  model: 'How the PBE model works',
+  track_record: 'PBE live track record',
+  winba: 'WinBA Score',
+  winba_index: 'The WinBA Index',
+  olivia_miles: 'Olivia Miles profile',
+  olivia_dna: 'Olivia Miles Player DNA',
+  atlanta_matchup: 'Washington at Atlanta matchup',
+  minnesota_matchup: 'New York at Minnesota matchup',
+  las_vegas_matchup: 'Indiana at Las Vegas matchup',
+  golden_state_matchup: 'Dallas at Golden State matchup'
+};
+
+function articleResearchLinks(a) {
+  const entries = Object.entries(a?.links || {}).filter(([, href]) => typeof href === 'string' && href.startsWith('/'));
+  if (!entries.length) return '';
+  return html`<nav class="story-research-links" aria-label="Explore this analysis">
+    <div class="story-research-head"><span>PropBetEdge research stack</span><b>Go deeper</b></div>
+    <div class="story-research-grid">
+      ${entries.map(([key, href]) => html`<a href="${href}"><span>${ARTICLE_LINK_LABELS[key] || key.replaceAll('_', ' ')}</span><b>→</b></a>`)}
+    </div>
+  </nav>`;
+}
+
 const REVISION_LABEL = { data_update: 'Updated with new source data', editorial_upgrade: 'Rewritten by an improved generator (no facts changed)', editorial_quality_upgrade: 'Editorial quality upgrade (same facts)', depth_upgrade: 'Developed into a fuller story', metadata_correction: 'Timestamp metadata corrected', integrity_correction: 'Newsroom integrity correction', integrity_retirement: 'Removed from live listings after integrity audit', integrity_restoration: 'Restored to live listings: the integrity failure did not hold', demoted_to_external_coverage: 'Moved to external coverage' };
 const MARKET_NAME = { spread: 'Spread', total: 'Total', moneyline: 'Moneyline', 'player props': 'Player props', line: 'Line' };
 
@@ -200,7 +227,8 @@ export function articleView({ article: a, related = [], series = [] }) {
   const seriesNav = a.kind === WINBA_INDEX_KIND && a.period
     ? winbaSeriesNav(winbaIndexCards({ items: series }), a.period)
     : null;
-  const winba = a.winba_reference && a.winba_sentence ? a.winba_reference : null;
+  const frozenWinba = a.winba_reference || null;
+  const winba = frozenWinba && a.winba_sentence ? frozenWinba : null;
   const winbaAfter = winba ? (a.winba_placement?.after_section ?? null) : null;
   // The reference is frozen at publication, so this paragraph is the score the
   // story reported, not the score the leaderboard holds now.
@@ -236,9 +264,10 @@ export function articleView({ article: a, related = [], series = [] }) {
           <span>In this story</span>
           ${players.map((p) => html`<a href="/players/${p.id}">${p.name}</a>`)}
           ${teams.map((t) => html`<a href="/teams/${t.id}">${t.name}</a>`)}
-          ${winba ? html`<a href="${METRIC_HREF.winba}" title="WinBA Score — PropBetEdge overall WNBA player rating">WinBA ${Math.round(winba.score)}</a>` : ''}
+          ${frozenWinba ? html`<a href="${METRIC_HREF.winba}" title="WinBA Score — PropBetEdge overall WNBA player rating">WinBA ${Math.round(frozenWinba.score)}</a>` : ''}
         </nav>` : ''}
         ${seriesNav ? winbaSeriesNavView(seriesNav) : ''}
+        ${articleResearchLinks(a)}
         ${a.commission?.note && !naturalNews ? html`<p class="commission-note"><b>Why we commissioned this.</b> ${a.commission.note}</p>` : ''}
       </header>
 
