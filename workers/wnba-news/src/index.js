@@ -24,6 +24,7 @@ import { mediaFor, winbaPodium, winbaBoardMedia, MEDIA_MANIFEST_AT } from './med
 import videoChannels from '../../../data/video-channels.json';
 import { runWinbaPasses } from './winba-run.js';
 import { runCommissionPass } from './commission-run.js';
+import { PLAYOFF_OPENING_KEY, publishPlayoffOpening } from './playoff-opening.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
 
 const SERVICE = 'wnba-news';
@@ -58,6 +59,7 @@ export default {
     if (path === '/run' && request.method === 'POST') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       if (url.searchParams.get('video') === 'force') return j({ ok: true, result: await runVideoPass(env, { channelsDoc: videoChannels, teams: ((await env.NEWS_KV.get('dict:v1', 'json')) || {}).teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null, force: true }) });
+      if (url.searchParams.get('commission') === PLAYOFF_OPENING_KEY) return j({ ok: true, result: await publishPlayoffOpening(env, { at: new Date().toISOString(), force: url.searchParams.get('commission_force') === '1' }) });
       return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null, winbaRefreeze: url.searchParams.get('winba_refreeze') === '1', winbaBackfill: url.searchParams.get('winba_backfill') === '1', winbaAcceptRankCorrection: url.searchParams.get('winba_accept_rank_correction') === '1', winbaFixCopy: url.searchParams.get('winba_fix_copy') === '1', winbaFixFrozenAt: url.searchParams.get('winba_fix_frozen_at') === '1', commission: url.searchParams.get('commission') || null, commissionForce: url.searchParams.get('commission_force') === '1' }) });
     }
     return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/articles/videos', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
