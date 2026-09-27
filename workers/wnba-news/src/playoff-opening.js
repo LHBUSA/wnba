@@ -10,9 +10,10 @@
 // data/commissions/playoff-opening-2026-09-27.json
 
 import { comparisonBars, impactBars, rankCards, visualsFailures } from './visuals.js';
+import { mediaFor, winbaBoardMedia } from './media.js';
 
 export const PLAYOFF_OPENING_KEY = 'playoff-opening-2026-09-27';
-export const PLAYOFF_OPENING_VERSION = 'pbe-wnba-playoff-opening/1.1.0';
+export const PLAYOFF_OPENING_VERSION = 'pbe-wnba-playoff-opening/1.1.1';
 export const PLAYOFF_OPENING_ID = '92f70927c6e1';
 export const PLAYOFF_OPENING_LEGACY_SLUG = 'wnba-playoffs-today-model-picks-winba-leader-september-27-2026';
 export const PLAYOFF_OPENING_SLUG = `${PLAYOFF_OPENING_LEGACY_SLUG}-${PLAYOFF_OPENING_ID.slice(0, 6)}`;
@@ -176,7 +177,24 @@ export function playoffOpeningArticle(at) {
   ];
   const visualErrors = visualsFailures(visuals);
   if (visualErrors.length) throw new Error(`playoff_opening_visuals:${visualErrors.join('|')}`);
-  return {
+
+  // This one-off publisher intentionally bypasses the live API path, but it
+  // must NOT bypass the reviewed newsroom-media ledger. Decorate the WinBA
+  // cards from the same approved photo resolver used by normal commissions.
+  const boardMedia = winbaBoardMedia(WINBA_TOP5.map((r) => ({
+    rank: r.rank,
+    player_id: r.entity.id,
+    player_name: r.entity.name,
+    team_id: r.entity.team_id,
+    team_name: r.entity.team_name,
+    score: r.value
+  })));
+  const photoById = new Map((boardMedia || []).map((m) => [String(m.player_id), m.image || null]));
+  const decoratedVisuals = visuals.map((v) => (v.type === 'rank_cards'
+    ? { ...v, cards: (v.cards || []).map((card) => ({ ...card, photo: photoById.get(String(card.entity.id)) || null })) }
+    : v));
+
+  const article = {
     id: PLAYOFF_OPENING_ID,
     slug: PLAYOFF_OPENING_SLUG,
     aliases: [PLAYOFF_OPENING_LEGACY_SLUG],
@@ -190,7 +208,7 @@ export function playoffOpeningArticle(at) {
     deck: 'PropBetEdge’s opening-day model makes Atlanta its strongest current Game 1 read at 75.3%, while the frozen September WinBA board has Olivia Miles No. 1 at 87.0. Here is the full four-game probability board, market gap and model reasoning.',
     body,
     sections,
-    visuals,
+    visuals: decoratedVisuals,
     lead_player_id: '4433791',
     lead_team_id: '20',
     primary_subject: '2026 WNBA Playoffs',
@@ -319,6 +337,7 @@ export function playoffOpeningArticle(at) {
     generator: { type: 'commissioned_deterministic', version: PLAYOFF_OPENING_VERSION },
     words: body.join(' ').split(/\s+/).filter(Boolean).length
   };
+  return { ...article, media: mediaFor(article), winba_board_media: boardMedia };
 }
 
 export function playoffOpeningCard(article) {
