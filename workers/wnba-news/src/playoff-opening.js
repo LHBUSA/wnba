@@ -9,8 +9,10 @@
 // The source snapshot is committed at:
 // data/commissions/playoff-opening-2026-09-27.json
 
+import { comparisonBars, impactBars, rankCards, visualsFailures } from './visuals.js';
+
 export const PLAYOFF_OPENING_KEY = 'playoff-opening-2026-09-27';
-export const PLAYOFF_OPENING_VERSION = 'pbe-wnba-playoff-opening/1.0.0';
+export const PLAYOFF_OPENING_VERSION = 'pbe-wnba-playoff-opening/1.1.0';
 export const PLAYOFF_OPENING_ID = '92f70927c6e1';
 export const PLAYOFF_OPENING_LEGACY_SLUG = 'wnba-playoffs-today-model-picks-winba-leader-september-27-2026';
 export const PLAYOFF_OPENING_SLUG = `${PLAYOFF_OPENING_LEGACY_SLUG}-${PLAYOFF_OPENING_ID.slice(0, 6)}`;
@@ -19,6 +21,15 @@ const SNAPSHOT_AT = '2026-09-27T14:10:36.238Z';
 const MARKET_AT = '2026-09-27T12:00:58.883Z';
 const OFFICIAL_PREVIEW = 'https://www.wnba.com/news/2026-playoffs-series-preview-first-round';
 const OFFICIAL_FAQ = 'https://www.wnba.com/news/2026-wnba-postseason-faq';
+
+const WINBA_TOP5 = [
+  { rank: 1, value: 87.0, entity: { id: '4433791', name: 'Olivia Miles', team_id: '8', team_name: 'Minnesota Lynx' } },
+  { rank: 2, value: 85.7, entity: { id: '3149391', name: "A'ja Wilson", team_id: '17', team_name: 'Las Vegas Aces' } },
+  { rank: 3, value: 82.6, entity: { id: '4433402', name: 'Angel Reese', team_id: '20', team_name: 'Atlanta Dream' } },
+  { rank: 4, value: 81.8, entity: { id: '4065870', name: 'Jackie Young', team_id: '17', team_name: 'Las Vegas Aces' } },
+  { rank: 5, value: 81.7, entity: { id: '4433403', name: 'Caitlin Clark', team_id: '5', team_name: 'Indiana Fever' } }
+];
+const WINBA_SNAPSHOT_AT = '2026-09-21T03:17:45.205Z';
 
 const games = [
   {
@@ -82,13 +93,13 @@ const entities = [
     { type: 'team', id: g.away.id, name: g.away.name },
     { type: 'team', id: g.home.id, name: g.home.name }
   ]),
-  { type: 'player', id: '4433791', name: 'Olivia Miles', team_id: '8' },
+  ...WINBA_TOP5.map((r) => ({ type: 'player', id: r.entity.id, name: r.entity.name, team_id: r.entity.team_id })),
   { type: 'metric', id: 'winba', name: 'WinBA Score' }
 ];
 
 const body = [
   'The 2026 WNBA playoffs open Sunday with four first-round Game 1s and a useful distinction between who the PropBetEdge model thinks is most likely to win and where it sees the best price relative to the market. At 10:10 a.m. ET, the strongest model probability on the board belonged to Atlanta: 75.3% at home against Washington. Golden State followed at 71.2%, Minnesota at 64.0% and Las Vegas at 56.0%. Those are live pre-lock reads, not official graded picks. PropBetEdge locks its official call 15 minutes before tip, so this snapshot is a transparent look at what the model saw early in the day rather than a rewrite of the later record.',
-  'The other headline is the latest frozen WinBA board. Olivia Miles enters the postseason as the No. 1 player on the published September WinBA Index at 87.0. The live ranking service is separate from this article; the number used here is the frozen September publication, so it will not change underneath the story. That makes the opening Minnesota-New York series especially interesting: the top seed begins the playoffs with the current WinBA leader at the center of its season-level player profile.',
+  'The other headline is the latest frozen WinBA board. Olivia Miles enters the postseason No. 1 at 87.0, ahead of A’ja Wilson at 85.7, Angel Reese at 82.6, Jackie Young at 81.8 and Caitlin Clark at 81.7. Every name in that top five links to the player’s PropBetEdge profile in the ranking below. The board is the frozen September publication, so it will not change underneath this story. That makes Minnesota-New York especially interesting: the top seed begins the playoffs with the current WinBA leader at the center of its season-level player profile.',
   'The model board is not a list of four equally strong bets. Atlanta is the only game in this morning snapshot where the model both favors the home team and assigns it a meaningfully higher win probability than the de-vigged market consensus. The Dream sit at 75.3% in the model against 69.8% in the market, a +5.5 percentage-point PBE Edge. Golden State is a 71.2% model favorite, but the market is already at 70.7%, leaving only a +0.4-point gap. Minnesota and Las Vegas are model favorites too, yet both are priced more aggressively by the market than by PBE. That difference between a projected winner and a value edge is the most important way to read this slate.',
   'Atlanta is the cleanest model case. Its largest positive input is team quality: a +6.7 schedule-adjusted net-rating advantage, worth +15.7 model-impact points in the current explanation packet. Home court adds another +5.8, the rest differential adds +0.9, and recent rotation availability adds +0.6. The data-quality record attached to this run carries no flags and both teams clear the model eligibility contract with at least 44 current-season games in the feature set.',
   'The official matchup context makes that signal more interesting rather than simpler. Atlanta finished the regular season 30-14 and won its final five games, while Washington finished 28-16 and built one of the league’s best defenses, allowing 82.7 points per game. Atlanta scored 91.3 per game. Washington also won the two most recent regular-season meetings by five points apiece after Atlanta took the first meeting decisively. In other words, the algorithm is not merely following the season series. It is weighting the larger schedule-adjusted quality profile, home court, rest and current rotation continuity more heavily than those two recent head-to-head losses.',
@@ -103,11 +114,11 @@ const body = [
 ];
 
 const sections = [
-  { title: 'The opening-day snapshot', first: 0, count: 3 },
-  { title: 'Why Atlanta is the algorithm’s strongest read', first: 3, count: 3 },
+  { title: 'The opening-day snapshot', first: 0, count: 3, visual: 'playoff-model-market' },
+  { title: 'Why Atlanta is the algorithm’s strongest read', first: 3, count: 3, visual: 'atlanta-model-drivers' },
   { title: 'Golden State: high confidence, almost fully priced', first: 6, count: 1 },
   { title: 'Minnesota and Las Vegas: picks without a positive price edge', first: 7, count: 2 },
-  { title: 'Olivia Miles leads the latest published WinBA board', first: 9, count: 2 },
+  { title: 'Olivia Miles leads the latest published WinBA board', first: 9, count: 2, visual: 'september-winba-top-five' },
   { title: 'How to read the probabilities', first: 11, count: 2 }
 ];
 
@@ -127,6 +138,44 @@ const pickRows = games.map((g) => ({
 
 export function playoffOpeningArticle(at) {
   const publishedAt = at || new Date().toISOString();
+  const visuals = [
+    comparisonBars({
+      id: 'playoff-model-market',
+      title: 'PBE model vs de-vigged market — all four Game 1s',
+      subtitle: 'Win probability at the frozen morning snapshot; PBE Edge is model minus market',
+      caption: 'Atlanta is the only opening-game favorite with a material positive model-market gap in this snapshot.',
+      primaryLabel: 'PBE model',
+      secondaryLabel: 'De-vigged market',
+      rows: games.map((g) => ({ key: g.id, label: `${g.away.abbr} at ${g.home.abbr}`, primary: g.probability, secondary: g.market, delta: g.edge, href: `/matchups/${g.id}` })),
+      provenance: { source: 'PropBetEdge PBE WNBA model v1 + stored 11-book market capture', observed_at: SNAPSHOT_AT },
+      footnote: 'These are pre-lock reads. Official calls lock 15 minutes before tip and only locked calls enter the public track record.'
+    }),
+    impactBars({
+      id: 'atlanta-model-drivers',
+      title: 'Why the model is highest on Atlanta',
+      subtitle: 'Signed contribution to the Atlanta win-probability explanation packet',
+      caption: 'Schedule-adjusted team quality dominates the Atlanta case, with home court providing the second-largest lift.',
+      rows: [
+        { key: 'team-quality', label: 'Schedule-adjusted team quality', value: 15.6532448985, family: 'team_quality' },
+        { key: 'home-court', label: 'Home court', value: 5.7974172017, family: 'situation' },
+        { key: 'rest', label: 'Rest advantage', value: 0.8974372937, family: 'situation' },
+        { key: 'rotation', label: 'Rotation availability', value: 0.5999870268, family: 'rotation' }
+      ],
+      provenance: { source: 'PropBetEdge PBE WNBA model v1 explanation packet — ATL vs WAS', observed_at: SNAPSHOT_AT },
+      footnote: 'Model-impact points describe the signed influence inside the explanation packet; they are not percentage points of win probability.'
+    }),
+    rankCards({
+      id: 'september-winba-top-five',
+      title: 'September WinBA top five',
+      subtitle: 'Frozen published board — every player links to her PropBetEdge profile',
+      caption: 'Olivia Miles leads the September edition at 87.0.',
+      cards: WINBA_TOP5.map((r) => ({ ...r, highlight: r.rank === 1 })),
+      provenance: { source: 'The WinBA Index — frozen September 2026 board', metric: 'winba/1.0.0', observed_at: WINBA_SNAPSHOT_AT },
+      footnote: 'WinBA is an association-with-winning index, not the PBE game prediction model.'
+    })
+  ];
+  const visualErrors = visualsFailures(visuals);
+  if (visualErrors.length) throw new Error(`playoff_opening_visuals:${visualErrors.join('|')}`);
   return {
     id: PLAYOFF_OPENING_ID,
     slug: PLAYOFF_OPENING_SLUG,
@@ -141,6 +190,7 @@ export function playoffOpeningArticle(at) {
     deck: 'PropBetEdge’s opening-day model makes Atlanta its strongest current Game 1 read at 75.3%, while the frozen September WinBA board has Olivia Miles No. 1 at 87.0. Here is the full four-game probability board, market gap and model reasoning.',
     body,
     sections,
+    visuals,
     lead_player_id: '4433791',
     lead_team_id: '20',
     primary_subject: '2026 WNBA Playoffs',
@@ -224,7 +274,13 @@ export function playoffOpeningArticle(at) {
       model: '/pbe-picks/model',
       track_record: '/track-record',
       winba: '/winba-score',
-      winba_index: '/news/winba-index'
+      winba_index: '/news/winba-index',
+      olivia_miles: '/players/4433791',
+      olivia_dna: '/players/4433791/dna',
+      atlanta_matchup: '/matchups/401918013',
+      minnesota_matchup: '/matchups/401918014',
+      las_vegas_matchup: '/matchups/401918015',
+      golden_state_matchup: '/matchups/401918016'
     },
     seo: {
       title: 'WNBA Playoff Picks Today: Model Odds & WinBA Leader',
