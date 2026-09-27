@@ -10,7 +10,12 @@
 // data/commissions/playoff-opening-2026-09-27.json
 
 import { comparisonBars, impactBars, rankCards, visualsFailures } from './visuals.js';
-import { mediaFor, winbaBoardMedia } from './media.js';
+import newsroomMedia from '../../../data/newsroom-media.json' with { type: 'json' };
+import { newsroomMediaFrom, winbaBoardMediaFrom } from './media-resolve.js';
+
+const APPROVED_PLAYERS = newsroomMedia.players || {};
+const mediaFor = (article) => newsroomMediaFrom(APPROVED_PLAYERS, article);
+const winbaBoardMedia = (rows) => winbaBoardMediaFrom(APPROVED_PLAYERS, rows, 25);
 
 export const PLAYOFF_OPENING_KEY = 'playoff-opening-2026-09-27';
 export const PLAYOFF_OPENING_VERSION = 'pbe-wnba-playoff-opening/1.1.1';
