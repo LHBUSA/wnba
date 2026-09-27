@@ -7,7 +7,7 @@
 
 import { eventType } from './taxonomy.js';
 
-export const IDENTITY_VERSION = 'wnba-news-identity/1.2.0';
+export const IDENTITY_VERSION = 'wnba-news-identity/1.3.0';
 
 const norm = (s) => String(s || '')
   .normalize('NFKD')
@@ -198,6 +198,12 @@ function evidenceMembers(article) {
  * a series article is checked against its own contract instead — not exempted
  * from checking.
  *
+ * `league` — a commissioned multi-game / league-wide feature. Its subject is a
+ * competition or slate (for example "2026 WNBA Playoffs"), so no single player
+ * or team is required to equal `primary_subject`. The contract instead verifies
+ * that the named lead entities and every player/team relationship represented
+ * in the feature are internally coherent.
+ *
  * The mode is declared on the article (`identity_mode`). It is also inferred
  * from `kind` for records written before the field existed, so a stored article
  * is never judged by the wrong contract merely because it predates this.
@@ -206,7 +212,7 @@ export const SERIES_KINDS = Object.freeze({ winba_index: 'The WinBA Index' });
 
 export function identityModeOf(article) {
   const declared = article?.identity_mode;
-  if (declared === 'series' || declared === 'player') return declared;
+  if (declared === 'series' || declared === 'player' || declared === 'league') return declared;
   return SERIES_KINDS[String(article?.kind)] ? 'series' : 'player';
 }
 
@@ -291,12 +297,71 @@ export function seriesIdentityFailures(article, { dict = null } = {}) {
   return [...new Set(failures)];
 }
 
+/**
+ * Identity contract for a league-wide commissioned feature.
+ *
+ * This mode exists for multi-game editorial packages where the story subject is
+ * the slate/competition itself, while individual players and teams are linked
+ * as evidence/navigation. It is intentionally strict about entity coherence
+ * but does not force one player or team to become the grammatical subject.
+ */
+export function leagueIdentityFailures(article, { dict = null } = {}) {
+  const failures = [];
+  if (article?.kind !== 'commissioned_feature') {
+    failures.push(`identity: league mode is reserved for commissioned_feature, not "${article?.kind || 'none'}"`);
+  }
+  if (!norm(article?.primary_subject)) failures.push('identity: league feature has no primary subject');
+
+  const entities = uniqEntities(article?.entities || []);
+  const teams = entities.filter((e) => e.type === 'team');
+  const players = entities.filter((e) => e.type === 'player');
+  const games = entities.filter((e) => e.type === 'game');
+  const teamIds = new Set(teams.map((e) => String(e.id)));
+
+  if (teams.length < 2) failures.push('identity: league feature must include at least two team entities');
+  if (article?.subject_type === 'playoff_feature' && games.length < 1) {
+    failures.push('identity: playoff feature has no game entities');
+  }
+
+  const leadTeamId = article?.lead_team_id == null ? null : String(article.lead_team_id);
+  if (leadTeamId && !teamIds.has(leadTeamId)) {
+    failures.push(`identity: lead team ${leadTeamId} is not present in the league feature's team entities`);
+  }
+
+  const leadPlayerId = article?.lead_player_id == null ? null : String(article.lead_player_id);
+  const leadPlayerEntity = leadPlayerId ? players.find((e) => String(e.id) === leadPlayerId) || null : null;
+  const leadDict = leadPlayerId ? dict?.playerById?.get?.(leadPlayerId) || null : null;
+  if (leadPlayerId && !leadPlayerEntity && !leadDict) {
+    failures.push(`identity: lead player ${leadPlayerId} is not present in article entities or roster dictionary`);
+  }
+
+  for (const p of players) {
+    if (!p?.id || !p?.name) {
+      failures.push('identity: league feature contains an unnamed player entity');
+      continue;
+    }
+    const pid = String(p.id);
+    const dictPlayer = dict?.playerById?.get?.(pid) || null;
+    if (dictPlayer?.name && norm(dictPlayer.name) !== norm(p.name)) {
+      failures.push(`identity: linked player "${p.name}" (${pid}) disagrees with roster name "${dictPlayer.name}"`);
+    }
+    const tid = String(p.team_id || '');
+    if (tid && !teamIds.has(tid)) {
+      failures.push(`identity: linked player ${p.name} (${pid}) points to team ${tid}, which is absent from the feature`);
+    }
+  }
+
+  return [...new Set(failures)];
+}
+
 /** Failures that make an article unsafe to publish/list, not stylistic issues. */
 export function articleIdentityFailures(article, { dict = null } = {}) {
   if (!article) return ['identity: missing article'];
   // A ranking/index is a different kind of subject, so it gets a different
   // contract rather than an exemption.
-  if (identityModeOf(article) === 'series') return seriesIdentityFailures(article, { dict });
+  const identityMode = identityModeOf(article);
+  if (identityMode === 'series') return seriesIdentityFailures(article, { dict });
+  if (identityMode === 'league') return leagueIdentityFailures(article, { dict });
   const failures = [];
   const entities = uniqEntities([
     ...(article.entities || []),
