@@ -6,11 +6,11 @@
 // nothing else. This module is what both sides agree on, so a value cannot be
 // changed on one side of the wire without the other noticing.
 
-export const VISUALS_VERSION = 'wnba-visuals/1.0.0';
-export const VISUAL_RENDERER = 'pbe-visual/1.0.0';
+export const VISUALS_VERSION = 'wnba-visuals/1.1.0';
+export const VISUAL_RENDERER = 'pbe-visual/1.1.0';
 
 /** Visual types the renderer implements. An unknown type never publishes and never draws. */
-export const VISUAL_TYPES = Object.freeze(['line_series', 'component_bars', 'rank_cards', 'resume_card']);
+export const VISUAL_TYPES = Object.freeze(['line_series', 'component_bars', 'rank_cards', 'resume_card', 'comparison_bars', 'impact_bars']);
 
 /** Declared unit spaces. A plotted number must say what it measures. */
 export const VISUAL_UNITS = Object.freeze({
@@ -18,7 +18,9 @@ export const VISUAL_UNITS = Object.freeze({
   percentile: { label: 'percentile', scale: [0, 100], decimals: 1 },
   percent: { label: '%', scale: [0, 100], decimals: 1 },
   per_game: { label: 'per game', scale: [0, 60], decimals: 1 },
-  count: { label: 'total', scale: [0, 1000], decimals: 0 }
+  count: { label: 'total', scale: [0, 1000], decimals: 0 },
+  percentage_points: { label: 'percentage points', scale: [-100, 100], decimals: 1 },
+  impact_points: { label: 'model-impact points', scale: [-25, 25], decimals: 1 }
 });
 
 /**
@@ -38,6 +40,8 @@ export function plottedValues(spec) {
   if (t === 'line_series') return ['line_series', (spec.series || []).map((p) => [String(p.key), n(p.value), p.rank ?? null])];
   if (t === 'component_bars') return ['component_bars', (spec.rows || []).map((r) => [String(r.key), n(r.value)])];
   if (t === 'rank_cards') return ['rank_cards', (spec.cards || []).map((c) => [String(c.entity?.id), n(c.value), c.rank ?? null])];
+  if (t === 'comparison_bars') return ['comparison_bars', (spec.rows || []).map((r) => [String(r.key), n(r.primary), n(r.secondary), n(r.delta)])];
+  if (t === 'impact_bars') return ['impact_bars', (spec.rows || []).map((r) => [String(r.key), n(r.value)])];
   if (t === 'resume_card') {
     return ['resume_card',
       (spec.honours || []).map((h) => [String(h.key), n(h.count)]),

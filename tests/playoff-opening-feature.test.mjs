@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { articleView } from '../src/views/article.js';
+import { visualsFailures } from '../workers/wnba-news/src/visuals.js';
 
 import {
   PLAYOFF_OPENING_ID,
@@ -51,6 +53,23 @@ test('Sep 27 playoff feature preserves the audited pre-lock slate and SEO identi
   assert.ok(a.links.picks);
   assert.ok(a.links.model);
   assert.ok(a.links.track_record);
+  assert.equal(a.visuals.length, 3);
+  assert.deepEqual(visualsFailures(a.visuals), []);
+  assert.ok(a.visuals.some((v) => v.id === 'playoff-model-market' && v.type === 'comparison_bars'));
+  assert.ok(a.visuals.some((v) => v.id === 'atlanta-model-drivers' && v.type === 'impact_bars'));
+  assert.ok(a.visuals.some((v) => v.id === 'september-winba-top-five' && v.type === 'rank_cards'));
+});
+
+test('playoff feature renders player, WinBA, model and matchup navigation with server-side charts', () => {
+  const a = playoffOpeningArticle('2026-09-27T14:30:00.000Z');
+  const h = String(articleView({ article: { ...a, media: null }, related: [] }));
+  const hrefs = ['/players/4433791','/players/4433791/dna','/players/3149391','/players/4433402','/players/4065870','/players/4433403','/winba-score','/news/winba-index','/pbe-picks','/pbe-picks/model','/track-record','/playoffs','/matchups/401918013','/matchups/401918014','/matchups/401918015','/matchups/401918016'];
+  for (const href of hrefs) assert.ok(h.includes(`href="${href}"`), href);
+  assert.match(h, /PBE model vs de-vigged market/);
+  assert.match(h, /Why the model is highest on Atlanta/);
+  assert.match(h, /September WinBA top five/);
+  assert.match(h, /PropBetEdge research stack/);
+  assert.match(h, /Olivia Miles Player DNA/);
 });
 
 test('playoff feature publisher is idempotent and force regenerates without moving first publication', async () => {

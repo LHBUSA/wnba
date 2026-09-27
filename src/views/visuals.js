@@ -62,6 +62,23 @@ function dataTable(spec) {
       </tr>`)}</tbody>
     </table>`;
   }
+
+  if (spec.type === 'comparison_bars') {
+    return html`<table class="pv-table">
+      <caption>Frozen model and market probabilities shown in this figure</caption>
+      <thead><tr><th scope="col">Matchup</th><th scope="col">${spec.primary_label}</th><th scope="col">${spec.secondary_label}</th><th scope="col">PBE Edge</th></tr></thead>
+      <tbody>${(spec.rows || []).map((r) => html`<tr><th scope="row">${r.label}</th><td>${f1(r.primary)}%</td><td>${f1(r.secondary)}%</td><td>${r.delta > 0 ? '+' : ''}${f1(r.delta)} pts</td></tr>`)}</tbody>
+    </table>`;
+  }
+  if (spec.type === 'impact_bars') {
+    return html`<table class="pv-table">
+      <caption>Frozen model-impact values shown in this figure</caption>
+      <thead><tr><th scope="col">Driver</th><th scope="col">Impact</th></tr></thead>
+      <tbody>${(spec.rows || []).map((r) => html`<tr><th scope="row">${r.label}</th><td>${r.value > 0 ? '+' : ''}${f1(r.value)}</td></tr>`)}</tbody>
+    </table>`;
+  }
+
+
   if (spec.type === 'rank_cards') {
     return html`<table class="pv-table">
       <caption>Frozen values shown in this figure</caption>
@@ -85,6 +102,12 @@ function ariaSummary(spec) {
   }
   if (spec.type === 'component_bars') {
     return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${fmtVal(r.value, r.unit)}`).join('. ')}.`;
+  }
+  if (spec.type === 'comparison_bars') {
+    return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${f1(r.primary)} percent model, ${f1(r.secondary)} percent market, ${r.delta > 0 ? 'plus ' : ''}${f1(r.delta)} point edge`).join('. ')}.`;
+  }
+  if (spec.type === 'impact_bars') {
+    return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${r.value > 0 ? 'plus ' : ''}${f1(r.value)} model-impact points`).join('. ')}.`;
   }
   if (spec.type === 'rank_cards') {
     return `${spec.title}. ${(spec.cards || []).map((c) => `Number ${c.rank}, ${c.entity.name}, ${f1(c.value)}`).join('. ')}.`;
@@ -199,6 +222,35 @@ function rankCardsFigure(spec) {
   </ol>`;
 }
 
+
+function comparisonBarsFigure(spec) {
+  return html`<div class="pv-compare">
+    ${(spec.rows || []).map((r) => html`<div class="pv-compare-row">
+      <div class="pv-compare-head">
+        ${r.href ? html`<a href="${r.href}"><b>${r.label}</b></a>` : html`<b>${r.label}</b>`}
+        <span class="pv-edge ${r.delta > 0 ? 'is-positive' : r.delta < 0 ? 'is-negative' : ''}">${r.delta > 0 ? '+' : ''}${f1(r.delta)} pts</span>
+      </div>
+      <div class="pv-compare-bars">
+        <div class="pv-compare-bar"><span>${spec.primary_label}</span><div class="pv-track"><i class="pv-fill" style="width:${Math.max(0, Math.min(100, r.primary)).toFixed(1)}%"></i></div><b>${f1(r.primary)}%</b></div>
+        <div class="pv-compare-bar"><span>${spec.secondary_label}</span><div class="pv-track"><i class="pv-fill pv-fill--secondary" style="width:${Math.max(0, Math.min(100, r.secondary)).toFixed(1)}%"></i></div><b>${f1(r.secondary)}%</b></div>
+      </div>
+    </div>`)}
+  </div>`;
+}
+
+function impactBarsFigure(spec) {
+  const max = Math.max(1, ...(spec.rows || []).map((r) => Math.abs(r.value || 0)));
+  return html`<div class="pv-impact">
+    ${(spec.rows || []).map((r) => {
+      const width = Math.max(2, Math.abs(r.value) / max * 100);
+      return html`<div class="pv-impact-row ${r.value >= 0 ? 'is-positive' : 'is-negative'}">
+        <div class="pv-impact-head"><span>${r.label}</span><b>${r.value > 0 ? '+' : ''}${f1(r.value)}</b></div>
+        <div class="pv-impact-track"><span class="pv-impact-fill" style="width:${width.toFixed(1)}%"></span></div>
+      </div>`;
+    })}
+  </div>`;
+}
+
 // -------------------------------------------------------------- resume card
 
 function resumeCardFigure(spec) {
@@ -222,6 +274,8 @@ const FIGURE = {
   line_series: lineSeriesFigure,
   component_bars: componentBarsFigure,
   rank_cards: rankCardsFigure,
+  comparison_bars: comparisonBarsFigure,
+  impact_bars: impactBarsFigure,
   resume_card: resumeCardFigure
 };
 

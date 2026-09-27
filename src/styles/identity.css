@@ -171,3 +171,15 @@ body::after {
 .ncard.lead::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 46px, rgba(255, 240, 220, .02) 46px 47px), linear-gradient(0deg, rgba(10, 8, 6, .85) 30%, transparent 75%); }
 .ncard.lead > * { position: relative; }
 .ncard.lead > .bg-logo { position: absolute; }
+
+
+/* Article research stack: owned product links, not generic related-content chrome. */
+.story-research-links { margin-top:14px; padding:14px; border:1px solid var(--line-2); border-radius:12px; background:rgba(255,255,255,.018); }
+.story-research-head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.story-research-head span { color:var(--faint); font:700 9px/1 var(--f-data); letter-spacing:.14em; text-transform:uppercase; }
+.story-research-head b { color:var(--gold-bright); font:700 11px/1 var(--f-data); }
+.story-research-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+.story-research-grid a { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 10px; border:1px solid var(--line-3); border-radius:9px; color:var(--paper-2); background:rgba(0,0,0,.12); font:600 11px/1.25 var(--f-ui); }
+.story-research-grid a:hover { color:var(--gold-bright); border-color:var(--gold-line); }
+.story-research-grid a b { color:var(--gold); }
+@media (max-width:700px) { .story-research-grid { grid-template-columns:1fr; } }
