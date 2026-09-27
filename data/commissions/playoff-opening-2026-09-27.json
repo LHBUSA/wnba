@@ -1,0 +1,92 @@
+{
+  "version": "pbe-wnba-playoff-opening/1.0.0",
+  "date_et": "2026-09-27",
+  "snapshot_at": "2026-09-27T14:10:36.238Z",
+  "market_captured_at": "2026-09-27T12:00:58.883Z",
+  "model_id": "pbe-wnba-model-v1",
+  "prediction_state": "pre_lock",
+  "locked_predictions_at_snapshot": 0,
+  "data_quality": {
+    "flags": [],
+    "minimum_current_games": 44,
+    "eligibility_contract": "pbe-wnba-eligibility/1"
+  },
+  "sources": {
+    "official_preview": "https://www.wnba.com/news/2026-playoffs-series-preview-first-round",
+    "official_postseason_faq": "https://www.wnba.com/news/2026-wnba-postseason-faq",
+    "pbe_playoffs": "/playoffs",
+    "pbe_model_method": "/pbe-picks/model",
+    "pbe_picks": "/pbe-picks",
+    "pbe_winba": "/winba-score",
+    "pbe_track_record": "/track-record"
+  },
+  "games": [
+    {
+      "game_id": "401918014",
+      "tip_utc": "2026-09-27T18:00:00Z",
+      "away": { "team_id": "9", "abbr": "NY", "name": "New York Liberty", "seed": 8, "record": "26-18" },
+      "home": { "team_id": "8", "abbr": "MIN", "name": "Minnesota Lynx", "seed": 1, "record": "33-11" },
+      "pick": { "team_id": "8", "abbr": "MIN", "name": "Minnesota Lynx", "probability": 0.6397425463454, "confidence": "medium" },
+      "market": { "devig_probability": 0.708588957055215, "consensus_moneyline": -280, "book_count": 11, "edge_points": -6.9 },
+      "drivers": [
+        { "family": "team_quality", "text": "+4.5 schedule-adjusted net rating per 100 possessions", "impact_points": 11.6325240457 },
+        { "family": "situation", "text": "Home court", "impact_points": 6.9464872385 },
+        { "family": "form", "text": "Last 10 games: -7.4 per 100 vs season baseline", "impact_points": -1.9726965440 },
+        { "family": "situation", "text": "Rest: 2 days vs opponent 3 days", "impact_points": -1.4369516766 }
+      ]
+    },
+    {
+      "game_id": "401918015",
+      "tip_utc": "2026-09-27T20:00:00Z",
+      "away": { "team_id": "5", "abbr": "IND", "name": "Indiana Fever", "seed": 6, "record": "28-16" },
+      "home": { "team_id": "17", "abbr": "LVA", "name": "Las Vegas Aces", "seed": 3, "record": "31-13" },
+      "pick": { "team_id": "17", "abbr": "LVA", "name": "Las Vegas Aces", "probability": 0.559551485438404, "confidence": "low" },
+      "market": { "devig_probability": 0.601769911504425, "consensus_moneyline": -165, "book_count": 11, "edge_points": -4.2 },
+      "drivers": [
+        { "family": "situation", "text": "Home court", "impact_points": 7.2528763117 },
+        { "family": "form", "text": "Last 10 games: +9.1 per 100 vs season baseline", "impact_points": 3.0601088156 },
+        { "family": "rotation", "text": "Rotation availability: 89% vs opponent 97%", "impact_points": -3.1339866054 },
+        { "family": "team_quality", "text": "Opponent holds a +0.3 schedule-adjusted net rating edge per 100 possessions", "impact_points": -0.9190728941 }
+      ]
+    },
+    {
+      "game_id": "401918013",
+      "tip_utc": "2026-09-27T23:00:00Z",
+      "away": { "team_id": "16", "abbr": "WAS", "name": "Washington Mystics", "seed": 5, "record": "28-16" },
+      "home": { "team_id": "20", "abbr": "ATL", "name": "Atlanta Dream", "seed": 4, "record": "30-14" },
+      "pick": { "team_id": "20", "abbr": "ATL", "name": "Atlanta Dream", "probability": 0.753466172714344, "confidence": "high" },
+      "market": { "devig_probability": 0.698434337175197, "consensus_moneyline": -270, "book_count": 11, "edge_points": 5.5 },
+      "drivers": [
+        { "family": "team_quality", "text": "+6.7 schedule-adjusted net rating per 100 possessions", "impact_points": 15.6532448985 },
+        { "family": "situation", "text": "Home court", "impact_points": 5.7974172017 },
+        { "family": "situation", "text": "Rest: 3 days vs opponent 2 days", "impact_points": 0.8974372937 },
+        { "family": "rotation", "text": "Rotation availability: 99% vs opponent 98%", "impact_points": 0.5999870268 }
+      ],
+      "official_context": {
+        "atlanta_finish": "won final five regular-season games",
+        "atlanta_offense_ppg": 91.3,
+        "washington_defense_ppg_allowed": 82.7,
+        "series_note": "Washington won the two most recent regular-season meetings, each by five points"
+      }
+    },
+    {
+      "game_id": "401918016",
+      "tip_utc": "2026-09-28T01:00:00Z",
+      "away": { "team_id": "3", "abbr": "DAL", "name": "Dallas Wings", "seed": 7, "record": "27-17" },
+      "home": { "team_id": "129689", "abbr": "GSV", "name": "Golden State Valkyries", "seed": 2, "record": "32-12" },
+      "pick": { "team_id": "129689", "abbr": "GSV", "name": "Golden State Valkyries", "probability": 0.711742800145784, "confidence": "high" },
+      "market": { "devig_probability": 0.707317073170732, "consensus_moneyline": -285, "book_count": 11, "edge_points": 0.4 },
+      "drivers": [
+        { "family": "team_quality", "text": "+3.8 schedule-adjusted net rating per 100 possessions", "impact_points": 9.1001848338 },
+        { "family": "situation", "text": "Home court", "impact_points": 6.3208967779 },
+        { "family": "rotation", "text": "Rotation availability: 94% vs opponent 83%", "impact_points": 4.0417419330 },
+        { "family": "situation", "text": "Rest: 2 days vs opponent 3 days", "impact_points": -1.2734502332 },
+        { "family": "form", "text": "Opponent last 10: +6.6 per 100 vs season baseline", "impact_points": -1.0383129554 }
+      ],
+      "official_context": {
+        "golden_state_defense_ppg_allowed": 75.1,
+        "golden_state_bench_ppg": 35.9
+      }
+    }
+  ]
+}
