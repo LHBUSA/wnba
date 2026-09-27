@@ -57,7 +57,11 @@ test('Sep 27 playoff feature preserves the audited pre-lock slate and SEO identi
   assert.deepEqual(visualsFailures(a.visuals), []);
   assert.ok(a.visuals.some((v) => v.id === 'playoff-model-market' && v.type === 'comparison_bars'));
   assert.ok(a.visuals.some((v) => v.id === 'atlanta-model-drivers' && v.type === 'impact_bars'));
-  assert.ok(a.visuals.some((v) => v.id === 'september-winba-top-five' && v.type === 'rank_cards'));
+  const board = a.visuals.find((v) => v.id === 'september-winba-top-five' && v.type === 'rank_cards');
+  assert.ok(board);
+  assert.ok(board.cards.every((card) => card.photo?.square), 'all five WinBA cards use approved player photography');
+  assert.ok(a.winba_board_media?.length >= 5);
+  assert.ok(a.media, 'article hero resolves through reviewed newsroom media');
 });
 
 test('playoff feature renders player, WinBA, model and matchup navigation with server-side charts', () => {
