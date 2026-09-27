@@ -12,7 +12,8 @@
 export const PLAYOFF_OPENING_KEY = 'playoff-opening-2026-09-27';
 export const PLAYOFF_OPENING_VERSION = 'pbe-wnba-playoff-opening/1.0.0';
 export const PLAYOFF_OPENING_ID = '92f70927c6e1';
-export const PLAYOFF_OPENING_SLUG = 'wnba-playoffs-today-model-picks-winba-leader-september-27-2026';
+export const PLAYOFF_OPENING_LEGACY_SLUG = 'wnba-playoffs-today-model-picks-winba-leader-september-27-2026';
+export const PLAYOFF_OPENING_SLUG = `${PLAYOFF_OPENING_LEGACY_SLUG}-${PLAYOFF_OPENING_ID.slice(0, 6)}`;
 
 const SNAPSHOT_AT = '2026-09-27T14:10:36.238Z';
 const MARKET_AT = '2026-09-27T12:00:58.883Z';
@@ -129,6 +130,7 @@ export function playoffOpeningArticle(at) {
   return {
     id: PLAYOFF_OPENING_ID,
     slug: PLAYOFF_OPENING_SLUG,
+    aliases: [PLAYOFF_OPENING_LEGACY_SLUG],
     kind: 'commissioned_feature',
     desk: 'feature',
     category: 'Playoffs',
@@ -267,7 +269,7 @@ export function playoffOpeningCard(article) {
   return {
     id: article.id,
     slug: article.slug,
-    aliases: [],
+    aliases: article.aliases || [],
     kind: article.kind,
     desk: article.desk,
     category: article.category,
@@ -300,7 +302,7 @@ export function playoffOpeningCard(article) {
  */
 export async function publishPlayoffOpening(env, { at, force = false } = {}) {
   const index = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
-  const existing = index.find((c) => c.id === PLAYOFF_OPENING_ID || c.slug === PLAYOFF_OPENING_SLUG);
+  const existing = index.find((c) => c.id === PLAYOFF_OPENING_ID || c.slug === PLAYOFF_OPENING_SLUG || c.slug === PLAYOFF_OPENING_LEGACY_SLUG || (c.aliases || []).includes(PLAYOFF_OPENING_LEGACY_SLUG));
   if (existing && !force) return { key: PLAYOFF_OPENING_KEY, status: 'already_published', id: existing.id, slug: existing.slug };
 
   const prior = existing ? await env.NEWS_KV.get(`art:v1:item:${existing.id}`, 'json') : null;
