@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   PLAYOFF_OPENING_ID,
   PLAYOFF_OPENING_KEY,
+  PLAYOFF_OPENING_LEGACY_SLUG,
   PLAYOFF_OPENING_SLUG,
   playoffOpeningArticle,
   publishPlayoffOpening
@@ -26,6 +27,8 @@ test('Sep 27 playoff feature preserves the audited pre-lock slate and SEO identi
   const a = playoffOpeningArticle('2026-09-27T14:30:00.000Z');
   assert.equal(a.id, PLAYOFF_OPENING_ID);
   assert.equal(a.slug, PLAYOFF_OPENING_SLUG);
+  assert.match(a.slug, /-[a-f0-9]{6}$/);
+  assert.deepEqual(a.aliases, [PLAYOFF_OPENING_LEGACY_SLUG]);
   assert.equal(a.kind, 'commissioned_feature');
   assert.equal(a.category, 'Playoffs');
   assert.equal(a.facts.prediction_state, 'pre_lock');
@@ -72,4 +75,44 @@ test('playoff feature publisher is idempotent and force regenerates without movi
   assert.equal(saved2.first_published_at, '2026-09-27T14:30:00.000Z');
   assert.equal(saved2.revised_at, '2026-09-27T14:50:00.000Z');
   assert.equal(saved2.revisions.length, 1);
+});
+
+
+test('force migration repairs the previously published unroutable legacy slug', async () => {
+  const oldCard = {
+    id: PLAYOFF_OPENING_ID,
+    slug: PLAYOFF_OPENING_LEGACY_SLUG,
+    aliases: [],
+    kind: 'commissioned_feature',
+    status: 'published',
+    quality_state: 'current_quality',
+    first_published_at: '2026-09-27T14:30:00.000Z',
+    published_at: '2026-09-27T14:30:00.000Z',
+    updated_at: '2026-09-27T14:30:00.000Z',
+    entities: []
+  };
+  const oldArticle = {
+    ...playoffOpeningArticle('2026-09-27T14:30:00.000Z'),
+    slug: PLAYOFF_OPENING_LEGACY_SLUG,
+    aliases: [],
+    first_published_at: '2026-09-27T14:30:00.000Z',
+    published_at: '2026-09-27T14:30:00.000Z'
+  };
+  const store = kv({
+    'art:v1:index': [oldCard],
+    [`art:v1:item:${PLAYOFF_OPENING_ID}`]: oldArticle
+  });
+
+  const out = await publishPlayoffOpening({ NEWS_KV: store }, { at: '2026-09-27T15:00:00.000Z', force: true });
+  assert.equal(out.status, 'regenerated');
+  assert.equal(out.slug, PLAYOFF_OPENING_SLUG);
+
+  const index = await store.get('art:v1:index', 'json');
+  assert.equal(index[0].slug, PLAYOFF_OPENING_SLUG);
+  assert.deepEqual(index[0].aliases, [PLAYOFF_OPENING_LEGACY_SLUG]);
+
+  const article = await store.get(`art:v1:item:${PLAYOFF_OPENING_ID}`, 'json');
+  assert.equal(article.slug, PLAYOFF_OPENING_SLUG);
+  assert.deepEqual(article.aliases, [PLAYOFF_OPENING_LEGACY_SLUG]);
+  assert.equal(article.first_published_at, '2026-09-27T14:30:00.000Z');
 });
