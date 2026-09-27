@@ -178,6 +178,45 @@ export function resumeCard({ id, title, subtitle = null, caption = null, entity,
   return { ...spec, values_hash: valuesHash(spec) };
 }
 
+
+/** Side-by-side comparison rows: model probability vs market, with signed delta. */
+export function comparisonBars({ id, title, subtitle = null, caption = null, rows = [], primaryLabel = 'Model', secondaryLabel = 'Market', provenance = {}, footnote = null }) {
+  const spec = {
+    id, type: 'comparison_bars', title, subtitle, caption, footnote,
+    primary_label: String(primaryLabel),
+    secondary_label: String(secondaryLabel),
+    unit: 'percent',
+    rows: rows.map((r) => ({
+      key: String(r.key),
+      label: String(r.label),
+      primary: num(r.primary),
+      secondary: num(r.secondary),
+      delta: num(r.delta),
+      href: r.href ? String(r.href) : null
+    })),
+    provenance: { renderer: VISUAL_RENDERER, ...provenance },
+    version: VISUALS_VERSION
+  };
+  return { ...spec, values_hash: valuesHash(spec) };
+}
+
+/** Signed driver bars for model explanation packets. */
+export function impactBars({ id, title, subtitle = null, caption = null, rows = [], provenance = {}, footnote = null }) {
+  const spec = {
+    id, type: 'impact_bars', title, subtitle, caption, footnote,
+    unit: 'impact_points',
+    rows: rows.map((r) => ({
+      key: String(r.key),
+      label: String(r.label),
+      value: num(r.value),
+      family: r.family ? String(r.family) : null
+    })),
+    provenance: { renderer: VISUAL_RENDERER, ...provenance },
+    version: VISUALS_VERSION
+  };
+  return { ...spec, values_hash: valuesHash(spec) };
+}
+
 // --------------------------------------------------------------- validation
 
 /**
@@ -242,6 +281,31 @@ export function visualFailures(spec, { id = spec?.id } = {}) {
     if (new Set(keys).size !== keys.length) at('duplicate component keys');
     if (!spec.entity?.id) at('no subject entity id');
     if (spec.total === null) at('no headline total to interpret the components against');
+  }
+
+  if (spec.type === 'comparison_bars') {
+    const rows = spec.rows || [];
+    if (rows.length < 2 || rows.length > 8) at(`row count ${rows.length} is outside 2–8`);
+    for (const r of rows) {
+      if (r.primary === null || r.secondary === null || r.delta === null) at(`row ${r.key} is missing a plotted value`);
+      if (!str(r.label)) at(`row ${r.key} has no label`);
+      if (r.primary !== null && (r.primary < 0 || r.primary > 100)) at(`row ${r.key} primary is outside 0–100`);
+      if (r.secondary !== null && (r.secondary < 0 || r.secondary > 100)) at(`row ${r.key} secondary is outside 0–100`);
+    }
+    const keys = rows.map((r) => String(r.key));
+    if (new Set(keys).size !== keys.length) at('duplicate comparison row keys');
+  }
+
+  if (spec.type === 'impact_bars') {
+    const rows = spec.rows || [];
+    if (rows.length < 2 || rows.length > 8) at(`row count ${rows.length} is outside 2–8`);
+    for (const r of rows) {
+      if (r.value === null) at(`row ${r.key} has no value`);
+      if (!str(r.label)) at(`row ${r.key} has no label`);
+      if (r.value !== null && (r.value < -25 || r.value > 25)) at(`row ${r.key} value ${r.value} is outside -25–25`);
+    }
+    const keys = rows.map((r) => String(r.key));
+    if (new Set(keys).size !== keys.length) at('duplicate impact row keys');
   }
 
   if (spec.type === 'rank_cards') {
