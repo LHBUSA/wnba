@@ -79,13 +79,6 @@ function dataTable(spec) {
   }
 
 
-  if (spec.type === 'comparison_bars') {
-    return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${f1(r.primary)} percent model, ${f1(r.secondary)} percent market, ${r.delta > 0 ? 'plus ' : ''}${f1(r.delta)} point edge`).join('. ')}.`;
-  }
-  if (spec.type === 'impact_bars') {
-    return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${r.value > 0 ? 'plus ' : ''}${f1(r.value)} model-impact points`).join('. ')}.`;
-  }
-
   if (spec.type === 'rank_cards') {
     return html`<table class="pv-table">
       <caption>Frozen values shown in this figure</caption>
@@ -109,6 +102,12 @@ function ariaSummary(spec) {
   }
   if (spec.type === 'component_bars') {
     return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${fmtVal(r.value, r.unit)}`).join('. ')}.`;
+  }
+  if (spec.type === 'comparison_bars') {
+    return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${f1(r.primary)} percent model, ${f1(r.secondary)} percent market, ${r.delta > 0 ? 'plus ' : ''}${f1(r.delta)} point edge`).join('. ')}.`;
+  }
+  if (spec.type === 'impact_bars') {
+    return `${spec.title}. ${(spec.rows || []).map((r) => `${r.label}: ${r.value > 0 ? 'plus ' : ''}${f1(r.value)} model-impact points`).join('. ')}.`;
   }
   if (spec.type === 'rank_cards') {
     return `${spec.title}. ${(spec.cards || []).map((c) => `Number ${c.rank}, ${c.entity.name}, ${f1(c.value)}`).join('. ')}.`;
