@@ -31,6 +31,6 @@ test('sports rail lists Soccer after Tennis, read from the registry, and SHELL_R
   const rail = doc.slice(doc.indexOf('sports-rail'));
   assert.match(rail, /<a href="https:\/\/soccer\.propbetedge\.ai\/"[^>]*title="Soccer Intelligence">Soccer<\/a>/);
   const shellSrc = readFileSync(new URL('../src/ui/shell.js', import.meta.url), 'utf8');
-  assert.ok(!/tennis\.propbetedge\.ai/.test(shellSrc), 'URL lives only in src/ui/network.js');
+  assert.ok(!/soccer\.propbetedge\.ai/.test(shellSrc), 'Soccer URL lives only in src/ui/network.js');
   assert.notEqual(SHELL_REV, '2026-09-26.5');
 });
