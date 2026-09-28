@@ -24,13 +24,13 @@ test('SHELL_REV moved past the playoffs shell so clients reconcile the footer be
   assert.notEqual(SHELL_REV, '2026-09-25.1');
 });
 
-test('sports rail lists Tennis after UFC, read from the registry, and SHELL_REV moved for it', () => {
-  assert.deepEqual(NETWORK.sports.map((s) => s.key), ['mlb', 'nfl', 'nba', 'wnba', 'nhl', 'ufc', 'tennis']);
-  assert.deepEqual(NETWORK.sports.at(-1), { key: 'tennis', label: 'Tennis', name: 'Tennis Intelligence', href: 'https://tennis.propbetedge.ai/' });
+test('sports rail lists Soccer after Tennis, read from the registry, and SHELL_REV moved for it', () => {
+  assert.deepEqual(NETWORK.sports.map((s) => s.key), ['mlb', 'nfl', 'nba', 'wnba', 'nhl', 'ufc', 'tennis', 'soccer']);
+  assert.deepEqual(NETWORK.sports.at(-1), { key: 'soccer', label: 'Soccer', name: 'Soccer Intelligence', href: 'https://soccer.propbetedge.ai/' });
   const doc = String(shellHtml());
   const rail = doc.slice(doc.indexOf('sports-rail'));
-  assert.match(rail, /<a href="https:\/\/tennis\.propbetedge\.ai\/"[^>]*title="Tennis Intelligence">Tennis<\/a>/);
+  assert.match(rail, /<a href="https:\/\/soccer\.propbetedge\.ai\/"[^>]*title="Soccer Intelligence">Soccer<\/a>/);
   const shellSrc = readFileSync(new URL('../src/ui/shell.js', import.meta.url), 'utf8');
   assert.ok(!/tennis\.propbetedge\.ai/.test(shellSrc), 'URL lives only in src/ui/network.js');
-  assert.notEqual(SHELL_REV, '2026-09-26.1');
+  assert.notEqual(SHELL_REV, '2026-09-26.5');
 });
