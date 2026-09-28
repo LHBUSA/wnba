@@ -9,6 +9,7 @@ import logoManifest from '../../data/team-logos.json' with { type: 'json' };
 import { buildTicker } from '../lib/ticker.js';
 import { countdownLabel, resolveTodayHero } from '../lib/today-hero.js';
 import { currentWinbaEdition, WINBA_INDEX_KIND } from './winba-index.js';
+import { selectHomepageLead, latestNewsRail, HOMEPAGE_LEAD_POLICY } from '../lib/homepage-lead.js';
 
 export async function loadToday(api) {
   // The ticker reads the international canonical layer too (live, recent finals, next games); a failure there only
@@ -267,8 +268,9 @@ function renderHeroDeskCard(hero) {
   </section>`;
 }
 
-function renderEditorialFront(leadStory, secondaryStories, hero = null) {
-  return html`<section class="editorial-front" aria-label="Top WNBA stories">
+function renderEditorialFront(leadStory, secondaryStories, hero = null, lead = null) {
+  // data-lead-* is a non-visible audit trail of why this story leads (policy + reason), readable with curl.
+  return html`<section class="editorial-front" aria-label="Top WNBA stories" data-lead-policy="${HOMEPAGE_LEAD_POLICY}" data-lead-id="${lead?.lead_story_id || ''}" data-lead-reason="${lead?.selection_reason || ''}">
     <div class="editorial-grid">
       <div class="editorial-lead">
         ${renderHomepageLead(leadStory)}
@@ -353,20 +355,20 @@ function renderLiveFront(hero, meta) {
   </section>`;
 }
 
-export function todayView({ today, arts, injuries, standings, intl = null, winbaIndexes = null }) {
+export function todayView({ today, arts, injuries, standings, intl = null, winbaIndexes = null }, { now = Date.now() } = {}) {
   if (!today?.ok) return { body: errorState(today, 'The WNBA slate'), live: false };
   const d = today.data;
   const slate = d.slate;
-  const hero = resolveTodayHero(d);
+  const hero = resolveTodayHero(d, now);
   const live = hero.mode === 'LIVE';
   const games = slate.games;
   const priced = games.filter((g) => g.market);
   const stories = arts.ok ? arts.data.items : [];
-  // The newsroom endpoint is newest-first, but keep the homepage contract explicit.
-  // Historical WinBA backfills are publication-history records, not current news.
+  // Latest News is chronological (newest first). Historical WinBA backfills are publication-history records, not current news.
   const frontPageStories = frontPageEditorialStories(stories, winbaIndexes);
-  const leadStory = frontPageStories[0];
-  const secondaryStories = frontPageStories.filter((c) => c.id !== leadStory?.id).slice(0, 4);
+  // Top Story is an editorial choice, not "newest record": see src/lib/homepage-lead.js for the deterministic policy.
+  const { lead: leadStory, diagnostics: leadDiagnostics } = selectHomepageLead(frontPageStories, { hero, data: d, now });
+  const secondaryStories = latestNewsRail(frontPageStories, leadStory, { limit: 4 });
   const heroStoryIds = new Set([leadStory?.id, ...secondaryStories.map((c) => c.id)].filter(Boolean));
   const moreStories = frontPageStories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
   const changes = (injuries.ok ? injuries.data.changes : []) || [];
@@ -387,8 +389,8 @@ export function todayView({ today, arts, injuries, standings, intl = null, winba
     ${tickerRail(ticker, { freshness: today.meta?.served_at ? `Updated ${relTime(today.meta.served_at)}` : null })}
 
     ${live
-      ? html`${renderLiveFront(hero, today.meta)}${renderEditorialFront(leadStory, secondaryStories)}`
-      : html`${renderEditorialFront(leadStory, secondaryStories, hero)}`}
+      ? html`${renderLiveFront(hero, today.meta)}${renderEditorialFront(leadStory, secondaryStories, null, leadDiagnostics)}`
+      : html`${renderEditorialFront(leadStory, secondaryStories, hero, leadDiagnostics)}`}
 
     <nav class="card sports-team-rail" aria-label="WNBA teams">
       ${logoManifest.teams.map((t) => html`<a href="/teams/${t.team_id}" title="${t.name}" style="flex:none;padding:6px;border-radius:10px">${teamLogo({ team_id: t.team_id, name: t.name }, 40)}</a>`)}
