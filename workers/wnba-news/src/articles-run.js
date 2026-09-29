@@ -228,6 +228,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
       }
       (edStats.cache_misses ||= {})[miss.split(':')[0]] = ((edStats.cache_misses || {})[miss.split(':')[0]] || 0) + 1;
       if (/^reuse_failed/.test(miss) && (edStats.reuse_failures ||= []).length < 6) edStats.reuse_failures.push({ id: a.id, reason: miss });
+      if ((edStats.miss_detail ||= []).length < 25) edStats.miss_detail.push({ id: a.id, kind: a.kind, miss: miss.slice(0, 40), stored_status: pe?.status || null, stored_digest: pe?.draft_digest || null, digest: job.digest });
       job.needsCall = true;
     }
     // Phase B: model calls — new stories first, then by desk; bounded by count, deadline and concurrency.

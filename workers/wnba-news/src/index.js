@@ -32,13 +32,16 @@ import { ARTICLE_RUN_MIN_GAP_MS } from './articles-run.js';
 const SERVICE = 'wnba-news';
 const VERSION = '2.0.0';
 export const CRON_MINUTES = 5;
+const LEASE_MS = 9 * 60e3;
 
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       // A slow pass must not overlap the next five-minute tick and race it on the same KV keys.
       const lease = await env.NEWS_KV.get('news:v1:lease', 'json');
-      if (lease?.at && Date.now() - Date.parse(lease.at) < 4 * 60e3) return;
+      // A pass with editorial-desk calls can run ~4 minutes; the lease covers a full article pass plus margin so a slow pass
+      // is never overlapped by the next five-minute tick (two full-index writers lose updates). It is released on finish.
+      if (lease?.at && Date.now() - Date.parse(lease.at) < LEASE_MS) return;
       await env.NEWS_KV.put('news:v1:lease', JSON.stringify({ at: new Date().toISOString() }), { expirationTtl: 600 });
       try { await runIngest(env, 'cron'); } finally { await env.NEWS_KV.delete('news:v1:lease'); }
     })());
@@ -63,7 +66,7 @@ export default {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       // A manual pass takes the same lease as the cron pass: two passes writing the full index concurrently lose updates.
       const held = await env.NEWS_KV.get('news:v1:lease', 'json');
-      if (held?.at && Date.now() - Date.parse(held.at) < 4 * 60e3) return j({ ok: false, error: 'busy', detail: 'a newsroom pass holds the lease; retry after it finishes', lease_at: held.at }, 409);
+      if (held?.at && Date.now() - Date.parse(held.at) < LEASE_MS) return j({ ok: false, error: 'busy', detail: 'a newsroom pass holds the lease; retry after it finishes', lease_at: held.at }, 409);
       await env.NEWS_KV.put('news:v1:lease', JSON.stringify({ at: new Date().toISOString(), manual: true }), { expirationTtl: 600 });
       try {
         if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(url.searchParams.get('model') ? { ...env, WNBA_EDITORIAL_MODEL: url.searchParams.get('model') } : env, (url.searchParams.get('ids') || '').split(',').filter(Boolean)) });
