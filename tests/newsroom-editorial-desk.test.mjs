@@ -196,20 +196,21 @@ test('padding ceiling: a rewrite may not grow past 1.4x the draft', () => {
   assert.ok(f.some((x) => /^length: .*padding/.test(x)), f.join(' | '));
 });
 
-test('cost defaults: 2 paid stories per pass, 1 attempt, 5k output tokens, $1/day breaker; telemetry flags a repeated digest', async () => {
+test('cost defaults: 2 paid stories per pass, 1 attempt, 5k output tokens, $25 nominal emergency ceiling; telemetry flags a repeated digest', async () => {
   const { budgetOf } = await import('../workers/wnba-news/src/editorial-desk.js');
   const b = budgetOf({});
   assert.equal(b.maxCalls, 2);
   assert.equal(b.attempts, 1);
-  assert.equal(b.dailyMaxUsd, 1);
+  assert.equal(b.dailyMaxUsd, 25);
   const f = fakeFetch([GOOD]);
   await run(f);
   assert.equal(f.calls[0].body.max_output_tokens, 5000);
-  const { costReport, callEntry, spentUsd } = await import('../workers/wnba-news/src/openai-cost.js');
+  const { costReport, callEntry, nominalUsd } = await import('../workers/wnba-news/src/openai-cost.js');
   const c = (at, digest, trigger = 'revision') => callEntry({ worker: 'wnba-news', id: 'x', model: 'm', trigger, attempt: 1, input_tokens: 4000, output_tokens: 1700, digest, at });
   const rep = costReport([c('t1', 'd1'), c('t2', 'd2'), c('t3', 'd2')], '2026-09-29');
   assert.equal(rep.totals.calls, 3);
-  assert.equal(rep.totals.estimated_usd, spentUsd(rep.calls));
+  assert.equal(rep.totals.nominal_standard_cost, nominalUsd(rep.calls));
+  assert.equal(rep.eligible_tokens_today, 3 * 5700); assert.equal(rep.existing_revision_calls, 3); assert.equal(rep.invariant_ok, false);
   assert.deepEqual(rep.unchanged_draft_recalls.map((x) => [x.digest, x.calls]), [['d2', 2]]);
-  assert.equal(c('t', 'd').estimated_usd, 0.022);
+  assert.equal(c('t', 'd').nominal_standard_cost, 0.022); assert.equal(c('t', 'd').total_eligible_tokens, 5700);
 });

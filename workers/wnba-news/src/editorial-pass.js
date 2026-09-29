@@ -13,7 +13,7 @@
 // (4) the daily $ breaker.
 
 import { draftDigest, editArticle, modelOf, budgetOf, isConfigured, EDITORIAL_KINDS, EDITORIAL_DESK_VERSION } from './editorial-desk.js';
-import { callEntry, readCallLog, appendCallLog, spentUsd } from './openai-cost.js';
+import { callEntry, readCallLog, appendCallLog, eligibleTokens, nominalUsd, governanceOf, governanceState } from './openai-cost.js';
 import { findPredecessor as realFindPredecessor, sharedFactsUnchanged } from './lifecycle.js';
 import { listedCard as realListedCard, lateCoverage as realLateCoverage } from './legacy.js';
 
@@ -55,8 +55,10 @@ export function makeEditorialGate({
     attempts: explicit ? Math.max(1, Math.min(2, Number(editorialOptions?.attempts || 1))) : 1
   };
   const callLog = [];
-  let spentToday = null;
   let todayLog = null;
+  const gov = governanceOf(env);
+  // An explicit admin re-edit/canary may pass the WNBA token soft cap (never the nominal emergency ceiling).
+  const overrideCap = explicit && Boolean(editorialOptions?.overrideCap);
   const edDeadline = Date.now() + edBudget.deadlineMs;
   const eligibility = {
     version: ELIGIBILITY_VERSION,
@@ -133,7 +135,7 @@ export function makeEditorialGate({
     const queue = allowEditorial
       ? jobs.filter((j) => j.needsCall && PAID_CLASSES.has(j.cls)).sort((x, y) => (priorIds.has(x.a.id) - priorIds.has(y.a.id)) || ((rank[x.a.kind] ?? 9) - (rank[y.a.kind] ?? 9)) || String(y.a.published_at).localeCompare(String(x.a.published_at)))
       : [];
-    if (queue.length && spentToday === null) spentToday = spentUsd(todayLog || await readCallLog(env.NEWS_KV, started).catch(() => []));
+    if (queue.length && todayLog === null) todayLog = await readCallLog(env.NEWS_KV, started).catch(() => []);
     const runJob = async (job) => {
       // Invariant: an existing story on an automatic pass can never reach the transport.
       if (!allowEditorial || !PAID_CLASSES.has(job.cls) || (job.cls === 'new_story' && explicit)) throw new Error(`editorial eligibility violated: ${job.cls}`);
@@ -151,8 +153,12 @@ export function makeEditorialGate({
       while (qi < queue.length) {
         const job = queue[qi]; qi += 1;
         if (edCalls >= edBudget.maxCalls || Date.now() > edDeadline - 5e3) { job.deferred = true; continue; }
-        // Last line of defence: past the daily ceiling no paid call is made — the deterministic draft stands.
-        if (edBudget.dailyMaxUsd && (spentToday || 0) + spentUsd(callLog) >= edBudget.dailyMaxUsd) { job.deferred = true; edStats.breaker = true; continue; }
+        // WNBA operating guard: at the eligible-token soft cap new AI rewrites defer to deterministic copy for the rest
+        // of the UTC day (explicit admin override excepted).
+        const tokens = eligibleTokens(todayLog) + eligibleTokens(callLog);
+        if (!overrideCap && gov.soft_cap_tokens && tokens >= gov.soft_cap_tokens) { job.deferred = true; edStats.token_cap = true; continue; }
+        // Emergency fallback: the nominal (standard-rate) ceiling, far above normal usage. No override.
+        if (edBudget.dailyMaxUsd && nominalUsd(todayLog) + nominalUsd(callLog) >= edBudget.dailyMaxUsd) { job.deferred = true; edStats.breaker = true; continue; }
         edCalls += 1;
         await runJob(job).catch((e) => { job.edited = { article: null, editorial: { ...edRecord('fallback'), failures: [`desk: ${String(e?.message || e).slice(0, 160)}`] } }; });
       }
@@ -220,7 +226,7 @@ export function makeEditorialGate({
     }
     return out;
   };
-  const budgetReport = () => ({ max_calls: edBudget.maxCalls, attempts: edBudget.attempts, daily_max_usd: edBudget.dailyMaxUsd, spent_before_pass_usd: spentToday });
+  const budgetReport = () => ({ max_calls: edBudget.maxCalls, attempts: edBudget.attempts, nominal_emergency_usd: edBudget.dailyMaxUsd, ...(todayLog ? { before_pass: governanceState(todayLog, env) } : { soft_cap_tokens: gov.soft_cap_tokens }) });
   return { gateMany, edStats, edBudget, budgetReport };
 }
 

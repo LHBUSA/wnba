@@ -24,6 +24,13 @@ service = "wnba-api"
 binding = "INTL"
 service = "wnba-international"
 
+# OpenAI governance (src/openai-cost.js). The org's complimentary data-sharing allowance is a SHARED pool (Soccer and
+# other eligible traffic draw on it); WNBA keeps its own soft cap well below it. Nominal $ is an emergency ceiling only.
+[vars]
+OPENAI_SHARED_DAILY_TOKEN_ALLOWANCE = "1000000"
+WNBA_OPENAI_DAILY_TOKEN_SOFT_CAP = "400000"
+WNBA_OPENAI_DAILY_TOKEN_WARN = "350000"
+
 [observability]
 enabled = true
 

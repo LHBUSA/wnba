@@ -27,7 +27,7 @@ import { runCommissionPass } from './commission-run.js';
 import { PLAYOFF_OPENING_KEY, publishPlayoffOpening } from './playoff-opening.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
 import { newsroomHealthReport } from './newsroom-health.js';
-import { readCallLog, costReport, costUsd } from './openai-cost.js';
+import { readCallLog, costReport, costUsd, governanceState } from './openai-cost.js';
 import { reeditPlan } from './editorial-pass.js';
 import { ARTICLE_RUN_MIN_GAP_MS } from './articles-run.js';
 
@@ -62,7 +62,7 @@ export default {
     if (path === '/v1/newsroom/openai-cost') {
       if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
       const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('date') || '') ? url.searchParams.get('date') : new Date().toISOString().slice(0, 10);
-      return j({ ok: true, data: costReport(await readCallLog(env.NEWS_KV, `${day}T00:00:00Z`), day) });
+      return j({ ok: true, data: costReport(await readCallLog(env.NEWS_KV, `${day}T00:00:00Z`), day, env) });
     }
     if (path === '/v1/articles/videos') return videosRoute(env);
     const am = path.match(/^\/v1\/articles\/([a-z0-9-]{6,120})$/);
@@ -76,13 +76,13 @@ export default {
       if (held?.at && Date.now() - Date.parse(held.at) < LEASE_MS) return j({ ok: false, error: 'busy', detail: 'a newsroom pass holds the lease; retry after it finishes', lease_at: held.at }, 409);
       await env.NEWS_KV.put('news:v1:lease', JSON.stringify({ at: new Date().toISOString(), manual: true }), { expirationTtl: 600 });
       try {
-        if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(url.searchParams.get('model') ? { ...env, WNBA_EDITORIAL_MODEL: url.searchParams.get('model') } : env, (url.searchParams.get('ids') || '').split(',').filter(Boolean), { repair: url.searchParams.get('repair') === '1' }) });
+        if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(url.searchParams.get('model') ? { ...env, WNBA_EDITORIAL_MODEL: url.searchParams.get('model') } : env, (url.searchParams.get('ids') || '').split(',').filter(Boolean), { repair: url.searchParams.get('repair') === '1', overrideCap: url.searchParams.get('override_cap') === '1' }) });
         if (url.searchParams.get('editorial') === 'reedit') {
           // Explicit admin re-edit of named existing stories: ids + max + confirmed cost estimate, or nothing runs.
           const plan = reeditPlan({ ids: (url.searchParams.get('ids') || '').split(','), max: url.searchParams.get('max'), confirmUsd: url.searchParams.get('confirm_usd'), repair: url.searchParams.get('repair') === '1', maxOutputTokens: Number(env.WNBA_EDITORIAL_MAX_OUTPUT_TOKENS || 5000), costUsd });
           if (!plan.ok) return j({ ok: false, error: plan.error }, 400);
           if (!plan.confirmed) return j({ ok: true, executed: false, plan });
-          await runIngest(env, 'manual', { forceArticles: true, reedit: { only: new Set(plan.ids), force: true, trigger: 'manual_reedit', attempts: plan.attempts, maxCalls: plan.max } });
+          await runIngest(env, 'manual', { forceArticles: true, reedit: { only: new Set(plan.ids), force: true, trigger: 'manual_reedit', attempts: plan.attempts, maxCalls: plan.max, overrideCap: url.searchParams.get('override_cap') === '1' } });
           const run = await env.NEWS_KV.get('art:v1:last_run', 'json');
           return j({ ok: true, executed: true, plan, editorial: run?.editorial || null });
         }
@@ -139,7 +139,7 @@ async function dictionary(env) {
  * production, every write stays in memory, nothing publishes. The editorial desk is forced (cache ignored) on the
  * named story ids only, and each story's deterministic draft and editorial outcome are returned side by side.
  */
-async function editorialCanary(env, ids, { repair = false } = {}) {
+async function editorialCanary(env, ids, { repair = false, overrideCap = false } = {}) {
   const overlay = new Map();
   const kv = env.NEWS_KV;
   const NEWS_KV = {
@@ -158,7 +158,7 @@ async function editorialCanary(env, ids, { repair = false } = {}) {
     const det = a.editorial?.status === 'applied' && a.editorial_draft ? { ...a, ...a.editorial_draft } : a;
     seen.push({ id: a.id, kind: a.kind, status: a.status, editorial: a.editorial || null, deterministic: pick(det), editorial_rewrite: a.editorial?.status === 'applied' ? pick(a) : null, published_version: a.editorial?.status === 'applied' ? 'editorial' : a.status === 'published' ? 'deterministic' : 'held', failures: [...new Set([...(a.gate?.failures || []), ...(a.reconcile?.failures || [])])].slice(0, 12), depth: { class: a.depth?.class, words: a.depth?.words, pass: a.depth?.pass } });
   };
-  const result = await runIngest(dry, 'canary', { forceArticles: true, canary: { inspect, editorialOptions: { only: want, force: true, canary: true, trigger: 'canary', attempts: repair ? 2 : 1, maxCalls: Math.max(ids.length, 1) } } });
+  const result = await runIngest(dry, 'canary', { forceArticles: true, canary: { inspect, editorialOptions: { only: want, force: true, canary: true, trigger: 'canary', overrideCap, attempts: repair ? 2 : 1, maxCalls: Math.max(ids.length, 1) } } });
   return { stories: seen, missing: ids.filter((id) => !seen.some((s) => s.id === id)), editorial: result?.desk?.articles?.editorial || null, writes_discarded: overlay.size };
 }
 
@@ -358,7 +358,12 @@ async function newsroomHealthRoute(env) {
     env.NEWS_KV.get('art:v1:index', 'json'),
     env.NEWS_KV.get('art:v1:held', 'json')
   ]);
+  const openaiCalls = await readCallLog(env.NEWS_KV, new Date().toISOString()).catch(() => []);
   const report = newsroomHealthReport({ status, runs: runs || [], lastRun, index: (index || []).filter((c) => !withheldBySourcePolicy(c)), held: held || [], now: Date.now(), mediaFor, cronMinutes: CRON_MINUTES, articleGapMin: Math.round(ARTICLE_RUN_MIN_GAP_MS / 60e3) + 1 });
+  // OpenAI guard (openai-cost.js): WARN at 350k eligible tokens, CAPPED at the 400k WNBA soft cap.
+  const g = governanceState(openaiCalls, env);
+  report.openai = { calls_today: openaiCalls.length, eligible_tokens_today: g.eligible_tokens_today, soft_cap_tokens: g.soft_cap_tokens, pct_of_wnba_soft_cap: g.pct_of_wnba_soft_cap, nominal_standard_cost_today: g.nominal_standard_cost_today, status: g.status };
+  if (g.status !== 'OK') (report.warnings ||= []).push(`openai ${g.status}: ${g.eligible_tokens_today} eligible tokens today (${g.pct_of_wnba_soft_cap}% of the WNBA soft cap)`);
   return j({ ok: true, data: report, meta: { service: SERVICE, served_at: new Date().toISOString() } });
 }
 

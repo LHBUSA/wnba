@@ -36,8 +36,9 @@ export const budgetOf = (env) => ({
   maxCalls: Math.max(0, Number(env?.WNBA_EDITORIAL_MAX_CALLS ?? 2)),
   // Automatic passes pay for ONE attempt; only explicit admin/canary work may request a corrective repair attempt.
   attempts: Math.max(1, Math.min(2, Number(env?.WNBA_EDITORIAL_ATTEMPTS ?? 1))),
-  // Emergency ceiling only — correct eligibility (new stories only) is the cost strategy, not this cap.
-  dailyMaxUsd: Math.max(0, Number(env?.WNBA_OPENAI_DAILY_MAX_USD ?? 1)),
+  // NOMINAL emergency ceiling only (standard-rate equivalent, not billed cost). The operating guard is the eligible-token
+  // soft cap in openai-cost.js; correct eligibility (new stories only) is the cost strategy.
+  dailyMaxUsd: Math.max(0, Number(env?.WNBA_OPENAI_DAILY_MAX_USD ?? 25)),
   deadlineMs: Math.max(10e3, Number(env?.WNBA_EDITORIAL_DEADLINE_MS ?? 150e3)),
   concurrency: Math.max(1, Math.min(4, Number(env?.WNBA_EDITORIAL_CONCURRENCY ?? 3))),
   timeoutMs: Math.max(5e3, Math.min(120e3, Number(env?.WNBA_EDITORIAL_TIMEOUT_MS ?? 80e3)))
@@ -213,7 +214,7 @@ export async function callModel(env, { input, schema, timeoutMs, fetchImpl = fet
     if (!text.length) throw new Error('openai empty output');
     let json;
     try { json = JSON.parse(text.join('')); } catch { throw new Error('openai malformed JSON'); }
-    return { json, usage: { input_tokens: body?.usage?.input_tokens ?? null, output_tokens: body?.usage?.output_tokens ?? null } };
+    return { json, response_id: body?.id || null, usage: { input_tokens: body?.usage?.input_tokens ?? null, cached_input_tokens: body?.usage?.input_tokens_details?.cached_tokens ?? 0, output_tokens: body?.usage?.output_tokens ?? null } };
   } catch (e) {
     throw new Error(e?.name === 'AbortError' ? `openai timeout after ${timeoutMs}ms` : redact(e?.message || e));
   } finally {
@@ -389,7 +390,7 @@ export async function editArticle(env, a, { keyOf, assess, draftAssessment, name
       out = r.json;
       record.usage.input_tokens += r.usage.input_tokens || 0;
       record.usage.output_tokens += r.usage.output_tokens || 0;
-      if (onCall) onCall({ attempt, input_tokens: r.usage.input_tokens || 0, output_tokens: r.usage.output_tokens || 0, error: null });
+      if (onCall) onCall({ attempt, input_tokens: r.usage.input_tokens || 0, cached_input_tokens: r.usage.cached_input_tokens || 0, output_tokens: r.usage.output_tokens || 0, response_id: r.response_id, error: null });
     } catch (e) {
       // A failed call is logged too (a timeout may still be billed; its usage is unknown here).
       if (onCall) onCall({ attempt, input_tokens: 0, output_tokens: 0, error: redact(e.message).slice(0, 120) });

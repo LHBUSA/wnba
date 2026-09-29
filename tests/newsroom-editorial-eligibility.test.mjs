@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeEditorialGate, paidEligibility, reeditPlan, PENDING_NEW_STORY_MS } from '../workers/wnba-news/src/editorial-pass.js';
 import { draftDigest } from '../workers/wnba-news/src/editorial-desk.js';
-import { costUsd } from '../workers/wnba-news/src/openai-cost.js';
+import { costUsd, callEntry, costReport, governanceState } from '../workers/wnba-news/src/openai-cost.js';
 import { sectionKey } from '../workers/wnba-news/src/depth.js';
 
 const DRAFT = {
@@ -198,10 +198,65 @@ test('J: EDITORIAL_DESK_VERSION changes over a mixed existing catalog -> 0 exist
   assert.equal(h.edStats.eligibility.existing_revision_openai_calls, 0);
 });
 
-test('breaker default is $1/day and automatic attempts are pinned to 1 whatever the env says', () => {
+test('nominal emergency ceiling defaults to $25 (not a $1 operating breaker); automatic attempts pinned to 1', () => {
   const h = harness({ fetch: fakeFetch([GOOD]), env: { WNBA_EDITORIAL_ATTEMPTS: '2' } });
-  assert.equal(h.edBudget.dailyMaxUsd, 1);
+  assert.equal(h.edBudget.dailyMaxUsd, 25);
   assert.equal(h.edBudget.attempts, 1);
+});
+
+// Today's log, pre-filled: `tokens` eligible tokens spread over `n` calls, nominal cost at standard rates.
+const dayLog = (tokens, n = 10, trigger = 'new_story') => Array.from({ length: n }, (_, i) => callEntry({ worker: 'wnba-news', id: `seed${i}`, model: 'm', trigger, attempt: 1, input_tokens: Math.round(tokens / n * 0.8), output_tokens: Math.round(tokens / n * 0.2), at: new Date().toISOString() }));
+const seededKV = (calls) => { const kv = memKV(); kv.m.set(`openai:v1:calls:${new Date().toISOString().slice(0, 10)}`, JSON.stringify(calls)); return kv; };
+
+test('token guard: at the 400k WNBA soft cap a new story defers to deterministic copy — 0 calls', async () => {
+  const f = fakeFetch([GOOD]);
+  const h = harness({ fetch: f, kv: seededKV(dayLog(400000)) });
+  const [a] = await h.gateMany([story(800)]);
+  assert.equal(f.calls.length, 0);
+  assert.equal(h.edStats.token_cap, true);
+  assert.equal(a.status, 'published'); assert.equal(a.editorial.status, 'deferred');
+  assert.equal(governanceState(dayLog(400000), {}).status, 'CAPPED');
+});
+
+test('token guard: 350k is a health WARNING only — the new story still gets its call', async () => {
+  const f = fakeFetch([GOOD]);
+  const h = harness({ fetch: f, kv: seededKV(dayLog(350000)) });
+  await h.gateMany([story(801)]);
+  assert.equal(f.calls.length, 1);
+  assert.equal(governanceState(dayLog(350000), {}).status, 'WARN');
+  assert.equal(governanceState(dayLog(349000), {}).status, 'OK');
+});
+
+test('token guard: an explicit admin override passes the soft cap (not the nominal emergency ceiling)', async () => {
+  const opts = { only: new Set([story(1).id]), force: true, maxCalls: 1, overrideCap: true };
+  const { prior, stored, drafts } = await catalog(2, applied());
+  const f = fakeFetch([GOOD]);
+  await harness({ prior, stored, fetch: f, options: opts, kv: seededKV(dayLog(450000)) }).gateMany(drafts);
+  assert.equal(f.calls.length, 1);
+  const f2 = fakeFetch([GOOD]);
+  await harness({ prior, stored, fetch: f2, options: { ...opts, overrideCap: false }, kv: seededKV(dayLog(450000)) }).gateMany(drafts);
+  assert.equal(f2.calls.length, 0);
+});
+
+test('nominal pricing does not stop eligible traffic: $2 nominal at 150k tokens still calls', async () => {
+  const log = dayLog(150000, 10).map((c) => ({ ...c, nominal_standard_cost: 0.2 }));
+  const f = fakeFetch([GOOD]);
+  await harness({ fetch: f, kv: seededKV(log) }).gateMany([story(802)]);
+  assert.equal(f.calls.length, 1);
+});
+
+test('telemetry: each call records eligible tokens, cached input, response id and nominal cost; report classes + invariant', async () => {
+  const f = fakeFetch([GOOD]);
+  const h = harness({ fetch: f });
+  await h.gateMany([story(803)]);
+  const [c] = JSON.parse([...h.kv.m.entries()].find(([k]) => k.startsWith('openai:v1:calls:'))[1]);
+  assert.equal(c.total_eligible_tokens, c.input_tokens + c.output_tokens);
+  assert.ok('cached_input_tokens' in c && 'response_id' in c && c.nominal_standard_cost > 0);
+  const rep = costReport([c, ...dayLog(1000, 2, 'manual_reedit')], 'today', { WNBA_OPENAI_DAILY_TOKEN_SOFT_CAP: '400000' });
+  assert.equal(rep.calls_today, 3); assert.equal(rep.new_story_calls, 1); assert.equal(rep.manual_calls, 2);
+  assert.equal(rep.existing_revision_calls, 0); assert.equal(rep.legacy_upgrade_calls, 0); assert.equal(rep.invariant_ok, true);
+  assert.equal(rep.wnba_soft_cap_tokens, 400000); assert.ok(rep.pct_of_wnba_soft_cap >= 0);
+  assert.match(rep.nominal_note, /not the billed amount/);
 });
 
 test('manual backfill plan: explicit ids, explicit max, confirmed cost estimate — or nothing runs', () => {
