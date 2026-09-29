@@ -6,8 +6,14 @@ Ledger: `data/player-photos.json` (Git-versioned; bundled into `wnba-api`, which
 
 Resolver: `workers/wnba-api/src/photos.js`, order `wnba,espn,commons,avatar` (wrangler env). Every
 player surface renders the API photo object through `src/ui/photo.js` (`photoImg` / `photoChain`),
-which walks the chain on image error and ends on the initials card. JSON-LD and the newsroom read the
-Commons (`licensed`) entry only.
+which walks the chain on image error and ends on the initials card. JSON-LD reads the Commons (`licensed`)
+entry only.
+
+**OWNER DECISION (standing, 2026-09-29): ESPN headshots are APPROVED for the newsroom.** Do not re-ask. Story media
+resolves: licensed Commons derivative → the story subject's own ESPN headshot (hotlinked from `a.espncdn.com`, exact
+subject id, ledger name must match the story entity, team from the roster record) → team composition → brand visual.
+Never another player's photo. Hotlinked headshots are not rehosted and not used in generated share cards (OG falls
+back to the brand card). `cdn.wnba.com` remains off (no rights decision recorded).
 
 | Provider | Rights | How a player gets it |
 |---|---|---|

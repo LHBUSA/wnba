@@ -47,7 +47,8 @@ turns to mush at 16px; the B stays legible, and the basketball inside it is the 
   (`?v=<rev>-<key>`: articles by revision time, WNBACast by state + score) are cached immutable; design-only
   `?v=<rev>` URLs refresh with the data (6h edge).
 - Photos: only the approved newsroom composite (`/media/news/players/<id>/og.jpg`, licensed Commons portraits).
-  Hotlinked provider headshots (WNBA CDN, ESPN) are never re-published inside a generated card.
+  Hotlinked provider headshots (WNBA CDN, ESPN) are never re-published inside a generated card. (ESPN headshots ARE
+  approved on newsroom pages themselves — owner decision 2026-09-29, see docs/PLAYER_PHOTOS.md.)
 - Local QA: `node scripts/brand/render-og-local.mjs <outDir> players/3149391 dna/3149391 cast/<gameId> …`
 
 ## Share actions

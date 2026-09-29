@@ -19,6 +19,19 @@
 .sm--lead .sm-vs, .sm--hero .sm-vs { font-size: 16px; padding: 9px 12px; }
 
 
+/* owner-approved ESPN headshot of the story's own subject: the isolated player on her team-colour field, contained and
+   bottom-aligned (never cropped through the head), clearly a headshot rather than a licensed action photograph */
+.sm-hs { position: absolute; inset: 0; display: block; overflow: hidden; background:
+  radial-gradient(ellipse 60% 85% at 50% 100%, color-mix(in srgb, var(--tc) 55%, transparent), transparent 72%),
+  linear-gradient(160deg, color-mix(in srgb, var(--tc) 30%, var(--ink-1)), var(--ink-1) 70%); }
+.sm-half .sm-hs { position: relative; display: block; aspect-ratio: 8 / 9; height: 100%; }
+.sm-hs-img { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: 94%; width: auto; max-width: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .45)); }
+.sm-half .sm-hs-img { height: 82%; max-width: 132%; }
+.sm-hs .sm-team { position: absolute; inset: 0; }
+.sm-thumb--hs { display: inline-grid; place-items: end center; overflow: hidden; border-radius: 10px; background: radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--tc) 60%, transparent), var(--ink-2) 75%); }
+.sm-thumb--hs img { width: 118%; height: auto; margin-bottom: -4%; object-fit: contain; }
+.sm-thumb--hs b { align-self: center; font: 800 18px/1 var(--f-display); color: var(--paper); }
+
 /* team compositions (no photographed subject): colour field, court lines, the team mark — no stand-in player */
 .sm--teamonly .sm-frame, .sm--teams .sm-frame { background:
   radial-gradient(ellipse 70% 90% at 70% 40%, color-mix(in srgb, var(--tc1) 42%, transparent), transparent 70%),

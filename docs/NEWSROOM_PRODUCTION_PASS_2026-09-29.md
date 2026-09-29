@@ -121,10 +121,10 @@ resolver only ever resolves the story's own subject; tested). Of the team-compos
 team-subject stories where team art is correct, 17 are players without a licensed photo — 12 of whom have an ESPN
 headshot.
 
-**Rights decision (not changed):** `docs/PLAYER_PHOTOS.md` and `docs/BRAND.md` say the newsroom and generated cards
-use licensed Commons only; hotlinked ESPN/WNBA headshots are never re-published there. The existing policy does
-NOT permit ESPN headshots as article imagery, so the newsroom resolver was not extended. `cdn.wnba.com` stays off.
-High-traffic players without a licensed photo: Kelsey Mitchell (rejected at review), Dominique Malonga (rejected).
+**ESPN headshots — owner-approved (standing decision, recorded 2026-09-29 in docs/PLAYER_PHOTOS.md).** Story media now
+resolves licensed photo → the subject's own ESPN headshot (exact id, name-checked, team from the roster ledger, hotlinked,
+never in a share card) → team art. Live effect: +4 subject photos on the listing (incl. Kelsey Mitchell and Dominique
+Malonga); the 13 remaining team-art cards are team-subject stories. 0 wrong-subject.
 
 ## 5. Editorial desk — enabled, canary, live cron
 
@@ -249,8 +249,6 @@ Tests: 880/880; guard-truth PASS; source-brand PASS.
 **WNBA newsroom production pass: COMPLETE (2026-09-29).**
 
 ## 9. Open (owner action)
-1. ESPN headshots stay off pending a separate usage/commercial-rights check. Kelsey Mitchell and Dominique Malonga
-   remain in manual photo review.
-2. June WinBA Index “a 8.1-point” — WinBA editions are frozen; correcting it is an owner decision.
-3. Props desk: held correctly (104 words, no game log); needs a real generator pass.
-4. Market-move visuals: not built — no market-move story has published (captures too sparse to chart honestly).
+1. June WinBA Index “a 8.1-point” — WinBA editions are frozen; correcting it is an owner decision.
+2. Props desk: held correctly (104 words, no game log); needs a real generator pass.
+3. Market-move visuals: not built — no market-move story has published (captures too sparse to chart honestly).

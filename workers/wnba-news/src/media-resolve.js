@@ -149,12 +149,34 @@ export function primarySubjectOf(a) {
  *   3. the deterministic PropBetEdge WNBA story visual (desk label + brand), for league-wide stories with no team.
  * International games use internationalMediaFrom. No standalone story resolves to a blank hero.
  */
-export function newsroomMediaFrom(PLAYERS, a) {
+/**
+ * An ESPN headshot of EXACTLY this player (owner-approved newsroom identification imagery, 2026-09-29): hotlinked from
+ * the roster ledger (data/player-headshots.json), never rehosted, never used in a generated share card. The ledger name
+ * must match the story's own entity name, so an id collision can never picture someone else.
+ */
+export function headshotFrom(HEADSHOTS, pid, { name = null, teamId = null } = {}) {
+  const id = pid !== null && pid !== undefined ? String(pid) : null;
+  const h = id ? HEADSHOTS?.[id] : null;
+  if (!h?.espn_headshot_full || !/^https:\/\/a\.espncdn\.com\//.test(h.espn_headshot_full)) return null;
+  if (name && h.name && normName(name) !== normName(h.name)) return null;
+  return {
+    player_id: id,
+    name: h.name || name,
+    team_id: teamId ? String(teamId) : null,
+    provider: 'espn',
+    headshot: h.espn_headshot_full,
+    credit: { author: 'ESPN', license: 'external editorial', license_url: null, source_page: `https://www.espn.com/wnba/player/_/id/${id}`, text: 'Photo: ESPN' }
+  };
+}
+
+export function newsroomMediaFrom(PLAYERS, a, HEADSHOTS = null, TEAM_OF = null) {
   if (a.kind === 'international') {
     const m = internationalMediaFrom(PLAYERS, a);
     if (m) return m;
   }
   const subject = (pid) => subjectFrom(PLAYERS, pid);
+  const nameOfPlayer = (pid) => (a.entities || []).find((e) => e?.type === 'player' && String(e.id) === String(pid))?.name || null;
+  const headshot = (pid, teamId) => (HEADSHOTS ? headshotFrom(HEADSHOTS, pid, { name: nameOfPlayer(pid), teamId }) : null);
   const ents = (a.entities || []).filter(Boolean);
   const teamIds = ents.filter((e) => e.type === 'team').map((e) => e.id);
   const brand = () => ({ layout: 'brand', subjects: [], teams: [], caption: null, og: null, visual: { kind: 'brand', desk: DESK_VISUAL[a.kind] || 'WNBA Newsroom' }, resolved: 'deterministic_story_visual' });
@@ -162,6 +184,9 @@ export function newsroomMediaFrom(PLAYERS, a) {
     const ps = primarySubjectOf(a);
     const s = ps.type === 'player' ? subject(ps.id) : null;
     if (s) return { layout: 'single', subjects: [s], teams: idsOf([s.team_id]), caption: `Pictured: ${s.name}`, og: s.og, resolved: 'approved_subject_photo' };
+    // No licensed photo of the subject: her own ESPN headshot on the team panel (never another player's photo).
+    const hs = ps.type === 'player' ? headshot(ps.id, a.lead_team_id) : null;
+    if (hs) return { layout: 'single', subjects: [hs], teams: idsOf([a.lead_team_id]), caption: `Pictured: ${hs.name}`, og: null, resolved: 'external_headshot' };
     const teams = idsOf([a.lead_team_id, ...teamIds]).slice(0, 1);
     return teams.length ? { layout: 'team', subjects: [], teams, caption: null, og: null, resolved: 'team_composition' } : brand();
   }
@@ -169,20 +194,23 @@ export function newsroomMediaFrom(PLAYERS, a) {
     const g = a.context?.game || a.context?.next_game || null;
     const away = String(a.matchup?.away_team_id ?? g?.away?.team_id ?? teamIds[0] ?? '');
     const home = String(a.matchup?.home_team_id ?? g?.home?.team_id ?? teamIds[1] ?? '');
-    const pick = (tid) => ents
-      .filter((e) => e.type === 'player')
-      .map((e) => subject(e.id))
-      .find((s) => s && s.team_id === tid) || null;
+    const players = ents.filter((e) => e.type === 'player');
+    // One pictured player per side, in the article's own entity order: a licensed photo first, else that player's own
+    // ESPN headshot. A side with neither leaves the story on team art — never a player from the other team.
+    const pick = (tid) => players.map((e) => subject(e.id)).find((s) => s && s.team_id === tid)
+      // A headshot side needs the player's team from a record (entity team_id or the roster ledger), never a guess.
+      || players.filter((e) => String(e.team_id ?? TEAM_OF?.[String(e.id)] ?? '') === tid).map((e) => headshot(e.id, tid)).find(Boolean) || null;
     const A = away ? pick(away) : null;
     const H = home ? pick(home) : null;
     if (A && H) {
+      const licensed = !A.headshot && !H.headshot;
       return {
         layout: 'matchup',
         subjects: [A, H],
         teams: [away, home],
-        caption: `Pictured: ${A.name} (${A.team_abbr}) and ${H.name} (${H.team_abbr})`,
-        og: H.og,
-        resolved: 'approved_subject_photos'
+        caption: `Pictured: ${A.name}${A.team_abbr ? ` (${A.team_abbr})` : ''} and ${H.name}${H.team_abbr ? ` (${H.team_abbr})` : ''}`,
+        og: licensed ? H.og : null,
+        resolved: licensed ? 'approved_subject_photos' : 'subject_photos_with_headshots'
       };
     }
     const teams = idsOf([away, home]);

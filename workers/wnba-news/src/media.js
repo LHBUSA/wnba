@@ -13,15 +13,21 @@
 // Every photo carries its credit (author, license, source page) and a "Pictured:" caption.
 
 import manifest from '../../../data/newsroom-media.json';
+import headshots from '../../../data/player-headshots.json';
+import ledger from '../../../data/player-photos.json';
 import { internationalMediaFrom, newsroomMediaFrom, winbaPodiumFrom, winbaBoardMediaFrom } from './media-resolve.js';
 
 const PLAYERS = manifest.players || {};
+// Owner-approved ESPN headshots (exact subject only; see media-resolve.js headshotFrom).
+const HEADSHOTS = headshots.players || {};
+// Player -> team from the reviewed roster ledger: which side of a matchup a headshot belongs to.
+const TEAM_OF = Object.fromEntries((Array.isArray(ledger.players) ? ledger.players : Object.values(ledger.players || {})).map((p) => [String(p.espn_athlete_id), String(p.team_id)]));
 
 /** International story media — see media-resolve.js for the priority rules. */
 export const internationalMedia = (a) => internationalMediaFrom(PLAYERS, a);
 
 export function mediaFor(a) {
-  return newsroomMediaFrom(PLAYERS, a);
+  return newsroomMediaFrom(PLAYERS, a, HEADSHOTS, TEAM_OF);
 }
 
 /** The approved top-three podium for a WinBA Index share card, or null. */

@@ -233,3 +233,23 @@ test('older-generator injury copy defects are recognised (template headline, zer
   assert.equal(knownDefect({ body: ['In the Sun’s last five games she started none and played 0 minutes a night.'] }), 'zero_minutes');
   assert.equal(knownDefect({ headline: 'Dana Evans listed out after missing two of the Aces’ last five games', body: [] }), null);
 });
+
+// ---------------------------------------------------------------- owner-approved ESPN headshots (2026-09-29)
+
+test('ESPN headshots: exact subject only, name-checked, team from the roster record, never in a share card', async () => {
+  const { newsroomMediaFrom } = await import('../workers/wnba-news/src/media-resolve.js');
+  const HS = { A: { name: 'Player A', espn_headshot_full: 'https://a.espncdn.com/i/headshots/wnba/players/full/A.png' }, B: { name: 'Player B', espn_headshot_full: 'https://a.espncdn.com/i/headshots/wnba/players/full/B.png' }, X: { name: 'Someone Else', espn_headshot_full: 'https://a.espncdn.com/x.png' }, E: { name: 'Evil', espn_headshot_full: 'https://evil.example/x.png' } };
+  const TEAM_OF = { A: '5', B: '17' };
+  const inj = { id: 'i', kind: 'injury', lead_player_id: 'A', lead_team_id: '5', entities: [{ type: 'player', id: 'A', name: 'Player A' }, { type: 'player', id: 'B', name: 'Player B' }] };
+  const m = newsroomMediaFrom({}, inj, HS, TEAM_OF);
+  assert.equal(m.resolved, 'external_headshot');
+  assert.equal(m.subjects[0].player_id, 'A');
+  assert.equal(m.og, null, 'a hotlinked headshot never enters a generated share card');
+  assert.equal(newsroomMediaFrom({}, { ...inj, lead_player_id: 'X', entities: [{ type: 'player', id: 'X', name: 'Player X' }] }, HS, TEAM_OF).resolved, 'team_composition', 'ledger name must match the story entity');
+  assert.equal(newsroomMediaFrom({}, { ...inj, lead_player_id: 'E', entities: [{ type: 'player', id: 'E', name: 'Evil' }] }, HS, TEAM_OF).resolved, 'team_composition', 'only a.espncdn.com');
+  assert.equal(newsroomMediaFrom({}, { ...inj, lead_player_id: 'Q', entities: [] }, HS, TEAM_OF).resolved, 'team_composition', 'no headshot: team art, never another player');
+  const pv = { id: 'p', kind: 'preview', matchup: { away_team_id: '17', home_team_id: '5' }, entities: [{ type: 'game', id: 'g' }, { type: 'player', id: 'A', name: 'Player A' }, { type: 'player', id: 'B', name: 'Player B' }] };
+  const mm = newsroomMediaFrom({}, pv, HS, TEAM_OF);
+  assert.deepEqual(mm.subjects.map((s) => s.player_id), ['B', 'A'], 'each side pictures its own team');
+  assert.equal(newsroomMediaFrom({}, pv, HS, {}).layout, 'team_matchup', 'unknown team membership: team art, never a guess');
+});

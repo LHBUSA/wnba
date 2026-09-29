@@ -35,10 +35,21 @@ function halfImg(s, slot, eager) {
   return html`<img class="sm-img" src="${f.src}" srcset="${srcset(files)}" sizes="${sz}" width="${f.w}" height="${f.h}" alt="${s.name}" ${eager ? html`fetchpriority="high"` : html`loading="lazy"`} decoding="async" />`;
 }
 
+/**
+ * An owner-approved ESPN headshot of the story's own subject: an isolated player on her team-colour panel (never
+ * dressed up as a licensed photograph). Hotlinked; if it fails to load, the shared photo listener (ui/photo.js)
+ * swaps in the team panel. Contained, bottom-aligned, never cropped through the head.
+ */
+function headshotPanel(s, teamId, eager, side = null) {
+  const c = teamColors({ team_id: teamId || s.team_id });
+  return html`<span class="sm-hs ${side ? `sm-hs--${side}` : ''}" style="--tc:${c.color || '#d4af37'};--tc2:${c.alt || '#ff7a2f'}"><img class="sm-hs-img" src="${s.headshot}" alt="${s.name}" width="600" height="436" ${eager ? html`fetchpriority="high"` : html`loading="lazy"`} decoding="async" referrerpolicy="no-referrer" data-photo-next="" data-photo-stage="0" /><template data-photo-fallback>${teamPanel(teamId || s.team_id)}</template></span>`;
+}
+
 export function creditLine(media, { compact = false } = {}) {
   const subs = media?.subjects || [];
   if (!subs.length) return '';
   const parts = subs.map((s) => {
+    if (s.headshot) return html`<span class="sm-cr">Photo: ${s.credit?.source_page ? html`<a href="${s.credit.source_page}" rel="noopener nofollow" target="_blank">ESPN</a>` : 'ESPN'}${compact ? '' : ' · headshot'}</span>`;
     const c = s.credit || {};
     const who = c.author || 'Unknown author';
     return html`<span class="sm-cr">Photo: ${c.source_page ? html`<a href="${c.source_page}" rel="noopener nofollow" target="_blank">${who}</a>` : who} · ${c.license_url ? html`<a href="${c.license_url}" rel="noopener nofollow license" target="_blank">${c.license}</a>` : c.license} (cropped)${compact ? '' : ' · Wikimedia Commons'}</span>`;
@@ -94,6 +105,14 @@ export function storyMedia(media, { slot = 'card', eager = false, credit = true,
   if (m.layout === 'single' && m.subjects?.[0]?.wide?.length) {
     inner = wideImg(m.subjects[0], slot, eager);
     cls += ' sm--photo';
+  } else if (m.layout === 'single' && m.subjects?.[0]?.headshot) {
+    inner = headshotPanel(m.subjects[0], (m.teams || [])[0], eager);
+    cls += ' sm--photo sm--headshot';
+  } else if (m.layout === 'matchup' && m.subjects?.length === 2 && m.subjects.every((s) => s.half?.length || s.headshot)) {
+    const [A, H] = m.subjects;
+    const half = (s, side, tid) => (s.half?.length ? html`<span class="sm-half sm-half--${side}">${halfImg(s, slot, eager)}</span>` : html`<span class="sm-half sm-half--${side}">${headshotPanel(s, tid, eager, side)}</span>`);
+    inner = html`${half(A, 'a', (m.teams || [])[0])}${half(H, 'h', (m.teams || [])[1])}<span class="sm-vs" aria-hidden="true">at</span>`;
+    cls += ' sm--duo sm--photo';
   } else if (m.layout === 'matchup' && m.subjects?.length === 2 && m.subjects.every((s) => s.half?.length)) {
     const [A, H] = m.subjects;
     inner = html`<span class="sm-half sm-half--a">${halfImg(A, slot, eager)}</span><span class="sm-half sm-half--h">${halfImg(H, slot, eager)}</span><span class="sm-vs" aria-hidden="true">at</span>`;
@@ -127,6 +146,10 @@ export function storyThumb(media, size = 72) {
       ? media.subjects?.[1] || media.subjects?.[0]
       : null;
   if (s?.square) return html`<img class="sm-thumb" src="${s.square}" width="${size}" height="${size}" alt="${s.name}" loading="lazy" decoding="async" />`;
+  if (s?.headshot) {
+    const c = teamColors({ team_id: s.team_id || (media?.teams || [])[0] }).color || '#d4af37';
+    return html`<span class="sm-thumb sm-thumb--hs" style="--tc:${c};width:${size}px;height:${size}px"><img src="${s.headshot}" alt="${s.name}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-photo-next="" data-photo-stage="0" /><template data-photo-fallback><b>${String(s.name || '').split(' ').map((w) => w[0]).join('').slice(0, 2)}</b></template></span>`;
+  }
   if (!(media?.teams || []).length) return html`<span class="sm-thumb sm-thumb--brand" style="width:${size}px;height:${size}px" role="img" aria-label="${media?.visual?.desk || 'PropBetEdge WNBA'}"><b>PBE</b></span>`;
   const e = logoEntry((media?.teams || [])[0]);
   const c = teamColors({ team_id: (media?.teams || [])[0] }).color || '#d4af37';
