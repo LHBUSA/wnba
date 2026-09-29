@@ -442,7 +442,10 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
   for (const a of articles) {
     const { prev, relistedAfter } = findPredecessor(a, [...byId.values()], { now });
     if (prev && prev.id !== a.id) a.id = prev.id;
-    const inHash = `${versionOf(a)}|${a.input_hash || ''}|${a.headline}|${a.deck}`;
+    // The change key includes the story's charts (ids + plotted-value hashes): a card whose item lacks the charts the
+    // current draft carries can never pass as unchanged.
+    const visualKey = (a.visuals || []).map((v) => `${v.id}:${v.values_hash}`).join(',');
+    const inHash = `${versionOf(a)}|${a.input_hash || ''}|${a.headline}|${a.deck}${visualKey ? `|v:${visualKey}` : ''}`;
     const iKey = injuryIdentity(a);
     // A continuing trend keeps its episode; only a trend with no live predecessor opens one.
     const storyKey = a.kind === 'trend' ? (prev && isEpisodeKey(prev.story_key) ? prev.story_key : trendKey(a)) : null;

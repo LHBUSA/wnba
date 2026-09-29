@@ -320,7 +320,10 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     const item = await getItem(c.id).catch(() => null);
     if (!item) continue;
     const defect = olderGenerator ? knownDefect(item) : null;
-    if (!defect && (!needsReview(c) || assessStored(item, { now }).pass)) continue;
+    // A listed game/trend/transaction story from an older generator is rebuilt in place so it carries the current
+    // copy and its frozen data visuals (same id, URL and first publication; the normal gate decides).
+    const visualBacklog = olderGenerator && !(item.visuals || []).length && ['result', 'performance', 'transaction', 'trend'].includes(c.kind);
+    if (!defect && !visualBacklog && (!needsReview(c) || assessStored(item, { now }).pass)) continue;
     upgradeBudget -= 1;
     let xs = [];
     try {
