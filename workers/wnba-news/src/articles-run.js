@@ -13,7 +13,7 @@ import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles, applyTrendDecisions, trendMarketOf } from './lifecycle.js';
 import { qualityFailures } from './quality.js';
 import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
-import { regularSeasonIds, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
+import { regularSeasonIds, playoffContext, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
 import { applyCorrections, CORRECTIONS_VERSION } from './corrections.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
@@ -211,6 +211,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     cardOf
   });
 
+  const writtenIdsEarly = new Set(events.map((e) => e.id));
   // Trend lifecycle: only a complete, error-free trend-desk pass may change which trend episodes are current. The
   // team's published story is current; a run the desk measured as no longer material ends and leaves every listing.
   const trendLifecycle = trendDecisions && typeof runs.trend === 'number'
@@ -230,6 +231,20 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   // Standalone stories that were only another publisher's feature (no underlying development) are demoted to external
   // coverage — deliberately, once per brief-generator version, keeping the item, its URL and its revision history.
   const demotions = await demoteExternalCoverage(next, { at: started, getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'), putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }) });
+  // A preview of an if-necessary playoff game the series has not forced is not current news: it leaves the listings
+  // (URL kept) and returns automatically when the generator previews the game again (written => current_quality).
+  const unforced = [];
+  if (ctx.playoffs) {
+    for (const c of next) {
+      if (c.kind !== 'preview' || c.superseded_by || writtenIdsEarly.has(c.id) || c.quality_state === 'retired_from_index') continue;
+      const gid = (c.entities || []).find((e) => e?.type === 'game')?.id;
+      const po = gid ? playoffContext(ctx.playoffs, gid) : null;
+      if (!po || po.needed) continue;
+      c.quality_state = 'retired_from_index';
+      c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'retired_from_index', reason: `Game ${po.game_number} of the ${po.round.toLowerCase()} is an if-necessary game the series has not forced; the preview returns if it is played`, at: started, unforced_if_necessary: true };
+      unforced.push(c.id);
+    }
+  }
   // Reviewed editorial corrections: a published story that was wrong is retired with its correction (corrections.js).
   const corrections = await applyCorrections(next, { at: started, getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'), putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }) });
   // Every live story gets an intentional quality state (legacy.js). Rewritten stories passed the gate this pass.
@@ -249,7 +264,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   }
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, unforced_previews_retired: unforced, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

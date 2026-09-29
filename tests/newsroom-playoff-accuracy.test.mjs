@@ -150,3 +150,22 @@ test('a result first published more than 48h after tip, or a transaction 72h aft
   assert.equal(review.state, 'retired_from_index');
   assert.match(review.reason, /late coverage/);
 });
+
+// ---------------------------------------------------------------- card/item agreement after a lost update
+
+test('an unchanged pass restores card display fields that drifted from the stored story (lost-update repair)', async () => {
+  const { mergeArticles } = await import('../workers/wnba-news/src/lifecycle.js');
+  const { cardOf } = await import('../workers/wnba-news/src/articles.js');
+  const items = new Map();
+  const story = { id: 'p1', kind: 'preview', headline: 'Lynx at Liberty, Game 2: Lynx favored by 3.5', deck: 'The Minnesota Lynx are 3.5-point favorites on the road.', body: ['x'], entities: [{ type: 'game', id: 'g2', start_utc: '2099-01-01T00:00Z' }], input_hash: 'h', evidence: [], published_at: '2026-09-29T08:00:00Z', status: 'published' };
+  const io = { feed: null, getItem: async (id) => items.get(id), putItem: async (a) => items.set(a.id, a), versionOf: () => 'v', cardOf };
+  const first = await mergeArticles({ index: [], articles: [structuredClone(story)], started: '2026-09-29T13:00:00Z', ...io });
+  // a concurrent writer puts back an older copy of the card
+  const stale = first.index.map((c) => ({ ...c, headline: 'Lynx at Liberty: injuries, recent form and the matchup' }));
+  const second = await mergeArticles({ index: stale, articles: [structuredClone(story)], started: '2026-09-29T13:10:00Z', ...io });
+  assert.equal(second.novelty.unchanged, 1);
+  assert.equal(second.written, 0, 'a repair is not a revision');
+  assert.equal(second.index[0].headline, story.headline);
+  assert.equal(second.index[0].revised_at, first.index[0].revised_at, 'no fake freshness');
+  assert.ok(second.repairs.some((r) => r.repair === 'card_display_drift'));
+});

@@ -422,6 +422,13 @@ export function assignSupersession(cards) {
  * `articles` are finalized, gated, slugged articles; `feed` is the injury feed items array, or null
  * when the feed fetch failed (listing continuity is then left untouched).
  */
+// Reader-facing card fields that must always equal the stored story. A card is a copy of its item; when a concurrent
+// index writer (or any lost update) leaves an older copy behind, an unchanged or re-keyed pass restores it.
+const DISPLAY_FIELDS = ['headline', 'deck', 'category', 'lead_player_id', 'lead_team_id', 'primary_subject', 'entities'];
+function displayDrift(prev, card) {
+  return DISPLAY_FIELDS.filter((k) => card[k] !== undefined && JSON.stringify(prev[k]) !== JSON.stringify(card[k]));
+}
+
 export async function mergeArticles({ index, articles, started, now = Date.parse(started), feed = null, getItem = null, putItem, versionOf, cardOf, retainDays = 90, cap = 400 }) {
   const { cards, repairs } = await repairIndex(index, { getItem });
   const byId = new Map(cards.map((c) => [c.id, c]));
@@ -446,7 +453,9 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
       // Unchanged story: no rewrite, no revision stamp. Card-only routing metadata added after it was written (its
       // newsroom desk) is filled in so the desks are complete without faking an update.
       const card = cardOf(a);
-      byId.set(prev.id, { ...prev, first_published_at: firstPublished, ...lifecycle, ...(a.depth?.class && !prev.depth_class ? { depth_class: a.depth.class } : {}), ...(prev.desk === undefined && card.desk !== undefined ? { desk: card.desk, event_type: card.event_type ?? null } : {}) });
+      const drift = displayDrift(prev, card);
+      if (drift.length) repairs.push({ id: prev.id, repair: 'card_display_drift', fields: drift });
+      byId.set(prev.id, { ...prev, ...Object.fromEntries(drift.map((k) => [k, card[k]])), first_published_at: firstPublished, ...lifecycle, ...(a.depth?.class && !prev.depth_class ? { depth_class: a.depth.class } : {}), ...(prev.desk === undefined && card.desk !== undefined ? { desk: card.desk, event_type: card.event_type ?? null } : {}) });
       novelty.unchanged += 1;
       continue;
     }
@@ -455,7 +464,10 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
     if (prev && getItem) {
       const stored = await getItem(prev.id).catch(() => null);
       if (stored && JSON.stringify(stored.body) === JSON.stringify(a.body) && stored.headline === a.headline && stored.deck === a.deck && sharedFactsUnchanged(stored, a) && (stored.provenance?.source_observed_at || null) === (a.provenance?.source_observed_at || null)) {
-        byId.set(prev.id, { ...prev, input_hash: inHash, first_published_at: firstPublished, ...lifecycle });
+        const card = cardOf(a);
+        const drift = displayDrift(prev, card);
+        if (drift.length) repairs.push({ id: prev.id, repair: 'card_display_drift', fields: drift });
+        byId.set(prev.id, { ...prev, ...Object.fromEntries(drift.map((k) => [k, card[k]])), input_hash: inHash, first_published_at: firstPublished, ...lifecycle });
         novelty.rekeyed += 1;
         continue;
       }
