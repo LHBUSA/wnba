@@ -11,7 +11,7 @@ import { assessDepth, sectionKey, DEPTH_VERSION } from './depth.js';
 import { reviewStory, needsReview, assessStored, listedCard, lateCoverage, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
-import { mergeArticles, applyTrendDecisions, trendMarketOf, sharedFactsUnchanged } from './lifecycle.js';
+import { mergeArticles, applyTrendDecisions, trendMarketOf, sharedFactsUnchanged, findPredecessor } from './lifecycle.js';
 import { qualityFailures } from './quality.js';
 import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
 import { regularSeasonIds, playoffContext, seasonOverTeams, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
@@ -212,7 +212,10 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
       if (!edOn) { a.editorial = edRecord('unconfigured'); continue; }
       if (edOnly && !edOnly.has(a.id)) { a.editorial = edRecord('not_selected'); continue; }
       job.digest = await draftDigest(a);
-      const prev = priorIds.has(a.id) && !editorialOptions?.force ? await getStored(a.id).catch(() => null) : null;
+      // The stored story this draft will revise: the same id, or the predecessor the merge will map it onto (an injury
+      // draft gets a new id whenever its feed listing changes; the merge keeps the original story and URL).
+      const predId = priorIds.has(a.id) ? a.id : findPredecessor(a, priorIndex, { now }).prev?.id || null;
+      const prev = predId && !editorialOptions?.force ? await getStored(predId).catch(() => null) : null;
       const pe = prev?.editorial;
       job.prev = prev;
       let miss = !prev ? 'no_stored_item' : !pe ? 'no_editorial_record' : pe.version !== EDITORIAL_DESK_VERSION ? 'desk_version' : pe.draft_digest !== job.digest ? 'draft_changed' : !['applied', 'fallback'].includes(pe.status) ? `status_${pe.status}` : null;
