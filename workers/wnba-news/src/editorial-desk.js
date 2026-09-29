@@ -31,7 +31,12 @@ export const EDITORIAL_KINDS = new Set(['injury', 'transaction', 'result', 'perf
 export const isConfigured = (env) => Boolean(env?.OPENAI_API_KEY) && String(env?.WNBA_EDITORIAL || 'on').toLowerCase() !== 'off';
 export const modelOf = (env) => env?.WNBA_EDITORIAL_MODEL || DEFAULT_MODEL;
 export const budgetOf = (env) => ({
-  maxCalls: Math.max(0, Number(env?.WNBA_EDITORIAL_MAX_CALLS ?? 8)),
+  // Cost exposure per automatic pass: at most two stories may consume a paid rewrite (cached rewrites are free and do
+  // not count); everything else publishes deterministic and is picked up on a later pass if still worth it.
+  maxCalls: Math.max(0, Number(env?.WNBA_EDITORIAL_MAX_CALLS ?? 2)),
+  // Automatic passes pay for ONE attempt; only explicit admin/canary work may request a corrective repair attempt.
+  attempts: Math.max(1, Math.min(2, Number(env?.WNBA_EDITORIAL_ATTEMPTS ?? 1))),
+  dailyMaxUsd: Math.max(0, Number(env?.WNBA_OPENAI_DAILY_MAX_USD ?? 5)),
   deadlineMs: Math.max(10e3, Number(env?.WNBA_EDITORIAL_DEADLINE_MS ?? 150e3)),
   concurrency: Math.max(1, Math.min(4, Number(env?.WNBA_EDITORIAL_CONCURRENCY ?? 3))),
   timeoutMs: Math.max(5e3, Math.min(120e3, Number(env?.WNBA_EDITORIAL_TIMEOUT_MS ?? 80e3)))
@@ -189,7 +194,9 @@ export async function callModel(env, { input, schema, timeoutMs, fetchImpl = fet
         reasoning: { effort: env?.WNBA_EDITORIAL_EFFORT || 'medium' },
         instructions: INSTRUCTIONS,
         input,
-        max_output_tokens: 16000,
+        // Observed production output (reasoning included) averages ~1.7k tokens per rewrite; 5k leaves headroom for
+        // a deep story without the old 16k exposure. An incomplete response fails closed to the deterministic draft.
+        max_output_tokens: Math.max(1000, Math.min(16000, Number(env?.WNBA_EDITORIAL_MAX_OUTPUT_TOKENS ?? 5000))),
         text: { format: { type: 'json_schema', name: 'wnba_editorial_rewrite', strict: true, schema } }
       })
     });
@@ -368,7 +375,7 @@ export function rewriteFailures(draft, out, rewritten, { names = { players: [], 
  * failures; `draftAssessment` is that result for the deterministic draft (its met depth elements must stay met).
  * Returns { article: the rewritten article or null, editorial: record }.
  */
-export async function editArticle(env, a, { keyOf, assess, draftAssessment, names, fetchImpl, timeoutMs, attempts: maxAttempts = 2 }) {
+export async function editArticle(env, a, { keyOf, assess, draftAssessment, names, fetchImpl, timeoutMs, attempts: maxAttempts = 1, onCall = null }) {
   const sections = draftSections(a, keyOf);
   const record = { provider: 'openai', model: modelOf(env), version: EDITORIAL_DESK_VERSION, status: 'fallback', failures: [], attempts: 0, usage: { input_tokens: 0, output_tokens: 0 } };
   const metBefore = new Set((draftAssessment?.depth?.elements || []).filter((e) => e.met).map((e) => e.key));
@@ -381,7 +388,10 @@ export async function editArticle(env, a, { keyOf, assess, draftAssessment, name
       out = r.json;
       record.usage.input_tokens += r.usage.input_tokens || 0;
       record.usage.output_tokens += r.usage.output_tokens || 0;
+      if (onCall) onCall({ attempt, input_tokens: r.usage.input_tokens || 0, output_tokens: r.usage.output_tokens || 0, error: null });
     } catch (e) {
+      // A failed call is logged too (a timeout may still be billed; its usage is unknown here).
+      if (onCall) onCall({ attempt, input_tokens: 0, output_tokens: 0, error: redact(e.message).slice(0, 120) });
       record.failures = [`provider: ${redact(e.message)}`];
       record.status = 'fallback';
       return { article: null, editorial: record };

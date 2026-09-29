@@ -27,6 +27,7 @@ import { runCommissionPass } from './commission-run.js';
 import { PLAYOFF_OPENING_KEY, publishPlayoffOpening } from './playoff-opening.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
 import { newsroomHealthReport } from './newsroom-health.js';
+import { readCallLog, costReport } from './openai-cost.js';
 import { ARTICLE_RUN_MIN_GAP_MS } from './articles-run.js';
 
 const SERVICE = 'wnba-news';
@@ -57,6 +58,11 @@ export default {
     if (path === '/v1/articles') return articlesRoute(env, url);
     if (path === '/v1/articles/held') return heldRoute(env);
     if (path === '/v1/newsroom/health') return newsroomHealthRoute(env);
+    if (path === '/v1/newsroom/openai-cost') {
+      if (!env.ADMIN_TOKEN || request.headers.get('authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return j({ ok: false, error: 'unauthorized' }, 401);
+      const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('date') || '') ? url.searchParams.get('date') : new Date().toISOString().slice(0, 10);
+      return j({ ok: true, data: costReport(await readCallLog(env.NEWS_KV, `${day}T00:00:00Z`), day) });
+    }
     if (path === '/v1/articles/videos') return videosRoute(env);
     const am = path.match(/^\/v1\/articles\/([a-z0-9-]{6,120})$/);
     if (am) return articleRoute(env, am[1]);
@@ -69,7 +75,7 @@ export default {
       if (held?.at && Date.now() - Date.parse(held.at) < LEASE_MS) return j({ ok: false, error: 'busy', detail: 'a newsroom pass holds the lease; retry after it finishes', lease_at: held.at }, 409);
       await env.NEWS_KV.put('news:v1:lease', JSON.stringify({ at: new Date().toISOString(), manual: true }), { expirationTtl: 600 });
       try {
-        if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(url.searchParams.get('model') ? { ...env, WNBA_EDITORIAL_MODEL: url.searchParams.get('model') } : env, (url.searchParams.get('ids') || '').split(',').filter(Boolean)) });
+        if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(url.searchParams.get('model') ? { ...env, WNBA_EDITORIAL_MODEL: url.searchParams.get('model') } : env, (url.searchParams.get('ids') || '').split(',').filter(Boolean), { repair: url.searchParams.get('repair') === '1' }) });
         if (url.searchParams.get('video') === 'force') return j({ ok: true, result: await runVideoPass(env, { channelsDoc: videoChannels, teams: ((await env.NEWS_KV.get('dict:v1', 'json')) || {}).teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null, force: true }) });
         if (url.searchParams.get('commission') === PLAYOFF_OPENING_KEY) return j({ ok: true, result: await publishPlayoffOpening(env, { at: new Date().toISOString(), force: url.searchParams.get('commission_force') === '1' }) });
         return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null, winbaRefreeze: url.searchParams.get('winba_refreeze') === '1', winbaBackfill: url.searchParams.get('winba_backfill') === '1', winbaAcceptRankCorrection: url.searchParams.get('winba_accept_rank_correction') === '1', winbaFixCopy: url.searchParams.get('winba_fix_copy') === '1', winbaFixFrozenAt: url.searchParams.get('winba_fix_frozen_at') === '1', commission: url.searchParams.get('commission') || null, commissionForce: url.searchParams.get('commission_force') === '1' }) });
@@ -123,12 +129,13 @@ async function dictionary(env) {
  * production, every write stays in memory, nothing publishes. The editorial desk is forced (cache ignored) on the
  * named story ids only, and each story's deterministic draft and editorial outcome are returned side by side.
  */
-async function editorialCanary(env, ids) {
+async function editorialCanary(env, ids, { repair = false } = {}) {
   const overlay = new Map();
   const kv = env.NEWS_KV;
   const NEWS_KV = {
     get: async (k, t) => { if (overlay.has(k)) { const v = overlay.get(k); return v === null ? null : t === 'json' ? JSON.parse(v) : v; } return kv.get(k, t); },
-    put: async (k, v) => { overlay.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    // Cost telemetry is real even in a dry run: the calls were paid for.
+    put: async (k, v, o) => { if (String(k).startsWith('openai:v1:calls:')) return kv.put(k, v, o); overlay.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
     delete: async (k) => { overlay.set(k, null); },
     list: (...a) => kv.list(...a)
   };
@@ -141,7 +148,7 @@ async function editorialCanary(env, ids) {
     const det = a.editorial?.status === 'applied' && a.editorial_draft ? { ...a, ...a.editorial_draft } : a;
     seen.push({ id: a.id, kind: a.kind, status: a.status, editorial: a.editorial || null, deterministic: pick(det), editorial_rewrite: a.editorial?.status === 'applied' ? pick(a) : null, published_version: a.editorial?.status === 'applied' ? 'editorial' : a.status === 'published' ? 'deterministic' : 'held', failures: [...new Set([...(a.gate?.failures || []), ...(a.reconcile?.failures || [])])].slice(0, 12), depth: { class: a.depth?.class, words: a.depth?.words, pass: a.depth?.pass } });
   };
-  const result = await runIngest(dry, 'canary', { forceArticles: true, canary: { inspect, editorialOptions: { only: want, force: true, maxCalls: Math.max(ids.length * 2, 4) } } });
+  const result = await runIngest(dry, 'canary', { forceArticles: true, canary: { inspect, editorialOptions: { only: want, force: true, canary: true, trigger: 'canary', attempts: repair ? 2 : 1, maxCalls: Math.max(ids.length, 1) } } });
   return { stories: seen, missing: ids.filter((id) => !seen.some((s) => s.id === id)), editorial: result?.desk?.articles?.editorial || null, writes_discarded: overlay.size };
 }
 

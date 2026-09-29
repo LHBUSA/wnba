@@ -47,7 +47,7 @@ const fakeFetch = (responses) => {
 };
 const ENV = { OPENAI_API_KEY: 'sk-test-secret-value-123456' };
 const passAll = () => ({ failures: [], depth: { elements: [] } });
-const run = (fetchImpl, assess = passAll) => editArticle(ENV, DRAFT, { keyOf: sectionKey, assess, draftAssessment: { depth: { elements: [] } }, names: NAMES, fetchImpl, timeoutMs: 5000 });
+const run = (fetchImpl, assess = passAll, attempts = 1) => editArticle(ENV, DRAFT, { keyOf: sectionKey, assess, draftAssessment: { depth: { elements: [] } }, names: NAMES, fetchImpl, timeoutMs: 5000, attempts });
 
 test('configuration: the secret is the switch, and WNBA_EDITORIAL=off disables it', () => {
   assert.equal(isConfigured({}), false);
@@ -100,13 +100,19 @@ test('error text never carries the key', async () => {
 test('a rewrite that adds a number is rejected; the corrective retry can fix it', async () => {
   const bad = structuredClone(GOOD);
   bad.sections[1].paragraphs = ['Stewart finished with 34 points, 12 rebounds and 7 assists on 11-of-18 shooting in 38 minutes.'];
+  // Automatic passes pay for ONE attempt: a failed rewrite falls back, it is not retried.
+  const once = fakeFetch([bad, GOOD]);
+  const r1 = await run(once);
+  assert.equal(once.calls.length, 1);
+  assert.equal(r1.editorial.status, 'fallback');
+  // Explicit admin repair (attempts: 2) may pay for the corrective retry.
   const f = fakeFetch([bad, GOOD]);
-  const r = await run(f);
+  const r = await run(f, passAll, 2);
   assert.equal(f.calls.length, 2);
   assert.match(f.calls[1].body.input, /CORRECTIVE REWRITE REQUIRED[\s\S]*number: "7"/);
   assert.equal(r.editorial.status, 'applied');
   const f2 = fakeFetch([bad, bad]);
-  const r2 = await run(f2);
+  const r2 = await run(f2, passAll, 2);
   assert.equal(r2.article, null);
   assert.ok(r2.editorial.failures.some((x) => /number: "7"/.test(x)));
 });
@@ -188,4 +194,22 @@ test('padding ceiling: a rewrite may not grow past 1.4x the draft', () => {
   out.sections[2].paragraphs = [...out.sections[2].paragraphs, ...Array(6).fill(0).map((_, i) => `${filler.replace('Sunday', i % 2 ? 'Sunday' : 'Sunday,')}`)];
   const f = rewriteFailures(DRAFT, out, applyRewrite(DRAFT, SECTIONS, out), { names: NAMES, draftSectionsList: SECTIONS });
   assert.ok(f.some((x) => /^length: .*padding/.test(x)), f.join(' | '));
+});
+
+test('cost defaults: 2 paid stories per pass, 1 attempt, 5k output tokens, $5/day breaker; telemetry flags a repeated digest', async () => {
+  const { budgetOf } = await import('../workers/wnba-news/src/editorial-desk.js');
+  const b = budgetOf({});
+  assert.equal(b.maxCalls, 2);
+  assert.equal(b.attempts, 1);
+  assert.equal(b.dailyMaxUsd, 5);
+  const f = fakeFetch([GOOD]);
+  await run(f);
+  assert.equal(f.calls[0].body.max_output_tokens, 5000);
+  const { costReport, callEntry, spentUsd } = await import('../workers/wnba-news/src/openai-cost.js');
+  const c = (at, digest, trigger = 'revision') => callEntry({ worker: 'wnba-news', id: 'x', model: 'm', trigger, attempt: 1, input_tokens: 4000, output_tokens: 1700, digest, at });
+  const rep = costReport([c('t1', 'd1'), c('t2', 'd2'), c('t3', 'd2')], '2026-09-29');
+  assert.equal(rep.totals.calls, 3);
+  assert.equal(rep.totals.estimated_usd, spentUsd(rep.calls));
+  assert.deepEqual(rep.unchanged_draft_recalls.map((x) => [x.digest, x.calls]), [['d2', 2]]);
+  assert.equal(c('t', 'd').estimated_usd, 0.022);
 });
