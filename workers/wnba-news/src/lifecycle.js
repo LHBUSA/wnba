@@ -54,6 +54,8 @@ export function sharedFactsUnchanged(prevItem, a) {
 /** The revision kind for a rewrite of `prev` by `a`. `prevItem` is the stored earlier version, when available. */
 export function revisionKind(a, prev, version, prevItem = null) {
   if (a.context?.regeneration === 'editorial_upgrade') return { kind: 'editorial_upgrade' };
+  // The editorial desk rewrote a story whose facts did not change: an editorial quality upgrade, not a data update.
+  if (a.editorial?.status === 'applied' && prevItem && prevItem.editorial?.status !== 'applied' && sharedFactsUnchanged(prevItem, a)) return { kind: 'editorial_quality_upgrade', from_generator: 'deterministic', editorial: a.editorial.version };
   const from = prev.depth_class;
   const to = a.depth?.class;
   if (from && to && DEPTH_RANK[to] > DEPTH_RANK[from]) return { kind: 'depth_upgrade', from, to };

@@ -3,10 +3,10 @@
 // Supabase when bound). Deterministic ids: a re-run rewrites the same article
 // only when its inputs changed (input_hash) or the generator version moved.
 
-import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, ARTICLE_VERSION } from './articles.js';
+import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, regate, slugFor, ARTICLE_VERSION } from './articles.js';
 import { briefArticles, underlyingEvent, BRIEF_VERSION } from './briefs.js';
 import { withheldBySourcePolicy } from './sources.js';
-import { assessDepth, DEPTH_VERSION } from './depth.js';
+import { assessDepth, sectionKey, DEPTH_VERSION } from './depth.js';
 import { reviewStory, needsReview, assessStored, listedCard, lateCoverage, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
@@ -14,6 +14,7 @@ import { mergeArticles, applyTrendDecisions, trendMarketOf } from './lifecycle.j
 import { qualityFailures } from './quality.js';
 import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
 import { regularSeasonIds, playoffContext, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
+import { isConfigured as editorialConfigured, modelOf as edModelOf, budgetOf, draftDigest, editArticle, EDITORIAL_KINDS, EDITORIAL_DESK_VERSION } from './editorial-desk.js';
 import { applyCorrections, CORRECTIONS_VERSION } from './corrections.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
@@ -128,42 +129,133 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const publishable = [];
   const feed = inj?.items || [];
   const priorIds = new Set(priorIndex.map((c) => c.id));
-  const gateOne = async (a0) => {
-    const a = await withSlug(a0);
-    // A story that has never been published and would arrive long after its event is late coverage, not news.
-    const late = priorIds.has(a.id) ? null : lateCoverage(a, now);
-    if (late) {
-      a.status = 'held';
-      a.reconcile = { ok: false, failures: [late] };
-      a.depth = { class: null, score: null, words: null };
-      held.push({ id: a.id, kind: a.kind, headline: a.headline, depth: a.depth, failures: [late], at: started });
-      return a;
-    }
-    // Added gate: gate.js validate() has already run inside finalize(); reconcile checks what a number gate
-    // cannot see (season provenance, absence context, injury-feed completeness, co-leaders, market alignment,
-    // rest semantics, provider comment text, prose lint). A failure holds the story.
-    a.reconcile = reconcileArticle(a, { season, injuries: feed });
-    if (!a.reconcile.ok) a.status = 'held';
-    // Identity is a publication invariant, not a quality preference: subject,
-    // roster team and publisher-headline event consensus must agree.
-    a.identity_failures = articleIdentityFailures(a, { dict });
-    if (a.identity_failures.length) {
-      a.status = 'held';
-      a.reconcile.failures.push(...a.identity_failures);
-    }
-    // Provenance chronology, resolved visuals and the Intelligence contract.
-    a.quality = qualityFailures(a, { media: mediaFor ? mediaFor(a) : null, generatedAt: a.provenance?.generated_at || a.updated_at });
-    if (a.quality.length) { a.status = 'held'; a.reconcile.failures.push(...a.quality); }
-    // Newsroom depth ladder (depth.js): a deterministic class from the evidence, then the desk's substance contract.
-    // Word count is a diagnostic; substance, repetition and Intelligence duplication decide.
-    a.depth = assessDepth(a, { now });
-    if (!a.depth.pass) { a.status = 'held'; a.reconcile.failures.push(...a.depth.failures.filter((f) => !a.gate.failures.includes(f))); }
-    if (inspect) inspect(a);
-    if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, depth: { class: a.depth.class, score: a.depth.score, words: a.depth.words }, failures: [...new Set([...a.gate.failures, ...a.reconcile.failures])].slice(0, 8), at: started }); return a; }
-    publishable.push(a);
+  const getStored = (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json');
+  // The complete publication gate chain for one candidate (deterministic draft or editorial rewrite). Pure: nothing is
+  // written to the candidate here.
+  //   gate.js (+ Intelligence contract) · reconcile (prose lint, season, injuries, co-leaders, market, rest, comment text)
+  //   · identity (subject/roster/event consensus) · quality (provenance, visuals, storycraft) · depth ladder.
+  const assessCandidate = (a) => {
+    const gate = regate(a);
+    const reconcile = reconcileArticle(a, { season, injuries: feed });
+    const identity = articleIdentityFailures(a, { dict });
+    const quality = qualityFailures(a, { media: mediaFor ? mediaFor(a) : null, generatedAt: a.provenance?.generated_at || a.updated_at });
+    const depth = assessDepth(a, { now });
+    const failures = [...new Set([...gate.failures, ...reconcile.failures, ...identity, ...quality, ...(depth.pass ? [] : depth.failures)])];
+    return { failures, gate, reconcile, identity, quality, depth };
+  };
+  const stampAssessment = (a, r) => {
+    a.gate = r.gate;
+    a.reconcile = { ...r.reconcile, failures: [...r.reconcile.failures, ...r.identity, ...r.quality, ...(r.depth.pass ? [] : r.depth.failures.filter((f) => !r.gate.failures.includes(f)))] };
+    a.identity_failures = r.identity;
+    a.quality = r.quality;
+    a.depth = r.depth;
+    a.status = r.failures.length ? 'held' : 'published';
     return a;
   };
-  for (const a0 of produced) await gateOne(a0);
+
+  // Editorial desk (editorial-desk.js): bounded per pass, parallel, fail-closed, cached by draft digest.
+  const edOn = editorialConfigured(env);
+  const edBudget = budgetOf(env);
+  const edDeadline = Date.now() + edBudget.deadlineMs;
+  const edNames = { players: [...(dict.playerById?.values?.() || [])].map((p) => p.name).filter(Boolean), teams: (dict.teamsList || []).map((t) => ({ name: t.name, short_name: t.short_name })) };
+  const edStats = { configured: edOn, provider: 'openai', model: edOn ? edModelOf(env) : null, version: EDITORIAL_DESK_VERSION, calls: 0, applied: 0, cached: 0, fallback: 0, deferred: 0, not_eligible: 0, failures: [], usage: { input_tokens: 0, output_tokens: 0 } };
+  let edCalls = 0;
+  const edRecord = (status, extra = {}) => ({ provider: 'openai', model: edOn ? edModelOf(env) : null, version: EDITORIAL_DESK_VERSION, status, failures: [], at: started, ...extra });
+
+  const gateMany = async (list) => {
+    // Phase A: slug, late-coverage check, the deterministic draft through every gate, the stored rewrite (if any).
+    const jobs = [];
+    for (const a0 of list) {
+      const a = await withSlug(a0);
+      // A story that has never been published and would arrive long after its event is late coverage, not news.
+      const late = priorIds.has(a.id) ? null : lateCoverage(a, now);
+      if (late) {
+        a.status = 'held';
+        a.reconcile = { ok: false, failures: [late] };
+        a.depth = { class: null, score: null, words: null };
+        held.push({ id: a.id, kind: a.kind, headline: a.headline, depth: a.depth, failures: [late], at: started });
+        jobs.push({ a, done: true, final: a });
+        continue;
+      }
+      const det = assessCandidate(a);
+      stampAssessment(a, det);
+      const job = { a, det, final: null };
+      jobs.push(job);
+      if (!EDITORIAL_KINDS.has(a.kind)) { edStats.not_eligible += 1; continue; }
+      if (!edOn) { a.editorial = edRecord('unconfigured'); continue; }
+      job.digest = await draftDigest(a);
+      const prev = priorIds.has(a.id) ? await getStored(a.id).catch(() => null) : null;
+      const pe = prev?.editorial;
+      if (pe && pe.version === EDITORIAL_DESK_VERSION && pe.draft_digest === job.digest && ['applied', 'fallback'].includes(pe.status)) {
+        if (pe.status === 'applied' && prev.editorial_draft) {
+          // Reuse the stored rewrite: same draft, same facts — no model call, and the lifecycle sees an unchanged story.
+          const cand = { ...a, headline: prev.headline, deck: prev.deck, body: prev.body, sections: prev.sections };
+          const r = assessCandidate(cand);
+          if (!r.failures.length) { job.cached = { cand, r, record: { ...pe } }; continue; }
+        } else if (pe.status === 'fallback') { a.editorial = { ...pe }; job.decided = true; continue; }
+      }
+      job.needsCall = true;
+    }
+    // Phase B: model calls — new stories first, then by desk; bounded by count, deadline and concurrency.
+    const rank = { injury: 0, result: 1, performance: 1, preview: 2, transaction: 3, brief: 4, trend: 5 };
+    const queue = jobs.filter((j) => j.needsCall).sort((x, y) => (priorIds.has(x.a.id) - priorIds.has(y.a.id)) || ((rank[x.a.kind] ?? 9) - (rank[y.a.kind] ?? 9)) || String(y.a.published_at).localeCompare(String(x.a.published_at)));
+    const runJob = async (job) => {
+      const r = await editArticle(env, job.a, { keyOf: sectionKey, assess: assessCandidate, draftAssessment: job.det, names: edNames, timeoutMs: Math.max(5e3, Math.min(edBudget.timeoutMs, edDeadline - Date.now())) });
+      job.edited = r;
+    };
+    let qi = 0;
+    const worker = async () => {
+      while (qi < queue.length) {
+        const job = queue[qi]; qi += 1;
+        if (edCalls >= edBudget.maxCalls || Date.now() > edDeadline - 5e3) { job.deferred = true; continue; }
+        edCalls += 1;
+        await runJob(job).catch((e) => { job.edited = { article: null, editorial: { ...edRecord('fallback'), failures: [`desk: ${String(e?.message || e).slice(0, 160)}`] } }; });
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(edBudget.concurrency, queue.length) }, worker));
+    // Phase C: choose what publishes. A rewrite publishes only when it passed every gate; otherwise the deterministic
+    // draft publishes if IT passes; otherwise the story is held with both sets of reasons.
+    const out = [];
+    for (const job of jobs) {
+      if (job.done) { out.push(job.final); continue; }
+      const { a } = job;
+      let final = a;
+      if (job.cached) {
+        final = stampAssessment(job.cached.cand, job.cached.r);
+        final.editorial = { ...job.cached.record, cached: true };
+        final.editorial_draft = { headline: a.headline, deck: a.deck, body: a.body, sections: a.sections };
+        edStats.cached += 1;
+      } else if (job.edited) {
+        edStats.calls += job.edited.editorial.attempts || 1;
+        edStats.usage.input_tokens += job.edited.editorial.usage?.input_tokens || 0;
+        edStats.usage.output_tokens += job.edited.editorial.usage?.output_tokens || 0;
+        const record = { ...job.edited.editorial, draft_digest: job.digest, at: started };
+        if (job.edited.article) {
+          final = stampAssessment(job.edited.article, job.edited.gate || assessCandidate(job.edited.article));
+          final.editorial = record;
+          final.editorial_draft = { headline: a.headline, deck: a.deck, body: a.body, sections: a.sections };
+          if (!priorIds.has(a.id)) final.slug = slugFor(final);
+          edStats.applied += 1;
+        } else {
+          a.editorial = record;
+          edStats.fallback += 1;
+          if (edStats.failures.length < 12) edStats.failures.push({ id: a.id, kind: a.kind, failures: record.failures.slice(0, 4) });
+        }
+      } else if (job.deferred) {
+        a.editorial = edRecord('deferred', { draft_digest: job.digest, failures: ['editorial budget for this pass used; the deterministic draft stands and the desk retries next pass'] });
+        edStats.deferred += 1;
+      }
+      if (inspect) inspect(final);
+      if (final.status !== 'published') {
+        const edFail = final.editorial?.status === 'fallback' ? final.editorial.failures.map((x) => `editorial: ${x}`) : [];
+        held.push({ id: final.id, kind: final.kind, headline: final.headline, depth: { class: final.depth.class, score: final.depth.score, words: final.depth.words }, failures: [...new Set([...final.gate.failures, ...final.reconcile.failures, ...edFail])].slice(0, 10), at: started });
+      } else publishable.push(final);
+      out.push(final);
+    }
+    return out;
+  };
+  const gateOne = async (a0) => (await gateMany([a0]))[0];
+  await gateMany(produced);
 
   // Legacy upgrade pass (legacy.js): a live story below the current standard whose records are still in reach is rebuilt
   // by the CURRENT generator for its desk and goes through exactly the same gate. Bounded per pass; never creates a story.
@@ -264,7 +356,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   }
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, unforced_previews_retired: unforced, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, unforced_previews_retired: unforced, editorial: edStats, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

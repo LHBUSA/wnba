@@ -165,6 +165,19 @@ const CAVEATS = {
 // short because its facts are; richer classes carry their own floors and substance contracts.
 const MIN_WORDS = { injury: 110, preview: 110, performance: 100, result: 90, transaction: 80, trend: 60, props: 60, market: 50, brief: 40 };
 
+/**
+ * The publication gate finalize() applies, re-runnable on any candidate (the editorial desk's rewrite is held to exactly
+ * the same gate as the deterministic draft): gate.js, with the Intelligence-contract exception, plus the contract itself.
+ */
+export function regate(a) {
+  const g = validateArticle(a, { minWords: MIN_WORDS[a.kind] ?? 100 });
+  const failures = [...g.failures.filter((f) => !(f === 'missing bettor_angle' && !a.intelligence?.render?.intelligence)), ...intelligenceFailures(a)];
+  return { ok: failures.length === 0, failures };
+}
+
+/** The URL slug a story's headline gives it (a revision keeps its first slug; see lifecycle.js). */
+export const slugFor = (a) => `${kebab(a.headline)}-${a.id.slice(0, 6)}`;
+
 function finalize(a) {
   const c = CAVEATS[a.kind] || CAVEATS.result;
   a.facts = { ...(a.facts || {}), policy: POLICY };
@@ -195,9 +208,7 @@ function finalize(a) {
   // contract sits on top of it: where the shared decision says there is no betting module, the gate's "missing
   // bettor_angle" requirement does not apply (a clean article with no betting relevance must not grow boilerplate to
   // pass), and every article is additionally checked for contradictions against that decision.
-  const g = validateArticle(a, { minWords: MIN_WORDS[a.kind] ?? 100 });
-  const failures = [...g.failures.filter((f) => !(f === 'missing bettor_angle' && !a.intelligence.render.intelligence)), ...intelligenceFailures(a)];
-  a.gate = { ok: failures.length === 0, failures };
+  a.gate = regate(a);
   a.status = a.gate.ok ? 'published' : 'held';
   return a;
 }
@@ -836,7 +847,7 @@ export async function marketMoveArticles({ api, upcoming }) {
 // ------------------------------------------------------------ store helpers
 
 export async function withSlug(a) {
-  a.slug = `${kebab(a.headline)}-${a.id.slice(0, 6)}`;
+  a.slug = slugFor(a);
   a.generator = { type: 'deterministic', version: ARTICLE_VERSION, structure: a.structure ?? 0 };
   a.updated_at = new Date().toISOString();
   return a;
