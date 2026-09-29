@@ -64,8 +64,15 @@ async function sha(s) {
 }
 
 /** Digest of what the editor is given: the deterministic draft and its facts. Unchanged digest = reuse, no call. */
+// Facts as the digest sees them: observation clocks and feed ordering are not facts a reader could see change, so they
+// never invalidate a rewrite (the same canonical form lifecycle.js uses to decide whether facts changed).
+const VOLATILE = /(captured_at|fetched_at|age_s|stale|generation_cutoff|generated_at|source_observed_at|observed_at|served_at|updated_at)$/;
+const canon = (x) => (Array.isArray(x) ? x.map(canon).sort((p, q) => JSON.stringify(p).localeCompare(JSON.stringify(q)))
+  : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).filter(([k]) => !VOLATILE.test(k)).sort(([p], [q]) => p.localeCompare(q)).map(([k, v]) => [k, canon(v)]))
+    : typeof x === 'number' ? Math.round(x * 1000) / 1000 : x);
+
 export async function draftDigest(a) {
-  return sha(JSON.stringify([EDITORIAL_DESK_VERSION, a.headline, a.deck, a.body, (a.sections || []).map((s) => s.title), a.facts || null]));
+  return sha(JSON.stringify([EDITORIAL_DESK_VERSION, a.headline, a.deck, a.body, (a.sections || []).map((s) => s.title), canon(a.facts || null)]));
 }
 
 // ------------------------------------------------------------ packet + instructions

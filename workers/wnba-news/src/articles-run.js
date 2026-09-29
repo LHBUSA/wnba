@@ -11,7 +11,7 @@ import { assessDepth, sectionKey, DEPTH_VERSION } from './depth.js';
 import { reviewStory, needsReview, assessStored, listedCard, lateCoverage, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
-import { mergeArticles, applyTrendDecisions, trendMarketOf } from './lifecycle.js';
+import { mergeArticles, applyTrendDecisions, trendMarketOf, sharedFactsUnchanged } from './lifecycle.js';
 import { qualityFailures } from './quality.js';
 import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
 import { regularSeasonIds, playoffContext, seasonOverTeams, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
@@ -214,14 +214,20 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
       job.digest = await draftDigest(a);
       const prev = priorIds.has(a.id) && !editorialOptions?.force ? await getStored(a.id).catch(() => null) : null;
       const pe = prev?.editorial;
-      if (pe && pe.version === EDITORIAL_DESK_VERSION && pe.draft_digest === job.digest && ['applied', 'fallback'].includes(pe.status)) {
+      job.prev = prev;
+      let miss = !prev ? 'no_stored_item' : !pe ? 'no_editorial_record' : pe.version !== EDITORIAL_DESK_VERSION ? 'desk_version' : pe.draft_digest !== job.digest ? 'draft_changed' : !['applied', 'fallback'].includes(pe.status) ? `status_${pe.status}` : null;
+      if (!miss) {
         if (pe.status === 'applied' && prev.editorial_draft) {
           // Reuse the stored rewrite: same draft, same facts — no model call, and the lifecycle sees an unchanged story.
-          const cand = { ...a, headline: prev.headline, deck: prev.deck, body: prev.body, sections: prev.sections };
+          const cand = { ...a, headline: prev.headline, deck: prev.deck, body: prev.body, sections: prev.sections, visuals: a.visuals };
           const r = assessCandidate(cand);
           if (!r.failures.length) { job.cached = { cand, r, record: { ...pe } }; continue; }
+          miss = `reuse_failed: ${r.failures[0]}`.slice(0, 140);
         } else if (pe.status === 'fallback') { a.editorial = { ...pe }; job.decided = true; continue; }
+        else miss = 'applied_without_draft';
       }
+      (edStats.cache_misses ||= {})[miss.split(':')[0]] = ((edStats.cache_misses || {})[miss.split(':')[0]] || 0) + 1;
+      if (/^reuse_failed/.test(miss) && (edStats.reuse_failures ||= []).length < 6) edStats.reuse_failures.push({ id: a.id, reason: miss });
       job.needsCall = true;
     }
     // Phase B: model calls — new stories first, then by desk; bounded by count, deadline and concurrency.
@@ -270,7 +276,16 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
           if (edStats.failures.length < 12) edStats.failures.push({ id: a.id, kind: a.kind, failures: record.failures.slice(0, 4) });
         }
       } else if (job.deferred) {
-        a.editorial = edRecord('deferred', { draft_digest: job.digest, failures: ['editorial budget for this pass used; the deterministic draft stands and the desk retries next pass'] });
+        // A published rewrite is not replaced by the deterministic draft just because this pass ran out of budget:
+        // with unchanged facts the stored story stands (no revision); with changed facts the fresh draft publishes.
+        const p = job.prev;
+        if (p?.editorial?.status === 'applied' && sharedFactsUnchanged(p, a)) {
+          const keep = { ...p, visuals: a.visuals, sections: (p.sections || []).map((sec, i) => ({ ...sec, ...(a.sections?.[i]?.visuals ? { visuals: a.sections[i].visuals } : {}) })) };
+          final = stampAssessment(keep, assessCandidate(keep));
+          if (final.status !== 'published') final = a;
+          else edStats.kept_published_rewrite = (edStats.kept_published_rewrite || 0) + 1;
+        }
+        if (final === a) a.editorial = edRecord('deferred', { draft_digest: job.digest, failures: ['editorial budget for this pass used; the deterministic draft stands and the desk retries next pass'] });
         edStats.deferred += 1;
       }
       if (inspect) inspect(final);
