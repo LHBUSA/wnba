@@ -346,7 +346,46 @@ function briefVisuals(a) {
   }), requirement: 'optional' }];
 }
 
-const BUILDERS = { result: resultVisuals, performance: resultVisuals, preview: previewVisuals, injury: injuryVisuals, transaction: transactionVisuals, trend: trendVisuals, brief: briefVisuals };
+// ------------------------------------------------------------ international (WNBA-connection games)
+
+function internationalVisuals(a) {
+  const g = a.facts?.game;
+  if (!g?.winner || !g?.loser) return [];
+  const out = [];
+  const W = g.winner; const L = g.loser;
+  const q = (g.quarters || []).filter((x) => n(x.winner) !== null && n(x.loser) !== null);
+  const src = `${g.competition?.name || 'FIBA'} box score (${g.provenance?.source || 'official game record'})`;
+  if (q.length >= 4) {
+    const swing = [...q].sort((x, y) => y.diff - x.diff)[0];
+    out.push({ section: 'flow', spec: groupedBars({
+      id: 'intl-game-flow', title: 'Scoring by quarter', subtitle: `${W.name} ${W.score}, ${L.name} ${L.score}${g.round?.name ? ` · ${g.round.name}` : ''}`,
+      caption: `Margin = ${W.name} points minus ${L.name} points in each period. The largest margin was Q${swing.q} (${swing.diff > 0 ? '+' : ''}${swing.diff}).`,
+      unit: 'points', series: [{ key: 'w', label: W.name, short_label: W.code || W.name }, { key: 'l', label: L.name, short_label: L.code || L.name }],
+      rows: q.map((x) => ({ key: `q${x.q}`, label: x.q > 4 ? `OT${x.q - 4 > 1 ? x.q - 4 : ''}` : `Q${x.q}`, values: [x.winner, x.loser], delta: x.winner - x.loser, highlight: x === swing })),
+      provenance: prov(a, { source: src, window: 'this game', entity_ids: [String(W.team_id), String(L.team_id)], fact_family: 'intl_linescore' })
+    }) });
+  }
+  // The WNBA connection: her line in this game against her EARLIER GAMES IN THIS TOURNAMENT — never her WNBA season.
+  const p = (g.wnba || []).find((x) => x.prior?.games >= 2 && n(x.pts) !== null);
+  if (p) {
+    const rows = rowsWith([
+      { key: 'pts', label: 'Points', unit: 'per_game', values: [n(p.pts), r1(n(p.prior.pts))] },
+      { key: 'reb', label: 'Rebounds', unit: 'per_game', values: [n(p.reb), r1(n(p.prior.reb))] },
+      { key: 'ast', label: 'Assists', unit: 'per_game', values: [n(p.ast), r1(n(p.prior.ast))] }
+    ]);
+    if (rows.length >= 2) {
+      out.push({ section: 'wnba', spec: statCompare({
+        id: 'intl-wnba-player', title: `${p.name} (${p.wnba?.team || 'WNBA'}) for ${p.team}`, subtitle: 'This game · her earlier games in this tournament',
+        caption: 'The comparison is her own earlier games at this tournament, not her WNBA season.',
+        columns: [{ key: 'game', label: 'This game', sample: 1 }, { key: 'prior', label: 'Earlier games', sample: n(p.prior.games) }], rows,
+        provenance: prov(a, { source: src, window: 'this tournament', entity_ids: [String(p.espn_id || p.player_id)], fact_family: 'intl_player' })
+      }), requirement: 'optional' });
+    }
+  }
+  return out;
+}
+
+const BUILDERS = { international: internationalVisuals, result: resultVisuals, performance: resultVisuals, preview: previewVisuals, injury: injuryVisuals, transaction: transactionVisuals, trend: trendVisuals, brief: briefVisuals };
 
 /**
  * Build, validate and place the article's visuals. Mutates `a`: sets `a.visuals` (valid specs only), places each id on
