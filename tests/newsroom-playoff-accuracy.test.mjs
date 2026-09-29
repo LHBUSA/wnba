@@ -194,3 +194,25 @@ test('a listed result carrying the old "0-0" records defect is detected for an i
   assert.equal(knownDefect({ body: ['After the result the Aces were 0-0 and the Storm 0-0 (team schedules through September 20).'] }), 'zero_records');
   assert.equal(knownDefect({ body: ['After the result the Aces were 30-12 and the Storm 20-22.'] }), null);
 });
+
+// ---------------------------------------------------------------- media identity: one subject on every surface
+
+test('primary subject drives media: the subject or a team/brand fallback, never a teammate stand-in', async () => {
+  const { primarySubjectOf, newsroomMediaFrom } = await import('../workers/wnba-news/src/media-resolve.js');
+  const { cardOf } = await import('../workers/wnba-news/src/articles.js');
+  const slot = { wide: [{ src: '/w.webp', w: 1280, h: 720 }], og: [{ src: '/og.jpg' }] };
+  const PLAYERS = { B: { name: 'Teammate B', team_id: '5', team_abbr: 'IND', slots: slot, license: 'CC BY 4.0', source_page_url: 'x' }, C: { name: 'Star C', team_id: '5', team_abbr: 'IND', slots: slot, license: 'CC BY 4.0', source_page_url: 'x' } };
+  const injury = { id: 'i1', slug: 'i1', kind: 'injury', lead_player_id: 'A', lead_team_id: '5', primary_subject: 'Player A', entities: [{ type: 'player', id: 'A', name: 'Player A' }, { type: 'player', id: 'B', name: 'Teammate B' }, { type: 'team', id: '5', name: 'Indiana Fever' }], evidence: [] };
+  assert.deepEqual(primarySubjectOf(injury), { type: 'player', id: 'A', name: 'Player A', reason: 'injury' });
+  const m = newsroomMediaFrom(PLAYERS, injury);
+  assert.equal(m.resolved, 'team_composition', 'Player A has no approved photo: team composition, never Teammate B');
+  assert.ok(!(m.subjects || []).some((s) => s.player_id === 'B'));
+  const perf = { ...injury, id: 'p1', kind: 'performance', lead_player_id: 'C', entities: [...injury.entities, { type: 'player', id: 'C', name: 'Star C' }] };
+  assert.equal(newsroomMediaFrom(PLAYERS, perf).subjects[0].player_id, 'C');
+  const result = { ...injury, id: 'r1', kind: 'result', lead_player_id: null };
+  assert.deepEqual(primarySubjectOf(result), { type: 'team', id: '5', name: 'Indiana Fever', reason: 'result' });
+  const preview = { id: 'v1', kind: 'preview', lead_team_id: '5', entities: [{ type: 'game', id: 'g2', name: 'LV @ IND' }], evidence: [] };
+  assert.equal(primarySubjectOf(preview).type, 'game');
+  // card and article resolve the same media (homepage, /news, related cards read cards; the hero reads the article)
+  for (const a of [injury, perf, result]) assert.deepEqual(newsroomMediaFrom(PLAYERS, cardOf(a)), newsroomMediaFrom(PLAYERS, a));
+});

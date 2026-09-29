@@ -17,6 +17,7 @@
 import { validateArticle } from './gate.js';
 import { decideIntelligence, intelligenceFailures, intelligenceOf, additiveCopy } from '../../../src/lib/intelligence.js';
 import { aan } from './prose.js';
+import { primarySubjectOf } from './media-resolve.js';
 
 /**
  * Newsroom context keeps only the licensed Commons photo, in its pre-provider
@@ -209,6 +210,7 @@ function finalize(a) {
   // bettor_angle" requirement does not apply (a clean article with no betting relevance must not grow boilerplate to
   // pass), and every article is additionally checked for contradictions against that decision.
   a.gate = regate(a);
+  a.subject = primarySubjectOf(a);
   a.status = a.gate.ok ? 'published' : 'held';
   return a;
 }
@@ -868,6 +870,7 @@ export function cardOf(a) {
     slug: a.slug,
     kind: a.kind,
     desk: deskOf(a),
+    subject: primarySubjectOf(a),
     event_type: a.context?.brief?.event_type || null,
     category: a.category,
     headline: a.headline,

@@ -426,7 +426,7 @@ export function assignSupersession(cards) {
  */
 // Reader-facing card fields that must always equal the stored story. A card is a copy of its item; when a concurrent
 // index writer (or any lost update) leaves an older copy behind, an unchanged or re-keyed pass restores it.
-const DISPLAY_FIELDS = ['headline', 'deck', 'category', 'lead_player_id', 'lead_team_id', 'primary_subject', 'entities'];
+const DISPLAY_FIELDS = ['headline', 'deck', 'category', 'lead_player_id', 'lead_team_id', 'primary_subject', 'subject', 'entities'];
 function displayDrift(prev, card) {
   return DISPLAY_FIELDS.filter((k) => card[k] !== undefined && JSON.stringify(prev[k]) !== JSON.stringify(card[k]));
 }

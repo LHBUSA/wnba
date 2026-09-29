@@ -122,6 +122,26 @@ const DESK_VISUAL = { injury: 'Injury Desk', transaction: 'Roster Moves', perfor
 const idsOf = (xs) => xs.filter((x) => x !== null && x !== undefined && x !== '').map(String);
 
 /**
+ * The story's primary subject — the ONE identity every surface (homepage, /news, article hero, related cards, team and
+ * player pages, share card) resolves media for. { type: player|team|game|league, id, name, reason }.
+ *   player — single-subject desks with a lead player (injury, transaction, performance, props, player brief, WinBA)
+ *   game   — matchup desks (preview, market move)
+ *   team   — results, trends, team briefs and anything with a lead team but no lead player
+ * Derived from the article's own lead ids and entities; a stored `subject` is honoured only when it agrees with them.
+ */
+export function primarySubjectOf(a) {
+  const ents = (a?.entities || []).filter(Boolean);
+  const nameOf = (type, id) => ents.find((e) => e.type === type && String(e.id) === String(id))?.name || null;
+  if (MATCHUP.has(a?.kind)) {
+    const g = ents.find((e) => e.type === 'game') || null;
+    if (g) return { type: 'game', id: String(g.id), name: g.name || null, reason: a.kind };
+  }
+  if (SINGLE.has(a?.kind) && a?.lead_player_id) return { type: 'player', id: String(a.lead_player_id), name: nameOf('player', a.lead_player_id) || a.primary_subject || null, reason: a.kind };
+  if (a?.lead_team_id) return { type: 'team', id: String(a.lead_team_id), name: nameOf('team', a.lead_team_id), reason: a.kind };
+  return { type: 'league', id: null, name: 'WNBA', reason: a?.kind || 'story' };
+}
+
+/**
  * Newsroom story media for every desk. Priority, per story type:
  *   1. an approved photograph of the story's own subject (single-subject desks), or one approved photo per team for a
  *      matchup — never a stand-in;
@@ -139,7 +159,8 @@ export function newsroomMediaFrom(PLAYERS, a) {
   const teamIds = ents.filter((e) => e.type === 'team').map((e) => e.id);
   const brand = () => ({ layout: 'brand', subjects: [], teams: [], caption: null, og: null, visual: { kind: 'brand', desk: DESK_VISUAL[a.kind] || 'WNBA Newsroom' }, resolved: 'deterministic_story_visual' });
   if (SINGLE.has(a.kind)) {
-    const s = subject(a.lead_player_id);
+    const ps = primarySubjectOf(a);
+    const s = ps.type === 'player' ? subject(ps.id) : null;
     if (s) return { layout: 'single', subjects: [s], teams: idsOf([s.team_id]), caption: `Pictured: ${s.name}`, og: s.og, resolved: 'approved_subject_photo' };
     const teams = idsOf([a.lead_team_id, ...teamIds]).slice(0, 1);
     return teams.length ? { layout: 'team', subjects: [], teams, caption: null, og: null, resolved: 'team_composition' } : brand();
