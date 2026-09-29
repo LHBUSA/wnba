@@ -22,7 +22,30 @@ import { intelligenceOf } from '../../../src/lib/intelligence.js';
 import { storyCraftAssessment } from './storycraft.js';
 import { TREND_UNLISTED } from './lifecycle.js';
 
-export const LEGACY_POLICY_VERSION = 'wnba-legacy-policy/1.2.0';
+// 1.3.0: late coverage — a result first published more than 48h after tip, or a transaction more than 72h after its
+// log date, is history on arrival: it keeps its URL and leaves the live listings (see lateCoverage).
+export const LEGACY_POLICY_VERSION = 'wnba-legacy-policy/1.3.0';
+
+export const LATE_RESULT_MS = 48 * 3600e3;
+export const LATE_TRANSACTION_MS = 72 * 3600e3;
+const gameStartOf = (c) => (c?.entities || []).map((e) => (e?.type === 'game' ? Date.parse(e.start_utc || '') : NaN)).filter(Number.isFinite).sort((a, b) => a - b)[0] ?? null;
+
+/**
+ * Late coverage: the story reached the newsroom long after the event, so it cannot be current news whatever its quality.
+ * Measured against the moment it was (or would be) first published. Returns the reason, or null.
+ */
+export function lateCoverage(c, firstPublishedMs = Date.parse(c?.first_published_at || '')) {
+  if (!c || !Number.isFinite(firstPublishedMs)) return null;
+  if (c.kind === 'result' || c.kind === 'performance') {
+    const tip = gameStartOf(c);
+    if (tip !== null && firstPublishedMs - tip > LATE_RESULT_MS) return `late coverage: first published ${Math.round((firstPublishedMs - tip) / 3600e3)}h after tip`;
+  }
+  if (c.kind === 'transaction') {
+    const at = Date.parse(c.published_at || '');
+    if (Number.isFinite(at) && firstPublishedMs - at > LATE_TRANSACTION_MS) return `late coverage: first published ${Math.round((firstPublishedMs - at) / 86400e3)} days after the transactions log date`;
+  }
+  return null;
+}
 export const QUALITY_STATES = ['current_quality', 'quality_upgrade_available', 'legacy_acceptable', 'external_coverage', 'retired_from_index'];
 export const UNLISTED_STATES = new Set(['external_coverage', 'retired_from_index', 'legacy_acceptable']);
 const LISTING_OVER_MS = 12 * 3600e3;
@@ -70,6 +93,8 @@ export function reviewStory({ card, item, now = Date.now(), regeneration = null,
   if (card.status === 'external_coverage') return stamp('external_coverage', card.coverage_review?.reason || 'publisher coverage, not a newsroom event');
   // A reviewed editorial correction (corrections.js) is final: the story stays retired, with its correction shown.
   if (card.correction) return stamp('retired_from_index', `corrected: ${card.correction.reason}`, { correction: true });
+  const late = lateCoverage(card);
+  if (late) return stamp('retired_from_index', `${late}; kept at its URL`, { late_coverage: true });
   if (withheld) return stamp('retired_from_index', 'its only publisher report is from a source under policy review; withheld from public listings');
   // The trend desk ended this run, or the team's current story is on its other market (lifecycle.js). Checked before
   // quality: a well-written story about a run that is over is not current news.

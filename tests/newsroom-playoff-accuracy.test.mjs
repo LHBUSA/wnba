@@ -134,3 +134,19 @@ test('a registered correction retires the story, keeps its URL and clock, and ca
   const review = reviewStory({ card: cards[0], item: store.get('467ed1ad4743') });
   assert.equal(review.state, 'retired_from_index');
 });
+
+// ---------------------------------------------------------------- late coverage (old events must not look new)
+
+test('a result first published more than 48h after tip, or a transaction 72h after its log date, is late coverage', async () => {
+  const { lateCoverage } = await import('../workers/wnba-news/src/legacy.js');
+  const res = { kind: 'performance', entities: [{ type: 'game', id: 'g', start_utc: '2026-09-24T23:00Z' }] };
+  assert.equal(lateCoverage(res, Date.parse('2026-09-25T02:00Z')), null);
+  assert.match(lateCoverage(res, Date.parse('2026-09-29T13:00Z')), /^late coverage: first published 110h after tip/);
+  const tx = { kind: 'transaction', published_at: '2026-09-20T07:00:00Z' };
+  assert.equal(lateCoverage(tx, Date.parse('2026-09-21T07:00:00Z')), null);
+  assert.match(lateCoverage(tx, Date.parse('2026-09-29T13:00:00Z')), /days after the transactions log date/);
+  assert.equal(lateCoverage({ kind: 'injury', published_at: '2026-09-01T00:00Z' }, Date.parse('2026-09-29T00:00Z')), null, 'injuries have their own lifecycle');
+  const review = reviewStory({ card: { ...res, id: 'x', status: 'published', first_published_at: '2026-09-29T13:01:00Z' }, item: { body: [] } });
+  assert.equal(review.state, 'retired_from_index');
+  assert.match(review.reason, /late coverage/);
+});

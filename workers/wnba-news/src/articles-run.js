@@ -7,7 +7,7 @@ import { injuryArticles, transactionArticles, resultArticles, previewArticles, t
 import { briefArticles, underlyingEvent, BRIEF_VERSION } from './briefs.js';
 import { withheldBySourcePolicy } from './sources.js';
 import { assessDepth, DEPTH_VERSION } from './depth.js';
-import { reviewStory, needsReview, assessStored, listedCard, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
+import { reviewStory, needsReview, assessStored, listedCard, lateCoverage, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles, applyTrendDecisions, trendMarketOf } from './lifecycle.js';
@@ -127,8 +127,18 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const held = [];
   const publishable = [];
   const feed = inj?.items || [];
+  const priorIds = new Set(priorIndex.map((c) => c.id));
   const gateOne = async (a0) => {
     const a = await withSlug(a0);
+    // A story that has never been published and would arrive long after its event is late coverage, not news.
+    const late = priorIds.has(a.id) ? null : lateCoverage(a, now);
+    if (late) {
+      a.status = 'held';
+      a.reconcile = { ok: false, failures: [late] };
+      a.depth = { class: null, score: null, words: null };
+      held.push({ id: a.id, kind: a.kind, headline: a.headline, depth: a.depth, failures: [late], at: started });
+      return a;
+    }
     // Added gate: gate.js validate() has already run inside finalize(); reconcile checks what a number gate
     // cannot see (season provenance, absence context, injury-feed completeness, co-leaders, market alignment,
     // rest semantics, provider comment text, prose lint). A failure holds the story.
@@ -228,7 +238,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const reviewLimit = 500; // full current catalog review after a policy/version change
   for (const c of next) {
     if (c.superseded_by) continue;
-    if (writtenIds.has(c.id) && !c.correction) { c.quality_state = 'current_quality'; c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'current_quality', reason: 'written this pass through the current gate', at: started, generator: String(c.input_hash || '').split('|')[0] || null }; continue; }
+    if (writtenIds.has(c.id) && !c.correction && !lateCoverage(c)) { c.quality_state = 'current_quality'; c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'current_quality', reason: 'written this pass through the current gate', at: started, generator: String(c.input_hash || '').split('|')[0] || null }; continue; }
     if (!needsReview(c) || reviewed >= reviewLimit) continue;
     reviewed += 1;
     const teamName = c.kind === 'trend' ? (ctx.teams || []).find((t) => String(t.team_id) === String(c.lead_team_id))?.short_name : null;
