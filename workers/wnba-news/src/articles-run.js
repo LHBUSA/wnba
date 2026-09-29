@@ -43,7 +43,7 @@ export function knownDefect(item) {
   return KNOWN_DEFECTS.find(([, re]) => re.test(text))?.[0] || null;
 }
 
-export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false, backfillInternational = false, mediaFor = null, inspect = null }) {
+export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false, backfillInternational = false, mediaFor = null, inspect = null, editorialOptions = null }) {
   const started = new Date().toISOString();
   const now = Date.now();
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
@@ -170,7 +170,10 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
 
   // Editorial desk (editorial-desk.js): bounded per pass, parallel, fail-closed, cached by draft digest.
   const edOn = editorialConfigured(env);
-  const edBudget = budgetOf(env);
+  // editorialOptions (admin canary only): { only: Set of story ids the desk may touch, force: ignore the rewrite cache,
+  // maxCalls }. The normal cron pass passes none.
+  const edOnly = editorialOptions?.only || null;
+  const edBudget = { ...budgetOf(env), ...(editorialOptions?.maxCalls ? { maxCalls: editorialOptions.maxCalls } : {}) };
   const edDeadline = Date.now() + edBudget.deadlineMs;
   const edNames = { players: [...(dict.playerById?.values?.() || [])].map((p) => p.name).filter(Boolean), teams: (dict.teamsList || []).map((t) => ({ name: t.name, short_name: t.short_name })) };
   const edStats = { configured: edOn, provider: 'openai', model: edOn ? edModelOf(env) : null, version: EDITORIAL_DESK_VERSION, calls: 0, applied: 0, cached: 0, fallback: 0, deferred: 0, not_eligible: 0, failures: [], usage: { input_tokens: 0, output_tokens: 0 } };
@@ -198,8 +201,9 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
       jobs.push(job);
       if (!EDITORIAL_KINDS.has(a.kind)) { edStats.not_eligible += 1; continue; }
       if (!edOn) { a.editorial = edRecord('unconfigured'); continue; }
+      if (edOnly && !edOnly.has(a.id)) { a.editorial = edRecord('not_selected'); continue; }
       job.digest = await draftDigest(a);
-      const prev = priorIds.has(a.id) ? await getStored(a.id).catch(() => null) : null;
+      const prev = priorIds.has(a.id) && !editorialOptions?.force ? await getStored(a.id).catch(() => null) : null;
       const pe = prev?.editorial;
       if (pe && pe.version === EDITORIAL_DESK_VERSION && pe.draft_digest === job.digest && ['applied', 'fallback'].includes(pe.status)) {
         if (pe.status === 'applied' && prev.editorial_draft) {

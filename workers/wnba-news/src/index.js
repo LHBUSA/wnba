@@ -66,6 +66,7 @@ export default {
       if (held?.at && Date.now() - Date.parse(held.at) < 4 * 60e3) return j({ ok: false, error: 'busy', detail: 'a newsroom pass holds the lease; retry after it finishes', lease_at: held.at }, 409);
       await env.NEWS_KV.put('news:v1:lease', JSON.stringify({ at: new Date().toISOString(), manual: true }), { expirationTtl: 600 });
       try {
+        if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(env, (url.searchParams.get('ids') || '').split(',').filter(Boolean)) });
         if (url.searchParams.get('video') === 'force') return j({ ok: true, result: await runVideoPass(env, { channelsDoc: videoChannels, teams: ((await env.NEWS_KV.get('dict:v1', 'json')) || {}).teams || [], intlGet: env.INTL ? (p) => intlGet(env, p) : null, force: true }) });
         if (url.searchParams.get('commission') === PLAYOFF_OPENING_KEY) return j({ ok: true, result: await publishPlayoffOpening(env, { at: new Date().toISOString(), force: url.searchParams.get('commission_force') === '1' }) });
         return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null, winbaRefreeze: url.searchParams.get('winba_refreeze') === '1', winbaBackfill: url.searchParams.get('winba_backfill') === '1', winbaAcceptRankCorrection: url.searchParams.get('winba_accept_rank_correction') === '1', winbaFixCopy: url.searchParams.get('winba_fix_copy') === '1', winbaFixFrozenAt: url.searchParams.get('winba_fix_frozen_at') === '1', commission: url.searchParams.get('commission') || null, commissionForce: url.searchParams.get('commission_force') === '1' }) });
@@ -114,7 +115,34 @@ async function dictionary(env) {
   }
 }
 
-async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false, forceWinba = false, winbaPeriod = null, winbaRefreeze = false, winbaBackfill = false, winbaAcceptRankCorrection = false, winbaFixCopy = false, winbaFixFrozenAt = false, commission = null, commissionForce = false } = {}) {
+/**
+ * Editorial canary (admin only): the real ingest + article pass over a read-through KV overlay — every read sees
+ * production, every write stays in memory, nothing publishes. The editorial desk is forced (cache ignored) on the
+ * named story ids only, and each story's deterministic draft and editorial outcome are returned side by side.
+ */
+async function editorialCanary(env, ids) {
+  const overlay = new Map();
+  const kv = env.NEWS_KV;
+  const NEWS_KV = {
+    get: async (k, t) => { if (overlay.has(k)) { const v = overlay.get(k); return v === null ? null : t === 'json' ? JSON.parse(v) : v; } return kv.get(k, t); },
+    put: async (k, v) => { overlay.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { overlay.set(k, null); },
+    list: (...a) => kv.list(...a)
+  };
+  const dry = { ...env, NEWS_KV };
+  const want = new Set(ids);
+  const seen = [];
+  const pick = (x) => ({ headline: x.headline, deck: x.deck, sections: (x.sections || []).map((s) => ({ title: s.title || null, key: s.key || null, paragraphs: (x.body || []).slice(s.first, s.first + s.count) })), words: (x.body || []).join(' ').split(/\s+/).filter(Boolean).length });
+  const inspect = (a) => {
+    if (!want.has(a.id)) return;
+    const det = a.editorial?.status === 'applied' && a.editorial_draft ? { ...a, ...a.editorial_draft } : a;
+    seen.push({ id: a.id, kind: a.kind, status: a.status, editorial: a.editorial || null, deterministic: pick(det), editorial_rewrite: a.editorial?.status === 'applied' ? pick(a) : null, published_version: a.editorial?.status === 'applied' ? 'editorial' : a.status === 'published' ? 'deterministic' : 'held', failures: [...new Set([...(a.gate?.failures || []), ...(a.reconcile?.failures || [])])].slice(0, 12), depth: { class: a.depth?.class, words: a.depth?.words, pass: a.depth?.pass } });
+  };
+  const result = await runIngest(dry, 'canary', { forceArticles: true, canary: { inspect, editorialOptions: { only: want, force: true, maxCalls: Math.max(ids.length * 2, 4) } } });
+  return { stories: seen, missing: ids.filter((id) => !seen.some((s) => s.id === id)), editorial: result?.desk?.articles?.editorial || null, writes_discarded: overlay.size };
+}
+
+async function runIngest(env, trigger, { forceArticles = false, backfillInternational = false, forceWinba = false, winbaPeriod = null, winbaRefreeze = false, winbaBackfill = false, winbaAcceptRankCorrection = false, winbaFixCopy = false, winbaFixFrozenAt = false, commission = null, commissionForce = false, canary = null } = {}) {
   const startedAt = new Date().toISOString();
   const now = Date.parse(startedAt);
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
@@ -219,7 +247,8 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
   // PropBetEdge newsroom — in-house articles from structured records (needs wnba-api).
   let articles;
   try {
-    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), intlGet: env.INTL ? (p) => intlGet(env, p) : null, dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: list, force: forceArticles, breaking: breaking.length > 0, backfillInternational, mediaFor });
+    articles = await runArticles(env, { apiGet: (p) => apiGet(env, p), intlGet: env.INTL ? (p) => intlGet(env, p) : null, dict: { ...dict, teamsList: rawDict.teams || [] }, externalItems: list, force: forceArticles, breaking: breaking.length > 0, backfillInternational, mediaFor, ...(canary ? { inspect: canary.inspect, editorialOptions: canary.editorialOptions } : {}) });
+    if (canary) return { desk: { articles } };
   } catch (e) {
     articles = { error: e.message };
   }
