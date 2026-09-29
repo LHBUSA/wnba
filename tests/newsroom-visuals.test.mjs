@@ -114,3 +114,19 @@ test('thin facts build no chart: a meaningless chart is worse than none', () => 
   attachNewsroomVisuals(a);
   assert.deepEqual(a.visuals, []);
 });
+
+test('a pass that only adds charts is a revision, never a silent re-key', async () => {
+  const { mergeArticles } = await import('../workers/wnba-news/src/lifecycle.js');
+  const { cardOf } = await import('../workers/wnba-news/src/articles.js');
+  const items = new Map();
+  const base = RESULT();
+  Object.assign(base, { headline: 'h'.repeat(30), deck: 'd'.repeat(50), input_hash: 'x', status: 'published', published_at: '2026-09-28T03:00:00Z', entities: [] });
+  const io = { feed: null, getItem: async (id) => items.get(id), putItem: async (a) => items.set(a.id, structuredClone(a)), cardOf };
+  const first = await mergeArticles({ index: [], articles: [structuredClone(base)], started: '2026-09-29T12:00:00Z', versionOf: () => 'v1', ...io });
+  const withCharts = structuredClone(base);
+  attachNewsroomVisuals(withCharts);
+  const second = await mergeArticles({ index: first.index, articles: [withCharts], started: '2026-09-29T13:00:00Z', versionOf: () => 'v2', ...io });
+  assert.equal(second.novelty.revision, 1);
+  assert.equal(second.novelty.rekeyed, 0);
+  assert.equal(items.get(base.id).visuals.length, 4);
+});

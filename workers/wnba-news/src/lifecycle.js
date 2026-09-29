@@ -465,7 +465,10 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
     // source observation) is not a revision: re-key the card, keep the stored version.
     if (prev && getItem) {
       const stored = await getItem(prev.id).catch(() => null);
-      if (stored && JSON.stringify(stored.body) === JSON.stringify(a.body) && stored.headline === a.headline && stored.deck === a.deck && sharedFactsUnchanged(stored, a) && (stored.provenance?.source_observed_at || null) === (a.provenance?.source_observed_at || null)) {
+      // Visuals (their plotted-value hashes and section placement) are part of what a reader sees: a pass that adds or
+      // changes a chart is a revision, never a silent re-key.
+      const visualsOf = (x) => JSON.stringify([(x.visuals || []).map((v) => [v.id, v.values_hash]), (x.sections || []).map((sec) => sec.visuals || null)]);
+      if (stored && JSON.stringify(stored.body) === JSON.stringify(a.body) && stored.headline === a.headline && stored.deck === a.deck && visualsOf(stored) === visualsOf(a) && sharedFactsUnchanged(stored, a) && (stored.provenance?.source_observed_at || null) === (a.provenance?.source_observed_at || null)) {
         const card = cardOf(a);
         const drift = displayDrift(prev, card);
         if (drift.length) repairs.push({ id: prev.id, repair: 'card_display_drift', fields: drift });
