@@ -18,8 +18,13 @@
 //           the ten-game window revises the SAME story (same id, URL and origin). The episode ends only when
 //           the desk measures the market and finds it no longer material; a later run is a new episode and
 //           may be a new story. A calendar date, a cron run or a generator version is never part of it.
-//   others  the generator id (game id, brief cluster id, transaction date+moves) is already stable, and the
-//           novelty key below maps any other id minted for the same fact back onto the stored story.
+//   transaction / brief  the generator id is NOT stable (transaction: date + the day's moves list; brief: the
+//           source-wire cluster id), so canonicalStoryKey() below maps a drifted id back onto the stored story:
+//           transaction = team + date; brief = event family + subject within the registry's 72h same-event window.
+//   others  the generator id (game id) is already stable, and the novelty key below maps any other id minted for
+//           the same fact back onto the stored story.
+
+import { laneOf } from './taxonomy.js';
 
 export const RELIST_GAP_MS = 12 * 3600e3;
 
@@ -239,6 +244,36 @@ export const noveltyKey = (x) => {
   }
 };
 
+// Brief fact families: the same families the event registry (events.js factKey) treats as one event.
+const BRIEF_FAMILY = (t) => (t === 'injury' || t === 'availability' ? 'injury' : laneOf(t) === 'roster' ? 'roster' : t === 'coaching' || t === 'front_office' || t === 'awards' ? t : null);
+// Same window the event registry uses for "same fact key = same event" (events.js FACT_WINDOW_MS).
+export const BRIEF_STORY_WINDOW_MS = 72 * 3600e3;
+
+/**
+ * Canonical story key for desks whose generator id is NOT stable (id drift), or null.
+ *   transaction  team + transaction date. The generator id hashes the day's moves list, so a second move filed the
+ *                same day minted a new id — and a new "new story" with a paid rewrite. One team, one day, one story.
+ *   brief        event family + subject (player; the team for a coaching/front-office event with no player). The id
+ *                hashes the source-wire cluster id, so a re-clustered event minted a new id. findPredecessor also
+ *                requires the two briefs' event times to fall within BRIEF_STORY_WINDOW_MS, the registry's own
+ *                same-event window. League-level briefs with no subject keep their cluster identity (null).
+ * Computed from card fields (kind, lead ids, published_at, event_type) so stored cards need no migration.
+ */
+export function canonicalStoryKey(x) {
+  if (x?.kind === 'transaction') {
+    const day = String(x.published_at || '').slice(0, 10);
+    return x.lead_team_id != null && /^\d{4}-\d{2}-\d{2}$/.test(day) ? `transaction:${x.lead_team_id}:${day}` : null;
+  }
+  if (x?.kind === 'brief') {
+    const fam = BRIEF_FAMILY(x.event_type || x.context?.brief?.event_type || null);
+    if (!fam) return null;
+    if (x.lead_player_id != null) return `brief:${fam}:player:${x.lead_player_id}`;
+    if ((fam === 'coaching' || fam === 'front_office') && x.lead_team_id != null) return `brief:${fam}:team:${x.lead_team_id}`;
+    return null;
+  }
+  return null;
+}
+
 /** The canonical card a duplicate points at. */
 function canonicalOf(c, byId) {
   let x = c;
@@ -347,6 +382,15 @@ export function findPredecessor(a, cards, { now = Date.now() } = {}) {
     const same = market && win.length ? cards.filter((c) => c.kind === 'trend' && !c.duplicate_of && String(c.lead_team_id) === String(a.lead_team_id) && trendMarketOf(c) === market && c.trend_state !== 'ended' && overlap(trendWindowOf(c, { stored: true }), win) >= TREND_MIN_OVERLAP)
       .sort((x, y) => (ms(y.updated_at) ?? 0) - (ms(x.updated_at) ?? 0) || String(y.id).localeCompare(String(x.id))) : [];
     return { prev: same[0] || null, relistedAfter: null };
+  }
+  // Canonical story key (id drift): a transaction or brief whose generator id moved but which reports the same canonical
+  // story continues the stored card instead of minting a new story (and buying a new-story rewrite).
+  const ck = canonicalStoryKey(a);
+  if (ck) {
+    const at = ms(a.published_at);
+    const same = cards.filter((c) => !c.duplicate_of && c.id !== a.id && c.kind === a.kind && canonicalStoryKey(c) === ck
+      && (a.kind !== 'brief' || (at !== null && ms(c.published_at) !== null && Math.abs(ms(c.published_at) - at) <= BRIEF_STORY_WINDOW_MS))).sort(byOriginDesc);
+    if (same.length) return { prev: canonicalOf(same[same.length - 1], byId), relistedAfter: null, canonical: ck };
   }
   // Novelty gate: another stored story already reports this fact (same game preview/result, same market) — continue it.
   const nk = noveltyKey(a);

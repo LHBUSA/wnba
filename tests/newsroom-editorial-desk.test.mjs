@@ -206,7 +206,7 @@ test('cost defaults: 2 paid stories per pass, 1 attempt, 5k output tokens, $25 n
   await run(f);
   assert.equal(f.calls[0].body.max_output_tokens, 5000);
   const { costReport, callEntry, nominalUsd } = await import('../workers/wnba-news/src/openai-cost.js');
-  const c = (at, digest, trigger = 'revision') => callEntry({ worker: 'wnba-news', id: 'x', model: 'm', trigger, attempt: 1, input_tokens: 4000, output_tokens: 1700, digest, at });
+  const c = (at, digest, trigger = 'revision') => callEntry({ worker: 'wnba-news', id: 'x', model: 'gpt-5.6-sol', trigger, attempt: 1, input_tokens: 4000, output_tokens: 1700, digest, at });
   const rep = costReport([c('t1', 'd1'), c('t2', 'd2'), c('t3', 'd2')], '2026-09-29');
   assert.equal(rep.totals.calls, 3);
   assert.equal(rep.totals.nominal_standard_cost, nominalUsd(rep.calls));

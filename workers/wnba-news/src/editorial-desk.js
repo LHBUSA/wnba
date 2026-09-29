@@ -182,9 +182,24 @@ function schemaFor(sections) {
 
 export const redact = (s) => String(s || '').replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer …').replace(/sk-[A-Za-z0-9_-]{8,}/g, 'sk-…').replace(/Incorrect API key provided:[^.]*/i, 'Incorrect API key provided').slice(0, 300);
 
+/** Usage the provider reported on a response body (billed even when the response is incomplete, failed or refused). */
+export function usageOf(body) {
+  const u = body?.usage;
+  if (!u || typeof u !== 'object') return null;
+  return { input_tokens: u.input_tokens ?? 0, cached_input_tokens: u.input_tokens_details?.cached_tokens ?? 0, output_tokens: u.output_tokens ?? 0, reasoning_tokens: u.output_tokens_details?.reasoning_tokens ?? 0 };
+}
+
+/**
+ * One Responses API call. Resolves { json, response_id, response_model, usage, latency_ms, status }. Rejects with an
+ * Error whose `.call` carries the same telemetry ({ usage, response_id, response_model, latency_ms, status }) so a
+ * failed call's billed usage is recorded rather than thrown away.
+ */
 export async function callModel(env, { input, schema, timeoutMs, fetchImpl = fetch }) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const t0 = Date.now();
+  let body = null;
+  let status = null;
   try {
     const res = await fetchImpl(API, {
       method: 'POST',
@@ -202,21 +217,25 @@ export async function callModel(env, { input, schema, timeoutMs, fetchImpl = fet
         text: { format: { type: 'json_schema', name: 'wnba_editorial_rewrite', strict: true, schema } }
       })
     });
-    const body = await res.json().catch(() => null);
+    body = await res.json().catch(() => null);
+    status = res.ok ? body?.status || 'completed' : `http_${res.status}`;
     if (!res.ok) throw new Error(`openai ${res.status}: ${redact(body?.error?.message || '')}`);
     if (body?.status === 'incomplete') throw new Error(`openai incomplete: ${body.incomplete_details?.reason || 'unknown'}`);
     if (body?.status === 'failed') throw new Error('openai failed');
     const text = [];
     for (const item of body?.output || []) for (const part of item?.content || []) {
-      if (part?.type === 'refusal') throw new Error('openai refusal');
+      if (part?.type === 'refusal') { status = 'refusal'; throw new Error('openai refusal'); }
       if (part?.type === 'output_text' && part.text) text.push(String(part.text));
     }
-    if (!text.length) throw new Error('openai empty output');
+    if (!text.length) { status = 'empty'; throw new Error('openai empty output'); }
     let json;
-    try { json = JSON.parse(text.join('')); } catch { throw new Error('openai malformed JSON'); }
-    return { json, response_id: body?.id || null, usage: { input_tokens: body?.usage?.input_tokens ?? null, cached_input_tokens: body?.usage?.input_tokens_details?.cached_tokens ?? 0, output_tokens: body?.usage?.output_tokens ?? null } };
+    try { json = JSON.parse(text.join('')); } catch { status = 'malformed'; throw new Error('openai malformed JSON'); }
+    const u = usageOf(body) || { input_tokens: null, cached_input_tokens: 0, output_tokens: null, reasoning_tokens: 0 };
+    return { json, response_id: body?.id || null, response_model: body?.model || null, usage: u, latency_ms: Date.now() - t0, status };
   } catch (e) {
-    throw new Error(e?.name === 'AbortError' ? `openai timeout after ${timeoutMs}ms` : redact(e?.message || e));
+    const err = new Error(e?.name === 'AbortError' ? `openai timeout after ${timeoutMs}ms` : redact(e?.message || e));
+    err.call = { usage: usageOf(body), response_id: body?.id || null, response_model: body?.model || null, latency_ms: Date.now() - t0, status: e?.name === 'AbortError' ? 'timeout' : status || 'transport_error' };
+    throw err;
   } finally {
     clearTimeout(timer);
   }
@@ -379,21 +398,28 @@ export function rewriteFailures(draft, out, rewritten, { names = { players: [], 
  */
 export async function editArticle(env, a, { keyOf, assess, draftAssessment, names, fetchImpl, timeoutMs, attempts: maxAttempts = 1, onCall = null }) {
   const sections = draftSections(a, keyOf);
-  const record = { provider: 'openai', model: modelOf(env), version: EDITORIAL_DESK_VERSION, status: 'fallback', failures: [], attempts: 0, usage: { input_tokens: 0, output_tokens: 0 } };
+  const record = { provider: 'openai', model: modelOf(env), version: EDITORIAL_DESK_VERSION, status: 'fallback', failures: [], attempts: 0, usage: { input_tokens: 0, output_tokens: 0, reasoning_tokens: 0 } };
   const metBefore = new Set((draftAssessment?.depth?.elements || []).filter((e) => e.met).map((e) => e.key));
   let correction = null;
+  // Telemetry never changes the editorial outcome: a failing onCall (e.g. a log write) is swallowed here.
+  const report = async (c) => { if (!onCall) return; try { await onCall(c); } catch { /* telemetry only */ } };
+  const addUsage = (u) => { record.usage.input_tokens += u?.input_tokens || 0; record.usage.output_tokens += u?.output_tokens || 0; record.usage.reasoning_tokens += u?.reasoning_tokens || 0; };
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     record.attempts = attempt;
     let out;
     try {
       const r = await callModel(env, { input: inputOf(a, sections, correction), schema: schemaFor(sections), timeoutMs, fetchImpl });
       out = r.json;
-      record.usage.input_tokens += r.usage.input_tokens || 0;
-      record.usage.output_tokens += r.usage.output_tokens || 0;
-      if (onCall) onCall({ attempt, input_tokens: r.usage.input_tokens || 0, cached_input_tokens: r.usage.cached_input_tokens || 0, output_tokens: r.usage.output_tokens || 0, response_id: r.response_id, error: null });
+      addUsage(r.usage);
+      if (r.response_model) record.response_model = r.response_model;
+      // onCall may persist the call log entry (awaited: each call is written the moment it returns).
+      await report({ attempt, input_tokens: r.usage.input_tokens || 0, cached_input_tokens: r.usage.cached_input_tokens || 0, output_tokens: r.usage.output_tokens || 0, reasoning_tokens: r.usage.reasoning_tokens || 0, response_id: r.response_id, response_model: r.response_model, latency_ms: r.latency_ms, status: r.status, error: null });
     } catch (e) {
-      // A failed call is logged too (a timeout may still be billed; its usage is unknown here).
-      if (onCall) onCall({ attempt, input_tokens: 0, output_tokens: 0, error: redact(e.message).slice(0, 120) });
+      // A failed call is logged too, with whatever usage the provider billed (an incomplete or refused response reports
+      // it; a timeout or transport error does not, and logs 0 with its status).
+      const c = e?.call || {};
+      addUsage(c.usage);
+      await report({ attempt, input_tokens: c.usage?.input_tokens || 0, cached_input_tokens: c.usage?.cached_input_tokens || 0, output_tokens: c.usage?.output_tokens || 0, reasoning_tokens: c.usage?.reasoning_tokens || 0, response_id: c.response_id || null, response_model: c.response_model || null, latency_ms: c.latency_ms ?? null, status: c.status || 'error', error: redact(e.message).slice(0, 120) });
       record.failures = [`provider: ${redact(e.message)}`];
       record.status = 'fallback';
       return { article: null, editorial: record };

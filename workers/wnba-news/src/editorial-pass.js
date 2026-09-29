@@ -9,11 +9,18 @@
 // allowEditorial:false and has no path to the transport at all. The ONLY paid route for an existing story is an
 // explicit admin re-edit or canary naming its ids (editorialOptions.only).
 //
-// Lines of defence, in order: (1) new-story eligibility, (2) the draft-digest cache, (3) the per-pass call cap,
-// (4) the daily $ breaker.
+// Lines of defence, in order: (1) new-story eligibility, (2) the AI router's trigger allow-list (ai-router.js — an
+// ineligible trigger routes DETERMINISTIC whatever the caller decided), (3) the draft-digest cache, (4) the per-pass call
+// cap, (5) the token soft cap, (6) the daily nominal emergency ceiling.
+//
+// ROUTING (wnba-ai-router/1.0.0). Every paid-eligible story gets job.routing = route(...): lane, model, pool, effort,
+// output cap and reason. The lane reaches the desk through an env overlay (laneEnv), the same technique the canary
+// route uses; a DETERMINISTIC lane never calls. Every call log entry carries the routing and is written the moment
+// the call returns.
 
 import { draftDigest, editArticle, modelOf, budgetOf, isConfigured, EDITORIAL_KINDS, EDITORIAL_DESK_VERSION } from './editorial-desk.js';
-import { callEntry, readCallLog, appendCallLog, eligibleTokens, nominalUsd, governanceOf, governanceState } from './openai-cost.js';
+import { callEntry, readCallLog, callLogWriter, eligibleTokens, guardUsd, governanceOf, governanceState } from './openai-cost.js';
+import { route, laneEnv, reachesTransport, aiConfig, ROUTER_VERSION } from './ai-router.js';
 import { findPredecessor as realFindPredecessor, sharedFactsUnchanged } from './lifecycle.js';
 import { listedCard as realListedCard, lateCoverage as realLateCoverage } from './legacy.js';
 
@@ -35,6 +42,8 @@ export function paidEligibility({ allowEditorial = true, explicit = false, canar
 }
 
 const PAID_CLASSES = new Set(['new_story', 'manual_reedit', 'canary']);
+// What an editorial record keeps of its routing decision (provenance: which lane/model/pool and why).
+const routingRecord = (r) => (r ? { lane: r.lane, model: r.model, pool: r.pool, reason: r.reason, flagship_eligible: Boolean(r.flagship_eligible), flagship_class: r.flagship_class || null, router_version: r.router_version } : null);
 
 export function makeEditorialGate({
   env, started, now, priorIndex, priorIds, getStored, withSlug, assessCandidate, stampAssessment, slugFor, sectionKey,
@@ -55,6 +64,10 @@ export function makeEditorialGate({
     attempts: explicit ? Math.max(1, Math.min(2, Number(editorialOptions?.attempts || 1))) : 1
   };
   const callLog = [];
+  // Each call's log entry is persisted immediately (serialized; retried at the end of the pass).
+  const logWriter = env?.NEWS_KV ? callLogWriter(env.NEWS_KV, started) : null;
+  const aiCfg = aiConfig(env);
+  const routing = { version: ROUTER_VERSION, lanes: {}, reasons: {}, flagship_eligible: 0, flagship_enabled: aiCfg.flagshipEnabled };
   let todayLog = null;
   const gov = governanceOf(env);
   // An explicit admin re-edit/canary may pass the WNBA token soft cap (never the nominal emergency ceiling).
@@ -67,7 +80,7 @@ export function makeEditorialGate({
     legacy_upgrade_candidates: 0, legacy_upgrade_openai_calls: 0,
     manual_reedit_calls: 0, canary_calls: 0
   };
-  const edStats = { configured: edOn, provider: 'openai', model: edOn ? modelOf(env) : null, version: EDITORIAL_DESK_VERSION, calls: 0, applied: 0, cached: 0, fallback: 0, deferred: 0, maintained: 0, not_eligible: 0, failures: [], usage: { input_tokens: 0, output_tokens: 0 }, eligibility };
+  const edStats = { configured: edOn, provider: 'openai', model: edOn ? modelOf(env) : null, version: EDITORIAL_DESK_VERSION, calls: 0, applied: 0, cached: 0, fallback: 0, deferred: 0, maintained: 0, not_eligible: 0, failures: [], usage: { input_tokens: 0, output_tokens: 0, reasoning_tokens: 0 }, eligibility, routing };
   let edCalls = 0;
   const edRecord = (status, extra = {}) => ({ provider: 'openai', model: edOn ? modelOf(env) : null, version: EDITORIAL_DESK_VERSION, status, failures: [], at: started, ...extra });
   // Existing-story maintenance record: the deterministic revision publishes; the editorial origin is kept, not re-bought.
@@ -110,6 +123,12 @@ export function makeEditorialGate({
       job.pe = pe;
       const elig = paidEligibility({ allowEditorial, explicit, canary: Boolean(editorialOptions?.canary), existing: Boolean(predCard), pe, now });
       job.cls = elig.cls;
+      // The router enforces its own trigger allow-list: a non-paid class routes DETERMINISTIC (trigger_not_eligible:<cls>)
+      // even if a caller got paidEligibility wrong.
+      job.routing = route({ story: a, trigger: elig.cls, attempt: 1, env, hasKey: edOn });
+      routing.lanes[job.routing.lane] = (routing.lanes[job.routing.lane] || 0) + 1;
+      if (job.routing.flagship_eligible) routing.flagship_eligible += 1;
+      if (Object.keys(routing.reasons).length < 20 || routing.reasons[job.routing.reason]) routing.reasons[job.routing.reason] = (routing.reasons[job.routing.reason] || 0) + 1;
       eligibility[`${elig.cls === 'canary' ? 'manual_reedit' : elig.cls}_candidates`] = (eligibility[`${elig.cls === 'canary' ? 'manual_reedit' : elig.cls}_candidates`] || 0) + 1;
       // Second line of defence: the draft-digest cache (free for every class; an admin `force` bypasses it).
       if (!editorialOptions?.force && pe && pe.draft_digest === job.digest) {
@@ -121,6 +140,8 @@ export function makeEditorialGate({
         } else if (['fallback', 'deterministic_revision'].includes(pe.status)) { a.editorial = { ...pe }; job.decided = true; continue; }
       }
       if (!elig.paid) { job.maintain = true; continue; }
+      // A paid-eligible story the router sends to the DETERMINISTIC lane makes no call: the deterministic draft stands.
+      if (!reachesTransport(job.routing)) { job.routedOff = true; continue; }
       // An explicit re-edit is not bought twice for the same draft on the same day (canary work is exempt).
       if (elig.cls === 'manual_reedit') {
         todayLog ||= await readCallLog(env.NEWS_KV, started).catch(() => []);
@@ -139,14 +160,20 @@ export function makeEditorialGate({
     const runJob = async (job) => {
       // Invariant: an existing story on an automatic pass can never reach the transport.
       if (!allowEditorial || !PAID_CLASSES.has(job.cls) || (job.cls === 'new_story' && explicit)) throw new Error(`editorial eligibility violated: ${job.cls}`);
+      // Second invariant: only a STANDARD/FLAGSHIP routing decision reaches the transport (laneEnv throws otherwise).
+      const laneEnvironment = laneEnv(env, job.routing);
       const onCall = (c) => {
         const trigger = c.attempt > 1 ? 'repair' : job.cls;
-        callLog.push(callEntry({ worker: 'wnba-news', id: job.prev?.id || job.a.id, model: modelOf(env), trigger, digest: job.digest, at: new Date().toISOString(), ...c }));
+        // A repair attempt is re-checked against the router's allow-list (attempt 2 of manual_reedit/canary only).
+        const r = c.attempt > 1 ? route({ story: job.a, trigger: 'repair', attempt: c.attempt, parentTrigger: job.cls, env, hasKey: edOn }) : job.routing;
+        const entry = callEntry({ worker: 'wnba-news', id: job.prev?.id || job.a.id, model: job.routing.model, trigger, digest: job.digest, at: new Date().toISOString(), story_class: job.a.kind, routing: { ...job.routing, reason: r.lane === job.routing.lane ? job.routing.reason : `${job.routing.reason}; repair: ${r.reason}` }, rates: aiCfg.rates, ...c });
+        callLog.push(entry);
         if (job.cls === 'new_story') eligibility.new_story_openai_calls += 1;
         else if (job.cls === 'canary') eligibility.canary_calls += 1;
         else eligibility.manual_reedit_calls += 1;
+        return logWriter ? logWriter.append(entry) : undefined;
       };
-      job.edited = await editImpl(env, job.a, { keyOf: sectionKey, assess: assessCandidate, draftAssessment: job.det, names, attempts: edBudget.attempts, onCall, fetchImpl, timeoutMs: Math.max(5e3, Math.min(edBudget.timeoutMs, edDeadline - Date.now())) });
+      job.edited = await editImpl(laneEnvironment, job.a, { keyOf: sectionKey, assess: assessCandidate, draftAssessment: job.det, names, attempts: edBudget.attempts, onCall, fetchImpl, timeoutMs: Math.max(5e3, Math.min(edBudget.timeoutMs, edDeadline - Date.now())) });
     };
     let qi = 0;
     const worker = async () => {
@@ -158,13 +185,18 @@ export function makeEditorialGate({
         const tokens = eligibleTokens(todayLog) + eligibleTokens(callLog);
         if (!overrideCap && gov.soft_cap_tokens && tokens >= gov.soft_cap_tokens) { job.deferred = true; edStats.token_cap = true; continue; }
         // Emergency fallback: the nominal (standard-rate) ceiling, far above normal usage. No override.
-        if (edBudget.dailyMaxUsd && nominalUsd(todayLog) + nominalUsd(callLog) >= edBudget.dailyMaxUsd) { job.deferred = true; edStats.breaker = true; continue; }
+        if (edBudget.dailyMaxUsd && guardUsd(todayLog) + guardUsd(callLog) >= edBudget.dailyMaxUsd) { job.deferred = true; edStats.breaker = true; continue; }
         edCalls += 1;
         await runJob(job).catch((e) => { job.edited = { article: null, editorial: { ...edRecord('fallback'), failures: [`desk: ${String(e?.message || e).slice(0, 160)}`] } }; });
       }
     };
     await Promise.all(Array.from({ length: Math.min(edBudget.concurrency, queue.length) }, worker));
-    if (callLog.length) await appendCallLog(env.NEWS_KV, started, callLog.splice(0)).catch((e) => errors.push(`openai cost log: ${e.message}`));
+    // Entries were written as each call returned; this retries any write that failed and reports what never landed.
+    if (logWriter) {
+      const fl = await logWriter.flush().catch((e) => ({ pending: -1, failures: [String(e?.message || e)] }));
+      if (fl.failures.length) edStats.call_log_write_retries = fl.failures.length;
+      if (fl.pending) errors.push(`openai cost log: ${fl.pending} entr${fl.pending === 1 ? 'y' : 'ies'} unwritten${fl.failures.length ? ` (${fl.failures[fl.failures.length - 1]})` : ''}`);
+    }
 
     // Phase C: choose what publishes. A rewrite publishes only when it passed every gate; otherwise the deterministic
     // draft publishes if IT passes; otherwise the story is held with both sets of reasons.
@@ -196,7 +228,8 @@ export function makeEditorialGate({
         edStats.calls += job.edited.editorial.attempts || 1;
         edStats.usage.input_tokens += job.edited.editorial.usage?.input_tokens || 0;
         edStats.usage.output_tokens += job.edited.editorial.usage?.output_tokens || 0;
-        const record = { ...job.edited.editorial, draft_digest: job.digest, eligibility: job.cls, at: started };
+        edStats.usage.reasoning_tokens += job.edited.editorial.usage?.reasoning_tokens || 0;
+        const record = { ...job.edited.editorial, draft_digest: job.digest, eligibility: job.cls, routing: routingRecord(job.routing), at: started };
         if (job.edited.article) {
           final = stampAssessment(job.edited.article, job.edited.gate || assessCandidate(job.edited.article));
           final.editorial = record;
@@ -208,6 +241,10 @@ export function makeEditorialGate({
           edStats.fallback += 1;
           if (edStats.failures.length < 12) edStats.failures.push({ id: a.id, kind: a.kind, failures: record.failures.slice(0, 4) });
         }
+      } else if (job.routedOff) {
+        // Paid-eligible, but the router chose the DETERMINISTIC lane: no call; the deterministic draft publishes.
+        a.editorial = edRecord('deterministic', { draft_digest: job.digest, eligibility: job.cls, routing: routingRecord(job.routing), failures: [`routing: ${job.routing.reason}`] });
+        edStats.routed_deterministic = (edStats.routed_deterministic || 0) + 1;
       } else if (job.deferred) {
         const kept = keepRewrite();
         if (kept) { final = kept; edStats.kept_published_rewrite = (edStats.kept_published_rewrite || 0) + 1; }

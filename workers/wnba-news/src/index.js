@@ -76,7 +76,7 @@ export default {
       if (held?.at && Date.now() - Date.parse(held.at) < LEASE_MS) return j({ ok: false, error: 'busy', detail: 'a newsroom pass holds the lease; retry after it finishes', lease_at: held.at }, 409);
       await env.NEWS_KV.put('news:v1:lease', JSON.stringify({ at: new Date().toISOString(), manual: true }), { expirationTtl: 600 });
       try {
-        if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(url.searchParams.get('model') ? { ...env, WNBA_EDITORIAL_MODEL: url.searchParams.get('model') } : env, (url.searchParams.get('ids') || '').split(',').filter(Boolean), { repair: url.searchParams.get('repair') === '1', overrideCap: url.searchParams.get('override_cap') === '1' }) });
+        if (url.searchParams.get('editorial') === 'canary') return j({ ok: true, result: await editorialCanary(url.searchParams.get('model') ? { ...env, WNBA_EDITORIAL_MODEL: url.searchParams.get('model'), WNBA_AI_STANDARD_MODEL: url.searchParams.get('model'), WNBA_AI_FLAGSHIP_ENABLED: 'false' } : env, (url.searchParams.get('ids') || '').split(',').filter(Boolean), { repair: url.searchParams.get('repair') === '1', overrideCap: url.searchParams.get('override_cap') === '1' }) });
         if (url.searchParams.get('editorial') === 'reedit') {
           // Explicit admin re-edit of named existing stories: ids + max + confirmed cost estimate, or nothing runs.
           const plan = reeditPlan({ ids: (url.searchParams.get('ids') || '').split(','), max: url.searchParams.get('max'), confirmUsd: url.searchParams.get('confirm_usd'), repair: url.searchParams.get('repair') === '1', maxOutputTokens: Number(env.WNBA_EDITORIAL_MAX_OUTPUT_TOKENS || 5000), costUsd });
