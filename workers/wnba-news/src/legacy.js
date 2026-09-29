@@ -20,14 +20,26 @@
 import { assessDepth } from './depth.js';
 import { intelligenceOf } from '../../../src/lib/intelligence.js';
 import { storyCraftAssessment } from './storycraft.js';
+import { TREND_UNLISTED } from './lifecycle.js';
 
 export const LEGACY_POLICY_VERSION = 'wnba-legacy-policy/1.2.0';
 export const QUALITY_STATES = ['current_quality', 'quality_upgrade_available', 'legacy_acceptable', 'external_coverage', 'retired_from_index'];
 export const UNLISTED_STATES = new Set(['external_coverage', 'retired_from_index', 'legacy_acceptable']);
 const LISTING_OVER_MS = 12 * 3600e3;
 
-/** Is a card shown in newsroom listings (front page, desks, team/player lists, sitemaps, related)? */
-export const listedCard = (c) => Boolean(c) && !c.superseded_by && c.status !== 'external_coverage' && !UNLISTED_STATES.has(c.quality_state);
+/** A game preview whose game has tipped is history, not current news: it keeps its URL and leaves every listing. */
+export const previewGameStarted = (c, now = Date.now()) => c?.kind === 'preview' && (c.entities || []).some((e) => {
+  const t = e?.type === 'game' ? Date.parse(e.start_utc || '') : NaN;
+  return Number.isFinite(t) && t <= now;
+});
+
+/** Listing state at an explicit clock (tests, audits). */
+export const listedCardAt = (c, now) => Boolean(c) && !c.superseded_by && !c.duplicate_of && c.status !== 'external_coverage' && !UNLISTED_STATES.has(c.quality_state)
+  && !(c.kind === 'trend' && TREND_UNLISTED.has(c.trend_state)) && !previewGameStarted(c, now);
+
+/** Is a card shown in newsroom listings (front page, desks, team/player lists, sitemaps, related)? Single-argument on
+ * purpose: it is passed straight to Array#filter, whose second argument is an index, not a clock. */
+export const listedCard = (c) => listedCardAt(c, Date.now());
 
 // Failures that say the copy itself is unsound under current checks, as opposed to merely shorter or thinner.
 // (An Intelligence module that restates the body is not here: the renderer suppresses non-additive copy on read.)
@@ -57,6 +69,9 @@ export function reviewStory({ card, item, now = Date.now(), regeneration = null,
   const stamp = (state, reason, extra = {}) => ({ policy: LEGACY_POLICY_VERSION, state, reason, at, generator, ...extra });
   if (card.status === 'external_coverage') return stamp('external_coverage', card.coverage_review?.reason || 'publisher coverage, not a newsroom event');
   if (withheld) return stamp('retired_from_index', 'its only publisher report is from a source under policy review; withheld from public listings');
+  // The trend desk ended this run, or the team's current story is on its other market (lifecycle.js). Checked before
+  // quality: a well-written story about a run that is over is not current news.
+  if (card.kind === 'trend' && TREND_UNLISTED.has(card.trend_state)) return stamp('retired_from_index', card.trend_state_reason || `trend ${card.trend_state}`, { trend_lifecycle: true });
   if (!item) return stamp('legacy_acceptable', 'stored item unavailable for review; left as published');
   const d = assessStored(item, { now });
   const depth = { class: d.class, score: d.score, words: d.words, contract: d.contract };

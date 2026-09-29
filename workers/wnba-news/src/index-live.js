@@ -79,7 +79,8 @@ async function archiveRoute(env, url) {
     .map(({ input_hash, ...c }) => ({
       ...c,
       listed: listedCard(c),
-      archive_state: c.duplicate_of ? 'duplicate' : c.superseded_by ? 'superseded' : c.status === 'external_coverage' ? 'external_coverage' : c.quality_state === 'retired_from_index' ? 'retired' : 'current',
+      // Not listed for any other reason (a preview whose game has tipped, an ended trend run) is also retired, not current.
+      archive_state: c.duplicate_of ? 'duplicate' : c.superseded_by ? 'superseded' : c.status === 'external_coverage' ? 'external_coverage' : c.quality_state === 'retired_from_index' || !listedCard(c) ? 'retired' : 'current',
       media: mediaFor(c),
       video: null
     }));

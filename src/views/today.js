@@ -368,7 +368,7 @@ export function todayView({ today, arts, injuries, standings, intl = null, winba
   const frontPageStories = frontPageEditorialStories(stories, winbaIndexes);
   // Top Story is an editorial choice, not "newest record": see src/lib/homepage-lead.js for the deterministic policy.
   const { lead: leadStory, diagnostics: leadDiagnostics } = selectHomepageLead(frontPageStories, { hero, data: d, now });
-  const secondaryStories = latestNewsRail(frontPageStories, leadStory, { limit: 4 });
+  const secondaryStories = latestNewsRail(frontPageStories, leadStory, { limit: 4, now });
   const heroStoryIds = new Set([leadStory?.id, ...secondaryStories.map((c) => c.id)].filter(Boolean));
   const moreStories = frontPageStories.filter((c) => !heroStoryIds.has(c.id)).slice(0, 5);
   const changes = (injuries.ok ? injuries.data.changes : []) || [];

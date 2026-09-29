@@ -10,7 +10,7 @@ import { assessDepth, DEPTH_VERSION } from './depth.js';
 import { reviewStory, needsReview, assessStored, listedCard, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
 import { reconcileArticle, RECONCILE_VERSION } from './reconcile.js';
 import { internationalArticles, INTL_VERSION } from './international.js';
-import { mergeArticles } from './lifecycle.js';
+import { mergeArticles, applyTrendDecisions, trendMarketOf } from './lifecycle.js';
 import { qualityFailures } from './quality.js';
 import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
 
@@ -84,6 +84,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   const produced = [];
   let coverageDecisions = [];
   const deskDecisions = {};
+  let trendDecisions = null; // the COMPLETE trend-desk measurement of this pass (status keeps a trimmed copy)
   const priorIndex = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
   // Backfill: regenerate EXISTING international stories (same id, slug, origin) with the current generator.
   const backfill = backfillInternational ? new Set(priorIndex.filter((c) => c.kind === 'international' && !c.superseded_by).map((c) => (c.entities || []).find((e) => e?.type === 'intl_game')?.id).filter(Boolean).map(String)) : null;
@@ -104,7 +105,8 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     try {
       const xs = await fn(ctx);
       runs[name] = xs.length;
-      if (Array.isArray(xs.decisions) && name !== 'brief') deskDecisions[name] = xs.decisions.slice(0, 20);
+      if (Array.isArray(xs.decisions) && name !== 'brief') deskDecisions[name] = xs.decisions.slice(0, 30);
+      if (name === 'trend' && Array.isArray(xs.decisions)) trendDecisions = xs.decisions;
       produced.push(...xs);
     } catch (e) {
       runs[name] = `error: ${e.message}`;
@@ -178,7 +180,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
 
   // New material event = new story; same event with new data = revision that keeps its editorial origin.
   // Existing duplicate/poisoned cards are repaired deterministically inside the merge on every pass.
-  const { index: next, written, repairs, events } = await mergeArticles({
+  const { index: next, written, repairs, events, novelty } = await mergeArticles({
     index,
     articles: publishable,
     started,
@@ -189,6 +191,12 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     versionOf: (a) => (a.kind === 'brief' ? BRIEF_VERSION : a.kind === 'international' ? INTL_VERSION : ARTICLE_VERSION),
     cardOf
   });
+
+  // Trend lifecycle: only a complete, error-free trend-desk pass may change which trend episodes are current. The
+  // team's published story is current; a run the desk measured as no longer material ends and leaves every listing.
+  const trendLifecycle = trendDecisions && typeof runs.trend === 'number'
+    ? applyTrendDecisions(next, trendDecisions, { at: started, publishedIds: new Set(publishable.filter((a) => a.kind === 'trend').map((a) => a.id)) })
+    : null;
 
   // Full versioned catalog audit: historical stories from older generators are
   // rechecked against today's roster dictionary and their own publisher evidence.
@@ -213,14 +221,14 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     if (!needsReview(c) || reviewed >= reviewLimit) continue;
     reviewed += 1;
     const teamName = c.kind === 'trend' ? (ctx.teams || []).find((t) => String(t.team_id) === String(c.lead_team_id))?.short_name : null;
-    const deskDecision = teamName ? (deskDecisions.trend || []).find((x) => x.team === teamName) || null : null;
+    const deskDecision = teamName ? (trendDecisions || []).find((x) => x.team === teamName && x.market === trendMarketOf(c)) || null : null;
     const review = reviewStory({ card: c, item: await getItem(c.id).catch(() => null), now, regeneration: regenerations.has(c.id) ? regenerations.get(c.id) : null, cards: next, withheld: withheldBySourcePolicy(c), deskDecision });
     c.quality_state = review.state;
     c.quality_review = review;
   }
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 20), desk_decisions: deskDecisions, demotions, lifecycle: { repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 20), desk_decisions: deskDecisions, demotions, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

@@ -731,7 +731,8 @@ export async function trendArticlesV1({ api, finalsByTeam, teams, now }) {
       `A run like this is information about how the market priced the ${t.short_name}, not a forecast: it says the lines ${atsW > atsL ? 'undersold' : 'oversold'} them over this ${n}-game window. Sample size is ${n}.`,
       `Read it as a description of the pricing, not a prediction: over these ${n} games the lines ${atsW > atsL ? 'undersold' : 'oversold'} the ${t.short_name}. Sample size is ${n}.`
     ][v]];
-    const id = await hashId(['trend', t.team_id, new Date(now).toISOString().slice(0, 10)]);
+    // Unused legacy generator; identity follows the same rule as deep.js — the run, never the calendar date.
+    const id = await hashId(['trend', t.team_id, rows[0].game_id]);
     out.push(finalize({
       id, kind: 'trend', category: 'Team trends', structure: v, headline, deck, body, bettor,
       market_angle: { text: [`All lines are a single sportsbook (${provider}) relayed by ESPN. PropBetEdge’s own multi-book captures began on September 11, 2026 and will replace this reference as they accumulate.`], market: null, game_id: null },
@@ -763,7 +764,8 @@ export async function propArticles({ api, props }) {
     if (!rows.length) continue;
     rows.sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
     const top = rows[0];
-    const v = structureOf('props', `props|${pg.odds_event_id}|${props.captured_at}`);
+    // One prop-watch story per game: a new capture revises it (same id, URL, origin) and never rotates its wording.
+    const v = structureOf('props', `props|${pg.odds_event_id}`);
     const headline = [
       `Prop watch, ${pg.away_team} at ${pg.home_team}: ${top.name}’s points line is ${top.line} against a last-${top.games} average of ${f1(top.l10_pts)}`,
       `${top.name}’s points line sits at ${top.line} for ${pg.away_team} at ${pg.home_team}; her last-${top.games} average is ${f1(top.l10_pts)}`
@@ -774,7 +776,7 @@ export async function propArticles({ api, props }) {
     ][v];
     const body = [intro, ...rows.slice(0, 6).map((r) => `${r.name}: line ${r.line}, last-${r.games} average ${f1(r.l10_pts)} points in ${f1(r.l10_min)} minutes (${pts(r.gap)}).`)];
     const bettor = ['A gap between a line and a recent average is a starting point, not an edge: lines already price minutes, matchups and injuries. PropBetEdge does not publish a WNBA prop model yet.'];
-    const id = await hashId(['props', pg.odds_event_id, props.captured_at]);
+    const id = await hashId(['props', pg.odds_event_id]);
     out.push(finalize({
       id, kind: 'props', category: 'Prop watch', structure: v, headline, deck: `${rows.length} player-points lines against recent production, captured ${dShort(props.captured_at)}.`, body, bettor,
       market_angle: { text: rows.slice(0, 4).map((r) => `${r.name} ${r.line}: best over ${am(r.best_over?.price)} (${book(r.best_over?.book)}), best under ${am(r.best_under?.price)} (${book(r.best_under?.book)}), ${r.books} book${r.books === 1 ? '' : 's'}.`), market: null, game_id: pg.game_id },
@@ -802,7 +804,8 @@ export async function marketMoveArticles({ api, upcoming }) {
     const dSpread = first.spread !== null && last.spread !== null ? last.spread - first.spread : 0;
     const dTotal = first.total !== null && last.total !== null ? last.total - first.total : 0;
     if (Math.abs(dSpread) < 1.5 && Math.abs(dTotal) < 2) continue;
-    const v = structureOf('market', `move|${g.game_id}|${last.at}`);
+    // One market-move story per game: a later capture extends the same move (a revision), never a new article.
+    const v = structureOf('market', `move|${g.game_id}`);
     const headline = Math.abs(dSpread) >= 1.5
       ? [`Line move: ${g.home.abbr} ${pts(first.spread)} to ${pts(last.spread)} for ${g.away.abbr} at ${g.home.abbr}`, `${g.away.abbr} at ${g.home.abbr}: the consensus spread moves from ${g.home.abbr} ${pts(first.spread)} to ${pts(last.spread)}`][v]
       : [`Total move: ${first.total} to ${last.total} for ${g.away.abbr} at ${g.home.abbr}`, `${g.away.abbr} at ${g.home.abbr}: the consensus total moves from ${first.total} to ${last.total}`][v];
@@ -810,7 +813,7 @@ export async function marketMoveArticles({ api, upcoming }) {
       `Between PropBetEdge’s capture on ${dShort(first.at)} at ${tET(first.at)} and the capture on ${dShort(last.at)} at ${tET(last.at)}, the consensus home spread moved from ${pts(first.spread)} to ${pts(last.spread)} and the consensus total from ${first.total} to ${last.total} (${last.books} books).`,
       `PropBetEdge’s captures show the move: at ${tET(first.at)} on ${dShort(first.at)} the consensus had the home spread at ${pts(first.spread)} and the total at ${first.total}; by ${tET(last.at)} on ${dShort(last.at)} they read ${pts(last.spread)} and ${last.total} (${last.books} books).`
     ][v]];
-    const id = await hashId(['move', g.game_id, last.at]);
+    const id = await hashId(['move', g.game_id]);
     out.push(finalize({
       id, kind: 'market', category: 'Market moves', structure: v, headline, deck: `${h.length} captures of the same market, The Odds API.`, body,
       bettor: ['A move tells you where money and information went between two captures; it is not a signal on its own. Check the availability desk for anything that changed in the same window.'],

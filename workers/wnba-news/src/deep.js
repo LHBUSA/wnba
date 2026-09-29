@@ -996,7 +996,11 @@ export async function trendDeep(ctx) {
   for (const t of teams) {
     const t0 = meter();
     const games = (finalsByTeam.get(t.team_id) || []).slice(0, 10);
-    if (games.length < 8) continue;
+    // Every team + market the desk measures gets a decision: the lifecycle ends an episode only on a measured
+    // "no longer material", never because a pass could not measure (too few lined games, a failed fetch).
+    const decide = (market, decision, reason) => out.decisions.push({ team: t.short_name, team_id: t.team_id, market, decision, reason });
+    const insufficient = (reason) => { decide('spread', 'insufficient', reason); decide('total', 'insufficient', reason); };
+    if (games.length < 8) { insufficient(`only ${games.length} finals in the window`); continue; }
     const rows = [];
     for (const g of games) {
       const gm = await api(`/v1/games/${g.game_id}`);
@@ -1011,7 +1015,7 @@ export async function trendDeep(ctx) {
       const tot = us.score + them.score;
       rows.push({ game_id: g.game_id, date: g.start_utc, opp: them.abbr, home, pts: us.score, opp_pts: them.score, spread: teamSpread, margin: m, ats: c > 0 ? 'W' : c < 0 ? 'L' : 'P', total_line: pc.over_under, total: tot, ou: tot > pc.over_under ? 'O' : tot < pc.over_under ? 'U' : 'P', provider: pc.provider });
     }
-    if (rows.length < 8) continue;
+    if (rows.length < 8) { insufficient(`only ${rows.length} games with a line in the source record`); continue; }
     const n = rows.length;
     const atsW = rows.filter((r) => r.ats === 'W').length;
     const atsL = rows.filter((r) => r.ats === 'L').length;
@@ -1019,11 +1023,16 @@ export async function trendDeep(ctx) {
     const un = rows.filter((r) => r.ou === 'U').length;
     const extremeAts = atsW >= 7 || atsL >= 7;
     const extremeOu = ov >= 8 || un >= 8;
-    if (!extremeAts && !extremeOu) continue;
     const marketType = extremeOu && !extremeAts ? 'total' : 'spread';
-    const mat = trendMateriality(rows, { market: marketType });
-    if (!mat.material) { out.decisions.push({ team: t.short_name, market: marketType, decision: 'withheld', reason: mat.reason }); continue; }
-    out.decisions.push({ team: t.short_name, market: marketType, decision: 'standalone', reason: mat.reason });
+    const otherType = marketType === 'spread' ? 'total' : 'spread';
+    const extremeOf = { spread: extremeAts, total: extremeOu };
+    const matOf = (m) => (extremeOf[m] ? trendMateriality(rows, { market: m }) : { material: false, not_extreme: true, reason: m === 'spread' ? `${atsW}-${atsL} against the spread is not a run` : `${Math.max(ov, un)} of ${n} is not a run` });
+    const mat = matOf(marketType);
+    const other = matOf(otherType);
+    decide(marketType, mat.material ? 'standalone' : mat.not_extreme ? 'not_extreme' : 'withheld', mat.reason);
+    // The team's other market: still material (its episode continues, unlisted) or measured out.
+    decide(otherType, other.material ? 'secondary' : other.not_extreme ? 'not_extreme' : 'withheld', other.reason);
+    if (!mat.material) continue;
     const D = {};
     const provider = rows[0].provider;
     const T = t.short_name;
@@ -1110,7 +1119,9 @@ export async function trendDeep(ctx) {
     }
     const nextParas = ng ? [`Next up is ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}. It is the first chance to see whether the run holds against the current multi-book line.`] : [];
     const { body, sections } = assemble([['The run', [thesis]], ['The numbers', evidence], ['The next line', marketNow], ['Next matchup', teamCtx], ['What could break the trend', [counterPara]], ['Next up', nextParas]]);
-    const id = await hashId(['trend', t.team_id, new Date(now).toISOString().slice(0, 10)]);
+    // Identity is the run, never the calendar: team + market + the newest game of the window. The lifecycle maps a
+    // continuing run onto its episode's stored story, so a new final revises that story instead of minting one.
+    const id = await hashId(['trend', t.team_id, marketType, rows[0].game_id]);
     const a0 = finalize({
       id, kind: 'trend', category: 'Team trends', structure: 0, headline, deck, body, sections, market_type: marketType, bettor, against, unknown,
       market_angle: { text: [], market: null, game_id: null },

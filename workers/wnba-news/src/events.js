@@ -16,6 +16,11 @@
 //   3. headline Jaccard ≥ 0.55, cross-publisher, within 48h; or, for league-level events with no linked player,
 //      the same specific event type and stemmed headline Jaccard ≥ 0.4 ("WNBA releases 2026 playoff schedule" /
 //      "WNBA playoffs schedule 2026: dates released").
+//   4. SAME publisher, within 12h: the same report re-filed under another URL — an identical headline, or the same
+//      article slug under a different section path. (The IX published "Breanna Stewart was 'putting out fires'…"
+//      at /uncategorized/<slug> and /features/<slug>: two events before this rule.) Distinct same-publisher
+//      reports — a Game 1 and a Game 2 highlight package, a quarterfinal and a semifinal preview — differ in
+//      headline and slug, or fall outside the window, and stay distinct.
 // A different fact (a different player, a roster move after an injury) is a new event.
 
 import { tokens, jaccard } from './editorial.js';
@@ -26,6 +31,27 @@ import { laneOf, legacyType, eventMateriality } from './taxonomy.js';
 export const EVENTS_VERSION = 'wnba-events/1.0.0';
 export const FACT_WINDOW_MS = 72 * 3600e3;
 export const SIMILAR_WINDOW_MS = 48 * 3600e3;
+export const VARIANT_WINDOW_MS = 12 * 3600e3;
+
+// Rule 4 identity: a headline with case, quotes and punctuation removed; a URL's last path segment when it is a real
+// article slug (short segments like "clip" or "story" identify nothing).
+const headlineKey = (h) => String(h || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const urlSlug = (u) => {
+  try {
+    const seg = new URL(u).pathname.split('/').filter(Boolean).pop() || '';
+    return seg.length >= 16 && /[a-z]-[a-z]/i.test(seg) ? seg.toLowerCase() : null;
+  } catch { return null; }
+};
+/** Is `it` the same report as a member already in `ev`, re-filed by the same publisher? */
+export function samePublisherVariant(it, ev) {
+  const t = ms(it.published_at);
+  const hk = headlineKey(it.headline);
+  const slug = urlSlug(it.canonical_url || it.url);
+  return (ev.members || []).some((m) => {
+    if (m.source_id !== it.source_id || t === null || ms(m.published_at) === null || Math.abs(ms(m.published_at) - t) > VARIANT_WINDOW_MS) return false;
+    return (hk.length >= 12 && headlineKey(m.headline) === hk) || (slug !== null && urlSlug(m.url) === slug);
+  });
+}
 
 const ms = (x) => { const v = Date.parse(x || ''); return Number.isFinite(v) ? v : null; };
 const ids = (ents, type) => [...new Set((ents || []).filter((e) => e?.type === type && e.id != null).map((e) => String(e.id)))].sort();
@@ -78,7 +104,7 @@ function newEvent(event_id, it) {
 }
 
 function attach(ev, it) {
-  if (!ev.members.some((m) => m.item_id === it.item_id)) ev.members.push({ item_id: it.item_id, source_id: it.source_id, headline: String(it.headline || '').slice(0, 200), published_at: it.published_at, event_type: it.event_type || null });
+  if (!ev.members.some((m) => m.item_id === it.item_id)) ev.members.push({ item_id: it.item_id, source_id: it.source_id, headline: String(it.headline || '').slice(0, 200), published_at: it.published_at, event_type: it.event_type || null, url: it.canonical_url || it.url || null });
   const fk = factKey(it);
   if (fk && !ev.fact_keys.includes(fk)) ev.fact_keys.push(fk);
   ev.players = [...new Set([...ev.players, ...ids(it.entities, 'player')])].sort();
@@ -136,6 +162,48 @@ export function repairSplitFactEvents(reg) {
   return repairs;
 }
 
+/**
+ * Registry repair for rule 4: events minted before it existed for one publisher's re-filed report are merged in
+ * place. The FIRST-minted event keeps its id (any brief keyed to it keeps its identity); every item mapping follows
+ * it. Events carrying different facts are never merged. Mutates only the cloned registry used in a run; idempotent.
+ */
+export function repairPublisherVariants(reg, items = []) {
+  if (!reg?.events) return [];
+  const urlOf = new Map((items || []).map((i) => [i.item_id, i.canonical_url || i.url || null]));
+  const withUrls = (ms_) => ms_.map((m) => ({ ...m, url: m.url || urlOf.get(m.item_id) || null }));
+  const repairs = [];
+  for (let changed = true; changed;) {
+    changed = false;
+    const list = Object.values(reg.events).sort((a, b) => (ms(a.first_seen_at || a.first_published_at) ?? 0) - (ms(b.first_seen_at || b.first_published_at) ?? 0) || String(a.event_id).localeCompare(String(b.event_id)));
+    for (let i = 0; i < list.length && !changed; i += 1) {
+      const keep = list[i];
+      const keepView = { members: withUrls(keep.members || []) };
+      for (let j = i + 1; j < list.length; j += 1) {
+        const drop = list[j];
+        const fa = (keep.fact_keys || []).map(normalizeFactKey);
+        const fb = (drop.fact_keys || []).map(normalizeFactKey);
+        if (fa.length && fb.length && !fb.every((k) => fa.includes(k))) continue;
+        if (!withUrls(drop.members || []).some((m) => samePublisherVariant({ ...m, canonical_url: m.url }, keepView))) continue;
+        for (const m of drop.members || []) if (!keep.members.some((x) => x.item_id === m.item_id)) keep.members.push(m);
+        keep.fact_keys = [...new Set([...fa, ...fb])];
+        keep.players = [...new Set([...(keep.players || []), ...(drop.players || [])])].sort();
+        keep.teams = [...new Set([...(keep.teams || []), ...(drop.teams || [])])].sort();
+        const first = [ms(keep.first_published_at), ms(drop.first_published_at)].filter((x) => x !== null);
+        const last = [ms(keep.last_published_at), ms(drop.last_published_at)].filter((x) => x !== null);
+        if (first.length) keep.first_published_at = new Date(Math.min(...first)).toISOString();
+        if (last.length) keep.last_published_at = new Date(Math.max(...last)).toISOString();
+        if (GENERIC.has(keep.event_type) && drop.event_type && !GENERIC.has(drop.event_type)) keep.event_type = drop.event_type;
+        for (const m of drop.members || []) reg.item_event[m.item_id] = keep.event_id;
+        delete reg.events[drop.event_id];
+        repairs.push({ rule: 'same_publisher_variant', kept_event_id: keep.event_id, merged_event_id: drop.event_id });
+        changed = true;
+        break;
+      }
+    }
+  }
+  return repairs;
+}
+
 function candidate(it, events) {
   const t = ms(it.published_at) ?? 0;
   const fk = factKey(it);
@@ -148,11 +216,16 @@ function candidate(it, events) {
     // 1. Same facts: same event (same publisher allowed).
     if (fk && ev.fact_keys.includes(fk) && t - last <= FACT_WINDOW_MS && last - t <= FACT_WINDOW_MS) return { ev, rule: 'fact_key' };
     if (Math.abs(t - first) > SIMILAR_WINDOW_MS && Math.abs(t - last) > SIMILAR_WINDOW_MS) continue;
-    const crossPublisher = !ev.members.some((m) => m.source_id === it.source_id);
-    if (!crossPublisher) continue;
     // Two different facts are two events, however similar the words.
     const evFactLanes = new Set(ev.fact_keys.map((k) => normalizeFactKey(k).split(':')[0]));
-    if (fk && evFactLanes.has(normalizeFactKey(fk).split(':')[0]) && !ev.fact_keys.includes(normalizeFactKey(fk))) continue;
+    const factConflict = Boolean(fk && evFactLanes.has(normalizeFactKey(fk).split(':')[0]) && !ev.fact_keys.includes(normalizeFactKey(fk)));
+    const crossPublisher = !ev.members.some((m) => m.source_id === it.source_id);
+    if (!crossPublisher) {
+      // 4. The same report under another URL from the same publisher (never a merely similar one).
+      if (!factConflict && samePublisherVariant(it, ev)) return { ev, rule: 'same_publisher_variant' };
+      continue;
+    }
+    if (factConflict) continue;
     const jac = Math.max(0, ...ev.members.map((m) => jaccard(tk, tokens(m.headline))));
     // League-level events carry no player to key on: the same specific event type plus stemmed headline overlap.
     const sameTypeNoFacts = !fk && !players.length && !GENERIC.has(it.event_type) && it.event_type === ev.event_type && !ev.fact_keys.length
@@ -174,7 +247,7 @@ function candidate(it, events) {
  */
 export function assignEvents(items, registry, { keepMs = 21 * 86400e3, now = Date.now() } = {}) {
   const reg = registry?.version === EVENTS_VERSION ? structuredClone(registry) : emptyRegistry();
-  const repaired = repairSplitFactEvents(reg);
+  const repaired = [...repairSplitFactEvents(reg), ...repairPublisherVariants(reg, items)];
   const created = [];
   const joined = [];
   const sorted = [...items].sort((a, b) => String(a.published_at).localeCompare(String(b.published_at)) || String(a.item_id).localeCompare(String(b.item_id)));

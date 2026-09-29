@@ -13,9 +13,13 @@
 //           51389 — same player, status, body part and return date), so the id is provenance only.
 //           A status change, or a re-listing after the player was off the feed for RELIST_GAP_MS,
 //           is a genuinely new event.
-//   trend   team + the exact game window the trend measures. The same ten games re-run on a new
-//           day is a revision, not a new story.
-//   others  the generator id (game id, brief cluster id, transaction date+moves) is already stable.
+//   trend   team + market (spread | total) + EPISODE. An episode is one continuous qualifying run: while the
+//           daily trend desk keeps finding the same market material for the team, each new final that shifts
+//           the ten-game window revises the SAME story (same id, URL and origin). The episode ends only when
+//           the desk measures the market and finds it no longer material; a later run is a new episode and
+//           may be a new story. A calendar date, a cron run or a generator version is never part of it.
+//   others  the generator id (game id, brief cluster id, transaction date+moves) is already stable, and the
+//           novelty key below maps any other id minted for the same fact back onto the stored story.
 
 export const RELIST_GAP_MS = 12 * 3600e3;
 
@@ -85,12 +89,152 @@ export const injuryEpisode = (x) => {
   return x.episode || null;
 };
 
-/** `trend:team:gameIds` — for a generated article (raw input_hash) or a stored card (story_key, else legacy input_hash). */
+// ---------------------------------------------------------------------------------------------- trend episodes
+
+/** Live continuity needs one shared game; repairing cards written before episodes existed needs a majority of the window. */
+export const TREND_MIN_OVERLAP = 1;
+export const TREND_LEGACY_OVERLAP = 5;
+/** Trend states that keep a story out of every listing (URL, origin and history are kept). */
+export const TREND_UNLISTED = new Set(['ended', 'dormant']);
+
+/** Market family of a trend: the article/card field, else read from a legacy headline. */
+export const trendMarketOf = (x) => {
+  if (x?.kind !== 'trend') return null;
+  if (x.market_type === 'spread' || x.market_type === 'total') return x.market_type;
+  const h = String(x.headline || '');
+  if (/against the spread|\bATS\b/i.test(h)) return 'spread';
+  if (/\b(unders?|overs?)\b|the total/i.test(h)) return 'total';
+  return null;
+};
+
+/** Newest-first game ids the trend measures: a generated article carries them raw in input_hash; a card in trend_window. */
+export const trendWindowOf = (x, { stored = false } = {}) => {
+  if (x?.kind !== 'trend') return [];
+  let w = x.trend_window;
+  if (!w && stored) {
+    const legacy = String(x.story_key || '').split(':');
+    w = legacy.length === 3 ? legacy[2] : String(x.input_hash || '').split('|')[1];
+  }
+  if (!w && !stored) w = x.input_hash;
+  return String(w || '').split(',').map((s) => s.trim()).filter(Boolean);
+};
+
+const overlap = (a, b) => { const s = new Set(a); return b.filter((x) => s.has(x)).length; };
+const isEpisodeKey = (k) => typeof k === 'string' && k.split(':').length === 4;
+export const trendEpisodeKey = (team, market, anchorGameId) => (team && market && anchorGameId ? `trend:${team}:${market}:${anchorGameId}` : null);
+
+/**
+ * `trend:team:market:anchor` — the episode a stored card belongs to, or the episode a generated article would OPEN
+ * (anchored on the newest game of its first window). A continuing article inherits its predecessor's key in the merge.
+ */
 export const trendKey = (x, { stored = false } = {}) => {
   if (x?.kind !== 'trend' || !x?.lead_team_id) return null;
-  if (x.story_key) return x.story_key;
-  const window = stored ? String(x.input_hash || '').split('|')[1] : x.input_hash;
-  return window ? `trend:${x.lead_team_id}:${window}` : null;
+  if (isEpisodeKey(x.story_key)) return x.story_key;
+  if (stored) return x.story_key || null;
+  return trendEpisodeKey(x.lead_team_id, trendMarketOf(x), trendWindowOf(x)[0]);
+};
+
+/**
+ * Assign episodes to trend cards written before episodes existed (story_key was the exact window, so every new final
+ * minted a new story). Per team + market, oldest first: a card whose window shares a majority of games with the
+ * previous card's continues that episode. Cards are only annotated here; repairIndex collapses each episode.
+ */
+export function assignLegacyTrendEpisodes(cards, repairs = []) {
+  const groups = new Map();
+  for (const c of cards) {
+    if (c.kind !== 'trend' || c.duplicate_of || isEpisodeKey(c.story_key)) continue;
+    const market = trendMarketOf(c);
+    const win = trendWindowOf(c, { stored: true });
+    if (!c.lead_team_id || !market || !win.length) continue;
+    const k = `${c.lead_team_id}|${market}`;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push({ c, market, win });
+  }
+  for (const list of groups.values()) {
+    list.sort((x, y) => eventStart(x.c) - eventStart(y.c) || String(x.c.id).localeCompare(String(y.c.id)));
+    let prev = null;
+    for (const cur of list) {
+      const key = prev && overlap(prev.win, cur.win) >= TREND_LEGACY_OVERLAP ? prev.key : trendEpisodeKey(cur.c.lead_team_id, cur.market, cur.win[0]);
+      repairs.push({ id: cur.c.id, fix: 'trend_episode_assigned', from: cur.c.story_key || null, to: key });
+      cur.c.story_key = key;
+      cur.c.market_type = cur.market;
+      if (!cur.c.trend_window) cur.c.trend_window = cur.win.join(',');
+      prev = { ...cur, key };
+    }
+  }
+  return repairs;
+}
+
+/**
+ * Apply one COMPLETE trend-desk pass to the stored trend cards. `decisions` holds one entry per team + market the desk
+ * measured: standalone (published this pass), secondary (material, but the team's story is on its other market),
+ * withheld (extreme but immaterial), not_extreme, or insufficient (too few lined games — measures nothing).
+ *   current  the team's published trend this pass, or a material one whose rewrite was held — listed.
+ *   dormant  still material but the team's current story is on its other market — unlisted, episode continues.
+ *   ended    measured and no longer material — unlisted; a later run is a new episode.
+ * Insufficient data and teams the pass did not measure leave a card unchanged. Idempotent.
+ */
+export function applyTrendDecisions(cards, decisions, { at, publishedIds = new Set() } = {}) {
+  const changes = [];
+  const byTeam = new Map();
+  for (const d of decisions || []) {
+    if (!d?.team_id || !d.market) continue;
+    const k = `${d.team_id}|${d.market}`;
+    byTeam.set(k, d);
+  }
+  // Newest episode first, so an older episode of the same run is the one that steps aside.
+  const trends = cards.filter((c) => c.kind === 'trend' && !c.duplicate_of && c.lead_team_id).sort(byOriginDesc);
+  const currentByTeam = new Map();
+  for (const c of trends) if (publishedIds.has(c.id)) currentByTeam.set(String(c.lead_team_id), c);
+  const set = (c, state, reason) => {
+    if (c.trend_state === state && c.trend_state_reason === reason) return;
+    changes.push({ id: c.id, from: c.trend_state || null, to: state, reason });
+    c.trend_state = state;
+    c.trend_state_reason = reason;
+    c.trend_state_at = at;
+    if (TREND_UNLISTED.has(state)) {
+      c.quality_state = 'retired_from_index';
+      c.quality_review = { policy: 'trend-lifecycle/1.0.0', state: 'retired_from_index', reason, at };
+    } else if (c.quality_review?.policy === 'trend-lifecycle/1.0.0' || c.quality_review?.trend_lifecycle) {
+      // Back to current: the normal quality review decides its listing state again.
+      delete c.quality_state;
+      delete c.quality_review;
+    }
+  };
+  for (const c of trends) {
+    const team = String(c.lead_team_id);
+    const d = byTeam.get(`${team}|${trendMarketOf(c)}`);
+    const cur = currentByTeam.get(team);
+    if (cur && cur.id === c.id) { set(c, 'current', `the team's trend story this pass: ${d?.reason || 'material'}`); continue; }
+    if (!d || d.decision === 'insufficient') continue;
+    if (d.decision === 'withheld' || d.decision === 'not_extreme') { set(c, 'ended', `the trend desk measured it on ${at.slice(0, 10)} and it no longer qualifies: ${d.reason}`); continue; }
+    // Still material. Another story is the team's current trend (the other market, or a newer episode): step aside.
+    if (cur) { set(c, 'dormant', `still material (${d.reason}), but the team's current trend story is ${cur.id}`); continue; }
+    const newerSame = trends.find((o) => o.id !== c.id &&String(o.lead_team_id) === team && trendMarketOf(o) === trendMarketOf(c) && o.trend_state === 'current');
+    if (newerSame) { set(c, 'ended', `a later episode of the same run is current (${newerSame.id})`); continue; }
+    set(c, 'current', `still material (${d.reason}); this pass did not rewrite it`);
+  }
+  return changes;
+}
+
+// ---------------------------------------------------------------------------------------------- novelty
+
+/**
+ * The fact a story reports, per desk — two stories with the same novelty key are the same news. Trends and injuries
+ * use their episode logic instead (a key alone cannot express continuity); briefs are keyed by their source event id,
+ * which is their generator id. Null when the desk has no fact key of its own.
+ */
+export const noveltyKey = (x) => {
+  const game = (x?.entities || []).find((e) => e?.type === 'game')?.id ?? x?.context?.game?.game_id ?? null;
+  switch (x?.kind) {
+    case 'preview': return game ? `preview:${game}` : null;
+    case 'result':
+    case 'performance': return game ? `result:${game}` : null;
+    case 'props': return game ? `props:${game}` : null;
+    case 'market': return game ? `market:${game}` : null;
+    case 'international': { const g = (x.entities || []).find((e) => e?.type === 'intl_game')?.id; return g ? `intl:${g}` : null; }
+    default: return null;
+  }
 };
 
 /** The canonical card a duplicate points at. */
@@ -114,8 +258,9 @@ export async function repairIndex(index, { getItem = null } = {}) {
   const repairs = [];
   for (const c of cards) {
     if (!c.first_published_at && c.published_at) { c.first_published_at = c.published_at; repairs.push({ id: c.id, fix: 'origin_from_source_clock', to: c.published_at }); }
-    if (c.kind === 'trend' && !c.story_key) { const k = trendKey(c, { stored: true }); if (k) c.story_key = k; }
   }
+  // Trend cards from before episodes existed: one episode per continuous run, collapsed by the grouping below.
+  assignLegacyTrendEpisodes(cards, repairs);
   if (getItem) {
     for (const c of cards) {
       if (c.kind !== 'injury' || c.episode || !c.lead_player_id) continue;
@@ -194,9 +339,18 @@ export function findPredecessor(a, cards, { now = Date.now() } = {}) {
   }
   if (direct) return { prev: direct, relistedAfter: null };
   if (a.kind === 'trend') {
-    const key = trendKey(a);
-    const same = key ? cards.filter((c) => c.kind === 'trend' && c.story_key === key && !c.duplicate_of).sort((x, y) => (ms(y.updated_at) ?? 0) - (ms(x.updated_at) ?? 0)) : [];
+    // The episode this run continues: same team and market, not ended, sharing at least one game with the new window.
+    const market = trendMarketOf(a);
+    const win = trendWindowOf(a);
+    const same = market && win.length ? cards.filter((c) => c.kind === 'trend' && !c.duplicate_of && String(c.lead_team_id) === String(a.lead_team_id) && trendMarketOf(c) === market && c.trend_state !== 'ended' && overlap(trendWindowOf(c, { stored: true }), win) >= TREND_MIN_OVERLAP)
+      .sort((x, y) => (ms(y.updated_at) ?? 0) - (ms(x.updated_at) ?? 0) || String(y.id).localeCompare(String(x.id))) : [];
     return { prev: same[0] || null, relistedAfter: null };
+  }
+  // Novelty gate: another stored story already reports this fact (same game preview/result, same market) — continue it.
+  const nk = noveltyKey(a);
+  if (nk) {
+    const same = cards.filter((c) => !c.duplicate_of && c.id !== a.id && noveltyKey(c) === nk).sort(byOriginDesc);
+    if (same.length) return { prev: canonicalOf(same[same.length - 1], byId), relistedAfter: null, novelty: nk };
   }
   return { prev: null, relistedAfter: null };
 }
@@ -273,14 +427,18 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
   const byId = new Map(cards.map((c) => [c.id, c]));
   const events = [];
   let written = 0;
+  // Novelty ledger for this pass: every generated article is exactly one of these. Only `new_story` mints an article.
+  const novelty = { new_story: 0, revision: 0, unchanged: 0, rekeyed: 0 };
 
   for (const a of articles) {
     const { prev, relistedAfter } = findPredecessor(a, [...byId.values()], { now });
     if (prev && prev.id !== a.id) a.id = prev.id;
     const inHash = `${versionOf(a)}|${a.input_hash || ''}|${a.headline}|${a.deck}`;
     const iKey = injuryIdentity(a);
-    const storyKey = a.kind === 'trend' ? trendKey(a) : null;
-    const lifecycle = { ...(iKey ? { injury_key: iKey } : {}), ...(storyKey ? { story_key: storyKey } : {}) };
+    // A continuing trend keeps its episode; only a trend with no live predecessor opens one.
+    const storyKey = a.kind === 'trend' ? (prev && isEpisodeKey(prev.story_key) ? prev.story_key : trendKey(a)) : null;
+    const trendFields = a.kind === 'trend' ? { market_type: trendMarketOf(a), trend_window: trendWindowOf(a).join(',') } : {};
+    const lifecycle = { ...(iKey ? { injury_key: iKey } : {}), ...(storyKey ? { story_key: storyKey } : {}), ...trendFields };
     // Editorial origin is inherited, never re-stamped: a predecessor's (already repaired) origin wins.
     const firstPublished = prev ? articleFirstPublishedAt(prev) || started : started;
 
@@ -289,6 +447,7 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
       // newsroom desk) is filled in so the desks are complete without faking an update.
       const card = cardOf(a);
       byId.set(prev.id, { ...prev, first_published_at: firstPublished, ...lifecycle, ...(a.depth?.class && !prev.depth_class ? { depth_class: a.depth.class } : {}), ...(prev.desk === undefined && card.desk !== undefined ? { desk: card.desk, event_type: card.event_type ?? null } : {}) });
+      novelty.unchanged += 1;
       continue;
     }
     // A changed input key with nothing a reader or the record would see differently (same body, headline, deck, facts and
@@ -297,6 +456,7 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
       const stored = await getItem(prev.id).catch(() => null);
       if (stored && JSON.stringify(stored.body) === JSON.stringify(a.body) && stored.headline === a.headline && stored.deck === a.deck && sharedFactsUnchanged(stored, a) && (stored.provenance?.source_observed_at || null) === (a.provenance?.source_observed_at || null)) {
         byId.set(prev.id, { ...prev, input_hash: inHash, first_published_at: firstPublished, ...lifecycle });
+        novelty.rekeyed += 1;
         continue;
       }
     }
@@ -327,9 +487,12 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
       ...(a.provenance ? { provenance_contract: 'v1' } : {}),
       ...lifecycle,
       ...(prev?.listing_seen_at ? { listing_seen_at: prev.listing_seen_at } : {}),
+      // Trend lifecycle state is owned by the trend desk pass (applyTrendDecisions); a rewrite never resets it.
+      ...(prev?.trend_state ? { trend_state: prev.trend_state, trend_state_reason: prev.trend_state_reason, trend_state_at: prev.trend_state_at } : {}),
       ...(relistedAfter ? { relisted_after: relistedAfter } : {})
     });
     events.push({ id: a.id, kind: a.kind, event: prev ? 'revision' : relistedAfter ? 'new_event_relisted' : 'new_story', first_published_at: a.first_published_at });
+    novelty[prev ? 'revision' : 'new_story'] += 1;
     written += 1;
   }
 
@@ -345,5 +508,5 @@ export async function mergeArticles({ index, articles, started, now = Date.parse
   const kept = all.filter(alive);
   const keptIds = new Set(kept.map((c) => c.id));
   const next = kept.filter((c) => !c.duplicate_of || keptIds.has(c.duplicate_of)).sort(byOriginDesc).slice(0, cap);
-  return { index: next, written, repairs, events };
+  return { index: next, written, repairs, events, novelty };
 }

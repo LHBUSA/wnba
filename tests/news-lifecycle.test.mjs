@@ -208,7 +208,7 @@ test('News Brief: the same cluster revises one story; a different cluster is a n
   assert.equal(chooseLead(live(r.index)).id, fresh.id);
 });
 
-test('trend: the same game window on a new day is a revision; a new window is a new story', async () => {
+test('trend: the same game window on a new day is a revision; a new final in the same run revises the same story', async () => {
   const items = new Map();
   let r = await pass({ items, index: [], articles: [trend({ id: 'trendDay1aaa', window: 'g10,g9,g8', at: ago(2 * DAY) })], minutesAgo: 2 * DAY });
   r = await pass({ items, index: r.index, articles: [trend({ id: 'trendDay2bbb', window: 'g10,g9,g8', headline: 'The Valkyries are 7-3 ATS: new structure', at: ago(DAY) })], minutesAgo: DAY });
@@ -217,10 +217,14 @@ test('trend: the same game window on a new day is a revision; a new window is a 
   assert.equal(r.index[0].first_published_at, ago(2 * DAY));
   assert.equal(r.index[0].revised_at, ago(DAY));
 
+  // A new final shifts the window but the run continues: the episode's story is revised, never re-minted.
+  // (Before episodes this minted a second "new" story for the same run — the production repetition defect.)
   r = await pass({ items, index: r.index, articles: [trend({ id: 'trendDay3ccc', window: 'g11,g10,g9', at: ago(10) })], minutesAgo: 10 });
-  assert.equal(r.index.length, 2);
-  assert.equal(r.index[0].id, 'trendDay3ccc');
-  assert.equal(r.index[0].first_published_at, ago(10));
+  assert.equal(r.index.length, 1);
+  assert.equal(r.index[0].id, 'trendDay1aaa');
+  assert.equal(r.index[0].first_published_at, ago(2 * DAY));
+  assert.equal(r.index[0].revised_at, ago(10));
+  assert.equal(r.novelty.new_story, 0);
 });
 
 test('a revised card with no origin clock claims no freshness from its source clock', () => {

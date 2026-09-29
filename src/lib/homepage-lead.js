@@ -240,25 +240,35 @@ export function selectHomepageLead(stories = [], context = {}) {
   return { lead: top ? byId.get(top.id) : null, diagnostics };
 }
 
+// Latest News desks: result and performance are one game desk; trend, props and market moves one market desk.
+const RAIL_DESK = Object.freeze({ result: 'game', performance: 'game', injury: 'availability', transaction: 'roster', brief: 'brief', preview: 'preview', commissioned_feature: 'feature', winba_index: 'feature', international: 'international', trend: 'market', props: 'market', market: 'market' });
+const railDesk = (c) => RAIL_DESK[c?.kind] || c?.kind || 'other';
+const BREAKING_WINDOW = 12 * HOUR;
+
+/** A fresh availability change, roster move or material brief: shown in Latest News whatever the desk mix. */
+export function isBreakingStory(c, now = Date.now()) {
+  const at = storyPublishedAt(c);
+  if (!at || now - at > BREAKING_WINDOW) return false;
+  if (c.kind === 'injury' || c.kind === 'transaction') return true;
+  return c.kind === 'brief' && MATERIAL_BRIEF.test(`${c.event_type || ''} ${c.desk || ''}`);
+}
+
 /**
  * Latest News rail: chronological (input order is newest-first and is preserved), without the lead.
- * Desk diversity is a selection rule, not a reorder: a kind already shown twice (lead included) yields its
- * slot to another desk while one exists; the chosen items are still shown newest-first.
+ * Selection, never a reorder, in four steps: (1) breaking news always gets a slot; (2) one story per desk not
+ * already shown (the lead counts), so a varied slate shows a result, an injury, a preview and a feature rather
+ * than two trends and two previews; (3) up to `maxPerKind` per desk; (4) anything left, chronologically — when
+ * only one desk has news the rail is filled from it rather than left empty. Copy is never rotated to fake variety.
  */
-export function latestNewsRail(chronological = [], lead = null, { limit = 4, maxPerKind = 2 } = {}) {
+export function latestNewsRail(chronological = [], lead = null, { limit = 4, maxPerKind = 2, now = Date.now() } = {}) {
   const rest = (chronological || []).filter((c) => c?.id !== lead?.id);
-  const counts = new Map(lead ? [[lead.kind, 1]] : []);
+  const counts = new Map(lead ? [[railDesk(lead), 1]] : []);
   const chosen = new Set();
-  for (const c of rest) {
-    if (chosen.size >= limit) break;
-    const n = counts.get(c.kind) || 0;
-    if (n >= maxPerKind) continue;
-    chosen.add(c.id);
-    counts.set(c.kind, n + 1);
-  }
-  for (const c of rest) {
-    if (chosen.size >= limit) break;
-    chosen.add(c.id);
-  }
+  const take = (c) => { chosen.add(c.id); counts.set(railDesk(c), (counts.get(railDesk(c)) || 0) + 1); };
+  const pass = (ok) => { for (const c of rest) { if (chosen.size >= limit) return; if (!chosen.has(c.id) && ok(c)) take(c); } };
+  pass((c) => isBreakingStory(c, now));
+  pass((c) => !counts.get(railDesk(c)));
+  pass((c) => (counts.get(railDesk(c)) || 0) < maxPerKind);
+  pass(() => true);
   return rest.filter((c) => chosen.has(c.id));
 }
