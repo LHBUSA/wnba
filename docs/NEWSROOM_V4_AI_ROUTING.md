@@ -1,7 +1,7 @@
 # WNBA Newsroom V4 — AI routing (stage 2)
 
-Status: **BUILT, TESTED, ON MAIN — NOT DEPLOYED.** The `wnba-news` Worker deploy waits for the Tennis stage-1 proof
-(owner order, 2026-09-29). Router `wnba-ai-router/1.0.0`, cost log `wnba-openai-cost/2.1.0`, desk `wnba-editorial/1.0.0`
+Status: **STAGE 2 ACCEPTED 2026-09-29.** `wnba-news` 99993f10 (main a6c7e54, deployed 21:07Z, rollback 18abd3f3; KV
+snapshot D:\Workers\wnba-rollback60929-v4-router). Acceptance evidence is below the checklist. Router `wnba-ai-router/1.0.0`, cost log `wnba-openai-cost/2.1.0`, desk `wnba-editorial/1.0.0`
 (unchanged), eligibility `wnba-editorial-eligibility/1.0.0` (unchanged). Mirrors the Tennis reference router
 (`tennis-ai-router`) so every PropBetEdge newsroom routes, logs and governs the same way.
 
@@ -161,11 +161,26 @@ deterministic) or `WNBA_AI_FLAGSHIP_ENABLED=false`.
 ## Acceptance checklist
 
 - [ ] A genuinely new story gets model prose (lane `STANDARD_EDITORIAL`, one call, `trigger: new_story`).
-- [ ] An existing revision does not (0 calls; `trigger_not_eligible:existing_revision` in `edStats.routing.reasons`).
+- [x] An existing revision does not (0 calls; `trigger_not_eligible:existing_revision` in `edStats.routing.reasons`).
 - [ ] A same-day transaction with an added move and a re-clustered brief are existing revisions (0 calls, same URL).
 - [ ] Legacy repair cannot reach a premium transport (`legacy_upgrade` → `DETERMINISTIC`; `laneEnv` refuses).
-- [ ] Every call log entry records routing lane/reason, model + response model, pool, usage incl. reasoning tokens,
+- [x] Every call log entry records routing lane/reason, model + response model, pool, usage incl. reasoning tokens,
       latency, status; failed calls keep billed usage; entries appear during the pass, not only at its end.
-- [ ] One automatic attempt (no `repair` entries from cron passes).
-- [ ] Astra only on proven classes (flagship off by default; enabled + released class required).
+- [x] One automatic attempt (no `repair` entries from cron passes).
+- [x] Astra only on proven classes (flagship off by default; enabled + released class required).
 - [ ] Fallback is fact-safe: a failed / incomplete / gate-failing rewrite publishes the deterministic draft.
+
+### Production acceptance (2026-09-29)
+
+- `/health` 200, `/v1/articles` 200, `/v1/newsroom/openai-cost` 401 without the admin token, `/v1/newsroom/health`
+  `openai.status` OK.
+- Controlled canary through the deployed path (`POST /run?editorial=canary`, read-through / write-discard overlay), one
+  call, on `61b70f73f8e6` at 21:23:14Z: `trigger canary`, `STANDARD_EDITORIAL` / `standard: routine story: standard
+  editorial`, `gpt-5.6-sol` (response model the same), pool `premium`, `resp_0e24361d…`, 14,418 input / 0 cached /
+  1,167 output / 470 reasoning tokens, 15,581 ms, `completed`, nominal $0.029693 (standard-rate equivalent, not billed).
+- The article was not mutated: its stored `updated_at` / `revised_at` stay 15:26Z, before the canary.
+- The daily eligible-token counter moved 15,599 -> 31,184 (+15,585), which equals the canary's `total_eligible_tokens`.
+- Cron pass 21:35:43Z: 20 existing revisions -> `DETERMINISTIC` (`trigger_not_eligible:existing_revision`), 0 calls,
+  flagship disabled. Legacy upgrade -> `DETERMINISTIC` is covered by tests (924/924); no legacy candidate ran in that pass.
+- Still organic: the first genuinely new story on `STANDARD_EDITORIAL`. Two pre-fix `revision` calls at 18:17Z (old
+  code 4b4572f7) keep 2026-09-29's `invariant_ok` false; from 2026-09-30 it must read true.
