@@ -5,8 +5,11 @@
 // leads with the basketball event and uses source attribution only where needed.
 
 import { dLong, dMonth, tET, f1, nick, poss, wordN, listJoin } from './prose.js';
+import { seriesScoreText } from './playoff-context.js';
 
-export const BRIEF_STORY_VERSION = 'wnba-brief-story/1.1.0';
+// 1.2.0: awards are stories only when won (never "enters the conversation"), a coach award is the team's honor and
+// never a coaching change, All-WNBA grammar, and the team's playoff series as the why-now.
+export const BRIEF_STORY_VERSION = 'wnba-brief-story/1.2.0';
 
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
@@ -72,11 +75,11 @@ function recordComparison(headline, playerName) {
 function awardName(headline) {
   const h = String(headline || '');
   const rules = [
-    [/rookie of the year/i, 'WNBA Rookie of the Year'],
-    [/defensive player of the year/i, 'WNBA Defensive Player of the Year'],
+    [/rookie of (?:the )?year/i, 'WNBA Rookie of the Year'],
+    [/defensive player of (?:the )?year/i, 'WNBA Defensive Player of the Year'],
     [/most improved player/i, 'WNBA Most Improved Player'],
-    [/sixth (?:player|woman) of the year/i, 'WNBA Sixth Player of the Year'],
-    [/coach of the year/i, 'WNBA Coach of the Year'],
+    [/sixth (?:player|woman) of (?:the )?year/i, 'WNBA Sixth Player of the Year'],
+    [/coach of (?:the )?year/i, 'WNBA Coach of the Year'],
     [/most valuable player|\bMVP\b/i, 'WNBA MVP'],
     [/all[- ]wnba/i, 'All-WNBA honors']
   ];
@@ -206,22 +209,58 @@ function lineupStory({ source, sourceAt, others, player, v }) {
   return { headline, deck, body, sections };
 }
 
-function awardsStory({ source, sourceHeadline, sourceAt, others, player, v }) {
+/** A reported award is WON (not merely discussed) when the publisher headline says so. */
+export const AWARD_WON = /\b(wins?|won|named|earns?|earned|receives?|received|voted|captures?|captured|claims?|claimed|takes home|took home|selected|unanimous(?:ly)?|honou?red as|nods?)\b/i;
+const AWARD_SPECULATIVE = /\b(race|odds|ladder|watch|power rankings?|frontrunners?|candidates?|case for|predictions?|picks?|should|could|would|conversation|debate)\b/i;
+
+function awardsStory({ source, sourceHeadline, sourceAt, others, player, team, v }) {
   const { body, sections, add } = sectioner();
-  const pn = player?.name || 'The player';
-  const tn = v.team?.name || null;
+  const tn = v.team?.name || team?.name || null;
   const award = awardName(sourceHeadline);
-  const won = /\b(wins?|named|earns?|receives?|voted)\b/i.test(sourceHeadline);
-  const headline = won ? `${pn} earns ${award}` : `${pn} enters the ${award} conversation`;
-  const deck = v.season
-    ? `${pn}’s season line — ${f1(v.season.pts)} points, ${f1(v.season.reb)} rebounds and ${f1(v.season.ast)} assists per game — supplies the basketball context behind the honor.`
-    : `${pn} is at the center of a new ${award} development.`;
-  add(won ? 'The honor' : 'The awards development', 'change', [
-    won ? `${pn} has been named ${award}.` : `${pn} is at the center of a reported ${award} development.`,
-    reportSentence(source, sourceAt, others, won ? `${award} honor` : `${award} development`)
-  ]);
-  add('The season behind it', 'records', [seasonSentence(pn, tn, v.season), recentSentence(pn, v.season)]);
-  add(tn ? `Her role with ${nick(v.team)}` : 'Her role', 'team', [roleSentence(pn, tn, v), standingSentence(tn, v.standing)]);
+  const won = AWARD_WON.test(sourceHeadline) && !AWARD_SPECULATIVE.test(sourceHeadline);
+  // An award with no linked player (a coach) is the team's honor. It is never written as "The player earns ..."
+  // and never inflated into a coaching change.
+  if (!player?.name) {
+    if (!tn || !won || !/coach of the year/i.test(award)) return null;
+    add('The honor', 'change', [
+      `The ${tn}’ head coach has been named ${award}.`,
+      reportSentence(source, sourceAt, others, `${award} honor`)
+    ]);
+    add('The season behind it', 'context', [
+      standingSentence(tn, v.standing),
+      v.core?.length ? `Over the last ${wordN(v.core_sample)} games, the heaviest minutes belong to ${listJoin(v.core.map((r) => `${r.name} (${f1(r.min)} minutes, ${f1(r.pts)} points)`))}.` : null
+    ]);
+    add('Next game', 'next', [nextGameSentence(tn, v.next_game)]);
+    const deck = v.standing
+      ? `The award follows a ${v.standing.wins}–${v.standing.losses} regular season for the ${tn}${v.standing.seed ? `, the No. ${v.standing.seed} seed in the ${v.standing.conference_name || 'conference'}` : ''}.`
+      : `The ${tn} have the ${award}.`;
+    return { headline: `${tn} coach named ${award}`, deck, body, sections };
+  }
+  // Award races, ladders and odds pieces are commentary about an award, not an award: no standalone story.
+  if (!won) return null;
+  const pn = player.name;
+  const allWnba = /all-wnba/i.test(award);
+  const honor = allWnba ? 'earned All-WNBA honors' : `been named ${award}`;
+  const headline = allWnba ? `${pn} earns All-WNBA honors` : `${pn} named ${award}`;
+  const s = v.season;
+  const lede = s
+    ? `${pn} has ${honor} after averaging ${f1(s.pts)} points, ${f1(s.reb)} rebounds and ${f1(s.ast)} assists in ${s.games} regular-season games${tn ? ` for the ${tn}` : ''}.`
+    : `${pn} has ${honor}.`;
+  const po = v.playoff || null;
+  const series = po && tn ? seriesScoreText(po, v.team?.id, 'before', (t) => (String(t.team_id) === String(v.team?.id) ? nick(v.team) : t.short_name || t.name)) : null;
+  const stake = po && v.team?.id ? po.stakes?.[String(v.team.id)] : null;
+  const deck = series
+    ? `The honor lands in the middle of the ${po.round.toLowerCase()}: ${series}${stake === 'elimination' ? `, and the ${nick(v.team)} face elimination in Game ${po.game_number}` : stake === 'closeout' ? `, and the ${nick(v.team)} can close it out in Game ${po.game_number}` : ''}.`
+    : v.role ? `${pn} has carried ${v.role.min_rank === 1 ? 'the heaviest minutes' : 'a front-line role'} in the ${poss(nick(v.team || { name: tn }))} recent rotation.` : `${pn} has ${honor}.`;
+  add('The honor', 'change', [lede, reportSentence(source, sourceAt, others, allWnba ? 'All-WNBA selection' : `${award} honor`)]);
+  add('The season behind it', 'records', [seasonSentence(pn, tn, s), recentSentence(pn, s)]);
+  add(tn ? `Her role with the ${nick(v.team)}` : 'Her role', 'team', [roleSentence(pn, tn, v), standingSentence(tn, v.standing)]);
+  if (series) {
+    add('Why it matters now', 'why', [
+      `The honor covers the regular season, and the postseason keeps its own ledger. ${cap(series)}${stake === 'elimination' ? `, which makes Game ${po.game_number} an elimination game for the ${nick(v.team)}` : stake === 'closeout' ? `, so a win in Game ${po.game_number} would send the ${nick(v.team)} through` : ''}.`
+    ]);
+  }
+  add('Next game', 'next', [nextGameSentence(tn, v.next_game)]);
   return { headline, deck, body, sections };
 }
 

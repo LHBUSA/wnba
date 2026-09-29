@@ -26,6 +26,7 @@ import { seasonLog } from './deep.js';
 import { dShort, dLong, dMonth, tET, f1, listJoin, nick, poss, wordN, countOf } from './prose.js';
 import { headlineConsensusPlayer, consensusEventType, teamForPlayer, headlineTeam } from './identity.js';
 import { buildBriefStory, BRIEF_STORY_VERSION } from './brief-story.js';
+import { playoffContext, playoffFacts } from './playoff-context.js';
 
 export const BRIEF_VERSION = 'wnba-briefs/3.0.0'; // reader-first event planner + headline consensus + fail-closed storycraft
 export const BRIEF_MAX_AGE_MS = 36 * 3600e3;
@@ -547,12 +548,20 @@ export async function briefArticles({ externalItems = [], structured = [], now =
 
     const deskOf = type === 'record' ? 'record' : type === 'draft' ? 'draft' : ['cba', 'expansion', 'league', 'business', 'front_office', 'coaching', 'playoff', 'awards'].includes(type) ? 'league' : null;
     const { v, evidence: records, team } = await verify({ player, team: teamEntity?.name ? teamEntity : null, ctx: { ...ctx, now }, type, headline: sourceHeadline, reportAt: eventAt });
+    // A roster move the transactions log dates more than a week before the report is not a new event: the report is
+    // about something else (a recap that mentions an old signing) or it is late. Never published as fresh news.
+    if (['signing', 'waiver', 'trade', 'roster_move'].includes(type) && v.transaction?.date && Date.parse(eventAt) - Date.parse(v.transaction.date) > 7 * 86400e3) {
+      decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'declined', reason: `stale ${type}: the transactions log dates the move ${v.transaction.date.slice(0, 10)}, more than a week before the report` });
+      continue;
+    }
+    // The team's postseason series, for any story whose next game is a playoff game.
+    if (v.next_game?.game_id && ctx.playoffs) { const po = playoffContext(ctx.playoffs, v.next_game.game_id); if (po) v.playoff = playoffFacts(po); }
     // A record story needs the achievement itself in PropBetEdge's records; an unverifiable record claim stays coverage.
     if (deskOf === 'record' && !v.record?.verified) {
       decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'external_coverage', reason: `record claim not verified in PropBetEdge records (${v.record?.reason || 'no checkable claim in the report'})` });
       continue;
     }
-    if (deskOf === 'league' && ['front_office', 'coaching'].includes(type) && (v.team?.id || teamEntity?.id) && ctx.api) {
+    if (deskOf === 'league' && (['front_office', 'coaching'].includes(type) || (type === 'awards' && !player)) && (v.team?.id || teamEntity?.id) && ctx.api) {
       const tRes = await ctx.api(`/v1/teams/${v.team?.id || teamEntity.id}`).catch(() => null);
       const rows = (tRes?.rotation?.rows || []).filter((r) => r.appearances > 0).sort((p, q) => q.min - p.min).slice(0, 3);
       if (rows.length) { v.core = rows.map((r) => ({ name: r.name, min: r.min, pts: r.pts })); v.core_sample = tRes.rotation.sample; records.push({ kind: 'record', source: `ESPN box scores, last ${tRes.rotation.sample} games (observed rotation)`, url: `https://wnba.propbetedge.ai/teams/${v.team?.id || teamEntity.id}`, captured_at: new Date(now).toISOString(), record: { core: v.core } }); }
@@ -595,6 +604,11 @@ export async function briefArticles({ externalItems = [], structured = [], now =
       type,
       leagueTeams: ctx.standingsById?.size || null
     });
+    // A composer may decline an event it cannot describe truthfully (an award with no named winner in our records).
+    if (!story) {
+      decisions.push({ cluster_id, brief_id: id, headline: sourceHeadline, publisher: source, decision: 'declined', reason: `${type}: the story composer cannot state this event from PropBetEdge records` });
+      continue;
+    }
     const headline = trimHeadline(story.headline);
     const deck = story.deck;
     const body = story.body;

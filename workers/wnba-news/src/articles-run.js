@@ -13,6 +13,8 @@ import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles, applyTrendDecisions, trendMarketOf } from './lifecycle.js';
 import { qualityFailures } from './quality.js';
 import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
+import { regularSeasonIds, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
+import { applyCorrections, CORRECTIONS_VERSION } from './corrections.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
 const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8) + n)); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`; };
@@ -25,7 +27,7 @@ export const ARTICLE_RUN_MIN_GAP_MS = 9 * 60e3;
 // Story identity, editorial-origin clock, duplicate repair and supersession live in lifecycle.js.
 export { articleFirstPublishedAt, injuryIdentity } from './lifecycle.js';
 
-export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false, backfillInternational = false, mediaFor = null }) {
+export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false, backfillInternational = false, mediaFor = null, inspect = null }) {
   const started = new Date().toISOString();
   const now = Date.now();
   const last = await env.NEWS_KV.get('art:v1:last_run', 'json');
@@ -48,13 +50,16 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   };
   const meter = () => ({ ...meterState });
   const today = et();
-  const [inj, tx, sched, longSched, standings, props] = await Promise.all([
+  const [inj, tx, sched, longSched, standings, props, playoffs, seasonInfo] = await Promise.all([
     soft('/v1/injuries'),
     soft('/v1/transactions'),
     soft(`/v1/schedule?from=${add(today, -14)}&to=${add(today, 7)}`),
     soft(`/v1/schedule?from=${add(today, -50)}&to=${today}`),
     soft('/v1/standings'),
-    soft('/v1/props')
+    soft('/v1/props'),
+    // Postseason series (game numbers, if-necessary games, series score) and the season-type date windows.
+    soft('/v1/playoffs'),
+    soft('/v1/season')
   ]);
   const standingsById = new Map((standings?.groups || []).flatMap((g) => g.entries.map((e) => [e.team_id, { ...e, conference_name: g.name }])));
   const games = sched?.games || [];
@@ -72,14 +77,17 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   // Regular-season game ids: a team schedule carries preseason games with the same season.year, so records
   // computed from team schedules are filtered by the league schedule, where season.type === 2.
   const season = games[0]?.season?.year || Number(today.slice(0, 4));
+  // ESPN's schedule no longer always carries season.type; when it is missing the phase comes from the /v1/season
+  // date windows (and playoff notes), so records never silently collapse to 0-0.
+  const seasonTypes = seasonInfo?.types || [];
   const regIds = new Set();
   for (let from = `${season}0501`; from < today;) {
     const to = [add(from, 59), today].sort()[0];
     const chunk = await soft(`/v1/schedule?from=${from}&to=${to}`);
-    for (const g of chunk?.games || []) if (g.season?.type === 2) regIds.add(String(g.game_id));
+    for (const id of regularSeasonIds(chunk?.games || [], seasonTypes)) regIds.add(id);
     from = add(to, 1);
   }
-  const ctx = { api, injuries: inj?.items || [], externalByPlayer, schedule: games, standingsById, now, transactions: tx?.items || [], dict, finals, upcoming, finalsByTeam, teams: dict.teamsList || [], props, season, regIds, meter, asOf: started };
+  const ctx = { api, injuries: inj?.items || [], externalByPlayer, schedule: games, standingsById, now, transactions: tx?.items || [], dict, finals, upcoming, finalsByTeam, teams: dict.teamsList || [], props, season, regIds, seasonTypes, playoffs: playoffs?.season === season ? playoffs : null, meter, asOf: started };
   const runs = {};
   const produced = [];
   let coverageDecisions = [];
@@ -99,7 +107,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     // Material source-wire events run last so the brief generator can suppress events already covered by a
     // structured injury/transaction story. A source cluster is one stable brief: corroboration revises it,
     // while a different material cluster becomes a genuinely new newsroom article.
-    ['brief', async () => { const xs = await briefArticles({ externalItems, structured: produced, now, existingIds: new Set(priorIndex.map((c) => c.id)), ctx: { api, injuries: inj?.items || null, transactions: tx?.items || [], schedule: games, standingsById, season, dict } }); coverageDecisions = xs.decisions || []; return xs; }, true]
+    ['brief', async () => { const xs = await briefArticles({ externalItems, structured: produced, now, existingIds: new Set(priorIndex.map((c) => c.id)), ctx: { api, injuries: inj?.items || null, transactions: tx?.items || [], schedule: games, standingsById, season, dict, playoffs: ctx.playoffs } }); coverageDecisions = xs.decisions || []; return xs; }, true]
   ]) {
     if (!on) { runs[name] = 'skipped (daily)'; continue; }
     try {
@@ -140,6 +148,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     // Word count is a diagnostic; substance, repetition and Intelligence duplication decide.
     a.depth = assessDepth(a, { now });
     if (!a.depth.pass) { a.status = 'held'; a.reconcile.failures.push(...a.depth.failures.filter((f) => !a.gate.failures.includes(f))); }
+    if (inspect) inspect(a);
     if (a.status !== 'published') { held.push({ id: a.id, kind: a.kind, headline: a.headline, depth: { class: a.depth.class, score: a.depth.score, words: a.depth.words }, failures: [...new Set([...a.gate.failures, ...a.reconcile.failures])].slice(0, 8), at: started }); return a; }
     publishable.push(a);
     return a;
@@ -211,13 +220,15 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   // Standalone stories that were only another publisher's feature (no underlying development) are demoted to external
   // coverage — deliberately, once per brief-generator version, keeping the item, its URL and its revision history.
   const demotions = await demoteExternalCoverage(next, { at: started, getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'), putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }) });
+  // Reviewed editorial corrections: a published story that was wrong is retired with its correction (corrections.js).
+  const corrections = await applyCorrections(next, { at: started, getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'), putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }) });
   // Every live story gets an intentional quality state (legacy.js). Rewritten stories passed the gate this pass.
   const writtenIds = new Set(events.map((e) => e.id));
   let reviewed = 0;
   const reviewLimit = 500; // full current catalog review after a policy/version change
   for (const c of next) {
     if (c.superseded_by) continue;
-    if (writtenIds.has(c.id)) { c.quality_state = 'current_quality'; c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'current_quality', reason: 'written this pass through the current gate', at: started, generator: String(c.input_hash || '').split('|')[0] || null }; continue; }
+    if (writtenIds.has(c.id) && !c.correction) { c.quality_state = 'current_quality'; c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'current_quality', reason: 'written this pass through the current gate', at: started, generator: String(c.input_hash || '').split('|')[0] || null }; continue; }
     if (!needsReview(c) || reviewed >= reviewLimit) continue;
     reviewed += 1;
     const teamName = c.kind === 'trend' ? (ctx.teams || []).find((t) => String(t.team_id) === String(c.lead_team_id))?.short_name : null;
@@ -228,7 +239,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   }
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 20), desk_decisions: deskDecisions, demotions, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }

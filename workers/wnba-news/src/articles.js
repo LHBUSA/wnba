@@ -40,7 +40,11 @@ export { injuryDeep as injuryArticles, transactionDeep as transactionArticles, r
 // market-now, persistence and opponent context; the legacy upgrade pass rebuilds stories whose records are still in reach.
 // 1.5.0: editorial voice pass — event-first ledes, shorter headlines/decks and sports-desk section language replace
 // audit/memo phrasing while every number, source boundary and deterministic gate remains unchanged.
-export const ARTICLE_VERSION = 'wnba-articles/1.5.0';
+// 1.6.0: playoff desk — series state (game number, series score, closeout/elimination stakes) in previews, results
+// and injuries; unforced if-necessary games are not previewed; eliminated teams' injuries and trends are not news;
+// regular-season records from the season windows (the schedule's season.type went null and every record read 0-0);
+// numeric comparators (bench ties are "even"), counted-noun agreement, a/an before margins, props sides never null.
+export const ARTICLE_VERSION = 'wnba-articles/1.6.0';
 
 // ------------------------------------------------------------ formatting
 
@@ -99,7 +103,7 @@ function marketText(m, g, forTeamId) {
 
 function standingText(st, conference) {
   if (!st) return null;
-  const gb = st.games_behind && st.games_behind !== '-' ? `, ${st.games_behind} games back` : '';
+  const gb = st.games_behind && st.games_behind !== '-' ? `, ${st.games_behind} ${Number(st.games_behind) === 1 ? 'game' : 'games'} back` : '';
   const seed = st.seed ? `the No. ${st.seed} seed in the ${conference || st.conference_name || 'league'}` : `in the ${conference || 'league'}`;
   return `${st.wins}-${st.losses}, ${seed}${gb}`;
 }
@@ -779,7 +783,8 @@ export async function propArticles({ api, props }) {
     const id = await hashId(['props', pg.odds_event_id]);
     out.push(finalize({
       id, kind: 'props', category: 'Prop watch', structure: v, headline, deck: `${rows.length} player-points lines against recent production, captured ${dShort(props.captured_at)}.`, body, bettor,
-      market_angle: { text: rows.slice(0, 4).map((r) => `${r.name} ${r.line}: best over ${am(r.best_over?.price)} (${book(r.best_over?.book)}), best under ${am(r.best_under?.price)} (${book(r.best_under?.book)}), ${r.books} book${r.books === 1 ? '' : 's'}.`), market: null, game_id: pg.game_id },
+      // A side the books have not posted is left out; the sentence never prints "null (undefined)".
+      market_angle: { text: rows.slice(0, 4).map((r) => `${r.name} ${r.line}: ${[r.best_over?.price !== undefined && r.best_over?.price !== null ? `best over ${am(r.best_over.price)} (${book(r.best_over.book)})` : null, r.best_under?.price !== undefined && r.best_under?.price !== null ? `best under ${am(r.best_under.price)} (${book(r.best_under.book)})` : null, `${r.books} book${r.books === 1 ? '' : 's'}`].filter(Boolean).join(', ')}.`), market: null, game_id: pg.game_id },
       lead_team_id: pg.home_team_id, lead_player_id: top.athlete_id, primary_subject: top.name, published_at: props.captured_at,
       context: { rows },
       entities: [...(pg.game_id ? [{ type: 'game', id: pg.game_id, name: `${pg.away_team} @ ${pg.home_team}` }] : []), ...rows.slice(0, 6).map((r) => ({ type: 'player', id: r.athlete_id, name: r.name }))],

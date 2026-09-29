@@ -8,7 +8,9 @@
 //   story_type  the legacy v1 type, kept so existing consumers (briefs, feed filters, Supabase rows) keep working
 //   materiality { score, level, material, reasons, flags } — whether the event can become a PropBetEdge story
 
-export const TAXONOMY_VERSION = 'wnba-taxonomy/1.2.0';
+// 1.3.0: award names match with or without "the" ("Coach of Year"), so an award can no longer fall through to the
+// coaching rule. The version bump re-types every stored item on the next ingest.
+export const TAXONOMY_VERSION = 'wnba-taxonomy/1.3.0';
 
 /** Score at or above which a source-wire event may become a new PropBetEdge story. */
 export const MATERIAL_THRESHOLD = 3.5;
@@ -72,7 +74,9 @@ const RULES = [
   ['front_office', /\b(general manager|\bgm\b|president of basketball|team president|front office|ownership group|new owners?|sale of the (team|franchise)|minority stake|chief executive|ceo)\b/i],
   ['draft', /\b(draft (lottery|pick|prospects?|order|board|night|rights)|no\. \d+ pick|first-round pick|\d{4} wnba draft|wnba draft)\b/i],
   ['record', /\b((sets?|breaks?|broke|ties?|tied|new|franchise|league|wnba|career|single-game|single-season) record|record-(setting|breaking)|rookie (?:points?|scoring) record|(?:breaks?|broke|passes?|passed|surpasses?|surpassed) .{1,70}\b(?:rookie|wnba|league|franchise) (?:points?|scoring)? ?record|milestone|career-high|all-time (leader|scoring|assists|rebounds)|first player (ever )?to|becomes the (first|fastest|youngest)|triple-double)\b/i],
-  ['awards', /\b(mvp|most valuable player|(player|rookie|coach|sixth player) of the (week|month)|defensive player of the year|dpoy|rookie of the year|sixth (player|woman) of the year|most improved player|coach of the year|executive of the year|all-wnba|all-defensive|all-rookie|player of the (week|month)|rookie of the month|all-star (starters?|reserves?|selections?|roster|captains?|voting)|named (an? )?all-star|award(s|ed)?|honou?rs? (for|as))\b/i],
+  // Award names match with or without "the": ESPN writes "Coach of Year", and a missed award fell through to the
+  // coaching rule ("named ... coach") and was once published as a coaching change.
+  ['awards', /\b(mvp|most valuable player|(player|rookie|coach|sixth player) of the (week|month)|defensive player of (the )?year|dpoy|rookie of (the )?year|sixth (player|woman) of (the )?year|most improved player|coach of (the )?year|executive of (the )?year|all-wnba|all-defensive|all-rookie|player of the (week|month)|rookie of the month|all-star (starters?|reserves?|selections?|roster|captains?|voting)|named (an? )?all-star|award(s|ed)?|honou?rs? (for|as))\b/i],
   ['coaching', /\b(head coach|interim coach|assistant coach|coach(es|ing)? (fired|hire[sd]?|search|change|staff)|(fires?|fired|hires?|hired|names?|named|parts? ways with|dismiss(es|ed)?) .{0,40}\bcoach)\b/i],
   ['playoff', /\b(clinch(es|ed|ing)?|eliminat(ed|ion)|magic number|tiebreakers?|wnba finals|first-round (series|bye)|playoff (seed|seeding|race|picture|schedule|bracket|spot|berth)|postseason (seed|seeding|race|picture|schedule|bracket|spot|berth)|earn(s|ed)? (a |the )?(playoff|postseason) (spot|berth))\b/i],
   ['league', /\b(wnba (announces|unveils|releases|reveals|sets|approves|fines|suspends)|schedule release|rule change|fine[sd]?|disciplin(e|ary)|investigation|commissioner'?s cup|all-star game|league-wide)\b/i],

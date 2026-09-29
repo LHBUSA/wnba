@@ -23,6 +23,20 @@ export const countOf = (n, w, pl = `${w}s`) => (n === 0 ? `no ${pl}` : `${n <= 1
 export const plural = (n, w, pl = `${w}s`) => (n === 0 ? `no ${pl}` : `${n} ${n === 1 ? w : pl}`);
 /** An averaged stat as prose: "no rebounds", "1 point", "4.2 rebounds". Never "0 rebounds" or "1 points". */
 export const statAvg = (v, one, many = `${one}s`) => (!Number.isFinite(v) ? null : Math.abs(v) < 0.05 ? `no ${many}` : `${f1(v)} ${Math.abs(v - 1) < 0.05 ? one : many}`);
+/**
+ * Bench comparison with the comparator decided by the numbers, never by the template: equal benches are "even",
+ * and only the bench that scored MORE is said to have outscored the other ("15–15" can never be "outscored").
+ * W = the winning team's nickname, L = the loser's.
+ */
+export function benchComparison(W, L, bw, bl) {
+  if (!Number.isFinite(bw) || !Number.isFinite(bl)) return null;
+  if (bw === bl) return `The benches were even, ${bw}–${bl}.`;
+  if (bw > bl) return `The ${poss(W)} bench outscored the ${poss(L)}, ${bw}–${bl}.`;
+  return bl - bw >= 8
+    ? `The ${W} won it with their starters: the ${poss(L)} bench outscored theirs, ${bl}–${bw}.`
+    : `The ${poss(L)} bench outscored the ${poss(W)}, ${bl}–${bw}.`;
+}
+
 /** A game score: en dash, never a hyphen (a hyphenated "108-100" reads as a price to gate.js). */
 export const sc = (a, b) => `${a}–${b}`;
 export const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);

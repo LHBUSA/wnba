@@ -18,7 +18,8 @@
 //     story's bettor analysis leads with the market it is about (market_type).
 
 import { finalize, marketText, standingText, nextGame, gameEntity, hashId, licensedContextPhoto } from './articles.js';
-import { dShort, dLong, dMonth, etDate, tET, f1, sgn, am, listJoin, nick, full, poss, cap, wordN, countOf, statAvg, avg, etDays, aan, sc, clockOf, periodOf, QUARTER } from './prose.js';
+import { dShort, dLong, dMonth, etDate, tET, f1, sgn, am, listJoin, nick, full, poss, cap, wordN, countOf, statAvg, avg, etDays, aan, sc, clockOf, periodOf, QUARTER, benchComparison } from './prose.js';
+import { playoffContext, playoffFacts, seriesScoreText, seasonOverTeams } from './playoff-context.js';
 import { coLeaders, CO_LEADER_RULE } from './reconcile.js';
 
 // The synthesis generators ship as part of the article engine; ARTICLE_VERSION in articles.js is the
@@ -187,6 +188,9 @@ export async function previewDeep(ctx) {
   const tn = nameByAbbr(ctx.teams);
   for (const g0 of upcoming) {
     const t0 = meter();
+    // A playoff game the series has not yet forced (Game 3 before a 1-1 tie) is not previewed: it may never be played.
+    const po = ctx.playoffs ? playoffContext(ctx.playoffs, g0.game_id) : null;
+    if (po && !po.needed) continue;
     const m = await api(`/v1/matchups/${g0.game_id}`);
     if (!m) continue;
     const g = m.game;
@@ -295,7 +299,7 @@ export async function previewDeep(ctx) {
     let series = [];
     if (m.season_series?.[0]?.summary && deepResearch) {
       const hs = await api(`/v1/teams/${H.team.team_id}`);
-      series = (hs?.schedule || []).filter((x) => x.status?.state === 'post' && x.season?.year === year && [x.home.team_id, x.away.team_id].includes(A.team.team_id) && Date.parse(x.start_utc) < Date.parse(g.start_utc)).sort((x, y) => y.start_utc.localeCompare(x.start_utc));
+      series = (hs?.schedule || []).filter((x) => x.status?.state === 'post' && x.season?.year === year && (!ctx.regIds?.size || ctx.regIds.has(String(x.game_id))) && [x.home.team_id, x.away.team_id].includes(A.team.team_id) && Date.parse(x.start_utc) < Date.parse(g.start_utc)).sort((x, y) => y.start_utc.localeCompare(x.start_utc));
     }
     if (m.season_series?.[0]?.summary) {
       cmp.push(series.length
@@ -369,14 +373,25 @@ export async function previewDeep(ctx) {
       thesis = `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}. ${mk ? 'With no clear favorite, the matchup comes down to recent form, scoring, rest and availability.' : historical ? 'There is no stored market snapshot for this date, so the matchup is framed by form, scoring, rest and the season series.' : 'The first market snapshot is not posted yet, so the early read is form, scoring, rest and availability.'}`;
     }
 
+    let seriesLede = null;
+    if (po) {
+      const S = (tid) => (String(tid) === String(A.team.team_id) ? A.team : H.team);
+      const closer = Object.entries(po.stakes).find(([, v]) => v === 'closeout')?.[0];
+      const facing = Object.entries(po.stakes).find(([, v]) => v === 'elimination')?.[0];
+      const decider = Object.values(po.stakes).includes('decider');
+      const where = (tid) => (String(tid) === String(H.team.team_id) ? 'at home' : 'on the road');
+      seriesLede = `This is Game ${po.game_number} of the ${po.round.toLowerCase()}, and ${seriesScoreText(po, H.team.team_id, 'before', (t) => nick(S(t.team_id)))}.${decider ? ` It decides the series: the winner advances and the loser’s season ends.` : closer ? ` The ${nick(S(closer))} can close it out ${where(closer)}; the ${nick(S(facing))} face elimination.` : ''}`;
+      thesis = `${seriesLede} ${thesis}`;
+    }
     const { body, sections } = assemble([['Game outlook', [thesis]], ['Availability', availParas], ['How they match up', cmp], ['The line', mkt], ['Before tip', next]]);
     const favN = fav ? nick(fav.team) : null;
+    const gameTag = po ? `, Game ${po.game_number}` : '';
     const headline = fav && seasonGap !== null && recentGap !== null
-      ? (seasonGap >= line && recentGap >= line ? `${a} at ${h}: ${favN} favored by ${line} with form on their side`
-        : seasonGap >= line ? `${a} at ${h}: ${favN} favored by ${line}, with the season edge stronger than recent form`
-          : recentGap >= line ? `${a} at ${h}: ${favN} favored by ${line} as recent form improves`
-            : `${a} at ${h}: ${favN} favored by ${line} in a tighter matchup than the spread suggests`)
-      : fav ? `${a} at ${h}: ${favN} favored by ${line}` : `${a} at ${h}: injuries, recent form and the matchup`;
+      ? (seasonGap >= line && recentGap >= line ? `${a} at ${h}${gameTag}: ${favN} favored by ${line} with form on their side`
+        : seasonGap >= line ? `${a} at ${h}${gameTag}: ${favN} favored by ${line}, with the season edge stronger than recent form`
+          : recentGap >= line ? `${a} at ${h}${gameTag}: ${favN} favored by ${line} as recent form improves`
+            : `${a} at ${h}${gameTag}: ${favN} favored by ${line} in a tighter matchup than the spread suggests`)
+      : fav ? `${a} at ${h}${gameTag}: ${favN} favored by ${line}` : po ? `${a} at ${h}${gameTag}: ${seriesScoreText(po, H.team.team_id, 'before', (t) => nick(String(t.team_id) === String(A.team.team_id) ? A.team : H.team)).replace(/^the /, 'The ')}` : `${a} at ${h}: injuries, recent form and the matchup`;
     const deck = fav
       ? `The ${full(fav.team)} are ${line}-point favorites ${fav === A ? 'on the road' : 'at home'} against the ${full(dog.team)}. ${gd.length ? `${countOf(gd.length, 'player')} across the two teams ${gd.length === 1 ? 'has' : 'have'} an ESPN return estimate on game day, making availability part of the pregame read.` : `Recent form and availability shape the matchup before ${dLong(g.start_utc)}${venue}.`}`
       : `The ${full(H.team)} host the ${full(A.team)} on ${dLong(g.start_utc)}${venue}, with recent form and availability driving the early read.`;
@@ -405,7 +420,7 @@ export async function previewDeep(ctx) {
       lead_team_id: H.team.team_id, lead_player_id: null, primary_subject: H.team.short_name, published_at: mk?.captured_at || new Date(now).toISOString(),
       context: { game: { game_id: g.game_id, start_utc: g.start_utc, home: g.home, away: g.away, venue: g.venue } },
       entities: [gameEntity(g), { type: 'team', id: A.team.team_id, name: A.team.name }, { type: 'team', id: H.team.team_id, name: H.team.name }, ...[A, H].flatMap((t) => t.rotation.rows.filter((x) => x.appearances > 0).slice(0, 2).map((x) => ({ type: 'player', id: x.athlete_id, name: x.name })))],
-      facts: { away: clean(A), home: clean(H), injury_feed: { away: feeds.a.map(stripNotes), home: feeds.h.map(stripNotes) }, injury_scope: feedUnknown ? [] : [A.team.team_id, H.team.team_id], injury_feed_unavailable: feedUnknown, rest_days: [rest[0]?.rest_days, rest[1]?.rest_days].filter((v) => Number.isFinite(v)), series: m.season_series, series_games: series.map((x) => ({ date: x.start_utc, home: x.home.abbr, home_score: x.home.score, away: x.away.abbr, away_score: x.away.score })), market: mt?.facts || null, market_history: hist, props: mk?.props || null, historical, derived: D },
+      facts: { playoff: playoffFacts(po), away: clean(A), home: clean(H), injury_feed: { away: feeds.a.map(stripNotes), home: feeds.h.map(stripNotes) }, injury_scope: feedUnknown ? [] : [A.team.team_id, H.team.team_id], injury_feed_unavailable: feedUnknown, rest_days: [rest[0]?.rest_days, rest[1]?.rest_days].filter((v) => Number.isFinite(v)), series: m.season_series, series_games: series.map((x) => ({ date: x.start_utc, home: x.home.abbr, home_score: x.home.score, away: x.away.abbr, away_score: x.away.score })), market: mt?.facts || null, market_history: hist, props: mk?.props || null, historical, derived: D },
       evidence: [
         { kind: 'record', source: 'wnba-api matchup research (ESPN standings, schedules, box scores, season team stats)', url: `https://wnba.propbetedge.ai/matchups/${g.game_id}`, record: { game_id: g.game_id } },
         ...(feedUnknown ? [] : [{ kind: 'record', source: 'ESPN WNBA injury feed (full current feed)', url: 'https://www.espn.com/wnba/injuries', record: { away: feeds.a.length, home: feeds.h.length } }]),
@@ -432,7 +447,10 @@ export async function injuryDeep(ctx) {
   const subject = ctx.injurySubjects ? (i) => ctx.injurySubjects.has(String(i.athlete_id)) : () => true;
   const recent = (injuries || []).filter((i) => i.athlete_id && serious(i) && subject(i) && Date.parse(i.source_updated_at) > now - 14 * 86400e3)
     .sort((a, b) => String(b.source_updated_at).localeCompare(String(a.source_updated_at))).slice(0, 12);
+  const over = seasonOverTeams(ctx.playoffs);
   for (const inj of recent) {
+    // During the postseason an eliminated team's listing affects no game: not a story until next season.
+    if (over.has(String(inj.team_id))) continue;
     const t0 = meter();
     const [pRes, tRes] = await Promise.all([api(`/v1/players/${inj.athlete_id}`), api(`/v1/teams/${inj.team_id}`)]);
     if (!pRes || !tRes) continue;
@@ -463,6 +481,9 @@ export async function injuryDeep(ctx) {
     // injury story develops. Every figure is a record value or arithmetic written to D.
     const recent5 = (pRes.gamelog?.seasons?.find((x) => x.name === cur.season_name)?.games || []).filter((x) => x.min).slice(0, 5).map((x) => ({ date: x.date, min: x.min, pts: x.pts, result: x.result, opponent: x.opponent?.name || null }));
     if (recent5.length >= 3) { D.recent_min = avg(recent5.map((x) => x.min)); D.recent_pts = avg(recent5.map((x) => x.pts)); }
+    // Her postseason games (a separate ESPN log season, never mixed into "this season" averages).
+    const postGames = (pRes.gamelog?.seasons?.find((x) => x.name === `${year} Postseason`)?.games || []).filter((x) => x.min).slice(0, 3)
+      .map((x) => ({ game_id: x.game_id, date: x.date, opponent: x.opponent?.name || null, at_vs: x.at_vs, result: x.result, score: x.score, min: x.min, pts: x.pts, reb: x.reb, ast: x.ast, tov: x.tov, fgm: x.fgm, fga: x.fga, fg3m: x.fg3m, fg3a: x.fg3a, game_number: ctx.playoffs ? playoffContext(ctx.playoffs, x.game_id)?.game_number ?? null : null }));
     const oppSt = opp ? standingsById.get(opp.team_id) || null : null;
     // new vs long-running absence, from games actually missed (last logged game vs team games since)
     const mode = since.n >= 3 ? 'long' : obs && obs.missed >= 2 ? 'intermittent' : me && me.appearances === rot?.sample ? 'fresh' : 'partial';
@@ -478,14 +499,16 @@ export async function injuryDeep(ctx) {
     let thesis;
     if (mode === 'long') thesis = `${p.name} has not played since ${dMonth(cur.last_date)}, and the ${n} have gone ${recWL(since.w, since.l)} over ${since.n} games without her. ESPN now lists her as ${status}${ofs ? ' for the rest of the season' : ''}, so this is confirmation that the absence continues rather than a brand-new rotation problem.`;
     else if (mode === 'intermittent') thesis = `${p.name} has already been in and out of the ${n} lineup, playing ${wordN(obs.window - obs.missed)} of their last ${wordN(obs.window)} games. The ${n} went ${recWL(missedRec.w, missedRec.l)} in the ${wordN(obs.missed)} she missed, and ESPN now lists her as ${status}${ofs ? ' for the rest of the season' : ''}.${splitTxt ? ` For the full season, ${splitTxt}; that split is context, not a clean measure of her individual impact.` : ''}`;
-    else if (mode === 'fresh') thesis = `${p.name} played every one of the ${poss(n)} last ${wordN(rot.sample)} games, averaging ${f1(me.min)} minutes with ${me.starts ? countOf(me.starts, 'start') : 'no starts'}. ESPN now lists her as ${status}, leaving the ${n} to cover a role this recent rotation has not had to replace. The immediate question is where those minutes go.`;
+    else if (mode === 'fresh') thesis = dtd
+      ? `${p.name} played every one of the ${poss(n)} last ${wordN(rot.sample)} games, averaging ${f1(me.min)} minutes with ${me.starts ? countOf(me.starts, 'start') : 'no starts'}. ESPN now lists her as ${status}: she may play, but if she cannot, the ${n} would be replacing a role this recent rotation has not had to cover.`
+      : `${p.name} played every one of the ${poss(n)} last ${wordN(rot.sample)} games, averaging ${f1(me.min)} minutes with ${me.starts ? countOf(me.starts, 'start') : 'no starts'}. ESPN now lists her as ${status}, leaving the ${n} to cover a role this recent rotation has not had to replace. The immediate question is where those minutes go.`;
     else thesis = `ESPN lists ${p.name} as ${status}. She has averaged ${f1(minutes)} minutes across ${cur.games} games this season, and the ${n} have one recent game without her to use as a clue for how the rotation may shift.`;
 
     const statusParas = [`ESPN’s WNBA injury feed lists ${p.name} as ${inj.status}${nir ? ' (not injury related)' : part ? ` with a ${part} injury` : ''}, updated ${dShort(inj.source_updated_at)} at ${tET(inj.source_updated_at)}${ofs ? ', and marks her out for the rest of the season' : inj.source_return_date ? `, with an estimated return date of ${rdText(inj, year)}` : ''}. The league’s official game-day report is separate.${reports.length ? ` The injury has also been covered by ${listJoin([...new Set(reports.slice(0, 2).map((r) => r.source_name))])}.` : ''}`];
     if (mode === 'long') statusParas.push(`The available data does not say why she had already been out since ${dMonth(cur.last_date)} or when the injury began.`);
 
     const role = [];
-    role.push(`${p.name} has played ${cur.games} games this season, averaging ${f1(cur.pts)} points, ${f1(cur.reb)} rebounds and ${f1(cur.ast)} assists in ${f1(cur.min)} minutes.${cur.last10 ? ` Over her last ${cur.last10.games}, she averaged ${f1(cur.last10.pts)} points in ${f1(cur.last10.min)} minutes.` : ''}${mode === 'intermittent' ? ` Her last appearance was ${dMonth(cur.last_date)}${me?.appearances ? ` (${me.min} minutes)` : ''}.` : ''}`);
+    role.push(`${p.name} has played ${countOf(cur.games, 'game')} this season, averaging ${statAvg(cur.pts, 'point')}, ${statAvg(cur.reb, 'rebound')} and ${statAvg(cur.ast, 'assist')} in ${statAvg(cur.min, 'minute')}.${cur.last10 ? ` Over her last ${cur.last10.games}, she averaged ${f1(cur.last10.pts)} points in ${f1(cur.last10.min)} minutes.` : ''}${mode === 'intermittent' ? ` Her last appearance was ${dMonth(cur.last_date)}${me?.appearances ? ` (${me.min} minutes)` : ''}.` : ''}`);
     if (splitTxt && mode !== 'intermittent') role.push(`${cap(splitTxt)}${mode === 'long' ? `, including ${recWL(since.w, since.l)} since ${dMonth(cur.last_date)}` : ''}. A split like that mixes opponents, dates and every other lineup change, so it describes the season rather than measuring her.`);
     const pos = /G/.test(p.position || me?.position || '') ? 'G' : 'FC';
     const feedTeam = feedFor(injuries, team.team_id);
@@ -498,7 +521,14 @@ export async function injuryDeep(ctx) {
     } else if (me && rot?.sample) {
       const outIds = new Set(feedTeam.map((x) => x.athlete_id));
       const heirs = rot.rows.filter((r) => r.athlete_id !== inj.athlete_id && !outIds.has(r.athlete_id) && r.appearances > 0).slice(0, 3);
-      role.push(`In the ${poss(n)} last ${wordN(rot.sample)} games she started ${me.starts ? wordN(me.starts) : 'none'} and played ${f1(me.min)} minutes a night. The healthy players with the heaviest minutes in that window are ${listJoin(heirs.map((h) => `${h.name} (${f1(h.min)} min)`))}; how her minutes divide among them is not yet established.`);
+      const lead = !me.appearances || !(me.min >= 0.05)
+        ? `She did not play in the ${poss(n)} last ${wordN(rot.sample)} games, so the listing does not open a hole in the current rotation.`
+        : `In the ${poss(n)} last ${wordN(rot.sample)} games she ${me.starts ? `started ${wordN(me.starts)}` : 'came off the bench'} and played ${statAvg(me.min, 'minute')} a night.`;
+      role.push(`${lead} The healthy players with the heaviest minutes in that window are ${listJoin(heirs.map((h) => `${h.name} (${f1(h.min)} min)`))}${me.appearances && me.min >= 0.05 ? '; how her minutes divide among them is not yet established' : ''}.`);
+    }
+    if (postGames.length) {
+      const line = (x) => { const [hi, lo] = String(x.score || '').split('-').map(Number); const sc2 = Number.isFinite(hi) && Number.isFinite(lo) ? `, a ${sc(Math.max(hi, lo), Math.min(hi, lo))} ${x.result === 'W' ? 'win' : 'loss'}` : ''; return `${x.game_number ? `Game ${x.game_number}` : dMonth(x.date)} ${x.at_vs === '@' ? 'at' : 'against'} the ${x.opponent ? x.opponent.split(' ').pop() : 'opponent'} (${dMonth(x.date)}): ${countOf(x.pts ?? 0, 'point')}${x.ast >= 3 ? `, ${countOf(x.ast, 'assist')}` : ''}${x.reb >= 5 ? `, ${countOf(x.reb, 'rebound')}` : ''} on ${x.fgm}-of-${x.fga} shooting${x.fg3a ? ` (${x.fg3m}-of-${x.fg3a} from three)` : ''}${x.tov >= 4 ? ` with ${countOf(x.tov, 'turnover')}` : ''} in ${x.min} minutes${sc2}`; };
+      role.push(`In the playoffs: ${postGames.map(line).join('; ')}. That postseason line is kept apart from her regular-season averages above.`);
     }
     const otherOut = feedTeam.filter((x) => x.athlete_id !== inj.athlete_id);
     if (otherOut.length) role.push(`She is not the team’s only listing: ESPN’s feed also carries ${listJoin(otherOut.map((x) => `${x.name} (${x.status})`))}.`);
@@ -506,7 +536,25 @@ export async function injuryDeep(ctx) {
 
     const teamParas = [];
     if (st) teamParas.push(`The ${full(team)} are ${standingText(st, st.conference_name)}, ${st.last_ten} over their last 10, scoring ${f1(st.points_for_avg)} a game and allowing ${f1(st.points_against_avg)}.`);
-    if (ng && oppSt) teamParas.push(`Their next game is ${ng.home.team_id === team.team_id ? `at home against the ${full(opp)}` : `on the road against the ${full(opp)}`} on ${dLong(ng.start_utc)}. The ${nick(opp)} are ${recWL(oppSt.wins, oppSt.losses)}, ${oppSt.last_ten} over their last 10, and allow ${f1(oppSt.points_against_avg)} points a game.`);
+    const poNext = ng && ctx.playoffs ? playoffContext(ctx.playoffs, ng.game_id) : null;
+    let lastSeries = null;
+    if (poNext) {
+      const sg = (ctx.playoffs.rounds || []).flatMap((r) => r.series || []).find((s) => s.series_id === poNext.series_id);
+      const prevG = (sg?.games || []).filter((x) => x.status === 'FINAL' && (x.game_number ?? 0) < (poNext.game_number ?? 0)).sort((x, y) => (y.game_number ?? 0) - (x.game_number ?? 0))[0];
+      const lv = prevG ? await api(`/v1/games/${prevG.game_id}/live`) : null;
+      const mine = lv?.box?.teams?.find((x) => String(x.team_id) === String(team.team_id))?.stats;
+      const theirs = lv?.box?.teams?.find((x) => String(x.team_id) !== String(team.team_id))?.stats;
+      if (mine && theirs && mine.fieldGoalPct && theirs.fieldGoalPct) {
+        lastSeries = { game_id: prevG.game_id, game_number: prevG.game_number, won: String(prevG.winner_team_id) === String(team.team_id), home_score: prevG.home_score, away_score: prevG.away_score, fg_pct: Number(mine.fieldGoalPct), opp_fg_pct: Number(theirs.fieldGoalPct), tov: Number(mine.totalTurnovers ?? mine.turnovers), opp_tov: Number(theirs.totalTurnovers ?? theirs.turnovers), reb: Number(mine.totalRebounds), opp_reb: Number(theirs.totalRebounds) };
+      }
+    }
+    if (poNext) teamParas.push(`Their next game is Game ${poNext.game_number} of the ${poNext.round.toLowerCase()} against the ${full(opp)} on ${dLong(ng.start_utc)}, and ${seriesScoreText(poNext, team.team_id, 'before', (t) => (String(t.team_id) === String(team.team_id) ? n : nick(opp)))}.${poNext.stakes[String(team.team_id)] === 'elimination' ? ` The ${n} face elimination.` : poNext.stakes[String(team.team_id)] === 'closeout' ? ` A win would close out the series.` : ''}`);
+    if (lastSeries) {
+      const L2 = lastSeries;
+      const hi = Math.max(L2.home_score, L2.away_score); const lo = Math.min(L2.home_score, L2.away_score);
+      teamParas.push(`In Game ${L2.game_number}, a ${sc(hi, lo)} ${L2.won ? 'win' : 'loss'}, the ${n} shot ${f1(L2.fg_pct)}% to the ${poss(nick(opp))} ${f1(L2.opp_fg_pct)}%${Number.isFinite(L2.tov) && Number.isFinite(L2.opp_tov) ? `, committed ${countOf(L2.tov, 'turnover')} to their ${L2.opp_tov}` : ''}${Number.isFinite(L2.reb) && Number.isFinite(L2.opp_reb) ? ` and ${L2.reb === L2.opp_reb ? `split the rebounds ${L2.reb}–${L2.opp_reb}` : L2.reb > L2.opp_reb ? `won the glass ${L2.reb}–${L2.opp_reb}` : `lost the glass ${L2.opp_reb}–${L2.reb}`}` : ''} (ESPN box score).`);
+    }
+    else if (ng && oppSt) teamParas.push(`Their next game is ${ng.home.team_id === team.team_id ? `at home against the ${full(opp)}` : `on the road against the ${full(opp)}`} on ${dLong(ng.start_utc)}. The ${nick(opp)} are ${recWL(oppSt.wins, oppSt.losses)}, ${oppSt.last_ten} over their last 10, and allow ${f1(oppSt.points_against_avg)} points a game.`);
 
     const mkt = [];
     const mt = ng?.market ? marketText(ng.market, ng, team.team_id) : null;
@@ -524,16 +572,17 @@ export async function injuryDeep(ctx) {
 
     const withBetter = Number.isFinite(D.without_w) && cur.wins / Math.max(1, cur.games) > D.without_w / Math.max(1, D.without_n);
     const counterPara = (mode === 'long' || mode === 'intermittent') && withBetter ? `One reason not to shrug off the absence: the ${n} have won a higher share of games with her (${recWL(cur.wins, cur.losses)}) than without (${recWL(D.without_w, D.without_l)}). The absence may be familiar, but it still matters.` : null;
-    const next = `${ng ? `Next up is ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}. ` : ''}${mode === 'long' || mode === 'intermittent' ? 'The starting lineup should show whether the existing rotation stays intact.' : 'The first box score without her will show who actually gets the minutes.'} Player props enter the PropBetEdge capture window inside 36 hours of tip.`;
+    const next = `${ng ? `Next up is ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}. ` : ''}${mode === 'long' || mode === 'intermittent' ? 'The starting lineup should show whether the existing rotation stays intact.' : dtd ? 'Her game-day status decides whether the rotation changes at all; if she sits, the first box score without her will show where the minutes go.' : 'The first box score without her will show who actually gets the minutes.'} Player props enter the PropBetEdge capture window inside 36 hours of tip.`;
 
     const { body, sections } = assemble([['The latest', [thesis, ...statusParas]], ['Who picks up the minutes', role], ['Team context', teamParas], ['The line', mkt], ['Next up', [counterPara, next]]]);
     const headline = mode === 'long' ? `${p.name} remains out as the ${n} keep rolling without her`
-      : mode === 'intermittent' ? `${p.name} listed ${ofs ? 'out for the season' : inj.status.toLowerCase()} after an uneven recent stretch`
+      : mode === 'intermittent' ? `${p.name} listed ${ofs ? 'out for the season' : inj.status.toLowerCase()} after missing ${wordN(obs.missed)} of the ${poss(n)} last ${wordN(obs.window)} games`
         : ofs ? `${p.name} out for the season; the ${n} turn to the rotation behind her`
-          : dtd ? `${p.name} day-to-day as the ${n} prepare to cover ${f1(minutes)} minutes` : `${p.name} listed out; the ${n} have ${f1(minutes)} minutes to replace`;
+          : dtd ? (poNext ? `${p.name} listed day-to-day before Game ${poNext.game_number} against the ${nick(opp)}` : `${p.name} day-to-day as the ${n} prepare to cover ${f1(minutes)} minutes`) : `${p.name} listed out; the ${n} have ${f1(minutes)} minutes to replace`;
     const deck = mode === 'long' ? `${p.name} has not played since ${dMonth(cur.last_date)}. The ${full(team)} are ${recWL(since.w, since.l)} over ${since.n} games since.`
       : mode === 'intermittent' ? `She has been in and out lately, but her ${f1(cur.pts)} points in ${f1(cur.min)} minutes per game still leave a real role to cover.`
-        : `${p.name} is averaging ${f1(cur.pts)} points in ${f1(cur.min)} minutes this season. Those minutes now have to go somewhere else in the ${n} rotation.`;
+        : dtd ? `${p.name} is averaging ${f1(cur.pts)} points in ${f1(cur.min)} minutes this season. ESPN lists her as day-to-day, so her availability${poNext ? ` for Game ${poNext.game_number}` : ' for the next game'} is open.`
+          : `${p.name} is averaging ${f1(cur.pts)} points in ${f1(cur.min)} minutes this season. Those minutes now have to go somewhere else in the ${n} rotation.`;
     const bettor = mode === 'long' ? [`The listing formalizes an absence the ${n} have played ${since.n} games through (${recWL(since.w, since.l)}); it settles her season more than it moves the next spread or total.`, 'Player-prop lines for the next game are captured only inside 36 hours of tip.']
       : mode === 'intermittent' ? [`The ${n} have mostly played without ${p.name} already (${wordN(obs.missed)} of the last ${wordN(obs.window)}); the listing turns a recurring absence into a certain one, which matters more for the season-long picture than for the next line.`, 'Player-prop lines for the next game are captured only inside 36 hours of tip.']
         : [`${poss(p.name)} ${f1(minutes)} minutes a night now go to someone else, and ${obs ? 'the one box score without her is the only evidence of where' : 'no box score yet shows where'}.`, 'Player-prop lines for the next game are captured only inside 36 hours of tip; that is where a minutes shift shows up first.'];
@@ -548,7 +597,7 @@ export async function injuryDeep(ctx) {
       lead_team_id: team.team_id, lead_player_id: p.athlete_id, primary_subject: p.name, published_at: inj.source_updated_at,
       context: { player: { athlete_id: p.athlete_id, name: p.name, position: p.position_name, photo: licensedContextPhoto(pRes.photo) }, team: { team_id: team.team_id, name: team.name, standing: st }, next_game: ng ? { game_id: ng.game_id, start_utc: ng.start_utc, home: ng.home, away: ng.away } : null },
       entities: [{ type: 'player', id: p.athlete_id, name: p.name }, { type: 'team', id: team.team_id, name: team.name }, ...(opp ? [{ type: 'team', id: opp.team_id, name: opp.name }] : []), ...(ng ? [gameEntity(ng)] : [])],
-      facts: { injury: stripNotes(inj), season_log: cur, provenance: [prov(p.name, cur, 'season')], absence: { mode, last_game: cur.last_date, games_since: since.n, window_missed: obs?.missed ?? 0 }, rotation_me: me ? { name: me.name, min: me.min, starts: me.starts, appearances: me.appearances } : null, rotation: rot?.rows?.map((r) => ({ name: r.name, position: r.position, min: r.min, pts: r.pts, starts: r.starts, appearances: r.appearances })), since, standing: st, next_game: ng ? { start_utc: ng.start_utc } : null, market: mt?.facts || null, other_out: otherOut.map((x) => ({ name: x.name, status: x.status })), injury_scope: [team.team_id], observed: obs, recent_games: recent5, next_opponent: oppSt ? { name: opp.name, wins: oppSt.wins, losses: oppSt.losses, last_ten: oppSt.last_ten, points_against_avg: oppSt.points_against_avg } : null, derived: D },
+      facts: { playoff: playoffFacts(poNext), last_series_game: lastSeries, postseason_games: postGames, injury: stripNotes(inj), season_log: cur, provenance: [prov(p.name, cur, 'season')], absence: { mode, last_game: cur.last_date, games_since: since.n, window_missed: obs?.missed ?? 0 }, rotation_me: me ? { name: me.name, min: me.min, starts: me.starts, appearances: me.appearances } : null, rotation: rot?.rows?.map((r) => ({ name: r.name, position: r.position, min: r.min, pts: r.pts, starts: r.starts, appearances: r.appearances })), since, standing: st, next_game: ng ? { start_utc: ng.start_utc } : null, market: mt?.facts || null, other_out: otherOut.map((x) => ({ name: x.name, status: x.status })), injury_scope: [team.team_id], observed: obs, recent_games: recent5, next_opponent: oppSt ? { name: opp.name, wins: oppSt.wins, losses: oppSt.losses, last_ten: oppSt.last_ten, points_against_avg: oppSt.points_against_avg } : null, derived: D },
       evidence: [
         { kind: 'record', source: 'ESPN WNBA injury feed', url: 'https://www.espn.com/wnba/injuries', captured_at: new Date(now).toISOString(), record: { athlete_id: inj.athlete_id, status: inj.status, body_part: inj.body_part, fantasy_status: inj.fantasy_status, source_return_date: inj.source_return_date, source_updated_at: inj.source_updated_at } },
         ...reports.map((r) => ({ kind: 'publisher_report', source: r.source_name, publisher: r.source_name, headline: r.headline, url: r.canonical_url, published_at: r.published_at, captured_at: r.first_captured_at })),
@@ -632,6 +681,7 @@ export async function transactionDeep(ctx) {
       if (p.current?.games && Number.isFinite(p.current.min) && played.length >= 5) {
         const rank = played.filter((r) => r.min > p.current.min).length + 1;
         D[`rank_${p.athlete_id}`] = rank;
+        D.rotation_players = played.length;
         sProfiles.push(`Her ${f1(p.current.min)} minutes a game would rank ${['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'][rank] || `No. ${rank}`} among the ${countOf(played.length, 'player')} who played in the ${poss(n)} last ${wordN(rot.sample)} games — ${p.current.min >= 15 ? 'a rotation-level workload, not end-of-bench minutes' : 'minutes at the end of the bench'}.`);
       }
     }
@@ -688,7 +738,7 @@ export async function transactionDeep(ctx) {
     const deck = recentLong.length && signing
       ? `The move came ${D.days_after_listing === 0 ? 'the same day as' : `${countOf(D.days_after_listing, 'day')} after`} an ESPN injury update for ${recentLong[0].name}. The transactions log is dated ${dShort(g.date)}.`
       : curMover
-        ? `${curMover.name} brings ${f1(curMover.current.pts)} points in ${f1(curMover.current.min)} minutes a game across ${curMover.current.games} games this season${st ? ` to a ${full(team)} team at ${recWL(st.wins, st.losses)}` : ''}${ng ? `, before the ${nick(oppNext)} on ${dShort(ng.start_utc)}` : ''}. Per ESPN’s transactions log, dated ${dShort(g.date)}.`
+        ? `${curMover.name} brings ${f1(curMover.current.pts)} points in ${f1(curMover.current.min)} minutes a game across ${countOf(curMover.current.games, 'game')} this season${st ? ` to a ${full(team)} team at ${recWL(st.wins, st.losses)}` : ''}${ng ? `, before the ${nick(oppNext)} on ${dShort(ng.start_utc)}` : ''}. Per ESPN’s transactions log, dated ${dShort(g.date)}.`
         : `ESPN’s WNBA transactions log records the move on ${dShort(g.date)}.`;
     const bettor = [curMover && curMover.current.min >= 15 ? `${poss(curMover.name)} ${f1(curMover.current.min)} minutes a game are rotation minutes: the move is relevant to player-prop eligibility and minutes for the ${poss(n)} regulars, not only the end of the bench.` : `A depth move: it changes who fills the last minutes of the ${poss(n)} rotation, which touches player-prop eligibility rather than game lines.`, ng ? `Next up: ${ng.away.abbr} at ${ng.home.abbr} on ${dLong(ng.start_utc)}.` : 'No upcoming game is on the published schedule.'];
     const against = [...(profiles.some((p) => !p.current?.games && p.prior?.games) ? [`The incoming player has no ${year} games in the source log; her last regular season is the only baseline, and it was with a different team.`] : []), 'Depth moves rarely move a game line on their own.'];
@@ -756,8 +806,10 @@ export async function resultDeep(ctx) {
     const loserSide = loser === g.home ? 'home' : 'away';
     const comeback = (lead?.largest_lead?.[loserSide]?.margin ?? 0) >= 12;
     const pc = gm.pickcenter?.[0] || null;
+    const po = ctx.playoffs ? playoffContext(ctx.playoffs, g.game_id) : null;
     const ot = (live.linescore || []).length > 4;
-    if (!stars.length && !ot && !comeback && !pc) continue;
+    // A playoff game is always a story; a regular-season game needs a notable line, overtime, a comeback or a line.
+    if (!stars.length && !ot && !comeback && !pc && !po) continue;
     const kind = stars.length ? 'performance' : 'result';
     const score = sc(winner.score, loser.score);
     const ls = live.linescore || [];
@@ -861,7 +913,21 @@ export async function resultDeep(ctx) {
       thesis = `${listJoin(coNames)} ${same ? `scored ${pts[0]} apiece` : `scored ${listJoin(pts.map(String))}`} as the ${full(winner)} beat the ${full(loser)} ${score} on ${dLong(g.start_utc)}${coSameTeam ? ` — ${D.pair_pts} of the ${poss(nick(co[0].team_id === winner.team_id ? winner : loser))} ${co[0].team_id === winner.team_id ? winner.score : loser.score} points, ${f1(D.pair_share)}% of the team’s scoring` : ''}.`;
     } else if (top) thesis = `${top.name} ${topTeam === winner ? 'led' : 'could not save'} the ${nick(topTeam)} with ${statLine(top)} as the ${full(winner)} beat the ${full(loser)} ${score} on ${dLong(g.start_utc)}.`;
     else thesis = `The ${full(winner)} beat the ${full(loser)} ${score}${ot ? ` in ${ls.length - 4 === 1 ? 'overtime' : `${ls.length - 4} overtimes`}` : ''} on ${dLong(g.start_utc)}.`;
-    if (ats && pc.over_under !== null) { /* market grading stays in PropBetEdge Intelligence below; keep the game-story lede about basketball */ }
+    if (!top && performerRows.length) {
+      const wTop = performerRows.find((r) => r.team_id === winner.team_id);
+      const lTop = performerRows.find((r) => r.team_id === loser.team_id);
+      if (wTop) thesis += ` ${wTop.name} led the ${W} with ${countOf(wTop.pts ?? 0, 'point')}${lTop ? `; ${lTop.name} had ${lTop.pts ?? 0} for the ${L}` : ''}.`;
+    }
+    let seriesLine = null;
+    if (po?.after) {
+      const wW = po.after[String(winner.team_id)]; const wL = po.after[String(loser.team_id)];
+      seriesLine = po.decided_by_this_game
+        ? `The win closes out the ${po.round.toLowerCase()} series ${wW}–${wL} and sends the ${W} on; the ${poss(L)} season is over.`
+        : wW === wL
+          ? `Game ${po.game_number} of the ${po.round.toLowerCase()}, and the best-of-${wordN(po.best_of)} series is tied ${wW}–${wL}${po.wins_needed - wW === 1 ? ', with a deciding game to come' : ''}.`
+          : `Game ${po.game_number} of the ${po.round.toLowerCase()}: the ${W} lead the best-of-${wordN(po.best_of)} series ${wW}–${wL}${po.wins_needed - wW === 1 ? ` and are one win from advancing, while the ${L} now face elimination` : ''}.`;
+      thesis += ` ${seriesLine}`;
+    }
 
     const how = [];
     if (q1 && half && best) {
@@ -874,12 +940,15 @@ export async function resultDeep(ctx) {
       const bench = (t) => live.box.players.filter((x) => x.team_id === t.team_id && !x.starter && !x.dnp).reduce((a2, x) => a2 + (x.pts || 0), 0);
       D.bench_w = bench(winner); D.bench_l = bench(loser);
       const lTop = live.box.players.filter((x) => x.team_id === loser.team_id && !x.dnp).sort((x, y) => (y.pts || 0) - (x.pts || 0)).slice(0, 2);
-      how.push(`${D.bench_w < D.bench_l ? `The ${W} did it with their starters: their bench scored ${D.bench_w} to the ${poss(L)} ${D.bench_l}.` : `The ${poss(W)} bench outscored the ${poss(L)}, ${sc(D.bench_w, D.bench_l)}.`}${lTop.length === 2 && topTeam === winner ? ` For the ${L}, ${lTop[0].name} scored ${lTop[0].pts} (${lTop[0].fgm}-of-${lTop[0].fga}) and ${lTop[1].name} ${lTop[1].pts} (${lTop[1].fgm}-of-${lTop[1].fga}).` : ''}`);
+      how.push(`${benchComparison(W, L, D.bench_w, D.bench_l)}${lTop.length === 2 && topTeam === winner ? ` For the ${L}, ${lTop[0].name} scored ${lTop[0].pts} (${lTop[0].fgm}-of-${lTop[0].fga}) and ${lTop[1].name} ${lTop[1].pts} (${lTop[1].fgm}-of-${lTop[1].fga}).` : ''}`);
       how.push(`The ${W} made ${shoot(tw)} from the field (${tw.fieldGoalPct}%) and ${tw['threePointFieldGoalsMade-threePointFieldGoalsAttempted']} from three; the ${L} ${shoot(tl)} (${tl.fieldGoalPct}%).${tl.turnoverPoints && tw.turnoverPoints ? ` Turnovers ran ${sc(tw.totalTurnovers ?? tw.turnovers, tl.totalTurnovers ?? tl.turnovers)}, and points off turnovers ${sc(tw.turnoverPoints, tl.turnoverPoints)}${Number(tl.turnoverPoints) > Number(tw.turnoverPoints) ? ` in the ${poss(L)} favor — the margin came from shooting, not possession control` : ''}.` : ''} Rebounds went ${sc(tw.totalRebounds, tl.totalRebounds)}, points in the paint ${sc(tw.pointsInPaint, tl.pointsInPaint)}.`);
     }
 
     const ctxParas = [];
-    if (afterW && afterL) ctxParas.push(`After the result the ${W} were ${recWL(afterW.w, afterW.l)} and the ${L} ${recWL(afterL.w, afterL.l)} (team schedules through ${dMonth(g.start_utc)}).${Number.isFinite(D.w_scored_vs_entering) ? ` The ${poss(W)} ${winner.score} was ${f1(Math.abs(D.w_scored_vs_entering))} ${D.w_scored_vs_entering >= 0 ? 'above' : 'below'} the ${f1(enterW.ppg)} a game they averaged entering it.` : ''}`);
+    if (po?.after) {
+      const nextSeriesGame = (ctx.playoffs?.rounds || []).flatMap((r) => r.series || []).find((s) => s.series_id === po.series_id)?.games?.find((x) => x.status !== 'FINAL' && (x.game_number ?? 0) > (po.game_number ?? 0) && (!x.if_necessary || po.after[String(winner.team_id)] === po.after[String(loser.team_id)]));
+      if (!po.decided_by_this_game && nextSeriesGame) D.next_series_game = nextSeriesGame.game_number;
+    } else if (afterW && afterL && (afterW.w + afterW.l) > 0) ctxParas.push(`After the result the ${W} were ${recWL(afterW.w, afterW.l)} and the ${L} ${recWL(afterL.w, afterL.l)} (team schedules through ${dMonth(g.start_utc)}).${Number.isFinite(D.w_scored_vs_entering) ? ` The ${poss(W)} ${winner.score} was ${f1(Math.abs(D.w_scored_vs_entering))} ${D.w_scored_vs_entering >= 0 ? 'above' : 'below'} the ${f1(enterW.ppg)} a game they averaged entering it.` : ''}`);
     const sl = standingsById.get(loser.team_id);
     if (sl && topTeam === winner && stars.length) {
       const rankAllowed = [...allStandings].sort((x, y) => y.points_against_avg - x.points_against_avg).findIndex((e) => e.team_id === loser.team_id) + 1;
@@ -892,10 +961,12 @@ export async function resultDeep(ctx) {
     const nextBits = [];
     for (const [t, ng] of [[winner, ngW], [loser, ngL]]) {
       if (!ng) continue;
+      if (t === loser && ngW && String(ngW.game_id) === String(ng.game_id)) continue; // same game for both teams: say it once
       const mk = ng.market;
       const line = mk?.spread?.home_line;
       const fav = line !== null && line !== undefined ? (line < 0 ? ng.home : ng.away) : null;
-      nextBits.push(`${ng.away.abbr} at ${ng.home.abbr} on ${dShort(ng.start_utc)}${fav ? `, where the market consensus has the ${nick(fav)} ${fav.team_id === t.team_id ? 'favored' : `favored over the ${nick(t)}`} by ${Math.abs(line)}${mk.total?.line ? ` with a total of ${mk.total.line}` : ''} (PropBetEdge capture, ${dShort(mk.captured_at)}, ${mk.books} books)` : mk ? '' : ' (no market capture yet)'}`);
+      const seriesTag = po && D.next_series_game && ctx.playoffs && playoffContext(ctx.playoffs, ng.game_id)?.series_id === po.series_id ? `Game ${D.next_series_game}, ` : '';
+      nextBits.push(`${seriesTag}${ng.away.abbr} at ${ng.home.abbr} on ${dShort(ng.start_utc)}${fav ? `, where the market consensus has the ${nick(fav)} ${fav.team_id === t.team_id ? 'favored' : `favored over the ${nick(t)}`} by ${Math.abs(line)}${mk.total?.line ? ` with a total of ${mk.total.line}` : ''} (PropBetEdge capture, ${dShort(mk.captured_at)}, ${mk.books} books)` : mk ? '' : ' (no market capture yet)'}`);
     }
     if (ngW && nextBits.length) {
       const nOpp = ngW.home.team_id === winner.team_id ? ngW.away : ngW.home;
@@ -908,6 +979,11 @@ export async function resultDeep(ctx) {
     }
     if (nextBits.length) ctxParas.push(`Next up: ${nextBits.join('; ')}. Player props enter the board inside 36 hours of tip.`);
 
+    if (po?.after) {
+      const seedOf = (tid) => [po.teams.higher, po.teams.lower].find((t) => t.team_id === String(tid))?.seed;
+      const sw = seedOf(winner.team_id); const sl2 = seedOf(loser.team_id);
+      if (Number.isFinite(sw) && Number.isFinite(sl2)) ctxParas.unshift(`The ${W} came into the series as the No. ${sw} seed and the ${L} as the No. ${sl2}; ${sw < sl2 ? `the higher seed ${po.decided_by_this_game ? 'finished the job' : 'held serve'}` : `the lower seed ${po.decided_by_this_game ? 'completed the upset' : 'has the early edge'}`}.`);
+    }
     const counter = [];
     const risers = comparisons.filter((c) => Number.isFinite(c.l10_minus_season));
     if (risers.length) counter.push(`${listJoin(risers.map((c) => `${poss(c.name)} previous-${c.entering.last10_games} average (${f1(c.entering.last10)}) already sat ${f1(c.l10_minus_season)} above her season mark`))}, so against recent form ${risers.length === 1 ? 'the game is a smaller outlier' : 'these are smaller outliers'} than the season averages make ${risers.length === 1 ? 'it' : 'them'} look`);
@@ -918,15 +994,15 @@ export async function resultDeep(ctx) {
     const { body, sections } = assemble([['Game story', [thesis]], ['Who stood out', starParas], ['How it happened', how], ['What it means', [...(counterPara ? [counterPara] : []), ...ctxParas]]]);
     const headline = co.length > 1 && headStat === 'pts'
       ? (co.length <= 3 ? `${listJoin(coNames)} score ${co.every((x) => x.pts === co[0].pts) ? `${co[0].pts} apiece` : listJoin(co.map((x) => String(x.pts)))} as the ${W} beat the ${L}, ${score}` : `The ${W} beat the ${L}, ${score}, with the scoring lead shared`)
-      : top ? (topTeam === winner ? `${poss(top.name)} ${keyLabel(top)} lead the ${W} past the ${L}, ${score}` : `The ${W} beat the ${L} ${score} despite ${poss(top.name)} ${keyLabel(top)}`)
-        : `The ${full(winner)} beat the ${full(loser)}, ${score}`;
+      : top ? (topTeam === winner ? `${poss(top.name)} ${keyLabel(top)} lead the ${W} past the ${L}${po ? ` in Game ${po.game_number}` : ''}, ${score}` : `The ${W} beat the ${L} ${score}${po ? ` in Game ${po.game_number}` : ''} despite ${poss(top.name)} ${keyLabel(top)}`)
+        : po ? `The ${full(winner)} ${po.decided_by_this_game ? 'close out' : 'beat'} the ${full(loser)} in Game ${po.game_number}, ${score}` : `The ${full(winner)} beat the ${full(loser)}, ${score}`;
     const deck = co.length > 1 && headStat === 'pts'
       ? `${listJoin(coNames)} shared the scoring spotlight as the ${W} ${q1 && q1.w < q1.l ? `erased a ${sc(q1.l, q1.w)} first-quarter deficit and ` : ''}won by ${margin}.`
       : q1 && q1.w < q1.l
-        ? `The ${W} erased a ${sc(q1.l, q1.w)} first-quarter deficit and finished with a ${margin}-point win${top ? ` behind ${poss(top.name)} ${keyLabel(top)}` : ''}.`
+        ? `The ${W} erased a ${sc(q1.l, q1.w)} first-quarter deficit and finished with ${aan(margin)} ${margin}-point win${top ? ` behind ${poss(top.name)} ${keyLabel(top)}` : ''}.`
         : top
-          ? (topTeam === winner ? `${top.name} set the pace with ${keyLabel(top)} in a ${margin}-point ${W} win.` : `${top.name} posted ${keyLabel(top)} in the loss, but the ${W} finished with a ${margin}-point win.`)
-          : `The ${W} beat the ${L} by ${margin} on ${dLong(g.start_utc)}.`;
+          ? (topTeam === winner ? `${top.name} set the pace with ${keyLabel(top)} in ${aan(margin)} ${margin}-point ${W} win.` : `${top.name} posted ${keyLabel(top)} in the loss, but the ${W} finished with ${aan(margin)} ${margin}-point win.`)
+          : po?.after ? `The ${W} won Game ${po.game_number} by ${margin}${po.decided_by_this_game ? ' to take the series' : ` and ${po.after[String(winner.team_id)] > po.after[String(loser.team_id)] ? 'lead' : 'even'} the best-of-${wordN(po.best_of)} series ${po.after[String(winner.team_id)]}–${po.after[String(loser.team_id)]}`}.` : `The ${W} beat the ${L} by ${margin} on ${dLong(g.start_utc)}.`;
     const bettor = [];
     if (ats) bettor.push(`On the spread: ${poss(pc.provider)} line, relayed by ESPN, had the ${nick(favTeam)} favored by ${Math.abs(ats.home_spread)}; the ${margin}-point margin put ${coverTeam ? `the ${nick(coverTeam)} on the right side of the spread` : 'the spread at a push'}. The ${ats.total_points} combined points went ${ats.total_result} the ${ats.over_under} total.`);
     else bettor.push('No closing line is available in the source record for this game, so this result carries no market grade.');
@@ -942,7 +1018,7 @@ export async function resultDeep(ctx) {
       lead_team_id: winner.team_id, lead_player_id: top?.athlete_id || null, primary_subject: W, published_at: g.last_play_wallclock || g.start_utc,
       context: { game: { game_id: g.game_id, start_utc: g.start_utc, home: g.home, away: g.away, venue: g.venue }, stars: stars.slice(0, 3) },
       entities: [gameEntity(g), { type: 'team', id: winner.team_id, name: winner.name }, { type: 'team', id: loser.team_id, name: loser.name }, ...stars.slice(0, 3).map((r) => ({ type: 'player', id: r.athlete_id, name: r.name }))],
-      facts: { scores: { w: winner.score, l: loser.score, margin }, stars, performers: performerRows, box_lines: boxLines, headline_stat: headStat, co_leader_rule: CO_LEADER_RULE, lead, run, ats, after: { w: afterW, l: afterL }, entering: { w: enterW }, standings_now: { l: sl }, quarters: q, team_stats: { w: tw, l: tl }, comparisons, provenance: provs, next: [ngW, ngL].filter(Boolean).map((ng) => ({ start_utc: ng.start_utc, home: ng.home.abbr, away: ng.away.abbr, market: ng.market ? { spread: ng.market.spread.home_line, total: ng.market.total.line, books: ng.market.books, captured_at: ng.market.captured_at } : null })), derived: D },
+      facts: { playoff: playoffFacts(po), scores: { w: winner.score, l: loser.score, margin }, stars, performers: performerRows, box_lines: boxLines, headline_stat: headStat, co_leader_rule: CO_LEADER_RULE, lead, run, ats, after: { w: afterW, l: afterL }, entering: { w: enterW }, standings_now: { l: sl }, quarters: q, team_stats: { w: tw, l: tl }, comparisons, provenance: provs, next: [ngW, ngL].filter(Boolean).map((ng) => ({ start_utc: ng.start_utc, home: ng.home.abbr, away: ng.away.abbr, market: ng.market ? { spread: ng.market.spread.home_line, total: ng.market.total.line, books: ng.market.books, captured_at: ng.market.captured_at } : null })), derived: D },
       evidence: [{ kind: 'record', source: 'ESPN box score + play-by-play + shot locations', url: `https://www.espn.com/wnba/game/_/gameId/${g.game_id}`, record: { final: `${g.away.abbr} ${g.away.score} - ${g.home.abbr} ${g.home.score}`, events: live.events_total } }, { kind: 'record', source: 'ESPN team schedules (records after the game, scoring entering it)', url: 'https://www.espn.com/wnba/schedule', record: { after_w: afterW, after_l: afterL, entering_w: enterW } }, { kind: 'record', source: `ESPN standings (${asOfLabel})`, url: 'https://www.espn.com/wnba/standings', record: { l: sl } }, ...(pc ? [{ kind: 'market', source: `${pc.provider} line relayed by ESPN`, record: { spread_home: pc.spread, total: pc.over_under, home_ml: pc.home_moneyline, away_ml: pc.away_moneyline } }] : [])]
     });
     a0.meter = meterDelta(meter, t0);
@@ -993,8 +1069,11 @@ export async function trendDeep(ctx) {
   const tn = nameByAbbr(teams);
   const out = [];
   out.decisions = [];
+  const over = seasonOverTeams(ctx.playoffs);
   for (const t of teams) {
     const t0 = meter();
+    // A betting trend for a team with no game left to bet is not news: measured as withheld, so a live episode ends.
+    if (over.has(String(t.team_id))) { for (const mk of ['spread', 'total']) out.decisions.push({ team: t.short_name, team_id: t.team_id, market: mk, decision: 'withheld', reason: 'season over: not in the postseason' }); continue; }
     const games = (finalsByTeam.get(t.team_id) || []).slice(0, 10);
     // Every team + market the desk measures gets a decision: the lifecycle ends an episode only on a measured
     // "no longer material", never because a pass could not measure (too few lined games, a failed fetch).

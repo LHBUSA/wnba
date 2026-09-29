@@ -239,7 +239,9 @@ function elementsFor(contract, a, cls) {
       el('statistical_explanation', f.team_stats?.w, /from the field|%|percent/i.test(all) && /rebound|turnover/i.test(all), true);
       el('both_teams', names.length, (f.box_lines || []).some((x) => String(x.team_id) !== String(a.lead_team_id) && all.includes(x.name)) || S('opponent').length > 0);
       el('lead_changes', f.lead, /lead change|never trailed|led wire to wire/i.test(all));
-      el('team_context', f.after?.w, recordIn(all, f.after?.w?.w, f.after?.w?.l), true);
+      // A playoff game's team context is the series score, not the regular-season record.
+      if (f.playoff?.after) el('team_context', true, /\bseries\b/i.test(all) && Object.values(f.playoff.after).every((w) => all.includes(String(w))), true);
+      else el('team_context', f.after?.w, recordIn(all, f.after?.w?.w, f.after?.w?.l), true);
       el('next', (f.next || []).length, S('next').length >= 1 || /\bNext(?: up)?:/.test(all), true);
       break;
     }

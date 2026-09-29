@@ -176,7 +176,11 @@ export const articleHasTeam = (card, teamId) => Boolean(card) && (
   || (card.entities || []).some((e) => e?.type === 'team' && String(e.id) === String(teamId))
 );
 
+// The minimum brief-story version that meets the current quality standard. Newer versions qualify too: an exact
+// match would silently hide every brief the moment the story planner is versioned forward.
 export const CURRENT_BRIEF_STORY_VERSION = 'wnba-brief-story/1.1.0';
+const semver = (v) => (String(v || '').match(/(\d+)\.(\d+)\.(\d+)$/) || []).slice(1).map(Number);
+const atLeast = (v, min) => { const a = semver(v); const b = semver(min); if (a.length !== 3) return false; for (let i = 0; i < 3; i += 1) { if (a[i] !== b[i]) return a[i] > b[i]; } return true; };
 
 const briefGeneratorVersion = (card) => {
   const direct = String(card?.context?.brief?.story_version || card?.facts?.brief?.story_version || '');
@@ -192,7 +196,8 @@ const briefGeneratorVersion = (card) => {
 export function isCurrentQualityBrief(card) {
   if (!card || card.kind !== 'brief') return true;
   if (isMilesRecordSlug(card.slug)) return true;
-  return briefGeneratorVersion(card) === CURRENT_BRIEF_STORY_VERSION;
+  const v = briefGeneratorVersion(card);
+  return Boolean(v) && v.startsWith('wnba-brief-story/') && atLeast(v, CURRENT_BRIEF_STORY_VERSION);
 }
 
 export function correctArticleListResponse(res, { playerId = null, teamId = null, archive = false } = {}) {
