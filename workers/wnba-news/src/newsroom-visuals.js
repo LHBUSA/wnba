@@ -161,7 +161,7 @@ function previewVisuals(a) {
   if (rows.length >= 3) {
     out.push({ section: 'matchup', spec: statCompare({
       id: 'matchup-dashboard', title: `${nickOf(g.away)} vs. ${nickOf(g.home)}: the widest contrasts`, subtitle: 'Season team profile, plus recent form and rest',
-      caption: 'Net differential always shown; the other rows are the largest gaps relative to a typical spread for each stat. Regular-season records; none is a projection.',
+      caption: 'Net differential always shown; the other rows are the largest gaps relative to a typical spread for each stat. Season rows are regular season; the last-10 margin counts the most recent games of each team, playoffs included. None is a projection.',
       layout: 'mirror', columns: [{ key: 'away', label: nickOf(g.away), entity: { type: 'team', id: ids[0] } }, { key: 'home', label: nickOf(g.home), entity: { type: 'team', id: ids[1] } }],
       rows: rows.map(({ key, label, unit, values, better }) => ({ key, label, unit, values, better })),
       provenance: prov(a, { source: 'wnba-api matchup research (ESPN standings, schedules, season team stats)', window: `season through ${dShort(observedAt(a))}`, game_id: g.game_id, entity_ids: ids, fact_family: 'matchup' })
@@ -299,7 +299,7 @@ function trendVisuals(a) {
     out.push({ section: 'evidence', spec: divergingBars({
       id: 'trend-vs-line', title: total ? 'Points against the total' : 'Result against the spread', subtitle: total ? 'Combined points minus the closing total' : 'Final margin plus the spread',
       caption: total ? 'Left of zero finished under the total; right of zero finished over.' : 'Right of zero beat the line; left of zero did not.',
-      unit: 'signed_points', negativeLabel: total ? 'Under' : 'Missed', positiveLabel: total ? 'Over' : 'Covered',
+      unit: 'signed_points', negativeLabel: total ? 'Under' : 'Missed', positiveLabel: total ? 'Over' : 'Covered', tone: total ? 'neutral' : 'signed',
       rows: vs.map(({ r, v }, i) => ({ key: `${i}-${r.date}`, label: label(r), value: r1(v) })),
       provenance: prov(a, { source: 'ESPN game results with the relayed closing line', window: `last ${vs.length} games`, entity_ids: [String(a.lead_team_id || '')], fact_family: 'trend_rows' })
     }) });

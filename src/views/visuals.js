@@ -310,7 +310,7 @@ function groupedBarsFigure(spec) {
 
 function divergingBarsFigure(spec) {
   const max = Math.max(1, ...(spec.rows || []).map((r) => Math.abs(r.value || 0)));
-  return html`<div class="pv-diverge">
+  return html`<div class="pv-diverge ${spec.tone === 'neutral' || spec.negative_label === 'Under' ? 'is-neutral' : ''}">
     ${spec.negative_label || spec.positive_label ? html`<div class="pv-diverge-axis"><span>← ${spec.negative_label || ''}</span><span>${spec.positive_label || ''} →</span></div>` : ''}
     ${(spec.rows || []).map((r) => {
       const w = Math.min(50, (Math.abs(r.value) / max) * 50);

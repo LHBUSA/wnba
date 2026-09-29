@@ -244,3 +244,8 @@
   .pv-figure .pv-table thead th { white-space: normal; }
   .pv-figure .pv-table th, .pv-figure .pv-table td { padding: 5px 6px 5px 0; overflow-wrap: break-word; }
 }
+/* A total has no good side: unders and overs use the strip's neutral under/over colours, not red/green. */
+.pv-diverge.is-neutral .pv-dfill.is-neg { background: rgba(120, 170, 255, .75); }
+.pv-diverge.is-neutral .pv-dfill.is-pos { background: var(--flame); }
+.pv-diverge.is-neutral .pv-drow b.is-neg { color: rgb(150, 190, 255); }
+.pv-diverge.is-neutral .pv-drow b.is-pos { color: var(--flame); }

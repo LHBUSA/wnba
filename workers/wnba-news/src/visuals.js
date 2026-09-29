@@ -433,9 +433,10 @@ export function groupedBars({ unit, series = [], rows = [], ...rest }) {
 }
 
 /** Diverging bars around zero: signed per-row values (a margin against a line, a quarter margin, a change). */
-export function divergingBars({ unit = 'signed_points', rows = [], negativeLabel = null, positiveLabel = null, ...rest }) {
+export function divergingBars({ unit = 'signed_points', rows = [], negativeLabel = null, positiveLabel = null, tone = 'signed', ...rest }) {
   return seal({
     ...base('diverging_bars', rest),
+    tone,
     unit, units: { value: unit, ...VISUAL_UNITS[unit] },
     negative_label: negativeLabel, positive_label: positiveLabel,
     rows: rows.map((r) => ({ key: String(r.key), label: String(r.label), value: num(r.value), meta: r.meta ? String(r.meta) : null, result: r.result || null }))
