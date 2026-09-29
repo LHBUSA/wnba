@@ -9,7 +9,8 @@ import { seriesScoreText } from './playoff-context.js';
 
 // 1.2.0: awards are stories only when won (never "enters the conversation"), a coach award is the team's honor and
 // never a coaching change, All-WNBA grammar, and the team's playoff series as the why-now.
-export const BRIEF_STORY_VERSION = 'wnba-brief-story/1.2.0';
+// 1.2.1: award briefs carry the player's postseason line as its own section.
+export const BRIEF_STORY_VERSION = 'wnba-brief-story/1.2.1';
 
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
