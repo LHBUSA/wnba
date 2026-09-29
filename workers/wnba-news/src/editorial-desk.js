@@ -138,7 +138,7 @@ function packetOf(a, sections) {
   };
 }
 
-function inputOf(a, sections, correction = null) {
+export function inputOf(a, sections, correction = null) {
   const words = (a.body || []).join(' ').split(/\s+/).filter(Boolean).length;
   const anchors = ANCHORS[contractOfKind(a.kind)] || [];
   return [
@@ -153,7 +153,7 @@ function inputOf(a, sections, correction = null) {
   ].join('\n');
 }
 
-function schemaFor(sections) {
+export function schemaFor(sections) {
   return {
     type: 'object',
     additionalProperties: false,
