@@ -1,7 +1,7 @@
 # WNBA Newsroom V4 — AI routing (stage 2)
 
 Status: **STAGE 2 ACCEPTED 2026-09-29.** `wnba-news` 99993f10 (main a6c7e54, deployed 21:07Z, rollback 18abd3f3; KV
-snapshot D:\Workers\wnba-rollback60929-v4-router). Acceptance evidence is below the checklist. Router `wnba-ai-router/1.0.0`, cost log `wnba-openai-cost/2.1.0`, desk `wnba-editorial/1.0.0`
+snapshot D:/Workers/wnba-rollback/20260929-v4-router). Acceptance evidence is below the checklist. Router `wnba-ai-router/1.0.0`, cost log `wnba-openai-cost/2.1.0`, desk `wnba-editorial/1.0.0`
 (unchanged), eligibility `wnba-editorial-eligibility/1.0.0` (unchanged). Mirrors the Tennis reference router
 (`tennis-ai-router`) so every PropBetEdge newsroom routes, logs and governs the same way.
 
