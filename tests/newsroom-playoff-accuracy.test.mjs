@@ -226,3 +226,10 @@ test('a withdrawal retires a true story with its own label, stickily', async () 
   assert.equal(cards[0].revisions.at(-1).kind, 'integrity_retirement');
   assert.match(reviewStory({ card: cards[0], item: store.get('316e67086ede') }).reason, /^withdrawn: /);
 });
+
+test('older-generator injury copy defects are recognised (template headline, zero-minute line)', async () => {
+  const { knownDefect } = await import('../workers/wnba-news/src/articles-run.js');
+  assert.equal(knownDefect({ headline: 'Natasha Cloud listed out after an uneven recent stretch', body: [] }), 'uneven_stretch_template');
+  assert.equal(knownDefect({ body: ['In the Sun’s last five games she started none and played 0 minutes a night.'] }), 'zero_minutes');
+  assert.equal(knownDefect({ headline: 'Dana Evans listed out after missing two of the Aces’ last five games', body: [] }), null);
+});

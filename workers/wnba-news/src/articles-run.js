@@ -14,7 +14,7 @@ import { internationalArticles, INTL_VERSION } from './international.js';
 import { mergeArticles, applyTrendDecisions, trendMarketOf } from './lifecycle.js';
 import { qualityFailures } from './quality.js';
 import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from './identity.js';
-import { regularSeasonIds, playoffContext, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
+import { regularSeasonIds, playoffContext, seasonOverTeams, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
 import { isConfigured as editorialConfigured, modelOf as edModelOf, budgetOf, draftDigest, editArticle, EDITORIAL_KINDS, EDITORIAL_DESK_VERSION } from './editorial-desk.js';
 import { applyCorrections, CORRECTIONS_VERSION } from './corrections.js';
 
@@ -36,8 +36,13 @@ export { articleFirstPublishedAt, injuryIdentity } from './lifecycle.js';
 export const KNOWN_DEFECTS = [
   // wnba-articles <= 1.5.0: the schedule's season.type went null, the regular-season id set was empty, and every
   // result reported both teams' records as 0-0.
-  ['zero_records', /\bwere 0-0 and the [A-Z][\w’']+ 0-0\b/]
+  ['zero_records', /\bwere 0-0 and the [A-Z][\w’']+ 0-0\b/],
+  // wnba-articles <= 1.5.0 injury copy: a template headline in place of the fact, and "started none ... played 0
+  // minutes" for a player who had not played in the window.
+  ['uneven_stretch_template', /\bafter an uneven recent stretch\b/],
+  ['zero_minutes', /\bstarted none and played 0(?:\.0)? minutes\b/]
 ];
+export const KNOWN_DEFECTS_VERSION = 'wnba-known-defects/1.1.0';
 export function knownDefect(item) {
   const text = [item?.headline, item?.deck, ...(item?.body || [])].join(' ');
   return KNOWN_DEFECTS.find(([, re]) => re.test(text))?.[0] || null;
@@ -367,6 +372,30 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     }
   }
   // Reviewed editorial corrections: a published story that was wrong is retired with its correction (corrections.js).
+  // Listed cards the current newsroom cannot stand behind and cannot rebuild:
+  //   * during the postseason, an eliminated team's injury listing affects no game (same rule as generation);
+  //   * an older-generator story with a known defect the upgrade pass could not rebuild in place.
+  // Both leave the listings with a stated reason; the URL and record stay. Decided once per defect-list version.
+  const overTeams = seasonOverTeams(ctx.playoffs);
+  const legacyRetired = [];
+  for (const c of next) {
+    if (c.superseded_by || c.correction || !listedCard(c) || writtenIdsEarly.has(c.id)) continue;
+    if (c.kind === 'injury' && overTeams.has(String(c.lead_team_id))) {
+      c.quality_state = 'retired_from_index';
+      c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'retired_from_index', reason: 'the team’s season is over, so this injury listing affects no remaining game; kept at its URL', at: started, season_over: true };
+      legacyRetired.push({ id: c.id, reason: 'season_over' });
+      continue;
+    }
+    if (c.defect_review === KNOWN_DEFECTS_VERSION || !['injury', 'result', 'performance', 'transaction', 'trend'].includes(c.kind)) continue;
+    if (String(c.input_hash || '').split('|')[0] === ARTICLE_VERSION) { c.defect_review = KNOWN_DEFECTS_VERSION; continue; }
+    const item = await env.NEWS_KV.get(`art:v1:item:${c.id}`, 'json').catch(() => null);
+    const defect = item ? knownDefect(item) : null;
+    c.defect_review = KNOWN_DEFECTS_VERSION;
+    if (!defect || regenerations.get(c.id)?.passed) continue;
+    c.quality_state = 'legacy_acceptable';
+    c.quality_review = { policy: LEGACY_POLICY_VERSION, state: 'legacy_acceptable', reason: `published under an older generator with a known copy defect (${defect}) the current generator no longer writes, and its records are out of reach for an in-place rebuild; kept at its URL`, at: started, known_defect: defect };
+    legacyRetired.push({ id: c.id, reason: defect });
+  }
   const corrections = await applyCorrections(next, { at: started, getItem: (id) => env.NEWS_KV.get(`art:v1:item:${id}`, 'json'), putItem: (a) => env.NEWS_KV.put(`art:v1:item:${a.id}`, JSON.stringify(a), { expirationTtl: 120 * 86400 }) });
   // Every live story gets an intentional quality state (legacy.js). Rewritten stories passed the gate this pass.
   const writtenIds = new Set(events.map((e) => e.id));
@@ -385,7 +414,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   }
   await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
-  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, unforced_previews_retired: unforced, editorial: edStats, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
+  const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, unforced_previews_retired: unforced, legacy_retired: legacyRetired, editorial: edStats, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
   return status;
 }
