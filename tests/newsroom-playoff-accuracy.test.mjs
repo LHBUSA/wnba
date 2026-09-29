@@ -188,3 +188,9 @@ test('newsroom health explains a quiet newsroom from the stored run state', asyn
   assert.equal(stale.status, 'DEGRADED');
   assert.match(stale.why_nothing_new.join(' '), /source ingest has not run for 120 minutes/);
 });
+
+test('a listed result carrying the old "0-0" records defect is detected for an in-place rebuild', async () => {
+  const { knownDefect } = await import('../workers/wnba-news/src/articles-run.js');
+  assert.equal(knownDefect({ body: ['After the result the Aces were 0-0 and the Storm 0-0 (team schedules through September 20).'] }), 'zero_records');
+  assert.equal(knownDefect({ body: ['After the result the Aces were 30-12 and the Storm 20-22.'] }), null);
+});

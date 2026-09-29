@@ -29,6 +29,20 @@ export const ARTICLE_RUN_MIN_GAP_MS = 9 * 60e3;
 // Story identity, editorial-origin clock, duplicate repair and supersession live in lifecycle.js.
 export { articleFirstPublishedAt, injuryIdentity } from './lifecycle.js';
 
+/**
+ * Known factual defects in stories written by older generators, found in production and fixed at the generator.
+ * A match rebuilds the story in place (same id, URL and first publication) through the normal gate.
+ */
+export const KNOWN_DEFECTS = [
+  // wnba-articles <= 1.5.0: the schedule's season.type went null, the regular-season id set was empty, and every
+  // result reported both teams' records as 0-0.
+  ['zero_records', /\bwere 0-0 and the [A-Z][\w’']+ 0-0\b/]
+];
+export function knownDefect(item) {
+  const text = [item?.headline, item?.deck, ...(item?.body || [])].join(' ');
+  return KNOWN_DEFECTS.find(([, re]) => re.test(text))?.[0] || null;
+}
+
 export async function runArticles(env, { apiGet, dict, externalItems, force = false, intlGet = null, breaking = false, backfillInternational = false, mediaFor = null, inspect = null }) {
   const started = new Date().toISOString();
   const now = Date.now();
@@ -266,9 +280,15 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   let upgradeBudget = 40; // one-time/current-policy cleanup can rebuild far more of the existing catalog
   for (const c of priorIndex) {
     if (upgradeBudget <= 0) break;
-    if (!listedCard(c) || producedIds.has(c.id) || !['result', 'performance', 'transaction', 'trend'].includes(c.kind) || !needsReview(c)) continue;
+    if (!listedCard(c) || producedIds.has(c.id) || !['result', 'performance', 'transaction', 'trend'].includes(c.kind)) continue;
+    // A listed story written by an older generator may carry a known factual defect that its depth review cannot see
+    // (knownDefect): it is rebuilt in place by the current generator whatever its review state.
+    const olderGenerator = String(c.input_hash || '').split('|')[0] !== ARTICLE_VERSION;
+    if (!needsReview(c) && !olderGenerator) continue;
     const item = await getItem(c.id).catch(() => null);
-    if (!item || assessStored(item, { now }).pass) continue;
+    if (!item) continue;
+    const defect = olderGenerator ? knownDefect(item) : null;
+    if (!defect && (!needsReview(c) || assessStored(item, { now }).pass)) continue;
     upgradeBudget -= 1;
     let xs = [];
     try {
