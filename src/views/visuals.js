@@ -39,6 +39,7 @@ function provenanceLine(spec) {
 
 /** The figure's own data, as a table. Not a fallback — the accessible form of the same frozen values. */
 function dataTable(spec) {
+  if (NEWSROOM_TYPES.has(spec.type)) return newsroomTable(spec);
   if (spec.type === 'line_series') {
     return html`<table class="pv-table">
       <caption>Frozen values plotted in this figure</caption>
@@ -97,6 +98,7 @@ function dataTable(spec) {
 
 /** A one-sentence read-out of the whole figure, for assistive technology. */
 function ariaSummary(spec) {
+  if (NEWSROOM_TYPES.has(spec.type)) return newsroomAria(spec);
   if (spec.type === 'line_series') {
     return `${spec.title}. ${(spec.series || []).map((p) => `${p.label}: ${f1(p.value)}${p.rank ? `, ranked number ${p.rank}` : ''}`).join('. ')}.`;
   }
@@ -270,7 +272,129 @@ function resumeCardFigure(spec) {
   </div>`;
 }
 
+
+// ------------------------------------------------- basketball newsroom figures (pbe-visual/1.2.0)
+//
+// HTML + CSS bars rather than a wide SVG: they reflow at 320px, labels never shrink below the stylesheet's
+// minimum, and nothing needs horizontal scrolling. Every value printed is the frozen value; bar lengths are
+// proportional within the figure and never rescaled to exaggerate a small gap.
+
+const dec = (unit) => VISUAL_UNITS[unit]?.decimals ?? 1;
+const fmtU = (v, unit) => {
+  if (v === null || v === undefined) return '—';
+  const x = Number(v);
+  const d = dec(unit);
+  const body = d === 0 ? String(Math.round(x)) : (Math.round(x * 10) / 10).toFixed(1).replace(/\.0$/, '');
+  const signed = unit === 'signed_points' ? `${x > 0 ? '+' : ''}${body}` : body;
+  return `${signed}${unit === 'percent' || unit === 'percentile' ? '%' : ''}`;
+};
+const pctOf = (v, max) => (max > 0 ? Math.max(2, Math.min(100, (Math.abs(v) / max) * 100)) : 0);
+const colHead = (c) => `${c.label}${c.sample ? ` · ${c.sample}${c.sample_label ? ` ${c.sample_label}` : c.sample === 1 ? ' game' : ' G'}` : ''}`;
+
+function groupedBarsFigure(spec) {
+  const max = Math.max(1, ...(spec.rows || []).flatMap((r) => (r.values || []).map((v) => Math.abs(v || 0))));
+  const single = (spec.series || []).length === 1;
+  return html`<div class="pv-gbars ${single ? 'is-single' : ''}">
+    ${single ? '' : html`<div class="pv-legend">${spec.series.map((s, i) => html`<span class="pv-key pv-key--${i}">${s.label}</span>`)}</div>`}
+    ${(spec.rows || []).map((r) => html`<div class="pv-grow ${r.highlight ? 'is-highlight' : ''}">
+      <div class="pv-grow-head"><span class="pv-grow-label">${r.label}</span>${r.delta !== null && r.delta !== undefined ? html`<span class="pv-delta ${r.delta > 0 ? 'is-pos' : r.delta < 0 ? 'is-neg' : ''}">${r.delta > 0 ? '+' : ''}${fmtU(r.delta, spec.unit)}</span>` : ''}</div>
+      ${(r.values || []).map((v, i) => html`<div class="pv-gbar pv-gbar--${i}">
+        ${single ? '' : html`<span class="pv-gbar-key">${spec.series[i]?.short_label || ''}</span>`}
+        <div class="pv-track"><i class="pv-fill" style="width:${pctOf(v, max).toFixed(1)}%"></i></div>
+        <b>${fmtU(v, spec.unit)}</b>
+      </div>`)}
+      ${r.meta ? html`<p class="pv-grow-meta">${r.meta}</p>` : ''}
+    </div>`)}
+  </div>`;
+}
+
+function divergingBarsFigure(spec) {
+  const max = Math.max(1, ...(spec.rows || []).map((r) => Math.abs(r.value || 0)));
+  return html`<div class="pv-diverge">
+    ${spec.negative_label || spec.positive_label ? html`<div class="pv-diverge-axis"><span>← ${spec.negative_label || ''}</span><span>${spec.positive_label || ''} →</span></div>` : ''}
+    ${(spec.rows || []).map((r) => {
+      const w = Math.min(50, (Math.abs(r.value) / max) * 50);
+      return html`<div class="pv-drow">
+        <span class="pv-drow-label">${r.label}</span>
+        <div class="pv-dtrack"><i class="pv-dzero"></i><span class="pv-dfill ${r.value >= 0 ? 'is-pos' : 'is-neg'}" style="${r.value >= 0 ? `left:50%;width:${w.toFixed(1)}%` : `left:${(50 - w).toFixed(1)}%;width:${w.toFixed(1)}%`}"></span></div>
+        <b class="${r.value >= 0 ? 'is-pos' : 'is-neg'}">${fmtU(r.value, spec.unit)}</b>
+      </div>`;
+    })}
+  </div>`;
+}
+
+const STRIP_CLASS = { W: 'is-good', C: 'is-good', U: 'is-under', O: 'is-over', L: 'is-bad', M: 'is-bad', P: 'is-push' };
+function gameStripFigure(spec) {
+  return html`<div class="pv-strips">
+    ${(spec.strips || []).map((s) => html`<div class="pv-strip">
+      <span class="pv-strip-label">${s.label}</span>
+      <ol class="pv-strip-items">
+        ${(s.items || []).map((i) => html`<li class="pv-chip ${STRIP_CLASS[i.result] || ''}" title="${i.label}${i.meta ? ` · ${i.meta}` : ''}">
+          <b>${i.result}</b>${i.value !== null && i.value !== undefined ? html`<small>${i.value > 0 ? '+' : ''}${Math.round(i.value)}</small>` : ''}
+        </li>`)}
+      </ol>
+    </div>`)}
+  </div>`;
+}
+
+function statCompareFigure(spec) {
+  const cols = spec.columns || [];
+  if (spec.layout === 'mirror' && cols.length === 2) {
+    return html`<div class="pv-mirror">
+      <div class="pv-mirror-head"><b>${cols[0].label}</b><span></span><b>${cols[1].label}</b></div>
+      ${(spec.rows || []).map((r) => {
+        const [a, b] = r.values;
+        const max = Math.max(Math.abs(a || 0), Math.abs(b || 0), 0.1);
+        const lead = a === null || b === null || a === b || !r.better ? -1 : (r.better === 'higher' ? (a > b ? 0 : 1) : (a < b ? 0 : 1));
+        return html`<div class="pv-mrow">
+          <b class="pv-mval ${lead === 0 ? 'is-lead' : ''}">${fmtU(a, r.unit)}</b>
+          <div class="pv-mbar pv-mbar--l"><i style="width:${pctOf(a || 0, max).toFixed(1)}%"></i></div>
+          <span class="pv-mlabel">${r.label}</span>
+          <div class="pv-mbar pv-mbar--r"><i style="width:${pctOf(b || 0, max).toFixed(1)}%"></i></div>
+          <b class="pv-mval ${lead === 1 ? 'is-lead' : ''}">${fmtU(b, r.unit)}</b>
+        </div>`;
+      })}
+    </div>`;
+  }
+  return html`<div class="pv-statgrid" style="--pv-cols:${cols.length}">
+    <div class="pv-srow pv-srow--head"><span></span>${cols.map((c) => html`<b>${c.label}${c.sample ? html`<small>${c.sample === 1 ? '1 game' : `${c.sample} G`}</small>` : ''}</b>`)}</div>
+    ${(spec.rows || []).map((r) => html`<div class="pv-srow"><span>${r.label}</span>${(r.values || []).map((v) => html`<b class="${v === null ? 'is-empty' : ''}">${fmtU(v, r.unit)}</b>`)}</div>`)}
+  </div>`;
+}
+
+function newsroomTable(spec) {
+  if (spec.type === 'grouped_bars') {
+    return html`<table class="pv-table"><caption>Frozen values plotted in this figure (${VISUAL_UNITS[spec.unit]?.label || spec.unit})</caption>
+      <thead><tr><th scope="col"></th>${spec.series.map((s) => html`<th scope="col">${s.label}</th>`)}${spec.rows.some((r) => r.delta !== null && r.delta !== undefined) ? html`<th scope="col">Margin</th>` : ''}</tr></thead>
+      <tbody>${spec.rows.map((r) => html`<tr><th scope="row">${r.label}</th>${r.values.map((v) => html`<td>${fmtU(v, spec.unit)}</td>`)}${r.delta !== null && r.delta !== undefined ? html`<td>${r.delta > 0 ? '+' : ''}${fmtU(r.delta, spec.unit)}</td>` : ''}</tr>`)}</tbody></table>`;
+  }
+  if (spec.type === 'diverging_bars') {
+    return html`<table class="pv-table"><caption>Frozen values plotted in this figure</caption>
+      <tbody>${spec.rows.map((r) => html`<tr><th scope="row">${r.label}</th><td>${fmtU(r.value, spec.unit)}</td></tr>`)}</tbody></table>`;
+  }
+  if (spec.type === 'game_strip') {
+    return html`<table class="pv-table"><caption>Game-by-game results shown in this figure</caption>
+      <thead><tr><th scope="col">Team</th><th scope="col">Game</th><th scope="col">Result</th><th scope="col">Value</th></tr></thead>
+      <tbody>${spec.strips.flatMap((s) => s.items.map((i) => html`<tr><th scope="row">${s.label}</th><td>${i.label}${i.meta ? ` (${i.meta})` : ''}</td><td>${i.result}</td><td>${i.value === null ? '—' : `${i.value > 0 ? '+' : ''}${i.value}`}</td></tr>`))}</tbody></table>`;
+  }
+  return html`<table class="pv-table"><caption>Frozen values shown in this figure</caption>
+    <thead><tr><th scope="col"></th>${spec.columns.map((c) => html`<th scope="col">${colHead(c)}</th>`)}</tr></thead>
+    <tbody>${spec.rows.map((r) => html`<tr><th scope="row">${r.label}</th>${r.values.map((v) => html`<td>${fmtU(v, r.unit)}</td>`)}</tr>`)}</tbody></table>`;
+}
+
+function newsroomAria(spec) {
+  if (spec.type === 'grouped_bars') return `${spec.title}. ${spec.rows.map((r) => `${r.label}: ${r.values.map((v, i) => `${spec.series[i]?.label} ${fmtU(v, spec.unit)}`).join(', ')}`).join('. ')}.`;
+  if (spec.type === 'diverging_bars') return `${spec.title}. ${spec.rows.map((r) => `${r.label}: ${fmtU(r.value, spec.unit)}`).join('. ')}.`;
+  if (spec.type === 'game_strip') return `${spec.title}. ${spec.strips.map((s) => `${s.label}: ${s.items.map((i) => i.result).join(' ')}`).join('. ')}.`;
+  return `${spec.title}. ${spec.rows.map((r) => `${r.label}: ${r.values.map((v, i) => `${spec.columns[i]?.label} ${fmtU(v, r.unit)}`).join(', ')}`).join('. ')}.`;
+}
+const NEWSROOM_TYPES = new Set(['grouped_bars', 'diverging_bars', 'game_strip', 'stat_compare']);
+
 const FIGURE = {
+  grouped_bars: groupedBarsFigure,
+  diverging_bars: divergingBarsFigure,
+  game_strip: gameStripFigure,
+  stat_compare: statCompareFigure,
   line_series: lineSeriesFigure,
   component_bars: componentBarsFigure,
   rank_cards: rankCardsFigure,
@@ -300,7 +424,7 @@ export function editorialVisual(spec) {
       <h3 class="pv-title" id="${headingId}">${spec.title}</h3>
       ${spec.subtitle ? html`<p class="pv-sub">${spec.subtitle}</p>` : ''}
     </div>
-    <div class="pv-body">${body}</div>
+    <div class="pv-body" ${NEWSROOM_TYPES.has(spec.type) ? html`role="img" aria-label="${ariaSummary(spec)}"` : ''}>${body}</div>
     <figcaption>
       ${spec.caption ? html`<p class="pv-caption">${spec.caption}</p>` : ''}
       ${spec.footnote ? html`<p class="pv-foot">${spec.footnote}</p>` : ''}
@@ -312,7 +436,7 @@ export function editorialVisual(spec) {
 
 /** The visual a section addresses, if the article carries it. */
 export function sectionVisual(article, section) {
-  if (!section?.visual) return '';
-  const spec = (article?.visuals || []).find((v) => v && v.id === section.visual);
-  return spec ? editorialVisual(spec) : '';
+  const ids = [...(section?.visual ? [section.visual] : []), ...(Array.isArray(section?.visuals) ? section.visuals : [])];
+  if (!ids.length) return '';
+  return html`${ids.map((id) => (article?.visuals || []).find((v) => v && v.id === id)).filter(Boolean).map((spec) => editorialVisual(spec))}`;
 }

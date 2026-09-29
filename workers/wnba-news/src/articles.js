@@ -18,6 +18,7 @@ import { validateArticle } from './gate.js';
 import { decideIntelligence, intelligenceFailures, intelligenceOf, additiveCopy } from '../../../src/lib/intelligence.js';
 import { aan } from './prose.js';
 import { primarySubjectOf } from './media-resolve.js';
+import { attachNewsroomVisuals } from './newsroom-visuals.js';
 
 /**
  * Newsroom context keeps only the licensed Commons photo, in its pre-provider
@@ -45,7 +46,10 @@ export { injuryDeep as injuryArticles, transactionDeep as transactionArticles, r
 // and injuries; unforced if-necessary games are not previewed; eliminated teams' injuries and trends are not news;
 // regular-season records from the season windows (the schedule's season.type went null and every record read 0-0);
 // numeric comparators (bench ties are "even"), counted-noun agreement, a/an before margins, props sides never null.
-export const ARTICLE_VERSION = 'wnba-articles/1.6.0';
+// 1.7.0: data storytelling — every desk builds frozen, hashed article.visuals from its fact packet (game flow, team
+// separators, player baselines, WinBA context, matchup dashboard, recent form, role, rotation, with/without, player
+// profile, trend strip/drivers), placed beside the section each one explains.
+export const ARTICLE_VERSION = 'wnba-articles/1.7.0';
 
 // ------------------------------------------------------------ formatting
 
@@ -209,7 +213,10 @@ function finalize(a) {
   // contract sits on top of it: where the shared decision says there is no betting module, the gate's "missing
   // bettor_angle" requirement does not apply (a clean article with no betting relevance must not grow boilerplate to
   // pass), and every article is additionally checked for contradictions against that decision.
+  // Data visuals from the same frozen facts (newsroom-visuals.js); an essential chart that fails validation holds.
+  const visualEssential = attachNewsroomVisuals(a);
   a.gate = regate(a);
+  if (visualEssential.length) a.gate = { ok: false, failures: [...a.gate.failures, ...visualEssential] };
   a.subject = primarySubjectOf(a);
   a.status = a.gate.ok ? 'published' : 'held';
   return a;

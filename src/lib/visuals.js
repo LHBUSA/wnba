@@ -6,11 +6,19 @@
 // nothing else. This module is what both sides agree on, so a value cannot be
 // changed on one side of the wire without the other noticing.
 
-export const VISUALS_VERSION = 'wnba-visuals/1.1.0';
-export const VISUAL_RENDERER = 'pbe-visual/1.1.0';
+// 1.2.0: basketball newsroom types (grouped_bars, diverging_bars, game_strip, stat_compare) and their units, so
+// ordinary newsroom stories use the same frozen, hashed, provenance-carrying contract as commissioned features.
+export const VISUALS_VERSION = 'wnba-visuals/1.2.0';
+export const VISUAL_RENDERER = 'pbe-visual/1.2.0';
+/** Renderer versions whose published payloads this renderer still draws (1.2.0 only added types). */
+export const ACCEPTED_RENDERERS = Object.freeze(['pbe-visual/1.1.0', 'pbe-visual/1.2.0']);
+/** How much an article depends on a visual: optional/supporting visuals that fail are dropped; essential ones hold the story. */
+export const VISUAL_REQUIREMENTS = Object.freeze(['optional', 'supporting', 'essential']);
+/** Result codes a game strip may carry. */
+export const STRIP_RESULTS = Object.freeze({ W: 'Win', L: 'Loss', C: 'Covered', M: 'Missed the spread', O: 'Over', U: 'Under', P: 'Push' });
 
 /** Visual types the renderer implements. An unknown type never publishes and never draws. */
-export const VISUAL_TYPES = Object.freeze(['line_series', 'component_bars', 'rank_cards', 'resume_card', 'comparison_bars', 'impact_bars']);
+export const VISUAL_TYPES = Object.freeze(['line_series', 'component_bars', 'rank_cards', 'resume_card', 'comparison_bars', 'impact_bars', 'grouped_bars', 'diverging_bars', 'game_strip', 'stat_compare']);
 
 /** Declared unit spaces. A plotted number must say what it measures. */
 export const VISUAL_UNITS = Object.freeze({
@@ -20,7 +28,15 @@ export const VISUAL_UNITS = Object.freeze({
   per_game: { label: 'per game', scale: [0, 60], decimals: 1 },
   count: { label: 'total', scale: [0, 1000], decimals: 0 },
   percentage_points: { label: 'percentage points', scale: [-100, 100], decimals: 1 },
-  impact_points: { label: 'model-impact points', scale: [-25, 25], decimals: 1 }
+  impact_points: { label: 'model-impact points', scale: [-25, 25], decimals: 1 },
+  points: { label: 'points', scale: [0, 200], decimals: 0 },
+  signed_points: { label: 'points', scale: [-100, 100], decimals: 1 },
+  team_per_game: { label: 'per game', scale: [0, 150], decimals: 1 },
+  minutes: { label: 'minutes', scale: [0, 60], decimals: 1 },
+  possessions: { label: 'possessions per game', scale: [0, 120], decimals: 1 },
+  per_100: { label: 'points per 100 possessions', scale: [0, 160], decimals: 1 },
+  days: { label: 'days', scale: [0, 60], decimals: 0 },
+  games: { label: 'games', scale: [0, 60], decimals: 0 }
 });
 
 /**
@@ -42,6 +58,10 @@ export function plottedValues(spec) {
   if (t === 'rank_cards') return ['rank_cards', (spec.cards || []).map((c) => [String(c.entity?.id), n(c.value), c.rank ?? null])];
   if (t === 'comparison_bars') return ['comparison_bars', (spec.rows || []).map((r) => [String(r.key), n(r.primary), n(r.secondary), n(r.delta)])];
   if (t === 'impact_bars') return ['impact_bars', (spec.rows || []).map((r) => [String(r.key), n(r.value)])];
+  if (t === 'grouped_bars') return ['grouped_bars', (spec.series || []).map((s) => String(s.key)), (spec.rows || []).map((r) => [String(r.key), (r.values || []).map(n), n(r.delta)])];
+  if (t === 'diverging_bars') return ['diverging_bars', (spec.rows || []).map((r) => [String(r.key), n(r.value)])];
+  if (t === 'game_strip') return ['game_strip', (spec.strips || []).map((s) => [String(s.key), (s.items || []).map((i) => [String(i.key), String(i.result), n(i.value)])])];
+  if (t === 'stat_compare') return ['stat_compare', (spec.columns || []).map((c) => [String(c.key), n(c.sample)]), (spec.rows || []).map((r) => [String(r.key), String(r.unit), (r.values || []).map(n)])];
   if (t === 'resume_card') {
     return ['resume_card',
       (spec.honours || []).map((h) => [String(h.key), n(h.count)]),

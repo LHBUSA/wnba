@@ -28,7 +28,10 @@ import {
   VISUAL_UNITS,
   valuesHash,
   isVisualNum,
-  visualNum
+  visualNum,
+  ACCEPTED_RENDERERS,
+  VISUAL_REQUIREMENTS,
+  STRIP_RESULTS
 } from '../../../src/lib/visuals.js';
 
 export {
@@ -233,7 +236,8 @@ export function visualFailures(spec, { id = spec?.id } = {}) {
   if (!VISUAL_TYPES.includes(spec.type)) at(`unknown type ${JSON.stringify(spec.type)}`);
   if (!str(spec.title)) at('no title');
   for (const [k, v] of Object.entries(spec)) if (hasMarkup(v)) at(`field ${k} contains markup; the renderer owns markup`);
-  if (spec.provenance?.renderer !== VISUAL_RENDERER) at('provenance.renderer is not this renderer');
+  if (!ACCEPTED_RENDERERS.includes(spec.provenance?.renderer)) at('provenance.renderer is not this renderer (or an accepted earlier version)');
+  if (spec.requirement !== undefined && !VISUAL_REQUIREMENTS.includes(spec.requirement)) at(`requirement ${JSON.stringify(spec.requirement)} is not optional/supporting/essential`);
   if (!str(spec.provenance?.source)) at('no provenance.source');
   if (!Number.isFinite(Date.parse(spec.provenance?.observed_at || ''))) at('provenance.observed_at is not a timestamp');
   if (spec.values_hash !== valuesHash(spec)) at(`values_hash ${spec.values_hash} does not match the plotted values (${valuesHash(spec)})`);
@@ -320,6 +324,78 @@ export function visualFailures(spec, { id = spec?.id } = {}) {
     if (new Set(ids).size !== ids.length) at('the same player appears twice');
   }
 
+  const inUnit = (unit, v) => { const sc = VISUAL_UNITS[unit]?.scale; return Boolean(sc) && v >= sc[0] && v <= sc[1]; };
+
+  if (spec.type === 'grouped_bars') {
+    const series = spec.series || [];
+    const rows = spec.rows || [];
+    if (series.length < 1 || series.length > 3) at(`series count ${series.length} is outside 1–3`);
+    if (rows.length < 2 || rows.length > 12) at(`row count ${rows.length} is outside 2–12`);
+    if (!VISUAL_UNITS[spec.unit]) at(`undeclared unit ${JSON.stringify(spec.unit)}`);
+    for (const r of rows) {
+      if (!str(r.label)) at(`row ${r.key} has no label`);
+      if ((r.values || []).length !== series.length) at(`row ${r.key} has ${(r.values || []).length} values for ${series.length} series`);
+      for (const v of r.values || []) {
+        if (v === null) at(`row ${r.key} has a missing value (a missing value must not plot as zero)`);
+        else if (!inUnit(spec.unit, v)) at(`row ${r.key} value ${v} is outside the ${spec.unit} domain`);
+      }
+      // A derived margin must be the arithmetic of the plotted values, never a free number.
+      if (r.delta !== null && r.delta !== undefined && series.length === 2 && (r.values || []).every((v) => v !== null) && Math.abs(r.delta - (r.values[0] - r.values[1])) > 0.05) at(`row ${r.key} delta ${r.delta} is not ${r.values[0]} − ${r.values[1]}`);
+    }
+    const keys = rows.map((r) => String(r.key));
+    if (new Set(keys).size !== keys.length) at('duplicate row keys');
+  }
+
+  if (spec.type === 'diverging_bars') {
+    const rows = spec.rows || [];
+    if (rows.length < 2 || rows.length > 12) at(`row count ${rows.length} is outside 2–12`);
+    if (!VISUAL_UNITS[spec.unit]) at(`undeclared unit ${JSON.stringify(spec.unit)}`);
+    for (const r of rows) {
+      if (!str(r.label)) at(`row ${r.key} has no label`);
+      if (r.value === null) at(`row ${r.key} has no value`);
+      else if (!inUnit(spec.unit, r.value)) at(`row ${r.key} value ${r.value} is outside the ${spec.unit} domain`);
+    }
+    const keys = rows.map((r) => String(r.key));
+    if (new Set(keys).size !== keys.length) at('duplicate row keys');
+  }
+
+  if (spec.type === 'game_strip') {
+    const strips = spec.strips || [];
+    if (strips.length < 1 || strips.length > 2) at(`strip count ${strips.length} is outside 1–2`);
+    for (const s of strips) {
+      const items = s.items || [];
+      if (!str(s.label)) at(`strip ${s.key} has no label`);
+      if (items.length < 2 || items.length > 12) at(`strip ${s.key} has ${items.length} games (2–12)`);
+      for (const i of items) {
+        if (!STRIP_RESULTS[i.result]) at(`strip ${s.key} game ${i.key} has an unknown result ${JSON.stringify(i.result)}`);
+        if (!str(i.label)) at(`strip ${s.key} game ${i.key} has no label`);
+      }
+      const keys = items.map((i) => String(i.key));
+      if (new Set(keys).size !== keys.length) at(`strip ${s.key} repeats a game`);
+    }
+  }
+
+  if (spec.type === 'stat_compare') {
+    const cols = spec.columns || [];
+    const rows = spec.rows || [];
+    if (cols.length < 2 || cols.length > 4) at(`column count ${cols.length} is outside 2–4`);
+    if (rows.length < 2 || rows.length > 8) at(`row count ${rows.length} is outside 2–8`);
+    for (const c of cols) {
+      if (!str(c.label)) at(`column ${c.key} has no label`);
+      if (c.sample !== null && c.sample !== undefined && !(c.sample >= 1)) at(`column ${c.key} sample ${c.sample} is not a real sample size`);
+    }
+    for (const r of rows) {
+      if (!str(r.label)) at(`row ${r.key} has no label`);
+      if (!VISUAL_UNITS[r.unit]) at(`row ${r.key} has an undeclared unit`);
+      if ((r.values || []).length !== cols.length) at(`row ${r.key} has ${(r.values || []).length} values for ${cols.length} columns`);
+      // A comparison needs at least two real values in a row; missing cells render as — and never as zero.
+      if ((r.values || []).filter((v) => v !== null).length < 2) at(`row ${r.key} compares fewer than two values`);
+      for (const v of r.values || []) if (v !== null && !inUnit(r.unit, v)) at(`row ${r.key} value ${v} is outside the ${r.unit} domain`);
+    }
+    const keys = rows.map((r) => String(r.key));
+    if (new Set(keys).size !== keys.length) at('duplicate row keys');
+  }
+
   if (spec.type === 'resume_card') {
     if (!(spec.honours || []).length && !(spec.lines || []).length) at('an empty résumé card');
     for (const h of spec.honours || []) {
@@ -335,6 +411,53 @@ export function visualFailures(spec, { id = spec?.id } = {}) {
     if (!spec.entity?.id) at('no subject entity id');
   }
   return out;
+}
+
+// ------------------------------------------------------ basketball newsroom types (1.2.0)
+
+const base = (type, { id, title, subtitle = null, caption = null, footnote = null, requirement = 'supporting', provenance = {} }) => ({
+  id, type, title, subtitle, caption, footnote, requirement,
+  provenance: { renderer: VISUAL_RENDERER, ...provenance },
+  version: VISUALS_VERSION
+});
+const seal = (spec) => ({ ...spec, values_hash: valuesHash(spec) });
+
+/** Grouped bars: rows (quarters, players, metrics) × up to three series (teams, windows). `delta` = series[0] − series[1]. */
+export function groupedBars({ unit, series = [], rows = [], ...rest }) {
+  return seal({
+    ...base('grouped_bars', rest),
+    unit, units: { value: unit, ...VISUAL_UNITS[unit] },
+    series: series.map((s) => ({ key: String(s.key), label: String(s.label), short_label: String(s.short_label || s.label), entity: s.entity || null })),
+    rows: rows.map((r) => ({ key: String(r.key), label: String(r.label), values: (r.values || []).map(num), delta: r.delta === undefined ? null : num(r.delta), meta: r.meta ? String(r.meta) : null, highlight: Boolean(r.highlight), href: r.href ? String(r.href) : null }))
+  });
+}
+
+/** Diverging bars around zero: signed per-row values (a margin against a line, a quarter margin, a change). */
+export function divergingBars({ unit = 'signed_points', rows = [], negativeLabel = null, positiveLabel = null, ...rest }) {
+  return seal({
+    ...base('diverging_bars', rest),
+    unit, units: { value: unit, ...VISUAL_UNITS[unit] },
+    negative_label: negativeLabel, positive_label: positiveLabel,
+    rows: rows.map((r) => ({ key: String(r.key), label: String(r.label), value: num(r.value), meta: r.meta ? String(r.meta) : null, result: r.result || null }))
+  });
+}
+
+/** Game strip: results in order (W/L, covered/missed, over/under/push), one strip per team. */
+export function gameStrip({ strips = [], ...rest }) {
+  return seal({
+    ...base('game_strip', rest),
+    strips: strips.map((s) => ({ key: String(s.key), label: String(s.label), entity: s.entity || null, items: (s.items || []).map((i) => ({ key: String(i.key), label: String(i.label), result: String(i.result), value: i.value === undefined ? null : num(i.value), meta: i.meta ? String(i.meta) : null })) }))
+  });
+}
+
+/** Stat comparison: metrics (rows) across 2–4 columns (windows, teams, with/without). Each column may declare its sample. */
+export function statCompare({ columns = [], rows = [], layout = 'table', ...rest }) {
+  return seal({
+    ...base('stat_compare', rest),
+    layout,
+    columns: columns.map((c) => ({ key: String(c.key), label: String(c.label), sample: c.sample === undefined ? null : num(c.sample), sample_label: c.sample_label ? String(c.sample_label) : null, entity: c.entity || null })),
+    rows: rows.map((r) => ({ key: String(r.key), label: String(r.label), unit: r.unit, values: (r.values || []).map(num), better: r.better || null }))
+  });
 }
 
 /** Validate a whole payload. Duplicate ids are a failure: a section addresses a visual by id. */

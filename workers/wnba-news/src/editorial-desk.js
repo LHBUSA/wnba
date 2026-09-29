@@ -50,7 +50,7 @@ export function draftSections(a, keyOf) {
   if (lead.length) out.push({ key: 'lede', title: null, fixed_title: true, paragraphs: lead });
   secs.forEach((s, i) => {
     const k = keyOf(s, i);
-    out.push({ key: k || `keep_${i}`, title: s.title || null, fixed_title: !k, paragraphs: (a.body || []).slice(s.first, s.first + s.count) });
+    out.push({ key: k || `keep_${i}`, title: s.title || null, fixed_title: !k, paragraphs: (a.body || []).slice(s.first, s.first + s.count), visuals: s.visuals || null, visual: s.visual || null });
   });
   // Keys must be unique for the schema enum; a repeated key keeps its title fixed and gets an index.
   const seen = new Map();
@@ -118,7 +118,7 @@ function packetOf(a, sections) {
     permitted_names: (a.entities || []).filter((e) => e && e.type !== 'game').map((e) => `${e.name} (${e.type})`),
     publisher_headlines: publisherHeadlines,
     intelligence_copy_not_to_repeat: intel,
-    draft: { headline: a.headline, deck: a.deck, sections: sections.map((s) => ({ key: s.key, title: s.title, fixed_title: s.fixed_title, paragraphs: s.paragraphs })) },
+    draft: { headline: a.headline, deck: a.deck, sections: sections.map((s) => ({ key: s.key, title: s.title, fixed_title: s.fixed_title, paragraphs: s.paragraphs, ...(s.visuals ? { charts_beside_this_section: s.visuals.map((id) => (a.visuals || []).find((v) => v.id === id)?.title).filter(Boolean) } : {}) })) },
     fact_block: a.facts || {},
     cited_records: records
   };
@@ -217,7 +217,8 @@ export function applyRewrite(a, draft, out) {
     const paras = (s?.paragraphs || []).map((p) => String(p).replace(/\s+/g, ' ').trim()).filter(Boolean);
     const title = d.fixed_title ? d.title : String(s?.title || '').replace(/\s+/g, ' ').trim() || d.title;
     // A fixed or untitled leading section keeps its original shape; keyed sections carry the key depth.js reads.
-    sections.push({ title, first: body.length, count: paras.length, ...(d.key.startsWith('keep_') || d.fixed_title ? {} : { key: d.key.replace(/_\d+$/, '') }) });
+    // Chart placement is code's decision, not the editor's: each section keeps the visuals the draft placed on it.
+    sections.push({ title, first: body.length, count: paras.length, ...(d.key.startsWith('keep_') || d.fixed_title ? {} : { key: d.key.replace(/_\d+$/, '') }), ...(d.visuals ? { visuals: d.visuals } : {}), ...(d.visual ? { visual: d.visual } : {}) });
     body.push(...paras);
   }
   return { ...a, headline: String(out.headline || '').replace(/\s+/g, ' ').trim(), deck: String(out.deck || '').replace(/\s+/g, ' ').trim(), body, sections: sections.filter((s) => s.count > 0 || s.title) };

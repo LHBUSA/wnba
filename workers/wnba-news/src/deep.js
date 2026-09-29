@@ -858,7 +858,7 @@ export async function resultDeep(ctx) {
       const ent = log.current;
       const key = (r.pts ?? 0) >= 28 ? 'pts' : (r.reb ?? 0) >= 15 ? 'reb' : 'ast';
       const label = { pts: 'points', reb: 'rebounds', ast: 'assists' }[key];
-      const c = { athlete_id: r.athlete_id, name: r.name, stat: key, value: r[key], entering: ent ? { games: ent.games, avg: ent[key], last10: ent.last10?.[key] ?? null, last10_games: ent.last10?.games ?? null } : null };
+      const c = { athlete_id: r.athlete_id, name: r.name, stat: key, value: r[key], entering: ent ? { games: ent.games, avg: ent[key], last10: ent.last10?.[key] ?? null, last10_games: ent.last10?.games ?? null } : null, entering_line: ent ? { games: ent.games, pts: ent.pts, reb: ent.reb, ast: ent.ast, min: ent.min } : null, last10_line: ent?.last10 || null };
       if (ent) provs.push(prov(r.name, ent, 'entering_game'));
       const sp = shotProfile(live, r.athlete_id);
       const spText = sp && sp.zones.length >= 2 ? ` By ESPN’s shot locations, ${listJoin(sp.zones.slice(0, 3).map((z) => `${z.made}-of-${z.att} ${ZONE[z.zone]}`))}.` : '';
@@ -892,7 +892,7 @@ export async function resultDeep(ctx) {
           const ent = seasonLog(pr, year, dict?.teamById, { before: g.start_utc }).current;
           if (ent && ent.games >= 3 && Number.isFinite(ent.pts)) {
             provs.push(prov(r.name, ent, 'entering_game'));
-            comparisons.push({ athlete_id: r.athlete_id, name: r.name, stat: 'pts', value: r.pts, entering: { games: ent.games, avg: ent.pts, last10: ent.last10?.pts ?? null, last10_games: ent.last10?.games ?? null }, above: (r.pts ?? 0) - ent.pts });
+            comparisons.push({ athlete_id: r.athlete_id, name: r.name, stat: 'pts', value: r.pts, entering: { games: ent.games, avg: ent.pts, last10: ent.last10?.pts ?? null, last10_games: ent.last10?.games ?? null }, entering_line: { games: ent.games, pts: ent.pts, reb: ent.reb, ast: ent.ast, min: ent.min }, last10_line: ent.last10 || null, above: (r.pts ?? 0) - ent.pts });
             base = ` She came in averaging ${f1(ent.pts)} points over ${ent.games} games of the ${year} regular season.`;
           }
         }

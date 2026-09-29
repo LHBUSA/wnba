@@ -297,6 +297,10 @@ function previewAnalytics(a) {
 
 export function articleAnalytics(article, { afterSection = 0 } = {}) {
   if (!article || afterSection !== 0) return '';
+  // A story that carries frozen contract visuals (wnba-articles >= 1.7.0) draws those beside their sections; the
+  // render-time dashboards below remain only for stories published before, so history renders as it did. The
+  // trend's next-market card is navigation, not a chart, and stays.
+  if ((article.visuals || []).length) return article.kind === 'trend' ? trendNextLine(article) : '';
   if (article.kind === 'trend') return trendAnalytics(article);
   if (article.kind === 'injury') return injuryAnalytics(article);
   if (article.kind === 'result' || article.kind === 'performance') return resultAnalytics(article);
