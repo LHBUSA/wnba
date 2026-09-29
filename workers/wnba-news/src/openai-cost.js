@@ -26,7 +26,7 @@ import { aiConfig, nominalStandardCost, ROUTER_VERSION } from './ai-router.js';
 // Standard-rate constant (the same one UFC and Tennis record against) — used for pre-2.1.0 entries, the re-edit estimate
 // and as the conservative emergency-ceiling estimate for a call whose model has no configured rate.
 export const USD_PER_MTOK = { input: 1.25, output: 10 };
-export const OPENAI_COST_VERSION = 'wnba-openai-cost/2.1.0';
+export const OPENAI_COST_VERSION = 'wnba-openai-cost/2.2.0';
 
 export const dayOf = (iso) => String(iso || new Date().toISOString()).slice(0, 10);
 const keyOf = (iso) => `openai:v1:calls:${dayOf(iso)}`;
@@ -129,6 +129,25 @@ export function callLogWriter(kv, iso) {
 // wnba-editorial-eligibility/1.0.0; the labels exist so a pre-fix log (revision/backfill) is still counted honestly.
 export const classOfTrigger = (t) => (t === 'new_story' ? 'new_story' : ['manual_reedit', 'canary', 'repair'].includes(t) ? 'manual' : t === 'revision' ? 'existing_revision' : ['backfill', 'legacy_upgrade'].includes(t) ? 'legacy_upgrade' : 'other');
 
+/**
+ * The eligibility invariant (no automatic existing-revision / legacy-upgrade calls), split in two so historical
+ * evidence never masks the live state. An entry written by the V4 router carries routing fields (router_version /
+ * routing_lane); entries without them predate the router. Historical violations are reported, never rewritten or
+ * dropped; the CURRENT invariant is judged only on entries written since the router went live.
+ */
+export function invariantState(calls) {
+  const isViolation = (c) => ['existing_revision', 'legacy_upgrade'].includes(classOfTrigger(c.trigger));
+  const routed = calls.filter((c) => c.router_version || c.routing_lane);
+  const legacy = calls.filter((c) => !(c.router_version || c.routing_lane));
+  const brief = (c) => ({ id: c.id, trigger: c.trigger, at: c.at, response_id: c.response_id || null });
+  const post = routed.filter(isViolation);
+  const hist = legacy.filter(isViolation);
+  return {
+    since_router: { ok: post.length === 0, calls: routed.length, violations: post.length, entries: post.map(brief) },
+    historical: { ok: hist.length === 0, calls: legacy.length, violations: hist.length, entries: hist.map(brief), note: 'pre-router log entries, preserved as evidence' }
+  };
+}
+
 /** The day's report: guard state, calls by class, totals, by story — and any story paid twice for the SAME draft. */
 export function costReport(calls, day, env = {}) {
   const by = (f) => calls.reduce((m, c) => { const k = f(c); const x = (m[k] ||= { calls: 0, input_tokens: 0, cached_input_tokens: 0, output_tokens: 0, reasoning_tokens: 0, eligible_tokens: 0, nominal_standard_cost: 0, unpriced_calls: 0 }); x.calls += 1; x.input_tokens += c.input_tokens || 0; x.cached_input_tokens += c.cached_input_tokens || 0; x.output_tokens += c.output_tokens || 0; x.reasoning_tokens += c.reasoning_tokens || 0; x.eligible_tokens += tokensOfCall(c); if (c.nominal_standard_cost === null) x.unpriced_calls += 1; x.nominal_standard_cost = round6(x.nominal_standard_cost + nominalOfCall(c)); return m; }, {});
@@ -138,6 +157,7 @@ export function costReport(calls, day, env = {}) {
   const cls = { new_story: 0, manual: 0, existing_revision: 0, legacy_upgrade: 0, other: 0 };
   for (const c of calls) cls[classOfTrigger(c.trigger)] += 1;
   const gov = governanceState(calls, env);
+  const inv = invariantState(calls);
   return {
     version: OPENAI_COST_VERSION,
     day,
@@ -152,7 +172,10 @@ export function costReport(calls, day, env = {}) {
     manual_calls: cls.manual,
     existing_revision_calls: cls.existing_revision,
     legacy_upgrade_calls: cls.legacy_upgrade,
+    // whole-day invariant (historical evidence included) — kept for compatibility; judge the live state on current_invariant_ok
     invariant_ok: cls.existing_revision === 0 && cls.legacy_upgrade === 0,
+    current_invariant_ok: inv.since_router.ok,
+    invariant: inv,
     governance: gov,
     pricing_usd_per_mtok: USD_PER_MTOK,
     rates_usd_per_mtok: aiConfig(env).rates,

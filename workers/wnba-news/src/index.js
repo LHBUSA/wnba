@@ -27,7 +27,7 @@ import { runCommissionPass } from './commission-run.js';
 import { PLAYOFF_OPENING_KEY, publishPlayoffOpening } from './playoff-opening.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
 import { newsroomHealthReport } from './newsroom-health.js';
-import { readCallLog, costReport, costUsd, governanceState } from './openai-cost.js';
+import { readCallLog, costReport, costUsd, governanceState, invariantState } from './openai-cost.js';
 import { reeditPlan } from './editorial-pass.js';
 import { ARTICLE_RUN_MIN_GAP_MS } from './articles-run.js';
 
@@ -362,7 +362,9 @@ async function newsroomHealthRoute(env) {
   const report = newsroomHealthReport({ status, runs: runs || [], lastRun, index: (index || []).filter((c) => !withheldBySourcePolicy(c)), held: held || [], now: Date.now(), mediaFor, cronMinutes: CRON_MINUTES, articleGapMin: Math.round(ARTICLE_RUN_MIN_GAP_MS / 60e3) + 1 });
   // OpenAI guard (openai-cost.js): WARN at 350k eligible tokens, CAPPED at the 400k WNBA soft cap.
   const g = governanceState(openaiCalls, env);
-  report.openai = { calls_today: openaiCalls.length, eligible_tokens_today: g.eligible_tokens_today, soft_cap_tokens: g.soft_cap_tokens, pct_of_wnba_soft_cap: g.pct_of_wnba_soft_cap, nominal_standard_cost_today: g.nominal_standard_cost_today, status: g.status };
+  const inv = invariantState(openaiCalls);
+  report.openai = { calls_today: openaiCalls.length, eligible_tokens_today: g.eligible_tokens_today, soft_cap_tokens: g.soft_cap_tokens, pct_of_wnba_soft_cap: g.pct_of_wnba_soft_cap, nominal_standard_cost_today: g.nominal_standard_cost_today, status: g.status, current_invariant_ok: inv.since_router.ok, invariant_violations_since_router: inv.since_router.violations, historical_invariant_violations: inv.historical.violations };
+  if (!inv.since_router.ok) (report.warnings ||= []).push(`openai invariant: ${inv.since_router.violations} automatic existing-revision/legacy call(s) since the router went live`);
   if (g.status !== 'OK') (report.warnings ||= []).push(`openai ${g.status}: ${g.eligible_tokens_today} eligible tokens today (${g.pct_of_wnba_soft_cap}% of the WNBA soft cap)`);
   return j({ ok: true, data: report, meta: { service: SERVICE, served_at: new Date().toISOString() } });
 }

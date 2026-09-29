@@ -368,3 +368,21 @@ test('id drift: the merge keeps ONE transaction story (same id and URL) when the
   assert.equal(second.novelty.new_story, 0); assert.equal(second.novelty.revision, 1);
   assert.deepEqual(second.index.map((c) => [c.id, c.slug]), [['txnold000001', 'first-slug']]);
 });
+
+test('invariant split: pre-router violations stay visible as historical; the current invariant judges routed entries only', async () => {
+  const { invariantState, costReport } = await import('../workers/wnba-news/src/openai-cost.js');
+  const pre = [{ id: 'a', trigger: 'revision', at: '2026-09-29T18:17:00Z', input_tokens: 10, output_tokens: 5 }, { id: 'b', trigger: 'revision', at: '2026-09-29T18:17:30Z', input_tokens: 10, output_tokens: 5 }];
+  const post = [{ id: 'c', trigger: 'canary', at: '2026-09-29T21:23:14Z', router_version: 'wnba-ai-router/1.0.0', routing_lane: 'STANDARD_EDITORIAL', input_tokens: 10, output_tokens: 5 }];
+  const s = invariantState([...pre, ...post]);
+  assert.equal(s.historical.violations, 2);
+  assert.deepEqual(s.historical.entries.map((e) => e.id), ['a', 'b'], 'historical evidence preserved, not dropped');
+  assert.equal(s.since_router.ok, true);
+  assert.equal(s.since_router.calls, 1);
+  const rep = costReport([...pre, ...post], '2026-09-29', {});
+  assert.equal(rep.invariant_ok, false, 'whole-day invariant still reports the historical violations');
+  assert.equal(rep.current_invariant_ok, true);
+  assert.equal(rep.calls.length, 3, 'no entry removed');
+  const bad = invariantState([...post, { id: 'd', trigger: 'revision', router_version: 'wnba-ai-router/1.0.0', routing_lane: 'DETERMINISTIC', at: '2026-09-29T22:00:00Z' }]);
+  assert.equal(bad.since_router.ok, false);
+  assert.equal(bad.since_router.violations, 1);
+});
