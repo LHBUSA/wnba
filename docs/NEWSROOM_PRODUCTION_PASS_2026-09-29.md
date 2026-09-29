@@ -100,8 +100,7 @@ regress. One corrective retry, then fall back to the deterministic draft. Cached
 repeat cost). Bounded: 8 calls / 150s / concurrency 3 per pass. `last_run.editorial` + `item.editorial` record
 provider, model, version, status, failures, usage.
 
-**Status: deployed, inert** — `OPENAI_API_KEY` is not set on `wnba-news` (no key exists in the local secret store;
-UFC's is a Worker secret and cannot be read back). Canary and backlog upgrade are blocked on it (§6).
+**Status: enabled** (owner set the secret) — see §5 for the canary and live results.
 
 ### 3.4 Observability — `GET /v1/newsroom/health`
 Source poll + health + newest item, events, last article pass (candidates by desk, generated, written, held,
@@ -127,22 +126,127 @@ use licensed Commons only; hotlinked ESPN/WNBA headshots are never re-published 
 NOT permit ESPN headshots as article imagery, so the newsroom resolver was not extended. `cdn.wnba.com` stays off.
 High-traffic players without a licensed photo: Kelsey Mitchell (rejected at review), Dominique Malonga (rejected).
 
-## 5. Deployments
+## 5. Editorial desk — enabled, canary, live cron
+
+`OPENAI_API_KEY` set on wnba-news by the owner; `/v1/newsroom/health` reports `editorial.configured: true`,
+provider `openai`, model `gpt-5.6-sol`, `wnba-editorial/1.0.0`.
+
+### 5.1 Six-story canary (dry run over a KV overlay — nothing published; `POST /run?editorial=canary&ids=…`)
+
+| Desk | Deterministic headline | Editorial headline | Words | Result |
+|---|---|---|---|---|
+| Playoff preview | Lynx at Liberty, Game 2: Lynx favored by 3.5, with the season edge stronger than recent form | Liberty face favored Lynx with a first-round closeout at stake | 554 → 649 | applied (1 attempt); 43/44 sentences rewritten |
+| Playoff result | The Golden State Valkyries beat the Dallas Wings in Game 1, 104–80 | Golden State Valkyries move one win from advancing after beating Dallas Wings | 322 → 376 | applied |
+| Injury | Caitlin Clark listed day-to-day before Game 2 against the Aces | Caitlin Clark listed day-to-day as Fever face elimination against Aces | 501 → 566 | applied |
+| Player-led result | A'ja Wilson’s 38 points lead the Aces past the Fever in Game 1, 102–85 | A'ja Wilson scores 38 as Aces beat Fever in Game 1 | 372 → 444 | applied (2 attempts) |
+| Award brief | Caitlin Clark earns All-WNBA honors | — | 225 | **rejected → deterministic**: model language (“projection”), unsupported superlative (“largest”) |
+| Transaction | The Mercury release F Saylor Poffenbarger and sign G Shay Ciezki… | — | 319 | **rejected → deterministic**: sportsbook language (“covers”) without a market; a height (6' 2") read as a quote — false positive, fixed |
+
+Section headings before → after (preview): Game outlook · Availability · How they match up · The line · Before tip →
+New York’s closeout chance · Four players listed out · Season strength meets recent form · Spread moves toward
+Minnesota · Props and line movement. Injury: The latest · Who picks up the minutes · Team context · The line ·
+Next up → Clark’s status before Game 2 · A major role in the rotation · Indiana faces elimination · Price set after
+the update · Status will shape the rotation.
+
+Excerpt (injury, rewrite): “Clark has played 41 games this season, averaging 22.1 points, 4 rebounds and 8.2 assists
+in 30.9 minutes… The Fever are 25-16 in the 41 games she has played and 3-0 in the 3 she has not. Those splits
+include different opponents, dates and lineup combinations, so they describe what happened rather than isolate her
+impact or project Game 2.”
+
+Against the UFC standard: the rewrite removes the WNBA-specific weaknesses (one heading set per desk; memo phrasing;
+flat transitions) and leads with stakes — the UFC desk's strength — without its habits (“no bet yet” closer,
+“<Publisher> reported…” second sentence). Median length stays well under UFC's 926 words because the desk may not add
+evidence; depth comes from the fact packet, not the model.
+
+**Known limit (documented, not hidden):** the number gate matches VALUES, not meanings. “Four players listed out”
+(2 + 2) passed because 4 appears elsewhere in the draft. The count was true; the rule the prompt states (no
+arithmetic) is enforced by instruction, not by the gate.
+
+**Fallback verified in production:** canary with `model=gpt-invalid-model-canary` → provider 404 on both stories,
+both published deterministic; the recorded error carries no key.
+
+### 5.2 Live cron — issues found and fixed
+
+1. **Padding.** The Olivia Miles ROY brief (held at 243/300 words) was published after the desk rewrote it to 408
+   words by restating facts. Fixed: the desk runs only on drafts that pass every gate on their own
+   (`draft_held`, no call); length ceiling 1.4× the draft. The story is **withdrawn** (corrections 1.1.0, URL kept,
+   reason on the page). The owner's rule stands: hold rather than pad.
+2. **Revision churn** (same stories revised every 10 min): the draft digest hashed observation clocks; a deferred
+   story replaced its published rewrite with the draft; injury drafts (new id per feed update) never found their
+   stored rewrite. Fixed: canonical facts digest, kept-published rewrite on deferral, predecessor lookup.
+3. **Lease** raised to 9 minutes (a pass with desk calls runs ~4 min).
+4. **Re-key hid charts**: a pass that only added visuals was re-keyed without a write; charts are now in the
+   lifecycle change key.
+
+Convergence after the fixes (cadence passes): 15:46Z cached 6 / deferred 11 → backfill 15:53Z cached 11 → 16:06Z **cached 14 / deferred 2 / 0 new stories**, 5 writes = first-time rewrites of the remaining queue; `no_stored_item` misses 5 → 0.
+
+## 6. Data storytelling — frozen contract visuals in every desk (`wnba-articles/1.7.0`)
+
+ONE visual system: ordinary newsroom stories now carry `article.visuals` on the same contract as commissioned
+features (`wnba-visuals/1.2.0`, renderer `pbe-visual/1.2.0`, which still draws 1.1.0 payloads). DATA → SPEC
+(`newsroom-visuals.js`) → VALIDATION (`visuals.js`) → RENDERER (`src/views/visuals.js`). The model never emits a
+chart; a rewrite keeps chart placement. New types: `grouped_bars`, `diverging_bars`, `game_strip`, `stat_compare`
+(units, validation incl. derived margin = plotted arithmetic, values_hash, provenance, data table, aria read-out,
+tests, mobile QA). `requirement: optional|supporting|essential` (an essential failure holds the story). Legacy
+render-time dashboards draw only for stories published before 1.7.0.
+
+| Desk | Visuals |
+|---|---|
+| Result / performance | quarter scoring + margin · 3–5 team separators by normalised gap · player vs last-10 / season (regular season only) · WinBA context with its board date |
+| Preview | matchup dashboard (net differential + strongest contrasts) · last-five form strips |
+| Injury | role (season / last 10 / recent) · current rotation minutes (“not a prediction”) · with/without record (≥3 games absent, “descriptive, not causal”) |
+| Transaction | player profile · where her minutes would rank (two windows, labelled) |
+| Trend | results strip · result vs line (totals in neutral under/over colours) · drivers (“largest descriptive shift”) |
+| Brief | season line (player briefs) |
+| International | quarter flow · WNBA player vs her earlier games in the tournament |
+
+### Coverage, newest listed stories (contract visuals)
+
+| Desk | Before (12:36Z) | After |
+|---|---|---|
+| Results / performances | 0/19 (legacy scoreboard only) | **19/19** (69 charts) |
+| Previews | 0/4 (legacy 4-row snapshot) | **4/4** |
+| Injuries | 0/26 (legacy rotation bar) | **7/8** |
+| Trends | 0/4 (legacy) | **4/4** |
+| Transactions | 0/3 | **2/3** |
+| International | 0/2 | **2/2** |
+| Briefs | 0/5 | 2/6 |
+| Features (commissioned + WinBA) | 4/8 | 4/8 (WinBA editions render their own frozen leaderboard) |
+
+Production canary (real pages, 390 + 1440): result, performance, preview, injury, transaction, trend, brief,
+international, commissioned feature — every chart in the server HTML, hash-verified, no overflow, no page errors.
+Charts are close to the claim they explain (e.g. “Where the game separated” under “How it happened”), and the
+Dream–Mystics separators show at a glance that Atlanta won Game 1 despite losing the glass 31–50, on a 7–23
+turnover gap. Local 7-width figure QA (every figure, tables opened): 0 overflow at 320–1440.
+
+## 7. Deployments
 
 | Worker | Version | Rollback |
 |---|---|---|
-| wnba-news | `410d1a82` (main `55ea703`) — chain `de60a771` → `219c3822` → `218f7979` → `1b4617fc` → `405254e5` → `410d1a82` | `d87646c5` (fa696a9) + KV snapshot `D:\Workers\wnba-rollback\20260929-playoff-desk\` |
-| wnba-web | `c3813cd3` (f8aa528) | `921c3b2c` |
-| Vercel | auto from main pushes (news-corrections semver quarantine) | previous main deployment |
+| wnba-news | `94fd6b0d` (main `523f280`) | `d87646c5` (fa696a9) + KV snapshots `D:\Workers\wnba-rollback\20260929-playoff-desk\`, `…\20260929-visuals\` |
+| wnba-web | `10fd73d4` (523f280) | `921c3b2c` |
+| Vercel | auto from main | previous main deployment |
 
-Tests: 868/868; guard-truth PASS; source-brand PASS.
+Tests: 880/880; guard-truth PASS; source-brand PASS.
 
-## 6. Open (owner action)
-1. `wrangler secret put OPENAI_API_KEY --name wnba-news` → then the six-story canary (injury, transaction,
-   result, performance-led result, playoff preview, team trend) with deterministic-vs-editorial diffs, then the
-   bounded backlog upgrade of listed current stories (`editorial_quality_upgrade`, same id/slug/first publication).
-2. Rights decision if ESPN headshots should become newsroom identification imagery (34 roster players, 12 listed
-   stories would gain a subject photo). Not taken here.
-3. Photo review for Kelsey Mitchell and Dominique Malonga.
-4. Props desk: every prop story is below the Brief floor (104 words, no game log) — held correctly; needs a real
-   generator pass, not a looser gate.
+## 8. Final acceptance
+
+- Editorial desk configured: YES (health). Six-story canary: 4 applied, 2 correctly rejected, 0 unsupported facts
+  published. Deterministic fallback verified (invalid model). Real cron rewrites published: 14 listed stories.
+- Next news cycle: no false award/transaction stories; late coverage never minted; 0 wrong-subject photos; 0
+  card/article identity drift; correction (Lynx) and withdrawal (Miles) pages intact.
+- Live regression scan (54 listed): 0 of “0-0”, “1 assists”, “null (undefined)”, bench-tie “outscored”; three
+  known flags: Sparks coaching change (true — the scan pattern), Alysha Clark “started none” (awkward, not false,
+  older copy), June WinBA Index “a 8.1-point” (WinBA lane, frozen — owner call).
+- 7-width browser QA after the desk went live: **not re-run** — the run was stopped by the machine running low on
+  memory (1 GB free; not a site failure). Earlier today: 0 overflow / 0 broken images / 0 page errors across
+  10 routes × 7 widths; production canary after visuals: all desks pass at 390 and 1440.
+
+## 9. Open (owner action)
+1. Re-run the 7-width browser QA when memory allows: `MSYS_NO_PATHCONV=1 node scripts/qa-screens.mjs
+   https://wnba.propbetedge.ai --widths=320,360,390,430,768,1024,1440 --routes=…`.
+2. ESPN headshots stay off pending a separate usage/commercial-rights check. Kelsey Mitchell and Dominique Malonga
+   remain in manual photo review.
+3. June WinBA Index “a 8.1-point” — WinBA editions are frozen; correcting it is an owner decision.
+4. Props desk: held correctly (104 words, no game log); needs a real generator pass.
+5. Market-move visuals: not built — no market-move story has published (captures too sparse to chart honestly).
