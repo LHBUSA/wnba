@@ -238,15 +238,19 @@ Tests: 880/880; guard-truth PASS; source-brand PASS.
 - Live regression scan (54 listed): 0 of “0-0”, “1 assists”, “null (undefined)”, bench-tie “outscored”; three
   known flags: Sparks coaching change (true — the scan pattern), Alysha Clark “started none” (awkward, not false,
   older copy), June WinBA Index “a 8.1-point” (WinBA lane, frozen — owner call).
-- 7-width browser QA after the desk went live: **not re-run** — the run was stopped by the machine running low on
-  memory (1 GB free; not a site failure). Earlier today: 0 overflow / 0 broken images / 0 page errors across
-  10 routes × 7 widths; production canary after visuals: all desks pass at 390 and 1440.
+- 7-width browser QA after the desk went live (17:0xZ, production): **105 page loads — 15 routes × 320/360/390/430/768/
+  1024/1440 — 0 overflow, 0 broken images, 0 page errors, 0 console errors.** Routes: homepage, /news, result,
+  performance, preview, injury, transaction, trend, brief, international, commissioned feature, the Lynx correction
+  and Miles withdrawal pages, a team page, a player page. (The harness also reports its built-in WNBACast replay check
+  `shots_match_api: false` for game 401857189 — outside the newsroom, not touched.)
+- Revisions after convergence are data-driven: the 17:01Z odds capture revised previews/injuries (e.g. the Fever
+  line moved to 1) and results whose “Next up” quotes the next line; no new story was minted by it.
+
+**WNBA newsroom production pass: COMPLETE (2026-09-29).**
 
 ## 9. Open (owner action)
-1. Re-run the 7-width browser QA when memory allows: `MSYS_NO_PATHCONV=1 node scripts/qa-screens.mjs
-   https://wnba.propbetedge.ai --widths=320,360,390,430,768,1024,1440 --routes=…`.
-2. ESPN headshots stay off pending a separate usage/commercial-rights check. Kelsey Mitchell and Dominique Malonga
+1. ESPN headshots stay off pending a separate usage/commercial-rights check. Kelsey Mitchell and Dominique Malonga
    remain in manual photo review.
-3. June WinBA Index “a 8.1-point” — WinBA editions are frozen; correcting it is an owner decision.
-4. Props desk: held correctly (104 words, no game log); needs a real generator pass.
-5. Market-move visuals: not built — no market-move story has published (captures too sparse to chart honestly).
+2. June WinBA Index “a 8.1-point” — WinBA editions are frozen; correcting it is an owner decision.
+3. Props desk: held correctly (104 words, no game log); needs a real generator pass.
+4. Market-move visuals: not built — no market-move story has published (captures too sparse to chart honestly).
