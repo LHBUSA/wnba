@@ -60,6 +60,18 @@ function standingSentence(tn, st) {
   return `The ${tn} are ${st.wins}–${st.losses}${st.seed ? `, No. ${st.seed} in the ${st.conference_name || 'conference'}` : ''}${st.last_ten ? `, with a ${st.last_ten} record over their last 10 games` : ''}.`;
 }
 
+/** A player's postseason games, kept apart from her regular-season line. */
+function postseasonSentence(pn, games) {
+  if (!pn || !(games || []).length) return null;
+  const one = (x) => {
+    const [a, b] = String(x.score || '').split('-').map(Number);
+    const score = Number.isFinite(a) && Number.isFinite(b) ? `, a ${Math.max(a, b)}–${Math.min(a, b)} ${x.result === 'W' ? 'win' : 'loss'}` : '';
+    const opp = x.opponent ? x.opponent.split(' ').pop() : 'opponent';
+    return `${x.game_number ? `Game ${x.game_number}` : dMonth(x.date)} ${x.at_vs === '@' ? 'at' : 'against'} the ${opp} (${dMonth(x.date)}): ${x.pts} ${x.pts === 1 ? 'point' : 'points'}${x.reb >= 5 ? `, ${x.reb} rebounds` : ''}${x.ast >= 3 ? `, ${x.ast} assists` : ''} on ${x.fgm}-of-${x.fga} shooting in ${x.min} minutes${score}`;
+  };
+  return `${pn}’s postseason so far — ${games.map(one).join('; ')}. That playoff line is its own record and is not part of the regular-season averages above.`;
+}
+
 function nextGameSentence(tn, ng) {
   if (!tn || !ng) return null;
   return `The ${tn} next play ${ng.home ? `the ${ng.opponent} at home` : `at the ${ng.opponent}`} on ${dLong(ng.start_utc)} at ${tET(ng.start_utc)}${ng.opponent_record ? `; the ${ng.opponent} enter at ${ng.opponent_record.wins}–${ng.opponent_record.losses}` : ''}.`;
@@ -255,6 +267,7 @@ function awardsStory({ source, sourceHeadline, sourceAt, others, player, team, v
   add('The honor', 'change', [lede, reportSentence(source, sourceAt, others, allWnba ? 'All-WNBA selection' : `${award} honor`)]);
   add('The season behind it', 'records', [seasonSentence(pn, tn, s), recentSentence(pn, s)]);
   add(tn ? `Her role with the ${nick(v.team)}` : 'Her role', 'team', [roleSentence(pn, tn, v), standingSentence(tn, v.standing)]);
+  if ((v.postseason || []).length) add('Her playoffs so far', 'history', [postseasonSentence(pn, v.postseason)]);
   if (series) {
     add('Why it matters now', 'why', [
       `The honor covers the regular season, and the postseason keeps its own ledger. ${cap(series)}${stake === 'elimination' ? `, which makes Game ${po.game_number} an elimination game for the ${nick(v.team)}` : stake === 'closeout' ? `, so a win in Game ${po.game_number} would send the ${nick(v.team)} through` : ''}.`

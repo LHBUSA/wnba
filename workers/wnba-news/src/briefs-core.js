@@ -219,6 +219,12 @@ async function verify({ player, team, ctx, type = null, headline = '', reportAt 
         v.provenance = { name: pRes.player.name, stat: 'season', season_name: cur.season_name, year: cur.year, team: pRes.player.team?.name || cur.team_name, games: cur.games, pts: cur.pts, min: cur.min, reb: cur.reb };
         evidence.push({ kind: 'record', source: `ESPN game log (${cur.season_name})`, url: `https://wnba.propbetedge.ai/players/${player.id}`, captured_at: capturedAt, record: { games: cur.games, pts: cur.pts, reb: cur.reb, ast: cur.ast, min: cur.min, last5: l5 } });
       }
+      // Postseason games: a separate ESPN log season, never mixed into the regular-season line above.
+      const post = season ? (pRes.gamelog?.seasons?.find((s) => s.name === `${season} Postseason`)?.games || []).filter((x) => x.min).slice(0, 3) : [];
+      if (post.length) {
+        v.postseason = post.map((x) => ({ game_id: x.game_id, date: x.date, opponent: x.opponent?.name || null, at_vs: x.at_vs, result: x.result, score: x.score, min: x.min, pts: x.pts, reb: x.reb, ast: x.ast, fgm: x.fgm, fga: x.fga, game_number: ctx.playoffs ? playoffContext(ctx.playoffs, x.game_id)?.game_number ?? null : null }));
+        evidence.push({ kind: 'record', source: `ESPN game log (${season} Postseason)`, url: `https://wnba.propbetedge.ai/players/${player.id}`, captured_at: capturedAt, record: { games: v.postseason } });
+      }
       v.position = pRes.player.position_name || null;
       // Physical/position data exactly as the player record carries it (draft desk): nothing is estimated.
       v.bio = { position: pRes.player.position_name || null, height: pRes.player.height || null, college: pRes.player.college || null, age: pRes.player.age ?? null };
