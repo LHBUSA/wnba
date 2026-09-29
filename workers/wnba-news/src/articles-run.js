@@ -5,6 +5,7 @@
 
 import { injuryArticles, transactionArticles, resultArticles, previewArticles, trendArticles, propArticles, marketMoveArticles, withSlug, cardOf, regate, slugFor, ARTICLE_VERSION } from './articles.js';
 import { briefArticles, underlyingEvent, BRIEF_VERSION } from './briefs.js';
+import { PREVIEW_LEAD_MS } from './deep.js';
 import { withheldBySourcePolicy } from './sources.js';
 import { assessDepth, sectionKey, DEPTH_VERSION } from './depth.js';
 import { reviewStory, needsReview, assessStored, listedCard, lateCoverage, LEGACY_POLICY_VERSION, QUALITY_STATES } from './legacy.js';
@@ -88,7 +89,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     for (const id of regularSeasonIds(chunk?.games || [], seasonTypes)) regIds.add(id);
     from = add(to, 1);
   }
-  const ctx = { api, injuries: inj?.items || [], externalByPlayer, schedule: games, standingsById, now, transactions: tx?.items || [], dict, finals, upcoming, finalsByTeam, teams: dict.teamsList || [], props, season, regIds, seasonTypes, playoffs: playoffs?.season === season ? playoffs : null, meter, asOf: started };
+  const ctx = { api, injuries: inj?.items || [], externalByPlayer, schedule: games, standingsById, now, transactions: tx?.items || [], dict, finals, upcoming, finalsByTeam, teams: dict.teamsList || [], props, season, regIds, seasonTypes, playoffs: playoffs?.season === season ? playoffs : null, previewLeadMs: PREVIEW_LEAD_MS, meter, asOf: started };
   const runs = {};
   const produced = [];
   let coverageDecisions = [];

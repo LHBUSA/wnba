@@ -169,3 +169,22 @@ test('an unchanged pass restores card display fields that drifted from the store
   assert.equal(second.index[0].revised_at, first.index[0].revised_at, 'no fake freshness');
   assert.ok(second.repairs.some((r) => r.repair === 'card_display_drift'));
 });
+
+// ---------------------------------------------------------------- health: "why haven't we published anything new?"
+
+test('newsroom health explains a quiet newsroom from the stored run state', async () => {
+  const { newsroomHealthReport } = await import('../workers/wnba-news/src/newsroom-health.js');
+  const now = Date.parse('2026-09-29T13:00:00Z');
+  const lastRun = { at: '2026-09-29T12:55:00Z', version: 'wnba-articles/1.6.0', runs: { injury: 4 }, produced: 4, written: 0, held: 3, lifecycle: { novelty: { new_story: 0, revision: 0, unchanged: 1, rekeyed: 0 } }, errors: [] };
+  const held = [{ kind: 'injury', headline: 'X listed out', failures: ['depth: 284 words is below the Full floor of 300'] }];
+  const index = [{ id: 'a', kind: 'injury', status: 'published', quality_state: 'current_quality', first_published_at: '2026-09-27T10:00:00Z', entities: [] }];
+  const status = { at: '2026-09-29T12:58:00Z', sources: [{ source_id: 's', status: 'PASS', latest_item_at: '2026-09-29T12:00:00Z' }], events: { created: 0, joined: 0, breaking: [] }, totals: { material_events: 3, events: 10 } };
+  const r = newsroomHealthReport({ status, runs: [status], lastRun, index, held, now });
+  assert.equal(r.status, 'OK');
+  assert.match(r.why_nothing_new[0], /3 generated stories are held by the gates \(top reason: depth: N words is below the Full floor of N\)/);
+  assert.equal(r.articles.new_stories.h24, 0);
+  assert.equal(r.freshness.newest_injury_age_h, 51);
+  const stale = newsroomHealthReport({ status: { ...status, at: '2026-09-29T11:00:00Z' }, lastRun, index, held, now });
+  assert.equal(stale.status, 'DEGRADED');
+  assert.match(stale.why_nothing_new.join(' '), /source ingest has not run for 120 minutes/);
+});

@@ -188,3 +188,35 @@ test('todayView renders the selected lead as Top Story and keeps the rail chrono
   const rail = s.slice(s.indexOf('editorial-rail'));
   assert.ok(rail.indexOf('lynx-under') > -1 && rail.indexOf('liberty-under') > -1);
 });
+
+// ---------------------------------------------------------------- 1.1.0: a preview's clock is its game
+
+test('1.1.0 · tonight’s playoff preview drafted four days early beats a two-day-old trend', () => {
+  const tonight = new Date(NOW + 10 * 3600e3).toISOString().replace(/:\d\d\.\d+Z$/, 'Z');
+  const early = story('g2-preview', 'preview', hoursAgo(96), { depth_class: 'full', entities: [game('g2', tonight), team('8'), team('9')] });
+  const trend = story('old-trend', 'trend', hoursAgo(48));
+  const c = ctx({ hero: { mode: 'PREGAME', upcomingGames: [preGame('g2', tonight, '8', '9')] } });
+  const { lead, diagnostics } = selectHomepageLead([trend, early], c);
+  assert.equal(lead.id, 'g2-preview');
+  assert.equal(diagnostics.lead_components.materiality_label, 'playoff preview');
+});
+
+test('1.1.0 · a preview for a game next week is not promoted early, and a fresh playoff result still beats it', () => {
+  const nextWeek = new Date(NOW + 7 * 86400e3).toISOString();
+  const early = story('far-preview', 'preview', hoursAgo(2), { entities: [game('g9', nextWeek)] });
+  const res = story('res', 'result', hoursAgo(3), { entities: [game('g1', hoursAgo(6))] });
+  assert.equal(leadId([early, res]), 'res');
+});
+
+test('1.1.0 · a revision clock cannot fake freshness: a trend revised an hour ago is still a two-day-old trend', () => {
+  const revised = story('revised-trend', 'trend', hoursAgo(48), { revised_at: hoursAgo(1), updated_at: hoursAgo(1) });
+  const res = story('res', 'performance', hoursAgo(6), { entities: [game('g1', hoursAgo(9))] });
+  assert.equal(leadId([revised, res]), 'res');
+});
+
+test('1.1.0 · a new injury beats an ordinary same-age preview; a photo never decides the lead', () => {
+  const soon = new Date(NOW + 20 * 3600e3).toISOString();
+  const pv = story('pv', 'preview', hoursAgo(2), { entities: [game('g3', soon)], media: { resolved: 'approved_subject_photos' } });
+  const inj = story('inj', 'injury', hoursAgo(2), { media: { resolved: 'team_composition' } });
+  assert.equal(leadId([pv, inj]), 'inj');
+});

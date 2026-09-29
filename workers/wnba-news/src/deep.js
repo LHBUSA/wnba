@@ -179,6 +179,8 @@ const prov = (name, s, stat) => (s ? { name, stat, season_name: s.season_name, y
 
 // ------------------------------------------------------------ 1. previews
 
+export const PREVIEW_LEAD_MS = 48 * 3600e3;
+
 export async function previewDeep(ctx) {
   const { api, upcoming, injuries, now } = ctx;
   const deepResearch = ctx.deepResearch !== false;
@@ -191,6 +193,9 @@ export async function previewDeep(ctx) {
     // A playoff game the series has not yet forced (Game 3 before a 1-1 tie) is not previewed: it may never be played.
     const po = ctx.playoffs ? playoffContext(ctx.playoffs, g0.game_id) : null;
     if (po && !po.needed) continue;
+    // A preview is written for a game inside the next 48 hours, so its first publication sits near its game (a preview
+    // drafted four days out, before the previous game was even played, reads as old news on the night it matters).
+    if (ctx.previewLeadMs && Date.parse(g0.start_utc) - now > ctx.previewLeadMs) continue;
     const m = await api(`/v1/matchups/${g0.game_id}`);
     if (!m) continue;
     const g = m.game;

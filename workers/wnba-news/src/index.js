@@ -26,6 +26,8 @@ import { runWinbaPasses } from './winba-run.js';
 import { runCommissionPass } from './commission-run.js';
 import { PLAYOFF_OPENING_KEY, publishPlayoffOpening } from './playoff-opening.js';
 import { runVideoPass, servedVideo, allowedChannels, VIDEO_VERSION, VIDEO_PASS_MINUTES } from './video.js';
+import { newsroomHealthReport } from './newsroom-health.js';
+import { ARTICLE_RUN_MIN_GAP_MS } from './articles-run.js';
 
 const SERVICE = 'wnba-news';
 const VERSION = '2.0.0';
@@ -51,6 +53,7 @@ export default {
     if (path === '/v1/news/runs') return runsRoute(env);
     if (path === '/v1/articles') return articlesRoute(env, url);
     if (path === '/v1/articles/held') return heldRoute(env);
+    if (path === '/v1/newsroom/health') return newsroomHealthRoute(env);
     if (path === '/v1/articles/videos') return videosRoute(env);
     const am = path.match(/^\/v1\/articles\/([a-z0-9-]{6,120})$/);
     if (am) return articleRoute(env, am[1]);
@@ -68,7 +71,7 @@ export default {
         return j({ ok: true, result: await runIngest(env, 'manual', { forceArticles: url.searchParams.get('articles') === 'force' || url.searchParams.get('backfill') === 'international', backfillInternational: url.searchParams.get('backfill') === 'international', forceWinba: url.searchParams.get('winba') === 'force', winbaPeriod: url.searchParams.get('winba_period') || null, winbaRefreeze: url.searchParams.get('winba_refreeze') === '1', winbaBackfill: url.searchParams.get('winba_backfill') === '1', winbaAcceptRankCorrection: url.searchParams.get('winba_accept_rank_correction') === '1', winbaFixCopy: url.searchParams.get('winba_fix_copy') === '1', winbaFixFrozenAt: url.searchParams.get('winba_fix_frozen_at') === '1', commission: url.searchParams.get('commission') || null, commissionForce: url.searchParams.get('commission_force') === '1' }) });
       } finally { await env.NEWS_KV.delete('news:v1:lease'); }
     }
-    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/articles/videos', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
+    return j({ ok: false, error: 'not_found', routes: ['/health', '/v1/articles', '/v1/articles/:slug', '/v1/articles/held', '/v1/newsroom/health', '/v1/articles/videos', '/v1/news (external source wire)', '/v1/news/sources', '/v1/news/runs'] }, 404);
   }
 };
 
@@ -296,6 +299,19 @@ async function persistSupabase(env, store, clusters, deskStore) {
 }
 
 // ---------------------------------------------------------------- read API
+
+/** "Why haven't we published anything new?" — sources, events, the article pass, media and freshness in one view. */
+async function newsroomHealthRoute(env) {
+  const [status, runs, lastRun, index, held] = await Promise.all([
+    env.NEWS_KV.get('news:v1:status', 'json'),
+    env.NEWS_KV.get('news:v1:runs', 'json'),
+    env.NEWS_KV.get('art:v1:last_run', 'json'),
+    env.NEWS_KV.get('art:v1:index', 'json'),
+    env.NEWS_KV.get('art:v1:held', 'json')
+  ]);
+  const report = newsroomHealthReport({ status, runs: runs || [], lastRun, index: (index || []).filter((c) => !withheldBySourcePolicy(c)), held: held || [], now: Date.now(), mediaFor, cronMinutes: CRON_MINUTES, articleGapMin: Math.round(ARTICLE_RUN_MIN_GAP_MS / 60e3) + 1 });
+  return j({ ok: true, data: report, meta: { service: SERVICE, served_at: new Date().toISOString() } });
+}
 
 async function feed(env, url) {
   const [store, clusters, desk, status, intlStore] = await Promise.all([
