@@ -330,8 +330,10 @@ export function rewriteFailures(draft, out, rewritten, { names = { players: [], 
   for (const w of properWords(rProse)) if (!dWords.has(w)) f.push(`entity: proper noun "${w}" is not in the draft`);
 
   // --- quotations, copied publisher text
-  const dQuotes = new Set([...dProse.matchAll(QUOTE)].map((m) => m[1]));
-  for (const m of rProse.matchAll(QUOTE)) if (!dQuotes.has(m[1])) f.push(`quote: “${m[1].slice(0, 60)}” is not a quotation the draft makes`);
+  // Heights (6' 2") use the same mark as a quotation; they are measurements, not quotes.
+  const unheight = (t) => t.replace(/\d+\s?['’]\s?\d{1,2}\s?["”]/g, ' ');
+  const dQuotes = new Set([...unheight(dProse).matchAll(QUOTE)].map((m) => m[1]));
+  for (const m of unheight(rProse).matchAll(QUOTE)) if (!dQuotes.has(m[1])) f.push(`quote: “${m[1].slice(0, 60)}” is not a quotation the draft makes`);
 
   // --- language the draft must license
   for (const re of BANNED_EDITORIAL) { const m = rProse.match(re); if (m && !dl.includes(m[0].toLowerCase())) f.push(`language: “${m[0]}”`); }

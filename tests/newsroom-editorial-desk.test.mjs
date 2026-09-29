@@ -173,3 +173,11 @@ test('transport: a refusal or incomplete response is an error, not an article', 
   const incomplete = async () => ({ ok: true, status: 200, json: async () => ({ status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } }) });
   await assert.rejects(callModel(ENV, { input: 'x', schema: {}, timeoutMs: 1000, fetchImpl: incomplete }), /incomplete/);
 });
+
+test('a height (6\' 2") is a measurement, not a quotation', () => {
+  const d = { ...DRAFT, body: [DRAFT.body[0], 'Breanna Stewart, a 6\' 4" forward: 34 points and 12 rebounds on 11-of-18 shooting in 38 minutes.', ...DRAFT.body.slice(2)] };
+  const secs = draftSections(d, sectionKey);
+  const out = structuredClone(GOOD);
+  out.sections[1].paragraphs = ['Stewart, a 6\' 4" forward, finished with 34 points and 12 rebounds on 11-of-18 shooting in 38 minutes.'];
+  assert.ok(!rewriteFailures(d, out, applyRewrite(d, secs, out), { names: NAMES, draftSectionsList: secs }).some((x) => /^quote:/.test(x)));
+});
