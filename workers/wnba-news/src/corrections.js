@@ -8,9 +8,17 @@
 //   * is sticky: reviewStory (legacy.js) honours card.correction, so no later review can re-list the story.
 // A corrected story is never rewritten into a different claim at the same URL.
 
-export const CORRECTIONS_VERSION = 'wnba-corrections/1.0.0';
+// 1.1.0: `kind: 'withdrawn'` — a true story withdrawn from listings because it should not have been published under
+// the newsroom's own standard (not a factual correction). Same sticky retirement, different label.
+export const CORRECTIONS_VERSION = 'wnba-corrections/1.1.0';
 
 export const CORRECTIONS = [
+  {
+    id: '316e67086ede',
+    kind: 'withdrawn',
+    decided_at: '2026-09-29',
+    reason: 'this story was published after the editorial desk expanded a 243-word draft that the newsroom had held as too thin for its class; the facts are correct, but the newsroom holds a story rather than pad it, and the desk may no longer publish a held draft'
+  },
   {
     id: '467ed1ad4743',
     decided_at: '2026-09-29',
@@ -23,9 +31,10 @@ export async function applyCorrections(cards, { at, getItem, putItem, registry =
   for (const fix of registry) {
     const c = cards.find((x) => x.id === fix.id);
     if (!c || c.correction?.decided_at === fix.decided_at) continue;
-    const revision = { at, kind: 'integrity_correction', note: `Correction: ${fix.reason}.`, generator: CORRECTIONS_VERSION };
-    const review = { policy: CORRECTIONS_VERSION, state: 'retired_from_index', reason: `corrected: ${fix.reason}`, at };
-    c.correction = { decided_at: fix.decided_at, reason: fix.reason, applied_at: at };
+    const withdrawn = fix.kind === 'withdrawn';
+    const revision = { at, kind: withdrawn ? 'integrity_retirement' : 'integrity_correction', note: `${withdrawn ? 'Withdrawn from listings' : 'Correction'}: ${fix.reason}.`, generator: CORRECTIONS_VERSION };
+    const review = { policy: CORRECTIONS_VERSION, state: 'retired_from_index', reason: `${withdrawn ? 'withdrawn' : 'corrected'}: ${fix.reason}`, at };
+    c.correction = { kind: fix.kind || 'correction', decided_at: fix.decided_at, reason: fix.reason, applied_at: at };
     c.quality_state = 'retired_from_index';
     c.quality_review = review;
     c.revisions = [...(c.revisions || []), revision].slice(-20);

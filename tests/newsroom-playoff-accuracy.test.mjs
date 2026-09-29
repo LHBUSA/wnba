@@ -216,3 +216,13 @@ test('primary subject drives media: the subject or a team/brand fallback, never 
   // card and article resolve the same media (homepage, /news, related cards read cards; the hero reads the article)
   for (const a of [injury, perf, result]) assert.deepEqual(newsroomMediaFrom(PLAYERS, cardOf(a)), newsroomMediaFrom(PLAYERS, a));
 });
+
+test('a withdrawal retires a true story with its own label, stickily', async () => {
+  const cards = [{ id: '316e67086ede', slug: 'olivia-miles-wins', kind: 'brief', status: 'published', first_published_at: '2026-09-29T14:31:26.941Z', quality_state: 'current_quality', revisions: [] }];
+  const store = new Map([['316e67086ede', { id: '316e67086ede', body: ['x'] }]]);
+  await applyCorrections(cards, { at: '2026-09-29T15:00:00Z', getItem: async (id) => store.get(id), putItem: async (a) => store.set(a.id, a) });
+  assert.equal(cards[0].quality_state, 'retired_from_index');
+  assert.match(cards[0].quality_review.reason, /^withdrawn: /);
+  assert.equal(cards[0].revisions.at(-1).kind, 'integrity_retirement');
+  assert.match(reviewStory({ card: cards[0], item: store.get('316e67086ede') }).reason, /^withdrawn: /);
+});

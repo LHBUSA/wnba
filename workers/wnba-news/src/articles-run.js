@@ -200,6 +200,10 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
       const job = { a, det, final: null };
       jobs.push(job);
       if (!EDITORIAL_KINDS.has(a.kind)) { edStats.not_eligible += 1; continue; }
+      // The desk improves how a PUBLISHABLE story is written; it never makes a held story publishable. A draft the
+      // gates hold (too thin for its class, a lint failure, anything) stays held: a rewrite cannot add evidence, so
+      // lifting it over a floor could only be padding. No model call is made for it.
+      if (det.failures.length) { a.editorial = edRecord('draft_held'); edStats.draft_held = (edStats.draft_held || 0) + 1; continue; }
       if (!edOn) { a.editorial = edRecord('unconfigured'); continue; }
       if (edOnly && !edOnly.has(a.id)) { a.editorial = edRecord('not_selected'); continue; }
       job.digest = await draftDigest(a);

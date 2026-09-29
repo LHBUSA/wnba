@@ -92,7 +92,7 @@ export function reviewStory({ card, item, now = Date.now(), regeneration = null,
   const stamp = (state, reason, extra = {}) => ({ policy: LEGACY_POLICY_VERSION, state, reason, at, generator, ...extra });
   if (card.status === 'external_coverage') return stamp('external_coverage', card.coverage_review?.reason || 'publisher coverage, not a newsroom event');
   // A reviewed editorial correction (corrections.js) is final: the story stays retired, with its correction shown.
-  if (card.correction) return stamp('retired_from_index', `corrected: ${card.correction.reason}`, { correction: true });
+  if (card.correction) return stamp('retired_from_index', `${card.correction.kind === 'withdrawn' ? 'withdrawn' : 'corrected'}: ${card.correction.reason}`, { correction: true });
   const late = lateCoverage(card);
   if (late) return stamp('retired_from_index', `${late}; kept at its URL`, { late_coverage: true });
   if (withheld) return stamp('retired_from_index', 'its only publisher report is from a source under policy review; withheld from public listings');

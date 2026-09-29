@@ -130,7 +130,7 @@ function inputOf(a, sections, correction = null) {
   return [
     'OUTPUT ACCEPTANCE FOR THIS STORY:',
     `- Keep all ${sections.length} sections, in order, with the same keys.`,
-    `- Body length between ${Math.round(words * 0.9)} and ${Math.max(Math.round(words * 1.6), words + 150)} words (the draft has ${words}). Length comes from better development of the draft's own evidence, never from filler.`,
+    `- Body length between ${Math.round(words * 0.9)} and ${Math.round(words * 1.35)} words (the draft has ${words}). Never restate a fact to add length; a shorter, tighter story is better than a padded one.`,
     ...anchors.map((x) => `- ${x}`),
     ...(correction ? ['', 'CORRECTIVE REWRITE REQUIRED — the previous rewrite was rejected for exactly these reasons:', ...correction.slice(0, 8).map((x) => `- ${x}`), 'Rewrite from the SAME packet and fix every one of them without adding any fact.'] : []),
     '',
@@ -310,7 +310,8 @@ export function rewriteFailures(draft, out, rewritten, { names = { players: [], 
   if (/injuries, recent form and the matchup|uneven recent stretch|: the roster the move inherits/i.test(hl)) f.push('headline: template headline pattern');
   const dw = wordsIn(draft.body || []); const rw = wordsIn(rewritten.body || []);
   if (rw < Math.floor(dw * 0.85)) f.push(`length: rewrite has ${rw} words against the draft's ${dw} (minimum ${Math.floor(dw * 0.85)})`);
-  if (rw > Math.max(Math.round(dw * 1.8), dw + 250)) f.push(`length: rewrite has ${rw} words against the draft's ${dw} — padding`);
+  // Padding ceiling: the rewrite cannot add evidence, so it may not grow much. (Canary rewrites ran 1.13–1.19x.)
+  if (rw > Math.round(dw * 1.4)) f.push(`length: rewrite has ${rw} words against the draft's ${dw} (max ${Math.round(dw * 1.4)}) — padding`);
 
   // --- numbers, dates, clock times: every value must already be stated by the draft
   const D = statedValues(dProse);

@@ -181,3 +181,11 @@ test('a height (6\' 2") is a measurement, not a quotation', () => {
   out.sections[1].paragraphs = ['Stewart, a 6\' 4" forward, finished with 34 points and 12 rebounds on 11-of-18 shooting in 38 minutes.'];
   assert.ok(!rewriteFailures(d, out, applyRewrite(d, secs, out), { names: NAMES, draftSectionsList: secs }).some((x) => /^quote:/.test(x)));
 });
+
+test('padding ceiling: a rewrite may not grow past 1.4x the draft', () => {
+  const out = structuredClone(GOOD);
+  const filler = 'The Liberty lead the best-of-three series 1–0 after Game 1, and New York won 91–75 in Minnesota on Sunday, September 27.';
+  out.sections[2].paragraphs = [...out.sections[2].paragraphs, ...Array(6).fill(0).map((_, i) => `${filler.replace('Sunday', i % 2 ? 'Sunday' : 'Sunday,')}`)];
+  const f = rewriteFailures(DRAFT, out, applyRewrite(DRAFT, SECTIONS, out), { names: NAMES, draftSectionsList: SECTIONS });
+  assert.ok(f.some((x) => /^length: .*padding/.test(x)), f.join(' | '));
+});
