@@ -196,12 +196,12 @@ test('padding ceiling: a rewrite may not grow past 1.4x the draft', () => {
   assert.ok(f.some((x) => /^length: .*padding/.test(x)), f.join(' | '));
 });
 
-test('cost defaults: 2 paid stories per pass, 1 attempt, 5k output tokens, $5/day breaker; telemetry flags a repeated digest', async () => {
+test('cost defaults: 2 paid stories per pass, 1 attempt, 5k output tokens, $1/day breaker; telemetry flags a repeated digest', async () => {
   const { budgetOf } = await import('../workers/wnba-news/src/editorial-desk.js');
   const b = budgetOf({});
   assert.equal(b.maxCalls, 2);
   assert.equal(b.attempts, 1);
-  assert.equal(b.dailyMaxUsd, 5);
+  assert.equal(b.dailyMaxUsd, 1);
   const f = fakeFetch([GOOD]);
   await run(f);
   assert.equal(f.calls[0].body.max_output_tokens, 5000);

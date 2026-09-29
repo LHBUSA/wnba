@@ -36,7 +36,8 @@ export const budgetOf = (env) => ({
   maxCalls: Math.max(0, Number(env?.WNBA_EDITORIAL_MAX_CALLS ?? 2)),
   // Automatic passes pay for ONE attempt; only explicit admin/canary work may request a corrective repair attempt.
   attempts: Math.max(1, Math.min(2, Number(env?.WNBA_EDITORIAL_ATTEMPTS ?? 1))),
-  dailyMaxUsd: Math.max(0, Number(env?.WNBA_OPENAI_DAILY_MAX_USD ?? 5)),
+  // Emergency ceiling only — correct eligibility (new stories only) is the cost strategy, not this cap.
+  dailyMaxUsd: Math.max(0, Number(env?.WNBA_OPENAI_DAILY_MAX_USD ?? 1)),
   deadlineMs: Math.max(10e3, Number(env?.WNBA_EDITORIAL_DEADLINE_MS ?? 150e3)),
   concurrency: Math.max(1, Math.min(4, Number(env?.WNBA_EDITORIAL_CONCURRENCY ?? 3))),
   timeoutMs: Math.max(5e3, Math.min(120e3, Number(env?.WNBA_EDITORIAL_TIMEOUT_MS ?? 80e3)))
