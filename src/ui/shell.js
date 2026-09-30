@@ -2,10 +2,11 @@ import { html, render, raw } from '../lib/dom.js';
 import { NETWORK, CURRENT_SPORT } from './network.js';
 import { membershipBadgeHtml, ALL_ACCESS_OFFER, ALL_ACCESS_URL } from '../lib/pbe-membership.js';
 import { isMember } from '../lib/membership.js';
+import { preferredSourceHtml } from './preferred-source.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-28.1';
+export const SHELL_REV = '2026-09-30.1';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -165,6 +166,8 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           </div>
           <p class="note foot-network-note">One research network across the major sports desks.</p>
         </div>
+
+        ${preferredSourceHtml({ surface: 'footer' })}
 
         <div class="foot-security">
           <a class="foot-mother-badge" href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Verify PropTechUSA.ai Mother AI protection status (opens in a new tab)">

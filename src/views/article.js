@@ -17,6 +17,7 @@ import { winbaSeriesNav, winbaSeriesNavView, winbaIndexCards, WINBA_INDEX_KIND }
 import { winbaIndexLeaderboard, winbaTeamDepth, winbaIndexAside } from './winba-leaderboard.js';
 import { sectionVisual } from './visuals.js';
 import { articleAnalytics, suppressVisualizedParagraph } from './article-analytics.js';
+import { preferredSourceHtml } from '../ui/preferred-source.js';
 
 // A `metric` entity carries no id-based route: it is the canonical explainer
 // for a PropBetEdge statistic. Routing it here lets the generator keep URLs out
@@ -292,6 +293,8 @@ export function articleView({ article: a, related = [], series = [] }) {
       </div>
 
       ${intelligenceView(a)}
+
+      ${preferredSourceHtml({ surface: 'article' })}
 
       <section class="trust-layer" id="evidence">
         <details class="evidence-method">

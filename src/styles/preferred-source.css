@@ -1,0 +1,48 @@
+/* Google Preferred Sources control (src/ui/preferred-source.js).
+ * Our own layout: the CTA has a stable width and never depends on a Google script. */
+.pbe-psrc {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px 24px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .018);
+}
+.foot-world .pbe-psrc { grid-column: 1 / -1; }
+.pbe-psrc-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pbe-psrc-eyebrow {
+  color: var(--gold);
+  font: 700 11px/1.2 var(--f-data, var(--f-ui));
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.pbe-psrc-copy strong { color: var(--paper); font: 700 16px/1.3 var(--f-ui); }
+.pbe-psrc-copy span:not(.pbe-psrc-eyebrow) { color: var(--faint); font-size: 13px; line-height: 1.45; }
+.pbe-psrc .pbe-psrc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 700 14px/1 var(--f-ui);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background .15s ease, transform .15s ease;
+}
+.pbe-psrc .pbe-psrc-btn:hover { background: #fff; color: var(--ink); transform: translateY(-1px); }
+.pbe-psrc .pbe-psrc-btn:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 3px; }
+.pbe-psrc--article { margin: 28px 0 8px; border-color: var(--gold-line); }
+
+@media (max-width: 640px) {
+  .pbe-psrc { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .pbe-psrc .pbe-psrc-btn { width: 100%; white-space: normal; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pbe-psrc .pbe-psrc-btn { transition: none; }
+  .pbe-psrc .pbe-psrc-btn:hover { transform: none; }
+}
