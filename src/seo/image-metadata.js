@@ -100,8 +100,12 @@ export function creatorTypeFor(name, declared) {
  * A Creative Commons photo with a recorded author. Without an author or a
  * license the photo is not "known" and falls back to a held third-party record.
  */
+/** Commons "authors" that name nobody: placeholders, footnote markers, boilerplate. */
+const NO_AUTHOR = /^(unknown|anonymous|n\/a|none|\[\d+\]|no machine-readable author|please complete|author information|see (?:file|source|below))/i;
+export const realAuthor = (name) => { const t = text(name); return t && !NO_AUTHOR.test(t) ? t : ''; };
+
 export function licensedImage({ author, author_type, license, license_url, source_page, ...rest } = {}) {
-  const who = text(author);
+  const who = realAuthor(author);
   const lic = text(license);
   if (!who || !lic) {
     return thirdPartyImage({ ...rest, source_url: source_page || rest.source_url, license: license_url, acquireLicensePage: source_page });
