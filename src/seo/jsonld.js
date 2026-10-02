@@ -7,6 +7,7 @@ import { deskOf, articleShareImage } from './meta.js';
 import { careerMetaLine } from '../lib/player-career.js';
 import { logoEntry } from '../ui/logo.js';
 import { licensedPhoto } from '../ui/photo.js';
+import { ownedImage, licensedImage, thirdPartyImage, compositeImage, imageObject } from './image-metadata.js';
 
 const clean = (o) => {
   if (Array.isArray(o)) { const a = o.map(clean).filter((x) => x !== undefined); return a.length ? a : undefined; }
@@ -18,18 +19,73 @@ const clean = (o) => {
   return o === null || o === '' ? undefined : o;
 };
 
+// ── Image rights ─────────────────────────────────────────────────────────────
+// Every ImageObject goes through ./image-metadata.js. A share card's rights follow
+// what the card actually embeds (workers/wnba-web/src/og-model.js): text-only and
+// brand cards are PropBetEdge art; a card on an approved Commons photo credits that
+// photographer; a card on a team mark or national flag is held (no rights claim).
+const OWNED_CARD = /^\/(share\/|og\/pages\/|og\/intl-comps\/|og\/intl-games\/)/;
+const HELD = Object.freeze([thirdPartyImage({ url: 'embedded-mark' })]);
+const pathOf = (url) => { try { return new URL(url, SITE).pathname; } catch { return ''; } };
+
+/** A Commons credit record ({ author, license, license_url, source_page }) as an image record. */
+const commonsPart = (c, extra = {}) => (c ? licensedImage({ ...extra, author: c.author, license: c.license, license_url: c.license_url, source_page: c.source_page }) : null);
+
+/** A licensed player photo carries "Photo: <author> / <license> via Wikimedia Commons" plus license fields. */
+function playerPhotoPart(lp, extra = {}) {
+  if (!lp) return null;
+  const lic = String(lp.license || '').trim();
+  const m = lic ? String(lp.attribution || '').match(/^Photo:\s*(.+?)\s*\/\s*(.+?)(?:\s+via\b|\s*\(|$)/) : null;
+  const author = m && m[2].trim() === lic ? m[1].trim() : '';
+  return licensedImage({ ...extra, author, license: lic, license_url: lp.license_url, source_page: lp.source_page });
+}
+
+const known = (parts) => (parts.every((x) => x && x.source_type !== 'third_party') ? parts : HELD);
+
+/** What an article's /og/news card embeds. */
+export function articleCardParts(a) {
+  const m = a?.media || {};
+  if (m.visual?.kind === 'intl_scoreboard') return HELD; // national flags
+  if (a?.kind === 'winba_index' && (a.winba_podium || []).length === 3) return known(a.winba_podium.map((r) => commonsPart(r.credit)));
+  if (!m.og) return [];
+  const subject = (m.subjects || []).find((x) => x.og === m.og);
+  return known([commonsPart(subject?.credit || m.credit)]);
+}
+
+/** What a player card embeds: the approved Commons photo, else the team mark. */
+function playerCardParts(photo) {
+  const lp = licensedPhoto(photo);
+  return lp ? known([playerPhotoPart(lp)]) : HELD;
+}
+
+function cardParts(route, image, data) {
+  const path = pathOf(image?.url);
+  if (OWNED_CARD.test(path)) return [];
+  if (path.startsWith('/og/news/') && route === 'article') return articleCardParts(data.article);
+  if (path.startsWith('/og/players/') && route === 'player') return playerCardParts(data.photo);
+  return HELD;
+}
+
+/** A share card as an ImageObject, with rights only where every embedded part is known. */
+export function cardImage(image, { parts = HELD, year } = {}) {
+  if (!image?.url) return undefined;
+  return imageObject(compositeImage({ url: image.url, width: image.width, height: image.height, caption: image.alt, year, parts }));
+}
+
+export const logoImage = () => imageObject(ownedImage({ url: LOGO.url, width: LOGO.width, height: LOGO.height, caption: 'PropBetEdge' }));
+
 export const LEAGUE = { '@type': 'SportsOrganization', name: 'Women’s National Basketball Association', alternateName: 'WNBA' };
 
 export function siteEntities() {
   return [
-    { '@type': 'Organization', '@id': IDS.org, name: 'PropBetEdge', url: 'https://propbetedge.ai/', logo: { '@type': 'ImageObject', url: LOGO.url, width: LOGO.width, height: LOGO.height }, sameAs: [PROPBETEDGE_X_URL] },
+    { '@type': 'Organization', '@id': IDS.org, name: 'PropBetEdge', url: 'https://propbetedge.ai/', logo: logoImage(), sameAs: [PROPBETEDGE_X_URL] },
     {
       '@type': 'NewsMediaOrganization',
       '@id': IDS.newsroom,
       name: NEWSROOM_NAME,
       alternateName: PUBLICATION_NAME,
       url: `${SITE}/news`,
-      logo: { '@type': 'ImageObject', url: LOGO.url, width: LOGO.width, height: LOGO.height },
+      logo: logoImage(),
       parentOrganization: { '@id': IDS.org },
       publishingPrinciples: `${SITE}/editorial-policy`,
       correctionsPolicy: `${SITE}/corrections`,
@@ -81,7 +137,7 @@ const webPage = (meta, type = 'WebPage', extra = {}) => ({
   inLanguage: LANG,
   isPartOf: { '@id': IDS.website },
   breadcrumb: { '@id': `${meta.url}#breadcrumb` },
-  primaryImageOfPage: meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
+  primaryImageOfPage: cardImage(meta.image, meta.image?.rights),
   ...extra
 });
 
@@ -134,7 +190,8 @@ export function newsArticle(a, meta) {
   // description rather than a database dump.
   const mentions = lead.filter((e) => !about.includes(e)).slice(0, isIndex ? 16 : 24);
   const share = articleShareImage(a);
-  const photo = a.media?.subjects?.[0]?.wide?.slice?.(-1)?.[0];
+  const subject = a.media?.subjects?.[0];
+  const photo = subject?.wide?.slice?.(-1)?.[0];
   const published = a.first_published_at || a.published_at;
   const modified = a.revised_at && Date.parse(a.revised_at) > Date.parse(published || 0) ? a.revised_at : published;
   return {
@@ -145,8 +202,9 @@ export function newsArticle(a, meta) {
     alternativeHeadline: a.headline.length > 110 ? a.headline : undefined,
     description: a.deck,
     image: [
-      { '@type': 'ImageObject', url: share.url, width: share.width, height: share.height, caption: share.alt },
-      photo ? { '@type': 'ImageObject', url: abs(photo.src), width: photo.w, height: photo.h, caption: a.media?.caption || undefined, creditText: a.media?.subjects?.[0]?.credit?.author ? `${a.media.subjects[0].credit.author} / ${a.media.subjects[0].credit.license}` : undefined, license: a.media?.subjects?.[0]?.credit?.license_url, acquireLicensePage: a.media?.subjects?.[0]?.credit?.source_page } : undefined
+      cardImage(share, { parts: articleCardParts(a), year: a.first_published_at || a.published_at }),
+      // The wide crop shows one subject: caption it with her name, not a multi-player layout caption.
+      photo ? imageObject(commonsPart(subject.credit, { url: abs(photo.src), width: photo.w, height: photo.h, caption: (a.media?.subjects || []).length > 1 ? `Pictured: ${subject.name}` : a.media?.caption || subject.name }) || thirdPartyImage({ url: abs(photo.src), width: photo.w, height: photo.h })) : undefined
     ],
     thumbnailUrl: share.url,
     datePublished: published,
@@ -177,8 +235,8 @@ export function person(d, meta) {
     familyName: p.last_name,
     url,
     image: [
-      meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
-      licensedPhoto(d.photo)?.portrait ? ((lp) => ({ '@type': 'ImageObject', url: abs(lp.portrait), width: lp.width, height: lp.height, creditText: lp.attribution, license: lp.license_url, acquireLicensePage: lp.source_page }))(licensedPhoto(d.photo)) : undefined
+      cardImage(meta.image, meta.image?.rights),
+      licensedPhoto(d.photo)?.portrait ? ((lp) => imageObject(playerPhotoPart(lp, { url: abs(lp.portrait), width: lp.width, height: lp.height, caption: p.name })))(licensedPhoto(d.photo)) : undefined
     ],
     birthDate: p.dob ? String(p.dob).slice(0, 10) : undefined,
     jobTitle: 'Professional basketball player',
@@ -200,8 +258,9 @@ export function sportsTeam(d, meta) {
     name: t.name,
     alternateName: t.short_name && t.short_name !== t.name ? t.short_name : undefined,
     url,
-    image: meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
-    logo: mark?.files?.['320'] ? { '@type': 'ImageObject', url: abs(mark.files['320']), width: 320, height: 320, caption: `${t.name} logo` } : undefined,
+    image: cardImage(meta.image, meta.image?.rights),
+    // The team's own mark: its rights belong to the team/league and are not recorded here, so no claim is made.
+    logo: mark?.files?.['320'] ? imageObject(thirdPartyImage({ url: abs(mark.files['320']), width: 320, height: 320, caption: `${t.name} logo` })) : undefined,
     sport: 'Basketball',
     memberOf: LEAGUE,
     coach: d.coach?.[0] ? { '@type': 'Person', name: d.coach[0] } : undefined,
@@ -242,6 +301,7 @@ const itemList = (url, items) => ({ '@type': 'ItemList', '@id': `${url}#list`, i
  * The full graph for a route. `data` is whatever the view rendered from.
  */
 export function pageGraph(route, meta, data = {}) {
+  if (meta?.image?.url && !meta.image.rights) meta = { ...meta, image: { ...meta.image, rights: { parts: cardParts(route, meta.image, data) } } };
   const g = [...siteEntities()];
   const crumbs = [['PropBetEdge WNBA', '/']];
   switch (route) {
@@ -249,7 +309,7 @@ export function pageGraph(route, meta, data = {}) {
       const a = data.article;
       crumbs.push(['News', '/news'], [DESKS[deskOf(a.kind)] || 'Newsroom', `/news/c/${deskOf(a.kind)}`], [a.headline, meta.path]);
       const refs = (a.entities || []).filter((e) => e?.type === 'player' || e?.type === 'team').map(refOf).filter(Boolean);
-      g.push(webPage(meta, 'WebPage', { primaryImageOfPage: { '@id': undefined, url: meta.image.url }, datePublished: a.first_published_at, dateModified: a.revised_at || undefined, about: refs }), newsArticle(a, meta));
+      g.push(webPage(meta, 'WebPage', { primaryImageOfPage: cardImage(meta.image, { parts: articleCardParts(a), year: a.first_published_at || a.published_at }), datePublished: a.first_published_at, dateModified: a.revised_at || undefined, about: refs }), newsArticle(a, meta));
       break;
     }
     case 'news':
@@ -361,7 +421,7 @@ export function pageGraph(route, meta, data = {}) {
       const roster = (data.competitions || []).flatMap((c) => c.roster || []);
       g.push(webPage(meta, 'WebPage', { mainEntity: { '@id': `${meta.url}#team` } }), {
         '@type': 'SportsTeam', '@id': `${meta.url}#team`, name: `${t.name} women’s national basketball team`, url: meta.url, sport: 'Basketball',
-        image: meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
+        image: cardImage(meta.image, meta.image?.rights),
         memberOf: { '@type': 'SportsOrganization', name: 'FIBA' },
         athlete: [...new Map(roster.map((p) => [p.player_id, p])).values()].map((p) => ({ '@type': 'Person', '@id': `${SITE}/international/players/${String(p.player_id).replace(/^p-/, '')}#person`, name: p.name }))
       });
@@ -378,8 +438,8 @@ export function pageGraph(route, meta, data = {}) {
         memberOf: [{ '@type': 'SportsTeam', '@id': `${SITE}/international/teams/${p.team.slug}#team`, name: `${p.team.name} women’s national basketball team`, url: `${SITE}/international/teams/${p.team.slug}` }, ...(p.wnba?.wnba_team ? [teamRef({ id: p.wnba.wnba_team.team_id, name: p.wnba.wnba_team.name })] : [])],
         sameAs: p.wnba ? [`${SITE}/players/${p.wnba.wnba_player_id}`] : undefined,
         image: [
-          meta.image?.url ? { '@type': 'ImageObject', url: meta.image.url, width: meta.image.width, height: meta.image.height, caption: meta.image.alt } : undefined,
-          licensedPhoto(p.wnba?.photo)?.portrait ? { '@type': 'ImageObject', url: abs(licensedPhoto(p.wnba.photo).portrait) } : undefined
+          cardImage(meta.image, meta.image?.rights),
+          licensedPhoto(p.wnba?.photo)?.portrait ? ((lp) => imageObject(playerPhotoPart(lp, { url: abs(lp.portrait), width: lp.width, height: lp.height, caption: p.name })))(licensedPhoto(p.wnba.photo)) : undefined
         ]
       });
       break;

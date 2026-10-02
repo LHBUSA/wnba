@@ -1,4 +1,5 @@
 import { SITE, SITE_NAME, NEWSROOM_NAME, DEFAULT_IMAGE, LOGO, IDS } from './site.js';
+import { ownedImage, imageObject } from './image-metadata.js';
 
 export const HISTORICAL_INDEX_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
@@ -29,7 +30,7 @@ export function historicalCompetitionGraph(c, h, meta) {
         '@id': IDS.newsroom,
         name: NEWSROOM_NAME,
         url: `${SITE}/news`,
-        logo: { '@type': 'ImageObject', url: LOGO.url, width: LOGO.width, height: LOGO.height },
+        logo: imageObject(ownedImage({ url: LOGO.url, width: LOGO.width, height: LOGO.height, caption: 'PropBetEdge' })),
         parentOrganization: { '@id': IDS.org }
       },
       {
