@@ -3,6 +3,7 @@
 // layer also owns public, data-free premium landing responses so protected values
 // are never server-rendered into public HTML.
 import current from './index.js';
+import { noTransform } from './transport.js';
 import { bindingApi } from './api.js';
 import { composeDocument } from './render.js';
 import { intlHomeView } from '../../../src/views/international.js';
@@ -122,7 +123,13 @@ async function sitemapWithArchives(request, env, ctx) {
 }
 
 export default {
+  // Every response leaves with no-transform: see transport.js for why (Vercel cache vs Accept-Encoding).
   async fetch(request, env, ctx) {
+    return noTransform(await route(request, env, ctx));
+  }
+};
+
+async function route(request, env, ctx) {
     const url = new URL(request.url);
     if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname === '/history') {
       try { return await historyLanding(request); } catch (e) { console.error('history landing failed', e?.stack || e); }
@@ -148,5 +155,4 @@ export default {
       if (url.pathname === '/sitemap.xml') return sitemapWithArchives(request, env, ctx);
     }
     return current.fetch(request, env, ctx);
-  }
-};
+}
