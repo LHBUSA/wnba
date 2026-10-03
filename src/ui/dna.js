@@ -630,7 +630,7 @@ function winbaChip(body, link) {
 /** Compact DNA module: mini fingerprint, top traits, watch, movement, WinBA, measurement base, CTA. */
 export function renderDnaCompact(body) {
   if (!body?.scopes) return '';
-  const id = body.player?.id || body.player?.espn_athlete_id || '';
+  const id = body.player?.id || body.player?.player_id || body.player?.espn_athlete_id || '';
   const s = body.scopes.season;
   const link = profileHref(id);
   if (!s?.calculated) {

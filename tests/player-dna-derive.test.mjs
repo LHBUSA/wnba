@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { dnaTask, slimArchiveDoc, currentAsOf, archiveSignature, DNA_EXCLUDE_GAME_IDS } from '../workers/wnba-ingest/src/dna-task.js';
 import api from '../workers/wnba-api/src/index-premium.js';
 import { DNA_KV, dnaPlayerView } from '../workers/shared/player-dna-views.js';
+import { customerDoc } from '../workers/shared/customer-brand.js';
 import { buildPlayerDna, QUALIFICATION, PLAYER_DNA_VERSION } from '../workers/shared/player-dna.js';
 import { buildWinbaSnapshot } from '../workers/shared/winba.js';
 import { FRANCHISES, league, ALL_STAR, makeDoc, playerLine } from './fixtures/player-dna-league.mjs';
@@ -212,10 +213,11 @@ test('GET /v1/dna/players/:id: prepared doc verbatim + headshot; shape mirrors N
   const d = r.body.data;
   for (const k of ['schema', 'version', 'source', 'as_of', 'captured_at', 'unavailable', 'versions', 'dimension_order', 'scopes', 'movement', 'provenance', 'player', 'team', 'team_id', 'season', 'content_hash']) assert.ok(k in d, k);
   assert.equal(d.schema, 'wnba-dna/player');
-  assert.deepEqual(Object.keys(d.player), ['id', 'espn_athlete_id', 'name', 'position', 'headshot']);
+  assert.deepEqual(Object.keys(d.player), ['id', 'player_id', 'espn_athlete_id', 'name', 'position', 'headshot']);
   assert.equal(d.team.abbr, 'T1');
   const stored = JSON.parse(env.WNBA_KV.map.get(DNA_KV.player('1026')));
-  assert.equal(JSON.stringify({ ...d, player: { ...d.player, headshot: null } }), JSON.stringify(stored), 'nothing computed per request');
+  // Served = stored doc through the customer source boundary (text only); nothing else is computed per request.
+  assert.equal(JSON.stringify({ ...d, player: { ...d.player, headshot: null } }), JSON.stringify(customerDoc(stored)), 'nothing computed per request');
   assert.equal(d.winba.score, BOARD.rows.find((x) => x.athlete_id === '1026').score);
   assert.equal(d.winba.source, 'canonical_board');
   assert.equal(d.scopes.career.reason, 'NO_PRIOR_SEASON_COVERAGE');

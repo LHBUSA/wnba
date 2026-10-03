@@ -65,7 +65,7 @@ export async function dnaPlayerRoute({ env, path, params }, ctx) {
       status: 404,
       reason: 'no_snapshot',
       detail: 'No Player DNA for this player (no archived WNBA regular-season or postseason appearance, or not derived yet)',
-      extra: { player: { id, espn_athlete_id: id } },
+      extra: { player: { id, player_id: id, espn_athlete_id: id } }, // espn_athlete_id: deprecated alias
       semantics: 'DNA_NO_SNAPSHOT'
     });
   }

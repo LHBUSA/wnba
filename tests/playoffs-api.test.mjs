@@ -49,7 +49,7 @@ test('current postseason not started: envelope, CACHED, POSTSEASON_NOT_STARTED, 
   assert.equal(r.body.data.is_current_season, true);
   assert.deepEqual(r.body.data.available_seasons, [2026, 2025]);
   assert.equal(r.headers.get('access-control-allow-origin'), '*');
-  assert.equal(r.body.meta.source.id, 'espn');
+  assert.equal(r.body.meta.source.id, 'propsports'); // customer source boundary (lane stays in /v1/sources)
   for (const k of ['season', 'phase', 'status', 'updated_at', 'seeds', 'rounds', 'champion', 'source', 'source_updated_at', 'freshness']) assert.ok(k in r.body.data, k);
 });
 

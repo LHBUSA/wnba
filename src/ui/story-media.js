@@ -49,7 +49,7 @@ export function creditLine(media, { compact = false } = {}) {
   const subs = media?.subjects || [];
   if (!subs.length) return '';
   const parts = subs.map((s) => {
-    if (s.headshot) return html`<span class="sm-cr">Photo: ${s.credit?.source_page ? html`<a href="${s.credit.source_page}" rel="noopener nofollow" target="_blank">ESPN</a>` : 'ESPN'}${compact ? '' : ' · headshot'}</span>`;
+    if (s.headshot) return html`<span class="sm-cr">Photo: ${s.credit?.source_page ? html`<a href="${s.credit.source_page}" rel="noopener nofollow" target="_blank">ESPN</a>` : 'ESPN'}${compact ? '' : ' · headshot'}</span>`; // source-brand:allow (photo credit for an owner-approved hotlinked headshot)
     const c = s.credit || {};
     const who = c.author || 'Unknown author';
     return html`<span class="sm-cr">Photo: ${c.source_page ? html`<a href="${c.source_page}" rel="noopener nofollow" target="_blank">${who}</a>` : who} · ${c.license_url ? html`<a href="${c.license_url}" rel="noopener nofollow license" target="_blank">${c.license}</a>` : c.license} (cropped)${compact ? '' : ' · Wikimedia Commons'}</span>`;

@@ -95,7 +95,8 @@ export function dnaPlayerView(result, athleteId, { teams = {}, capturedAt = null
   return dnaEnvelope('player', {
     competition: DNA_COMPETITION,
     season: p.season,
-    player: { id: p.athlete_id, espn_athlete_id: p.athlete_id, name: p.name, position: p.position, headshot: null },
+    // espn_athlete_id: deprecated compatibility alias of player_id (removed in the next contract version).
+    player: { id: p.athlete_id, player_id: p.athlete_id, espn_athlete_id: p.athlete_id, name: p.name, position: p.position, headshot: null },
     team_id: p.team_id,
     team: teams[p.team_id] ?? null,
     coverage_from: result.coverage.coverage_from,
@@ -118,7 +119,8 @@ export function dnaIndexView(result, { teams = {}, capturedAt = null, archiveSig
     const w = s?.calculated ? s.dimensions.winba : null;
     return {
       id: p.athlete_id,
-      espn_athlete_id: p.athlete_id,
+      player_id: p.athlete_id,
+      espn_athlete_id: p.athlete_id, // deprecated alias of player_id
       name: p.name,
       position: p.position,
       team_id: p.team_id,

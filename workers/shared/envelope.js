@@ -1,6 +1,7 @@
 // Response envelope + freshness semantics shared by every WNBA Worker.
 // Pattern learned from NBA src/data/freshness.js; the states are identical so
 // the frontend can treat every PropBetEdge surface the same way.
+import { customerDoc } from './customer-brand.js';
 
 export const FRESHNESS = Object.freeze({
   CURRENT: 'CURRENT',       // fetched from the source inside its freshness window
@@ -13,16 +14,16 @@ export const FRESHNESS = Object.freeze({
 
 export const SOURCES = Object.freeze({
   espn: {
-    id: 'espn',
-    name: 'ESPN',
+    id: 'espn', // source-brand:allow (provenance registry, served unmapped by /v1/sources)
+    name: 'ESPN', // source-brand:allow (provenance registry, served unmapped by /v1/sources)
     authority: 'EXTERNAL_PROVIDER',
-    note: 'Public ESPN JSON (site.web.api / sports.core.api). Scores, events, box scores, rosters, standings, injuries.'
+    note: 'Public ESPN JSON (site.web.api / sports.core.api). Scores, events, box scores, rosters, standings, injuries.' // source-brand:allow (provenance registry, served unmapped by /v1/sources)
   },
   odds_api: {
     id: 'odds_api',
-    name: 'The Odds API',
+    name: 'The Odds API', // source-brand:allow (provenance registry, served unmapped by /v1/sources)
     authority: 'EXTERNAL_MARKET',
-    note: 'Sportsbook prices aggregated by The Odds API. Snapshot ingest on a fixed schedule; user traffic never triggers provider spend.'
+    note: 'Sportsbook prices aggregated by The Odds API. Snapshot ingest on a fixed schedule; user traffic never triggers provider spend.' // source-brand:allow (provenance registry, served unmapped by /v1/sources)
   },
   pbe: {
     id: 'pbe',
@@ -67,7 +68,9 @@ export function meta({
     service,
     version,
     route,
-    source: source ? { id: source.id, name: source.name, authority: source.authority } : null,
+    // Customer contract names PropSports (network source standard). The upstream lane stays in SOURCES / /v1/sources.
+    // No consumer reads meta.source.id/name (checked 2026-10-03: SPA, wnba-web, PropSports gateway, propbetedge.ai).
+    source: source ? { id: source.id === 'pbe' ? 'pbe' : 'propsports', name: source.id === 'pbe' ? source.name : 'PropSports', authority: source.authority } : null,
     fetched_at: fetchedAt,
     source_updated_at: sourceUpdatedAt,
     served_at: nowIso(),
@@ -93,7 +96,10 @@ export function json(body, { status = 200, maxAge = 0, sMaxAge = null, headers =
   });
   if (maxAge <= 0 && sMaxAge === null) h.set('cache-control', 'no-store');
   else h.set('cache-control', `public, max-age=${Math.max(0, maxAge)}${sMaxAge !== null ? `, s-maxage=${sMaxAge}` : ''}`);
-  return new Response(JSON.stringify(body), { status, headers: h });
+  // Customer source boundary: every public body is mapped, except the provenance registry and ops health.
+  const route = body?.meta?.route || '';
+  const out = /^\/(?:health|v1\/sources)\b/.test(route) ? body : customerDoc(body);
+  return new Response(JSON.stringify(out), { status, headers: h });
 }
 
 export function ok(data, metaBlock, opts) {

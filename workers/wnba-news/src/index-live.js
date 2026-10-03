@@ -12,6 +12,19 @@ import { withheldBySourcePolicy } from './sources.js';
 import { mediaFor } from './media.js';
 import { permanentArticleEnv } from './article-kv.js';
 import { ARTICLE_RETENTION_MIGRATION_KEY, ARTICLE_RETENTION_VERSION, migrateArticleRetention } from './article-retention.js';
+import { customerDoc } from '../../shared/customer-brand.js';
+
+// Customer source boundary (DATA · PropSports): public article/story JSON is mapped at serving time; stored,
+// hashed articles are never rewritten. /v1/news (named-publisher wire) and /v1/news/sources (provenance) pass through.
+const CUSTOMER_ROUTE = /^\/v1\/(?:articles(?:\/[a-z0-9-]{6,120})?|articles\/videos|news\/story\/pbe_[a-f0-9]{18})$/;
+async function customerResponse(response) {
+  if (!(response.headers.get('content-type') || '').includes('json')) return response;
+  const body = await response.clone().json().catch(() => null);
+  if (body === null) return response;
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  return new Response(JSON.stringify(customerDoc(body)), { status: response.status, headers });
+}
 
 const SERVICE = 'wnba-news';
 const VERSION = '2.1.1';
@@ -38,7 +51,7 @@ export default {
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
     if (path === '/v1/articles' && url.searchParams.get('archive') === '1') {
-      return archiveRoute(durableEnv, url);
+      return customerResponse(await archiveRoute(durableEnv, url));
     }
 
     if (path === '/health') {
@@ -54,7 +67,8 @@ export default {
     }
 
     // Manual article passes, if ever used, get the same permanent-write policy.
-    return core.fetch(request, durableEnv, ctx);
+    const response = await core.fetch(request, durableEnv, ctx);
+    return request.method === 'GET' && CUSTOMER_ROUTE.test(path) ? customerResponse(response) : response;
   }
 };
 

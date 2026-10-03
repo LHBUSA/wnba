@@ -1,3 +1,4 @@
+import { customerDoc } from '../../shared/customer-brand.js';
 // WNBA-owned passwordless sign-in (owner decision 2026-09-15). Identity only: this module never grants WNBA Pro.
 // Entitlement is decided separately (account.js) by the network billing ledger.
 //
@@ -118,7 +119,8 @@ export function credentialedHeaders(request, extra = {}) {
 }
 
 export function privateJson(request, body, status = 200, extra = {}) {
-  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...credentialedHeaders(request, extra) } });
+  // Customer source boundary (DATA · PropSports) for signed-in responses too.
+  return new Response(JSON.stringify(customerDoc(body)), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...credentialedHeaders(request, extra) } });
 }
 
 export function credentialedPreflight(request) {

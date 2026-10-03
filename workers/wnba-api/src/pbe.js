@@ -20,6 +20,7 @@ import TEAM_LOGOS from '../../../data/team-logos.json' with { type: 'json' };
 import { resolveAccount } from './account.js';
 import { privateJson } from './auth.js';
 import { orientDoc, lockPhase, trackRecordAggregate, LOCK_POLICY, CONTRACT, ELIGIBILITY } from '../../shared/pbe-runtime.js';
+import { customerDoc } from '../../shared/customer-brand.js';
 
 const KV = (ledger, kind, id) => `pbe:v1:${ledger}:${kind}${id ? `:${id}` : ''}`;
 
@@ -505,5 +506,6 @@ async function officialRows(env, { detail = false } = {}) {
 }
 
 function json(body, maxAge = 0) {
-  return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json; charset=utf-8', 'access-control-allow-origin': '*', 'cache-control': maxAge ? `public, max-age=${maxAge}` : 'no-store', 'x-content-type-options': 'nosniff' } });
+  // Customer source boundary (DATA · PropSports), same as shared/envelope.js json().
+  return new Response(JSON.stringify(customerDoc(body)), { headers: { 'content-type': 'application/json; charset=utf-8', 'access-control-allow-origin': '*', 'cache-control': maxAge ? `public, max-age=${maxAge}` : 'no-store', 'x-content-type-options': 'nosniff' } });
 }

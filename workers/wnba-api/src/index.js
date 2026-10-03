@@ -5,6 +5,8 @@
 // Every response is an envelope: { ok, data, meta } with source + freshness.
 
 import { FRESHNESS, SOURCES, meta, ok, fail, preflight, json, nowIso } from '../../shared/envelope.js';
+// Provider-neutral play-by-play lane for public game JSON (pbp_source stays as a deprecated alias).
+const PBP_LANE = Object.freeze({ archive: 'archive', espn_site: 'primary', espn_site_degraded: 'primary_degraded', espn_core_failover: 'failover' });
 import { cachedJson } from '../../shared/fetcher.js';
 import {
   ESPN,
@@ -563,6 +565,8 @@ async function gameLive({ env, ctx, url, params, path }) {
       pickcenter: s.pickcenter,
       market: liveMarket,
       ...surfaces(env, liveMarket),
+      // pbp_source: deprecated legacy lane identifier (compatibility only); pbp_lane is the provider-neutral field.
+      pbp_lane: PBP_LANE[L.pbpSource] || (L.pbpSource ? 'other' : null),
       pbp_source: L.pbpSource || null,
       pbp_integrity: L.pbpIntegrity || null
     },

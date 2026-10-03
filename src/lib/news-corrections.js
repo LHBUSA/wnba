@@ -82,7 +82,7 @@ export function correctMilesRecordArticle(article, playerData = null) {
     `Olivia Miles owns the WNBA rookie scoring record after her 21-point night in Minnesota’s ${score} win at Connecticut pushed her season total to 770 points and past the mark previously held by Caitlin Clark.`,
     gameLine,
     'The record changed hands during a Minnesota win, not in an isolated scoring chase. Miles reached the milestone while also creating six assists, giving the Lynx production as both a scorer and playmaker in the same game.',
-    'NBC Sports first reported the 770-point milestone Saturday. ESPN and CBS Sports separately reported that Miles had moved past Clark’s rookie scoring record, and Just Women’s Sports carried the same record change in its later awards coverage.',
+    'NBC Sports first reported the 770-point milestone Saturday. ESPN and CBS Sports separately reported that Miles had moved past Clark’s rookie scoring record, and Just Women’s Sports carried the same record change in its later awards coverage.', // source-brand:allow (named publisher reporting)
     'Clark’s name remains part of the story because hers was the mark Miles passed. The player at the center of the new record, though, is Miles — and the record night belongs to Minnesota’s rookie guard.'
   ];
 
@@ -246,7 +246,7 @@ export function milesRecordStaticArticle() {
     ],
     evidence: [
       { kind: 'publisher_report', publisher: 'NBC Sports', headline: 'Olivia Miles breaks Caitlin Clark’s WNBA rookie points record by scoring 770th point', url: 'https://www.nbcsports.com/wnba/news/olivia-miles-breaks-caitlin-clarks-wnba-rookie-points-record-by-scoring-770th-point', published_at: '2026-09-20T19:20:06.000Z' },
-      { kind: 'publisher_report', publisher: 'ESPN', headline: "Olivia Miles breaks Caitlin Clark's WNBA rookie points record", url: 'https://www.espn.com/wnba/story/_/id/49990917/olivia-miles-breaks-caitlin-clark-wnba-rookie-points-record', published_at: '2026-09-20T20:35:18.000Z' },
+      { kind: 'publisher_report', publisher: 'ESPN', headline: "Olivia Miles breaks Caitlin Clark's WNBA rookie points record", url: 'https://www.espn.com/wnba/story/_/id/49990917/olivia-miles-breaks-caitlin-clark-wnba-rookie-points-record', published_at: '2026-09-20T20:35:18.000Z' }, // source-brand:allow (named publisher reporting)
       { kind: 'publisher_report', publisher: 'CBS Sports', headline: "Lynx guard Olivia Miles breaks Caitlin Clark's WNBA rookie scoring record, continuing historic campaign", url: 'https://www.cbssports.com/wnba/news/olivia-miles-breaks-caitlin-clarks-wnba-rookie-scoring-record', published_at: '2026-09-20T22:26:40.000Z' },
       { kind: 'publisher_report', publisher: 'Just Women’s Sports', headline: 'Olivia Miles Breaks Caitlin Clark’s Rookie Scoring Record as WNBA Awards Loom', url: 'https://justwomenssports.com/reads/olivia-miles-caitlin-clark-rookie-scoring-record-wnba-awards', published_at: '2026-09-21T15:11:33.000Z' },
       { kind: 'record', source: 'PropBetEdge WNBA player record', url: 'https://wnba.propbetedge.ai/players/4433791', captured_at: CORRECTED_AT, record: { athlete_id: MILES_ID, team_id: LYNX_ID } }
