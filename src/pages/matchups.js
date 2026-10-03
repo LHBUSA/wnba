@@ -5,8 +5,8 @@ import { skeleton } from '../ui/components.js';
 import { loadMatchupsList, matchupsListView, matchupsListHead, loadMatchup, matchupView } from '../views/matchups.js';
 import { routeMeta } from '../seo/meta.js';
 import { createPoller } from '../lib/poller.js';
-import { kalshi, kalshiColors, kalshiPollState, matchupKalshiSlot } from '../data/kalshi.js';
-import { kalshiCard, wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
+import { kalshi, marketPollMs, within, matchupKalshiSlot, matchupKalshiMarkup } from '../data/kalshi.js';
+import { wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = (p) => (p.gameId ? 'Matchup research' : 'Matchups');
 
@@ -22,27 +22,43 @@ export async function mount(root, ctx) {
   }
   render(root, html`${skeleton(120)}${skeleton(420)}`);
   const gameId = ctx.params.gameId;
-  // The Kalshi market loads WITH the matchup so its card is part of the first paint (no layout shift).
-  const [data, kxEntry] = await Promise.all([loadMatchup(api, gameId), kalshi.loadEvent(gameId)]);
+  // The market module loads WITH the matchup so it is part of the first paint (no layout shift); the wait for it is
+  // bounded (<= 800 ms after the matchup), after which it paints into its own slot when it arrives.
+  const kxLoad = kalshi.loadEvent(gameId);
+  const data = await loadMatchup(api, gameId);
+  const kxFirst = await within(kxLoad, 800);
   if (!ctx.isCurrent()) return;
   if (data.res.ok) ctx.setMeta(routeMeta('matchups', { path: ctx.path, params: ctx.params, data: data.res.data }));
   const g = data.res.ok ? data.res.data.game : null;
-  render(root, matchupView({ ...data, kalshi: g ? matchupKalshiSlot(kxEntry, g) : '' }));
+  render(root, matchupView({ ...data, kalshi: g ? matchupKalshiSlot(kxFirst ?? null, g) : '' }));
   if (!g) return;
   wireKalshi(root);
 
-  // Poll our markets Worker (never Kalshi) while this page is mounted: 20 s live, 45 s pregame, nothing otherwise.
-  // Only the Kalshi slot is repainted; the sportsbook block and the rest of the page are untouched.
-  const state = kalshiPollState(g);
-  if (state === 'idle') return;
+  // Only the market slot is ever repainted; the sportsbook block and the rest of the page are untouched.
+  // Every event that has/had a market mounts, FINAL games included: the live card while it trades, then
+  // "How the market closed" once CLOSED/SETTLED — the page evolves with no frontend release.
   let poller = null;
-  poller = createPoller(async () => {
-    const entry = await kalshi.loadEvent(gameId, { force: true });
-    if (!ctx.isCurrent()) return poller?.stop();
+  let entry = kxFirst ?? null;
+  const paint = (e) => {
     const slot = root.querySelector('[data-kx-slot]');
     if (!slot) return;
-    slot.innerHTML = kalshiCard(entry, { placement: 'matchup-page', colors: kalshiColors(g) });
-    wireKalshi(slot);
-  }, { intervalMs: kalshi.pollMsFor(state), immediate: false });
-  return () => poller.stop();
+    const markup = matchupKalshiMarkup(e, g);
+    if (slot.innerHTML !== markup) { slot.innerHTML = markup; wireKalshi(slot); }
+  };
+  if (kxFirst === undefined) {
+    entry = await kxLoad;
+    if (!ctx.isCurrent()) return;
+    paint(entry);
+  }
+  // Poll our markets Worker (never Kalshi): live 20 s, pregame 45 s, CLOSED every 5 min until SETTLED, SETTLED never.
+  const first = marketPollMs(g, entry);
+  if (!first) return;
+  poller = createPoller(async () => {
+    const next = await kalshi.loadEvent(gameId, { force: true });
+    if (!ctx.isCurrent()) return poller?.stop();
+    paint(next);
+    const ms = marketPollMs(g, next);
+    if (!ms) poller.stop(); else poller.setInterval(ms);
+  }, { intervalMs: first, immediate: false });
+  return () => poller?.stop();
 }

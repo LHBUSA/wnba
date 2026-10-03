@@ -16,6 +16,7 @@
 .kx-slot--matchup { margin: 0 0 16px; }
 .kx-slot--cast { margin-top: 16px; }
 .kx-slot--cast-pre { margin-top: 16px; }
+.kx-slot--cast-history { margin-top: 12px; }
 
 /* Game cards: one restrained line under the sportsbook snapshot. */
 .gc2-kx { min-width: 0; overflow: hidden; }

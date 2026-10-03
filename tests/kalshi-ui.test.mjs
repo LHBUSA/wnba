@@ -177,3 +177,111 @@ test('CSP connect-src allows the owned markets Worker and no Kalshi host (Vercel
     assert.equal(read(f).match(/'content-security-policy': "([^"]+)"/)?.[1], csp, f);
   }
 });
+
+// ------------------------------------------------------------ market history ("How the market closed")
+// SETTLED fixture: the real settled payload from GET /v1/market-intelligence/event (tennis, 2026-10-03), reshaped only
+// in sport / ids / names / tickers to this WNBA game.
+const SETTLED = JSON.parse(read('tests/fixtures/kalshi/market-history-settled.json')).event;
+const CLOSED = (() => {
+  const e = structuredClone(SETTLED);
+  e.market.lifecycle = 'CLOSED';
+  e.market.close.lifecycle = 'CLOSED';
+  for (const o of e.market.close.outcomes) o.result = null;
+  e.market_history.lifecycle = 'CLOSED';
+  e.market_history.status_label = 'Market closed';
+  e.market_history.markers.settlement = null;
+  for (const o of e.market_history.outcomes) o.settlement = null;
+  return e;
+})();
+
+test('history: SETTLED renders "How the market closed" with stored values and the venue settlement', async () => {
+  const { matchupKalshiSlot } = await import('../src/data/kalshi.js');
+  const h = String(matchupKalshiSlot(SETTLED, FINAL));
+  assert.match(h, /data-kx-history/);
+  const t = text(h);
+  assert.match(t, /^How the market closed Market history · Kalshi Market settled/);
+  assert.match(t, /NY New York wins First observed 94\.5¢ Final trade 1¢ Settled NO/);
+  assert.match(t, /ATL Atlanta wins First observed 5\.5¢ Final trade 99¢ Settled YES/);
+  assert.match(t, /Kalshi settlement: ATL — YES/);
+  assert.match(t, /“First observed” is our first record, not the opening price/);
+  assert.match(t, /not sportsbook odds and not a PropBetEdge model/);
+  assert.doesNotMatch(t, /\bopen(?:ing)? price\b(?! ?\.)|Kalshi intelligence|more accurate|earlier than|stale sportsbook/i);
+  assert.match(h, /<svg [^>]*role="img"/);
+  assert.doesNotMatch(h, /style="/); // strict CSP: no inline styles
+});
+
+test('history: CLOSED shows "awaiting settlement", never a settlement', async () => {
+  const { matchupKalshiSlot } = await import('../src/data/kalshi.js');
+  const t = text(matchupKalshiSlot(CLOSED, FINAL));
+  assert.match(t, /Market closed · awaiting settlement/);
+  assert.match(t, /Awaiting settlement/);
+  assert.doesNotMatch(t, /Settled (YES|NO)|settlement: /);
+});
+
+test('history: no entry or no history -> nothing (no placeholder box)', async () => {
+  const { matchupKalshiSlot, kalshiLineFor } = await import('../src/data/kalshi.js');
+  assert.equal(String(matchupKalshiSlot(null, FINAL)), '<div class="kx-slot kx-slot--matchup" data-kx-slot></div>');
+  assert.equal(kalshiLineFor({ ...FINAL, game_id: '999' }), '');
+  // CLOSED lifecycle without market_history falls back to the (live) card path, which renders nothing without prices.
+  const { marketHistoryCard } = await import('../src/vendor/kalshi/kalshi-market-ui.js');
+  assert.equal(marketHistoryCard({ ...SETTLED, market_history: null }), '');
+  assert.match(read('src/styles/kalshi.css'), /\.kx-slot:empty \{ display: none; \}/);
+});
+
+test('history: every link is the verified Kalshi market with rel sponsored', async () => {
+  const { matchupKalshiSlot } = await import('../src/data/kalshi.js');
+  const h = String(matchupKalshiSlot(SETTLED, FINAL));
+  const anchors = h.match(/<a [^>]*>/g) || [];
+  assert.ok(anchors.length >= 1);
+  for (const a of anchors) {
+    assert.ok(a.includes(`href="${URL_}"`), a);
+    assert.match(a, /rel="noopener noreferrer sponsored"/);
+  }
+});
+
+test('history: FINAL result cards carry the restrained market-close line from the board, only when recorded', async () => {
+  const realFetch = globalThis.fetch;
+  const boardEntry = { ...SETTLED, market_history: undefined };
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ contract: 'market-intel/1', sport: 'wnba', enabled: true, events: [boardEntry] }) });
+  try {
+    const { kalshi } = await import('../src/data/kalshi.js');
+    await kalshi.loadBoard({ force: true });
+    const card = String(gameCard(FINAL));
+    assert.match(card, /<div class="gc2-kx"><span class="kx-line kx-line--closed mono"/);
+    assert.match(text(card), /MARKET ATL first 5\.5¢ · settled YES/);
+    assert.doesNotMatch(text(card), /open(?:ing)? price/i);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test('history: poll policy — live 20 s, pregame 45 s, CLOSED 5 min until SETTLED, SETTLED never', async () => {
+  const { marketPollMs } = await import('../src/data/kalshi.js');
+  assert.equal(marketPollMs({ status: { state: 'in' } }, ENTRY), 20000);
+  assert.equal(marketPollMs(GAME, ENTRY), 45000);
+  assert.equal(marketPollMs(FINAL, CLOSED), 300000);
+  assert.equal(marketPollMs(FINAL, SETTLED), 0);
+  assert.equal(marketPollMs(FINAL, null), 0);
+  assert.equal(marketPollMs(FINAL, { ...ENTRY, market: { lifecycle: 'ACTIVE' } }), 300000);
+});
+
+test('history: the event page mounts the market module for FINAL games; WNBACast replay shows it under the controls', () => {
+  const mu = read('src/pages/matchups.js');
+  assert.match(mu, /matchupKalshiSlot\(kxFirst \?\? null, g\)/);
+  assert.doesNotMatch(mu, /state === 'idle'\) return/); // finals are no longer skipped
+  assert.match(mu, /within\(kxLoad, 800\)/);
+  const cast = read('src/pages/cast.js');
+  assert.match(cast, /\$\{v\.replay \? kalshiSlot\('history', g\) : ''\}/);
+  assert.match(cast, /kind === 'history'\) return marketModule\(/);
+  assert.match(read('src/data/kalshi.js'), /marketModule\(entry, \{ placement: 'matchup-page'/);
+});
+
+test('vendored client bytes are pinned (sha256 @ propbetedge-workers 70d92e0)', async () => {
+  const { createHash } = await import('node:crypto');
+  const pins = {
+    'kalshi-market-client.js': '653cb0fc2673f909552453052560bfd6194e0e4d045c51b1eb73483957d4c049',
+    'kalshi-market-ui.css': 'db0f4b1efd5209966fb627f72e217b9539876d5123edc10d80524d172da41a06',
+    'kalshi-market-ui.js': 'c343805e546cde66d01676c9c6c9f6f4ca746a8ba138b4b1ad0159a341f3db2a'
+  };
+  for (const [f, sha] of Object.entries(pins)) assert.equal(createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'src/vendor/kalshi', f))).digest('hex'), sha, f);
+});

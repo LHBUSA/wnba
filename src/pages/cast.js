@@ -21,8 +21,8 @@ import { etCompact, addDays } from '../../workers/shared/time.js';
 import { pbpEmphasis } from '../ui/pbp.js';
 import { groupRailGames, patchRailGame, mergeSlate, createRailRefresher, pollIntervalFor, LIVE_POLL_MS } from '../lib/cast-rail.js';
 import { isBackwards, mergeLiveEvents, liveSnapshotKey } from '../lib/cast-live.js';
-import { kalshi, kalshiColors, kalshiPollState } from '../data/kalshi.js';
-import { kalshiCard, kalshiStrip, wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
+import { kalshi, kalshiColors, marketPollMs, within } from '../data/kalshi.js';
+import { kalshiCard, kalshiStrip, marketModule, wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = (p) => (p.gameId ? 'WNBACast' : 'WNBACast — live WNBA games & replays');
 export const description = () => 'WNBACast: live WNBA scoreboard, real play-by-play, published shot locations, scoring runs, box scores and full replays of completed games.';
@@ -65,6 +65,7 @@ export async function mount(root, ctx) {
   };
   let poller = null;
   let kxPoller = null;
+  let kxPending = null; // the in-flight first market read for state.gameId (bounded first-paint wait)
   // Warm the Kalshi read for a deep-linked game while the schedule loads; it never gates WNBACast.
   if (state.gameId) kalshi.loadEvent(state.gameId);
   let playTimer = null;
@@ -173,6 +174,7 @@ export async function mount(root, ctx) {
     render($stage, html`${skeleton(160)}${skeleton(420)}`);
     loadGameArticles(gameId);
     poller?.setInterval(LIVE_POLL_MS);
+    kxPoller?.setInterval(kalshi.pollMsFor('pregame')); // re-arm (a settled previous game may have stopped it)
     load();
     loadKalshi();
   });
@@ -226,6 +228,11 @@ export async function mount(root, ctx) {
     renderRail();
     refreshRailLive();
     const s = d.game.status?.state;
+    // First paint of a game: wait (bounded, <= 800 ms) for its market read so the module is in the same paint.
+    if (state.kalshiGame !== requestedGameId && kxPending) {
+      await within(kxPending, 800);
+      if (!ctx.isCurrent() || requestedGameId !== state.gameId) return;
+    }
     setPollInterval();
     setKalshiInterval();
     if (s === 'post' && state.cursor === null) state.cursor = state.events.length - 1;
@@ -233,12 +240,17 @@ export async function mount(root, ctx) {
   }
 
   // ------------------------------------------------------------ Kalshi prediction market
-  // A separate, independent lane: its own poller (20 s live, 45 s pregame, idle otherwise) against our markets
-  // Worker. It never blocks or delays the WNBACast event poll, and it repaints only its own slot.
+  // A separate, independent lane: its own poller (20 s live, 45 s pregame, CLOSED every 5 min until SETTLED, SETTLED
+  // never) against our markets Worker. Only the first paint of a game waits for it, bounded at 800 ms; it repaints
+  // only its own slot. Completed games show "How the market closed" under the replay controls.
   async function loadKalshi() {
     const gameId = state.gameId;
     if (!gameId) return;
-    const entry = await kalshi.loadEvent(gameId, { force: state.kalshiGame === gameId });
+    // A settled market never changes: no further reads (also covers the poller's on-visible tick).
+    if (state.kalshiGame === gameId && state.kalshi?.market?.lifecycle === 'SETTLED') return;
+    const p = kalshi.loadEvent(gameId, { force: state.kalshiGame === gameId });
+    if (state.kalshiGame !== gameId) kxPending = p;
+    const entry = await p;
     if (!ctx.isCurrent() || gameId !== state.gameId) return;
     state.kalshi = entry;
     state.kalshiGame = gameId;
@@ -247,7 +259,10 @@ export async function mount(root, ctx) {
   }
 
   function setKalshiInterval() {
-    if (state.data?.game) kxPoller?.setInterval(kalshi.pollMsFor(kalshiPollState(state.data.game)));
+    if (!state.data?.game) return;
+    const ms = marketPollMs(state.data.game, kalshiEntry());
+    // 0 = stop following (settled, or a final game with no market); a later game switch re-arms it.
+    kxPoller?.setInterval(ms);
   }
 
   function kalshiEntry() {
@@ -255,22 +270,27 @@ export async function mount(root, ctx) {
   }
 
   // Line & market tab: the full card, below the sportsbook market. Pre-game: the one-line strip (expands to the card).
+  // Replay (final): the market module under the replay controls — "How the market closed" once CLOSED/SETTLED.
   function kalshiMarkup(kind, g) {
     const entry = kalshiEntry();
     if (!entry || !g) return '';
+    if (kind === 'history') return marketModule(entry, { placement: 'wnbacast-history', colors: kalshiColors(g) });
     if (kind === 'tab') return kalshiCard(entry, { placement: 'wnbacast-market', colors: kalshiColors(g) });
     const strip = kalshiStrip(entry, { placement: 'wnbacast-strip', colors: kalshiColors(g) });
     return state.kalshiOpen ? strip.replace('<details class="kx-strip"', '<details open class="kx-strip"') : strip;
   }
 
   function kalshiSlot(kind, g) {
-    return html`<div class="kx-slot kx-slot--${kind === 'tab' ? 'cast' : 'cast-pre'}" data-kx-slot="${kind}">${raw(kalshiMarkup(kind, g))}</div>`;
+    const cls = kind === 'tab' ? 'cast' : kind === 'history' ? 'cast-history' : 'cast-pre';
+    return html`<div class="kx-slot kx-slot--${cls}" data-kx-slot="${kind}">${raw(kalshiMarkup(kind, g))}</div>`;
   }
 
   function paintKalshi() {
     const slot = $stage.querySelector('[data-kx-slot]');
     if (!slot || !state.data?.game) return;
-    slot.innerHTML = kalshiMarkup(slot.dataset.kxSlot, state.data.game);
+    const markup = kalshiMarkup(slot.dataset.kxSlot, state.data.game);
+    if (slot.innerHTML === markup) return;
+    slot.innerHTML = markup;
     bindKalshi(slot);
   }
 
@@ -397,6 +417,7 @@ export async function mount(root, ctx) {
         <input type="range" min="0" max="${state.events.length - 1}" value="${v.idx}" data-scrub aria-label="Replay position" />
         <span class="pos">${v.last ? `${periodName(v.last.period)} ${v.last.clock}` : ''} · play ${v.idx + 1}/${state.events.length}</span>
       </section>` : ''}
+      ${v.replay ? kalshiSlot('history', g) : ''}
 
       ${g.status?.state === 'pre' ? preGame(g) : liveBody(v)}
     `);
@@ -704,7 +725,7 @@ export async function mount(root, ctx) {
       </tbody></table></div><p class="note" style="margin-top:8px">A single sportsbook line exposed through propsports.proptechusa.ai. It is not a PropBetEdge price, consensus or model.</p>` : html`<p class="note">No line published for this game in the source record.</p>`}
       <div class="callout" style="margin-top:14px">PBE game predictions are <b>live</b>. Sportsbook fair-value and model-gap comparisons remain <b>unavailable</b> until the separate market model is validated.</div>
       <p style="margin-top:12px"><a class="sec-link" href="/props">Open the best-line board →</a></p>
-      ${kalshiSlot('tab', g)}`;
+      ${g.status?.state === 'post' ? '' : kalshiSlot('tab', g)}`;
   }
 
   // ------------------------------------------------------------ events
