@@ -24,7 +24,9 @@ export function createPoller(fn, { intervalMs, immediate = true } = {}) {
   if (immediate) tick(); else schedule();
 
   return {
-    setInterval(ms) { interval = ms; schedule(); },
+    // Re-arming on an unchanged interval would push the next tick back by however
+    // long the caller took (the rail refresh lands after the live response).
+    setInterval(ms) { if (ms === interval) return; interval = ms; schedule(); },
     stop() {
       stopped = true;
       clearTimeout(timer);

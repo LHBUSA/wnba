@@ -19,7 +19,8 @@ import { scoringRuns, leadTracker, foulContext, playerProgression, shotChart } f
 import { fmtDateET, fmtTimeET, fmtDateTimeET, relTime, american, num } from '../lib/format.js';
 import { etCompact, addDays } from '../../workers/shared/time.js';
 import { pbpEmphasis } from '../ui/pbp.js';
-import { groupRailGames, patchRailGame, mergeSlate, createRailRefresher, RAIL_REFRESH_MS } from '../lib/cast-rail.js';
+import { groupRailGames, patchRailGame, mergeSlate, createRailRefresher, pollIntervalFor, LIVE_POLL_MS } from '../lib/cast-rail.js';
+import { isBackwards, mergeLiveEvents, liveSnapshotKey } from '../lib/cast-live.js';
 
 export const title = (p) => (p.gameId ? 'WNBACast' : 'WNBACast — live WNBA games & replays');
 export const description = () => 'WNBACast: live WNBA scoreboard, real play-by-play, published shot locations, scoring runs, box scores and full replays of completed games.';
@@ -94,7 +95,8 @@ export async function mount(root, ctx) {
     </a>`;
   }
   // Every other card on the rail is fed by /v1/today. The first call fetches
-  // immediately (first selected-game paint); after that it is throttled to 15s.
+  // immediately (first selected-game paint); after that it is throttled to the
+  // live cadence (RAIL_REFRESH_MS, ~5s).
   const nextSlate = createRailRefresher({ fetchToday: () => api.today({ fresh: true }) });
   async function refreshRailLive() {
     const fresh = await nextSlate();
@@ -110,7 +112,7 @@ export async function mount(root, ctx) {
   function setPollInterval() {
     const s = state.data?.game?.status?.state;
     const othersLive = (state.rail.live || []).some((g) => g.game_id !== state.gameId);
-    poller?.setInterval(s === 'in' ? 8000 : othersLive ? RAIL_REFRESH_MS : s === 'pre' ? 60000 : 0);
+    poller?.setInterval(pollIntervalFor(s, othersLive));
   }
 
   function renderRail() {
@@ -159,7 +161,7 @@ export async function mount(root, ctx) {
     renderRail();
     render($stage, html`${skeleton(160)}${skeleton(420)}`);
     loadGameArticles(gameId);
-    poller?.setInterval(8000);
+    poller?.setInterval(LIVE_POLL_MS);
     load();
   });
 
@@ -189,15 +191,19 @@ export async function mount(root, ctx) {
     }
     const d = res.data;
     // Guard against our own past: never step a live stream backwards.
-    if (state.data && d.last_seq !== null && state.events.length && d.last_seq < state.events.at(-1).seq) return;
-    const prevLast = state.events.at(-1)?.seq ?? 0;
-    if (since !== undefined) {
-      const bySeq = new Map(state.events.map((e) => [e.seq, e]));
-      for (const e of d.events) bySeq.set(e.seq, e);
-      state.events = [...bySeq.values()].sort((a, b) => a.seq - b.seq);
-    } else {
-      state.events = d.events;
+    if (state.data && isBackwards(state.events, d.last_seq)) return;
+    // Nothing new from the provider (e.g. the same edge snapshot): no repaint, no
+    // invented activity. Only the "Fetched" age moves to the latest check.
+    if (since !== undefined && !d.events.length && state.data?.game?.game_id === d.game?.game_id
+      && liveSnapshotKey(state.data, state.meta) === liveSnapshotKey(d, res.meta)) {
+      state.meta = res.meta;
+      if (res.meta?.fetched_at) $stage.querySelectorAll('[data-fresh]').forEach((el) => el.setAttribute('data-fresh', res.meta.fetched_at));
+      refreshRailLive();
+      setPollInterval();
+      return;
     }
+    const prevLast = state.events.at(-1)?.seq ?? 0;
+    state.events = mergeLiveEvents(state.events, d.events, since);
     state.newFrom = since !== undefined ? prevLast : null;
     state.animateShotSeq = since !== undefined
       ? ([...d.events].reverse().find((e) => e.shooting && e.coordinate)?.seq ?? null)
@@ -290,7 +296,7 @@ export async function mount(root, ctx) {
             <p style="max-width:720px;color:var(--paper-2);font-size:1rem;line-height:1.55">Follow the game as it happens with an automatically updating event feed, live score, published shot locations, scoring runs and box-score context. No refresh needed.</p>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;flex:0 1 430px;justify-content:flex-end">
-            ${badge(g.status?.state === 'in' ? 'live' : 'sched', g.status?.state === 'in' ? 'Updates every 8 seconds' : g.status?.state === 'post' ? 'Full game replay' : 'Starts automatically at tip')}
+            ${badge(g.status?.state === 'in' ? 'live' : 'sched', g.status?.state === 'in' ? 'Updates every ~5 seconds while live' : g.status?.state === 'post' ? 'Full game replay' : 'Starts automatically at tip')}
             <span class="pill" style="cursor:default">Real play-by-play</span>
             <span class="pill" style="cursor:default">Shot chart + game flow</span>
           </div>
@@ -930,6 +936,6 @@ export async function mount(root, ctx) {
     playTimer = null;
   }
 
-  poller = createPoller(load, { intervalMs: 8000 });
+  poller = createPoller(load, { intervalMs: LIVE_POLL_MS });
   return () => { poller?.stop(); stopPlay(); stopTicker(); };
 }

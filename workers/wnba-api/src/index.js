@@ -45,22 +45,7 @@ import { dnaMetaRoute, dnaIndexRoute, dnaPlayerRoute } from './dna.js';
 const SERVICE = 'wnba-api';
 const VERSION = '1.3.0'; // 1.3.0: /v1/dna/meta, /v1/dna/index, /v1/dna/players/:id (Player DNA V1, prepared KV reads). 1.2.0: /v1/playoffs (postseason bracket). 1.1.0: /v1/account carries the shared membership contract
 
-// Freshness windows (seconds). Live data is short; season aggregates are long.
-const TTL = {
-  scoreboardLive: 8,
-  scoreboard: 60,
-  summaryLive: 6,
-  summaryFinal: 86400,
-  summaryPre: 120,
-  standings: 600,
-  injuries: 300,
-  roster: 3600,
-  teams: 86400,
-  athlete: 3600,
-  leaders: 1800,
-  schedule: 900,
-  transactions: 300
-};
+import { TTL } from './ttl.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -356,7 +341,8 @@ async function today({ env, ctx, path }) {
       season: st.season,
       degraded: [...degradedFrom(r), ...(nextFetched ? degradedFrom(nextFetched) : [])]
     }),
-    { maxAge: 5 }
+    // WNBACast's live rail reads this every ~5s: the browser copy must not outlive the tick.
+    { maxAge: TTL.scoreboardLive }
   );
 }
 

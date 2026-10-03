@@ -38,7 +38,7 @@ test('1 · the first refresh fires immediately and fills both live games, neithe
   assert.deepEqual(rail.live.map((g) => g.game_id), ['401857197', '401857198']);
 });
 
-test('2 · after the initial refresh the 15-second throttle holds, then both scores advance again', async () => {
+test('2 · after the initial refresh the 5-second throttle holds, then both scores advance again', async () => {
   let clock = 1_000_000;
   let calls = 0;
   const frames = [
@@ -48,10 +48,10 @@ test('2 · after the initial refresh the 15-second throttle holds, then both sco
   const refresh = createRailRefresher({ now: () => clock, fetchToday: async () => today(frames[calls++]) });
   let rail = mergeSlate(groupRailGames(schedule()), await refresh());
 
-  clock += 8000; // the selected game's own 8s poll
+  clock += 2000; // an early call (e.g. a game switch)
   assert.equal(await refresh(), null, 'throttled');
-  clock += RAIL_REFRESH_MS - 8001;
-  assert.equal(await refresh(), null, 'still throttled at 14.999s');
+  clock += RAIL_REFRESH_MS - 2001;
+  assert.equal(await refresh(), null, 'still throttled at 4.999s');
   assert.equal(calls, 1);
 
   clock += 1;
@@ -94,5 +94,5 @@ test('6 · cast.js uses the shared refresher and keeps the rail ticking while ot
   const src = readFileSync(new URL('../src/pages/cast.js', import.meta.url), 'utf8');
   assert.ok(!/lastRailRefreshAt/.test(src), 'no page-local refresh timestamp');
   assert.match(src, /createRailRefresher\(/);
-  assert.match(src, /othersLive \? RAIL_REFRESH_MS/);
+  assert.match(src, /pollIntervalFor\(s, othersLive\)/);
 });

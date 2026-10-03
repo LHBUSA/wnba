@@ -2,7 +2,19 @@
 // throttle. Pure (no DOM) so the multi-game live behaviour is testable.
 
 export const RAIL_GROUPS = ['live', 'upcoming', 'finals'];
-export const RAIL_REFRESH_MS = 15000;
+// Live cadence target: ~5s between the end of one request and the start of the
+// next (the poller never overlaps), so measured start-to-start is 5s + latency.
+// The wnba-api live TTLs (summaryLive, scoreboardLive) sit below this so every
+// tick is eligible for a fresh provider read.
+export const LIVE_POLL_MS = 5000;
+export const PRE_POLL_MS = 60000;
+export const RAIL_REFRESH_MS = LIVE_POLL_MS;
+
+// Selected game live -> live cadence; another game live -> keep ticking at the
+// rail cadence; upcoming -> 60s; final with nothing else live -> stop.
+export function pollIntervalFor(selectedState, othersLive) {
+  return selectedState === 'in' ? LIVE_POLL_MS : othersLive ? RAIL_REFRESH_MS : selectedState === 'pre' ? PRE_POLL_MS : 0;
+}
 
 const phaseRank = (s) => s === 'pre' ? 0 : s === 'in' ? 1 : s === 'post' ? 2 : -1;
 
