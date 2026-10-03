@@ -19,7 +19,7 @@
 
 import { finalize, marketText, standingText, nextGame, gameEntity, hashId, licensedContextPhoto } from './articles.js';
 import { dShort, dLong, dMonth, etDate, tET, f1, sgn, am, listJoin, nick, full, poss, cap, wordN, countOf, statAvg, avg, etDays, aan, sc, clockOf, periodOf, QUARTER, benchComparison } from './prose.js';
-import { playoffContext, playoffFacts, seriesScoreText, seasonOverTeams } from './playoff-context.js';
+import { playoffContext, playoffFacts, seriesScoreText, seasonOverTeams, seriesGames, advanceOf } from './playoff-context.js';
 import { coLeaders, CO_LEADER_RULE } from './reconcile.js';
 
 // The synthesis generators ship as part of the article engine; ARTICLE_VERSION in articles.js is the
@@ -802,7 +802,7 @@ export async function resultDeep(ctx) {
     const D = {};
     const box = live.box.players.filter((r) => !r.dnp && r.min);
     const boxLines = box.map((r) => ({ name: r.name, team_id: r.team_id, pts: r.pts ?? 0, reb: r.reb ?? 0, ast: r.ast ?? 0 }));
-    const stars = box.filter(notable).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0));
+    const allStars = box.filter(notable).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0));
     const winner = g.home.winner ? g.home : g.away;
     const loser = g.home.winner ? g.away : g.home;
     const W = nick(winner); const L = nick(loser);
@@ -814,8 +814,16 @@ export async function resultDeep(ctx) {
     const po = ctx.playoffs ? playoffContext(ctx.playoffs, g.game_id) : null;
     const ot = (live.linescore || []).length > 4;
     // A playoff game is always a story; a regular-season game needs a notable line, overtime, a comeback or a line.
-    if (!stars.length && !ot && !comeback && !pc && !po) continue;
+    if (!allStars.length && !ot && !comeback && !pc && !po) continue;
+    // A series-deciding game is the story of the team that advanced. Only a notable line on the winning side can
+    // lead it; the eliminated side's best line is still reported among the performers.
+    const clincher = Boolean(po?.decided_by_this_game);
+    const stars = clincher ? allStars.filter((r) => r.team_id === winner.team_id) : allStars;
     const kind = stars.length ? 'performance' : 'result';
+    const series = po ? seriesGames(ctx.playoffs, po.series_id, { throughGameId: g.game_id }) : [];
+    const advance = clincher ? advanceOf(ctx.playoffs, winner.team_id, po.series_id) : null;
+    const roundLabel = (name) => (/final/i.test(name) && !/semi/i.test(name) ? name.replace(/^(WNBA )?/, 'WNBA ') : `WNBA ${name.toLowerCase()}`);
+    const champion = clincher && /final/i.test(po.round) && !/semi/i.test(po.round);
     const score = sc(winner.score, loser.score);
     const ls = live.linescore || [];
     const side = (t) => (t === g.home ? 'home' : 'away');
@@ -917,7 +925,7 @@ export async function resultDeep(ctx) {
       if (coSameTeam) { D.pair_pts = pts.reduce((s2, v) => s2 + v, 0); D.pair_share = pctOf(D.pair_pts, co[0].team_id === winner.team_id ? winner.score : loser.score); }
       thesis = `${listJoin(coNames)} ${same ? `scored ${pts[0]} apiece` : `scored ${listJoin(pts.map(String))}`} as the ${full(winner)} beat the ${full(loser)} ${score} on ${dLong(g.start_utc)}${coSameTeam ? ` — ${D.pair_pts} of the ${poss(nick(co[0].team_id === winner.team_id ? winner : loser))} ${co[0].team_id === winner.team_id ? winner.score : loser.score} points, ${f1(D.pair_share)}% of the team’s scoring` : ''}.`;
     } else if (top) thesis = `${top.name} ${topTeam === winner ? 'led' : 'could not save'} the ${nick(topTeam)} with ${statLine(top)} as the ${full(winner)} beat the ${full(loser)} ${score} on ${dLong(g.start_utc)}.`;
-    else thesis = `The ${full(winner)} beat the ${full(loser)} ${score}${ot ? ` in ${ls.length - 4 === 1 ? 'overtime' : `${ls.length - 4} overtimes`}` : ''} on ${dLong(g.start_utc)}.`;
+    else thesis = `The ${full(winner)} beat the ${full(loser)} ${score}${clincher ? ` in ${po.stakes?.[String(winner.team_id)] === 'decider' ? 'the deciding ' : ''}Game ${po.game_number}` : ''}${ot ? ` in ${ls.length - 4 === 1 ? 'overtime' : `${ls.length - 4} overtimes`}` : ''} on ${dLong(g.start_utc)}.`;
     if (!top && performerRows.length) {
       const wTop = performerRows.find((r) => r.team_id === winner.team_id);
       const lTop = performerRows.find((r) => r.team_id === loser.team_id);
@@ -927,7 +935,9 @@ export async function resultDeep(ctx) {
     if (po?.after) {
       const wW = po.after[String(winner.team_id)]; const wL = po.after[String(loser.team_id)];
       seriesLine = po.decided_by_this_game
-        ? `The win closes out the ${po.round.toLowerCase()} series ${wW}–${wL} and sends the ${W} on; the ${poss(L)} season is over.`
+        ? champion
+          ? `The win closes out the ${po.round} ${wW}–${wL}: the ${W} are WNBA champions.`
+          : `The win closes out the ${po.round.toLowerCase()} series ${wW}–${wL} and ${advance?.opponent ? `sends the ${W} to the ${roundLabel(advance.round)} against the ${advance.opponent.short_name || advance.opponent.name}` : `sends the ${W} on`}; the ${poss(L)} season is over.`
         : wW === wL
           ? `Game ${po.game_number} of the ${po.round.toLowerCase()}, and the best-of-${wordN(po.best_of)} series is tied ${wW}–${wL}${po.wins_needed - wW === 1 ? ', with a deciding game to come' : ''}.`
           : `Game ${po.game_number} of the ${po.round.toLowerCase()}: the ${W} lead the best-of-${wordN(po.best_of)} series ${wW}–${wL}${po.wins_needed - wW === 1 ? ` and are one win from advancing, while the ${L} now face elimination` : ''}.`;
@@ -982,6 +992,15 @@ export async function resultDeep(ctx) {
         nextBits[0] += ` — and the ${nick(nOpp)} allow ${f1(so.points_against_avg)} a game, ${r2 <= 3 ? `the ${MOSTS[r2]} in the league` : `${ordinalN(r2)}-most of ${allStandings.length}`}`;
       }
     }
+    if (advance?.opponent && !champion) {
+      const opp = advance.opponent;
+      const g1 = advance.game1;
+      const homeCourt = Number.isFinite(advance.seed) && Number.isFinite(opp.seed) ? advance.seed < opp.seed : null;
+      const where = g1?.venue ? `at ${g1.venue}` : null;
+      const when = g1?.start_utc && !g1.time_tbd ? `on ${dLong(g1.start_utc)}` : null;
+      D.next_round_best_of = advance.best_of; D.next_opp_seed = opp.seed; D.next_seed = advance.seed;
+      ctxParas.push(`Next for the ${W}: the No. ${opp.seed} ${opp.name || opp.short_name} in the best-of-${wordN(advance.best_of)} ${advance.round.toLowerCase()}${homeCourt === true ? `, with home-court advantage as the No. ${advance.seed} seed` : homeCourt === false ? `, opening on the road as the No. ${advance.seed} seed` : ''}.${where || when ? ` Game 1 is ${[where, when].filter(Boolean).join(' ')}${g1.time_tbd ? '; the tip time has not been set' : ''}.` : ''}`);
+    }
     if (nextBits.length) ctxParas.push(`Next up: ${nextBits.join('; ')}. Player props enter the board inside 36 hours of tip.`);
 
     if (po?.after) {
@@ -997,17 +1016,27 @@ export async function resultDeep(ctx) {
     const counterPara = counter.length ? `A reason to be cautious about carrying this game forward: ${counter.join('; ')}. One game is still one game.` : null;
 
     const { body, sections } = assemble([['Game story', [thesis]], ['Who stood out', starParas], ['How it happened', how], ['What it means', [...(counterPara ? [counterPara] : []), ...ctxParas]]]);
-    const headline = co.length > 1 && headStat === 'pts'
+    const clinchHead = clincher && po?.after
+      ? champion
+        ? `The ${W} beat the ${L} ${score} in Game ${po.game_number} to win the WNBA championship`
+        : `The ${W} beat the ${L} ${score} in Game ${po.game_number}, advance to the ${advance ? roundLabel(advance.round) : 'next round'}`
+      : null;
+    const headline = clinchHead || (co.length > 1 && headStat === 'pts'
       ? (co.length <= 3 ? `${listJoin(coNames)} score ${co.every((x) => x.pts === co[0].pts) ? `${co[0].pts} apiece` : listJoin(co.map((x) => String(x.pts)))} as the ${W} beat the ${L}, ${score}` : `The ${W} beat the ${L}, ${score}, with the scoring lead shared`)
       : top ? (topTeam === winner ? `${poss(top.name)} ${keyLabel(top)} lead the ${W} past the ${L}${po ? ` in Game ${po.game_number}` : ''}, ${score}` : `The ${W} beat the ${L} ${score}${po ? ` in Game ${po.game_number}` : ''} despite ${poss(top.name)} ${keyLabel(top)}`)
-        : po ? `The ${full(winner)} ${po.decided_by_this_game ? 'close out' : 'beat'} the ${full(loser)} in Game ${po.game_number}, ${score}` : `The ${full(winner)} beat the ${full(loser)}, ${score}`;
-    const deck = co.length > 1 && headStat === 'pts'
+        : po ? `The ${full(winner)} ${po.decided_by_this_game ? 'close out' : 'beat'} the ${full(loser)} in Game ${po.game_number}, ${score}` : `The ${full(winner)} beat the ${full(loser)}, ${score}`);
+    const loserLead = lead?.largest_lead?.[loserSide]?.margin ?? 0;
+    const loserStar = clincher ? allStars.find((r) => r.team_id === loser.team_id) : null;
+    const clinchDeck = clincher && po?.after
+      ? `The ${W} ${loserLead >= 8 ? `came back from ${loserLead} down` : `held on`}${top ? ` behind ${poss(top.name)} ${keyLabel(top)}` : loserStar ? ` despite ${poss(loserStar.name)} ${keyLabel(loserStar)}` : ''} to win the ${po.round.toLowerCase().replace(/^first round$/, 'first-round')} series ${po.after[String(winner.team_id)]}–${po.after[String(loser.team_id)]}${advance?.opponent && !champion ? `; the No. ${advance.opponent.seed} ${advance.opponent.short_name || advance.opponent.name} are next` : ''}.`
+      : null;
+    const deck = clinchDeck || (co.length > 1 && headStat === 'pts'
       ? `${listJoin(coNames)} shared the scoring spotlight as the ${W} ${q1 && q1.w < q1.l ? `erased a ${sc(q1.l, q1.w)} first-quarter deficit and ` : ''}won by ${margin}.`
       : q1 && q1.w < q1.l
-        ? `The ${W} erased a ${sc(q1.l, q1.w)} first-quarter deficit and finished with ${aan(margin)} ${margin}-point win${top ? ` behind ${poss(top.name)} ${keyLabel(top)}` : ''}.`
+        ? `The ${W} erased a ${sc(q1.l, q1.w)} first-quarter deficit and finished with ${aan(margin)} ${margin}-point win${top ? ` ${topTeam === winner ? 'behind' : 'despite'} ${poss(top.name)} ${keyLabel(top)}` : ''}.`
         : top
           ? (topTeam === winner ? `${top.name} set the pace with ${keyLabel(top)} in ${aan(margin)} ${margin}-point ${W} win.` : `${top.name} posted ${keyLabel(top)} in the loss, but the ${W} finished with ${aan(margin)} ${margin}-point win.`)
-          : po?.after ? `The ${W} won Game ${po.game_number} by ${margin}${po.decided_by_this_game ? ' to take the series' : ` and ${po.after[String(winner.team_id)] > po.after[String(loser.team_id)] ? 'lead' : 'even'} the best-of-${wordN(po.best_of)} series ${po.after[String(winner.team_id)]}–${po.after[String(loser.team_id)]}`}.` : `The ${W} beat the ${L} by ${margin} on ${dLong(g.start_utc)}.`;
+          : po?.after ? `The ${W} won Game ${po.game_number} by ${margin}${po.decided_by_this_game ? ' to take the series' : ` and ${po.after[String(winner.team_id)] > po.after[String(loser.team_id)] ? 'lead' : 'even'} the best-of-${wordN(po.best_of)} series ${po.after[String(winner.team_id)]}–${po.after[String(loser.team_id)]}`}.` : `The ${W} beat the ${L} by ${margin} on ${dLong(g.start_utc)}.`);
     const bettor = [];
     if (ats) bettor.push(`On the spread: ${poss(pc.provider)} line, relayed by ESPN, had the ${nick(favTeam)} favored by ${Math.abs(ats.home_spread)}; the ${margin}-point margin put ${coverTeam ? `the ${nick(coverTeam)} on the right side of the spread` : 'the spread at a push'}. The ${ats.total_points} combined points went ${ats.total_result} the ${ats.over_under} total.`);
     else bettor.push('No closing line is available in the source record for this game, so this result carries no market grade.');
@@ -1020,10 +1049,10 @@ export async function resultDeep(ctx) {
     const a0 = finalize({
       id, kind, category: stars.length ? 'Performances' : 'Results', structure: 0, headline, deck, body, sections, market_type: ats ? 'spread' : null, bettor, against, unknown,
       market_angle: { text: ats ? [`Market reference: ${pc.provider} via ESPN (a single sportsbook). PropBetEdge ${gm.market ? `also holds a pre-tip capture from ${dShort(gm.market.captured_at)}` : 'began storing its own market captures on September 11, 2026, so no PropBetEdge capture exists for this game'}.`] : [], market: gm.market || null, game_id: g.game_id, line: pc },
-      lead_team_id: winner.team_id, lead_player_id: top?.athlete_id || null, primary_subject: W, published_at: g.last_play_wallclock || g.start_utc,
+      lead_team_id: winner.team_id, lead_player_id: top?.athlete_id || (clincher ? performerRows.find((r) => r.team_id === winner.team_id)?.athlete_id || null : null), primary_subject: W, published_at: g.last_play_wallclock || g.start_utc,
       context: { game: { game_id: g.game_id, start_utc: g.start_utc, home: g.home, away: g.away, venue: g.venue }, stars: stars.slice(0, 3) },
-      entities: [gameEntity(g), { type: 'team', id: winner.team_id, name: winner.name }, { type: 'team', id: loser.team_id, name: loser.name }, ...stars.slice(0, 3).map((r) => ({ type: 'player', id: r.athlete_id, name: r.name }))],
-      facts: { playoff: playoffFacts(po), scores: { w: winner.score, l: loser.score, margin }, stars, performers: performerRows, box_lines: boxLines, headline_stat: headStat, co_leader_rule: CO_LEADER_RULE, lead, run, ats, after: { w: afterW, l: afterL }, entering: { w: enterW }, standings_now: { l: sl }, quarters: q, team_stats: { w: tw, l: tl }, comparisons, provenance: provs, next: [ngW, ngL].filter(Boolean).map((ng) => ({ start_utc: ng.start_utc, home: ng.home.abbr, away: ng.away.abbr, market: ng.market ? { spread: ng.market.spread.home_line, total: ng.market.total.line, books: ng.market.books, captured_at: ng.market.captured_at } : null })), derived: D },
+      entities: [gameEntity(g), { type: 'team', id: winner.team_id, name: winner.name }, { type: 'team', id: loser.team_id, name: loser.name }, ...[...stars.slice(0, 3), ...performerRows].filter((r, i, xs) => xs.findIndex((y) => y.athlete_id === r.athlete_id) === i).map((r) => ({ type: 'player', id: r.athlete_id, name: r.name }))],
+      facts: { playoff: playoffFacts(po), series_games: series.length ? series : null, advance, scores: { w: winner.score, l: loser.score, margin }, stars, performers: performerRows, box_lines: boxLines, headline_stat: headStat, co_leader_rule: CO_LEADER_RULE, lead, run, ats, after: { w: afterW, l: afterL }, entering: { w: enterW }, standings_now: { l: sl }, quarters: q, team_stats: { w: tw, l: tl }, comparisons, provenance: provs, next: [ngW, ngL].filter(Boolean).map((ng) => ({ start_utc: ng.start_utc, home: ng.home.abbr, away: ng.away.abbr, market: ng.market ? { spread: ng.market.spread.home_line, total: ng.market.total.line, books: ng.market.books, captured_at: ng.market.captured_at } : null })), derived: D },
       evidence: [{ kind: 'record', source: 'ESPN box score + play-by-play + shot locations', url: `https://www.espn.com/wnba/game/_/gameId/${g.game_id}`, record: { final: `${g.away.abbr} ${g.away.score} - ${g.home.abbr} ${g.home.score}`, events: live.events_total } }, { kind: 'record', source: 'ESPN team schedules (records after the game, scoring entering it)', url: 'https://www.espn.com/wnba/schedule', record: { after_w: afterW, after_l: afterL, entering_w: enterW } }, { kind: 'record', source: `ESPN standings (${asOfLabel})`, url: 'https://www.espn.com/wnba/standings', record: { l: sl } }, ...(pc ? [{ kind: 'market', source: `${pc.provider} line relayed by ESPN`, record: { spread_home: pc.spread, total: pc.over_under, home_ml: pc.home_moneyline, away_ml: pc.away_moneyline } }] : [])]
     });
     a0.meter = meterDelta(meter, t0);

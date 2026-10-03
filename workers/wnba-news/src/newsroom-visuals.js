@@ -91,6 +91,26 @@ function resultVisuals(a) {
     }) });
   }
 
+  // 2b. Playoff series strip: every final game of this series through this one, from the bracket's own scores.
+  const sg = f.playoff ? (f.series_games || []) : [];
+  if (sg.length >= 2) {
+    const wid = String(W.team_id);
+    const items = sg.map((x) => {
+      const home = x.home_team_id === wid;
+      const us = home ? x.home_score : x.away_score; const them = home ? x.away_score : x.home_score;
+      return { key: `g${x.game_number}`, label: `Game ${x.game_number} ${home ? 'vs' : 'at'} ${home ? x.away_abbr : x.home_abbr}`, result: x.winner_team_id === wid ? 'W' : 'L', value: us - them, meta: `${Math.max(us, them)}–${Math.min(us, them)}` };
+    });
+    const after = f.playoff.after || {};
+    const a1 = n(after[wid]); const b1 = n(after[String(L.team_id)]);
+    const state = a1 === null || b1 === null ? null : f.playoff.decided_by_this_game ? `${nickOf(W)} win the series ${a1}–${b1}` : a1 === b1 ? `Series tied ${a1}–${b1}` : `${nickOf(W)} lead the series ${a1}–${b1}`;
+    out.push({ section: 'context', spec: gameStrip({
+      id: 'series-strip', title: `${f.playoff.round} series`, subtitle: state || `Best of ${f.playoff.best_of}`,
+      caption: `Each final game of the best-of-${f.playoff.best_of} series through this one, from the ${nickOf(W)} side; the number is the final margin.`,
+      strips: [{ key: wid, label: nickOf(W), entity: { type: 'team', id: wid }, items }],
+      provenance: prov(a, { source: 'PropBetEdge playoff bracket (final scores)', window: 'this series through this game', game_id: g.game_id, entity_ids: ids, fact_family: 'series' })
+    }) });
+  }
+
   // 3. The lead performer against her own entering baselines (frozen in the comparisons block).
   const c = (f.comparisons || []).find((x) => x.entering_line);
   const line = c ? [...(f.stars || []), ...(f.performers || [])].find((x) => String(x.athlete_id) === String(c.athlete_id)) : null;

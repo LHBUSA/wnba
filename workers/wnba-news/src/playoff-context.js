@@ -135,6 +135,50 @@ export function playoffFacts(pc) {
 }
 
 /**
+ * The FINAL games of a series up to and including one game, oldest first, as frozen facts for a series strip.
+ * Scores and winners only from the bracket's own game rows; a game without both scores is left out.
+ */
+export function seriesGames(playoffs, seriesId, { throughGameId = null } = {}) {
+  const s = (playoffs?.rounds || []).flatMap((r) => r.series || []).find((x) => x.series_id === seriesId);
+  if (!s) return [];
+  const through = throughGameId ? s.games.find((x) => String(x.game_id) === String(throughGameId)) : null;
+  const cut = through ? ms(through.start_utc) : null;
+  return (s.games || [])
+    .filter((x) => x.status === 'FINAL' && x.winner_team_id && Number.isFinite(Number(x.home_score)) && Number.isFinite(Number(x.away_score)))
+    .filter((x) => cut === null || (ms(x.start_utc) !== null && ms(x.start_utc) <= cut))
+    .sort((a, b) => (a.game_number ?? 0) - (b.game_number ?? 0))
+    .map((x) => ({ game_id: String(x.game_id), game_number: x.game_number ?? null, start_utc: x.start_utc, home_team_id: String(x.home_team?.team_id ?? ''), away_team_id: String(x.away_team?.team_id ?? ''), home_abbr: x.home_team?.abbreviation || null, away_abbr: x.away_team?.abbreviation || null, home_score: Number(x.home_score), away_score: Number(x.away_score), winner_team_id: String(x.winner_team_id) }));
+}
+
+/**
+ * Where a series winner goes next, read from the bracket: the later-round series that contains the team.
+ * null when the bracket has not placed the team yet (or the series won was the Finals). Nothing is inferred.
+ */
+export function advanceOf(playoffs, teamId, fromSeriesId) {
+  const tid = String(teamId);
+  const rounds = playoffs?.rounds || [];
+  const from = rounds.findIndex((r) => (r.series || []).some((s) => s.series_id === fromSeriesId));
+  if (from < 0) return null;
+  for (const r of rounds.slice(from + 1)) {
+    for (const s of r.series || []) {
+      const me = teamOf(s, tid);
+      if (!me) continue;
+      const opp = [s.higher_seed, s.lower_seed].find((t) => t && String(t.team_id) !== tid) || null;
+      const g1 = (s.games || []).find((x) => (x.game_number ?? 0) === 1) || null;
+      return {
+        round: r.name,
+        series_id: s.series_id,
+        best_of: s.best_of ?? null,
+        seed: me.seed ?? null,
+        opponent: opp ? { team_id: String(opp.team_id), name: opp.team_name || null, short_name: opp.short_name || null, abbr: opp.abbreviation || null, seed: opp.seed ?? null } : null,
+        game1: g1 ? { game_id: String(g1.game_id), start_utc: g1.start_utc || null, time_tbd: Boolean(g1.time_tbd), home_team_id: String(g1.home_team?.team_id ?? ''), venue: g1.venue?.name || null } : null
+      };
+    }
+  }
+  return null;
+}
+
+/**
  * Teams whose season is over while a postseason is running: never in the bracket, or lost a decided series.
  * Their injury listings and betting trends are not news until next season (no game can be affected).
  */
