@@ -5,10 +5,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import zlib from 'node:zlib';
 import { assertMarketFree, assertModelSource, findMarketKeys, MarketLeakageError } from '../workers/shared/pbe-leakage-guard.js';
-import { predictFromRows, predictGame, MANIFEST } from '../workers/shared/pbe-wnba-model.js';
+import { predictFromRows, predictGame, MANIFEST, ARTIFACT } from '../workers/shared/pbe-wnba-model.js';
 import { buildFeatures } from '../workers/shared/pbe-wnba-features.js';
 import { pbeTask, ROWS_KEY } from '../workers/wnba-ingest/src/pbe-runner.js';
 import { computeGolden } from '../scripts/model/leakage-golden.mjs';
+import { createHash } from 'node:crypto';
 
 const FX = new URL('./fixtures/pbe-wnba-model/', import.meta.url);
 const ROWS = zlib.gunzipSync(fs.readFileSync(new URL('rows-2025-2026.jsonl.gz', FX))).toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
@@ -78,6 +79,20 @@ function scheduled(id, tipIso, home, away) {
 const LAST_FINAL = Math.max(...ROWS.filter((r) => r.season === 2026).map((r) => Date.parse(r.start_utc)));
 const NOW = LAST_FINAL + 2 * 86400e3;
 
+// Seeded PRNG (mulberry32) so the "random" perturbation is reproducible.
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+// A venue perturbation: every Kalshi / Polymarket price field set by `price()` (basis points, 0..10000).
+function venueBlock(price) {
+  const k = { yes_bid_bp: price(), yes_ask_bp: price(), no_bid_bp: price(), no_ask_bp: price(), last_price_bp: price(), mid_bp: price(), spread_bp: price(), volume: price(), open_interest: price(), liquidity: price() };
+  const p = { best_bid_bp: price(), best_ask_bp: price(), midpoint_bp: price(), last_trade_bp: price(), spread_bp: price(), volume: price(), liquidity: price(), token_id: 't-20', condition_id: 'c-1', order_book: { bids: [[price(), price()]], asks: [[price(), price()]] } };
+  return { kalshi: k, polymarket: p, consensus: { mid_bp: price() } };
+}
+const PERTURB = {
+  zero: () => venueBlock(() => 0),          // every price 0c
+  ninetynine: () => venueBlock(() => 9900), // every price 99c
+  random: () => { const r = rng(20261003); return venueBlock(() => Math.floor(r() * 10001)); }
+};
+
 async function runWith(venue) {
   const kv = kvStore();
   for (const season of [2025, 2026]) {
@@ -86,38 +101,65 @@ async function runWith(venue) {
   }
   const tipLock = new Date(NOW + 14 * 60e3).toISOString();
   const events = { 2025: eventsFromRows(2025), 2026: [...eventsFromRows(2026), scheduled('G_LOCK', tipLock, '20', '18'), scheduled('G_LATER', new Date(NOW + 5 * 3600e3).toISOString(), '9', '17')] };
-  // Sportsbook snapshot is held constant; both prediction-market venues ride along on it and in their own stores.
-  const latest = { captured_at: new Date(NOW - 3600e3).toISOString(), events: [{ game_id: 'G_LOCK', home_team_id: '20', away_team_id: '18', commence_time: tipLock,
-    moneyline: { books: [{ book: 'a', home: -500, away: 380 }, { book: 'b', home: -450, away: 350 }] },
-    kalshi: { yes_bid_bp: venue.k[0], yes_ask_bp: venue.k[1], last_price_bp: venue.k[1] }, polymarket: { best_bid_bp: venue.p[0], best_ask_bp: venue.p[1], token_id: 't-20' } }] };
+  // Sportsbook snapshot is held constant. When perturbed, both prediction-market venues ride along on the
+  // market rows (extra venue fields), in their own KV stores, and behind a fake venue service binding.
+  const ev = { game_id: 'G_LOCK', home_team_id: '20', away_team_id: '18', commence_time: tipLock, moneyline: { books: [{ book: 'a', home: -500, away: 380 }, { book: 'b', home: -450, away: 350 }] } };
+  const latest = { captured_at: new Date(NOW - 3600e3).toISOString(), events: [venue ? { ...ev, ...venue } : ev] };
   await kv.put('odds:v1:latest', JSON.stringify(latest));
-  await kv.put('kalshi:v1:latest', JSON.stringify({ G_LOCK: { yes_bid_bp: venue.k[0], yes_ask_bp: venue.k[1] } }));
-  await kv.put('polymarket:v1:latest', JSON.stringify({ G_LOCK: { best_bid_bp: venue.p[0], best_ask_bp: venue.p[1] } }));
-  await kv.put('market_venue_observations', JSON.stringify([{ outcome_id: 'g_lock-20', mid_bp: (venue.p[0] + venue.p[1]) / 2 }]));
+  const venueCalls = [];
+  const env = { WNBA_KV: kv, PBE_MODE: 'dry_run' };
+  if (venue) {
+    await kv.put('kalshi:v1:latest', JSON.stringify({ G_LOCK: venue.kalshi }));
+    await kv.put('polymarket:v1:latest', JSON.stringify({ G_LOCK: venue.polymarket }));
+    await kv.put('market_venue_observations', JSON.stringify([{ outcome_id: 'g_lock-20', ...venue.polymarket }]));
+    await kv.put('market_intel_snapshots', JSON.stringify([{ event: 'G_LOCK', ...venue.kalshi }]));
+    const svc = (name) => ({ fetch: async (u) => { venueCalls.push(`${name} ${u?.url || u}`); return new Response(JSON.stringify(venue), { headers: { 'content-type': 'application/json' } }); } });
+    env.MARKETS = svc('MARKETS');       // propsports-markets (/kalshi/*, /polymarket/*, /admin/kalshi)
+    env.PROPSPORTS_MARKETS = svc('PROPSPORTS_MARKETS');
+    env.POLYMARKET = svc('POLYMARKET');
+    env.KALSHI = svc('KALSHI');
+  }
   const reads = [];
   const get = kv.get.bind(kv);
   kv.get = async (k, t) => { reads.push(k); return get(k, t); };
-  const env = { WNBA_KV: kv, PBE_MODE: 'dry_run' };
   const noSummaries = async (id) => { throw new Error(`summary fetch not expected (${id})`); };
   const summary = await pbeTask(env, { now: NOW, minute: 0, eventsFor: async (y) => events[y] || [], fetchSummary: noSummaries });
   const out = Object.fromEntries([...kv.map.entries()].filter(([k]) => k.startsWith('pbe:v1:')).sort(([a], [b]) => (a < b ? -1 : 1)));
-  return { summary, out, reads };
+  return { summary, out, reads, venueCalls };
 }
 
-test('regression: radical Kalshi + Polymarket price changes leave PBE model inputs and outputs byte-identical', async (t) => {
+const sha = (x) => createHash('sha256').update(typeof x === 'string' ? x : JSON.stringify(x)).digest('hex');
+const MODEL_OUT = ['model', 'call', 'no_call_reason', 'no_call_detail', 'p_home', 'p_away', 'pick_team_id', 'pick_probability', 'confidence', 'eligibility', 'flags', 'contributions', 'reasoning', 'teams_state', 'feature_hash'];
+
+test('INVARIANT: Kalshi + Polymarket at 0c, 99c and seeded random leave every PBE feature and forecast byte-identical to the unperturbed run', async (t) => {
   const realFetch = globalThis.fetch;
-  globalThis.fetch = async (u) => { throw new Error(`network call in test: ${u}`); };
+  const netCalls = [];
+  globalThis.fetch = async (u) => { netCalls.push(String(u?.url || u)); throw new Error(`network call in test: ${u}`); };
   t.after(() => { globalThis.fetch = realFetch; });
-  const a = await runWith({ k: [100, 300], p: [200, 400] });     // venues say the home side is a 2-4% shot
-  const b = await runWith({ k: [9600, 9800], p: [9700, 9900] }); // venues flip to 97-99%
-  assert.equal(a.summary.scored, 2);
-  assert.equal(a.summary.locks, 1);
-  assert.deepEqual(a.summary, b.summary);
-  assert.deepEqual(a.reads, b.reads, 'identical store reads');
-  assert.ok(!a.reads.some((k) => /kalshi|polymarket|market_venue/.test(k)), 'the runner never reads a venue store');
-  const pred = (x) => JSON.parse(x.out['pbe:v1:shadow:pred:G_LOCK']);
-  assert.deepEqual(pred(a).feature_vector, pred(b).feature_vector, 'model inputs identical');
-  assert.equal(pred(a).feature_hash, pred(b).feature_hash);
-  assert.equal(pred(a).p_home, pred(b).p_home);
-  assert.equal(JSON.stringify(a.out), JSON.stringify(b.out), 'every PBE document (pred, observation, lock) byte-identical');
+  const base = await runWith(null);
+  assert.equal(base.summary.scored, 2);
+  assert.equal(base.summary.locks, 1);
+  for (const game of ['G_LOCK', 'G_LATER']) {
+    const doc = JSON.parse(base.out[`pbe:v1:shadow:pred:${game}`]);
+    assert.equal(doc.feature_vector.length, ARTIFACT.feature_order.length, game);
+  }
+  for (const [name, make] of Object.entries(PERTURB)) {
+    const run = await runWith(make());
+    assert.deepEqual(run.venueCalls, [], `${name}: nothing called the fake venue services`);
+    assert.ok(!run.reads.some((k) => /kalshi|polymarket|market_venue|market_intel/.test(k)), `${name}: no venue store read`);
+    assert.deepEqual(run.reads, base.reads, `${name}: identical store reads`);
+    assert.deepEqual(run.summary, base.summary, name);
+    for (const game of ['G_LOCK', 'G_LATER']) {
+      const a = JSON.parse(base.out[`pbe:v1:shadow:pred:${game}`]);
+      const b = JSON.parse(run.out[`pbe:v1:shadow:pred:${game}`]);
+      assert.equal(sha(b.feature_vector), sha(a.feature_vector), `${name} ${game}: feature vector sha256`);
+      assert.equal(JSON.stringify(b.feature_vector), JSON.stringify(a.feature_vector));
+      const outA = Object.fromEntries(MODEL_OUT.map((k) => [k, a[k]]));
+      const outB = Object.fromEntries(MODEL_OUT.map((k) => [k, b[k]]));
+      assert.equal(sha(outB), sha(outA), `${name} ${game}: model output sha256`);
+    }
+    // Every PBE document written (prediction, observation, lock) is byte-identical too.
+    assert.equal(sha(run.out), sha(base.out), `${name}: all PBE documents`);
+  }
+  assert.deepEqual(netCalls, []);
 });
