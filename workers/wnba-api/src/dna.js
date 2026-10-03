@@ -27,6 +27,13 @@ function unavailable(ctx, path, kind, { status, reason, detail, extra = {}, sema
   }, { status, maxAge: 30 });
 }
 
+// Neutral player_id beside the deprecated espn_athlete_id alias (stored docs predate the alias; key order kept).
+function withPlayerId(p) {
+  if (!p || 'player_id' in p) return p;
+  const out = {};
+  for (const [k, v] of Object.entries(p)) { out[k] = v; if (k === 'id') out.player_id = v; }
+  return out;
+}
 function served(ctx, path, kind, doc) {
   return ok(doc, base(ctx, path, {
     fetchedAt: doc.captured_at,
@@ -51,7 +58,7 @@ export async function dnaMetaRoute({ env, path }, ctx) {
 export async function dnaIndexRoute({ env, path }, ctx) {
   const doc = await read(env, DNA_KV.index);
   if (!doc) return unavailable(ctx, path, 'index', { status: 503, reason: 'not_derived', detail: 'Player DNA has not been derived yet', semantics: 'DNA_NOT_DERIVED' });
-  return served(ctx, path, 'index', { ...doc, players: (doc.players || []).map((p) => ({ ...p, headshot: photoFor(p.id) })) });
+  return served(ctx, path, 'index', { ...doc, players: (doc.players || []).map((p) => withPlayerId({ ...p, headshot: photoFor(p.id) })) });
 }
 
 export async function dnaPlayerRoute({ env, path, params }, ctx) {
@@ -69,5 +76,5 @@ export async function dnaPlayerRoute({ env, path, params }, ctx) {
       semantics: 'DNA_NO_SNAPSHOT'
     });
   }
-  return served(ctx, path, 'player', { ...doc, player: { ...doc.player, headshot: photoFor(id) } });
+  return served(ctx, path, 'player', { ...doc, player: withPlayerId({ ...doc.player, headshot: photoFor(id) }) });
 }
