@@ -14,6 +14,8 @@ import { fmtDateET, fmtTimeET } from '../lib/format.js';
 import { pbeValidationNotice, teamName } from '../ui/pbe.js';
 import { flagshipPbeCard } from '../ui/pbe-flagship.js';
 import { pbePicksPublicView } from '../views/pbe-picks-public.js';
+import { kalshi, loadAlgoVsMarket, within } from '../data/kalshi.js';
+import { pbeCallMarket } from '../data/pick-market.js';
 
 export const title = () => 'PBE Picks';
 export const description = () => 'PBE WNBA intelligence: independent win probabilities, de-vigged market comparison, model-market disagreement, confidence, driver-by-driver reasoning, matchup research and a permanent locked track record.';
@@ -34,8 +36,11 @@ export async function mount(root, ctx) {
 
   if (!(acct.ok && acct.data?.state === 'pro')) return render(root, html`${head}${teaserView(cov, acct)}`);
 
-  const res = await api.pbePicks();
+  // The Kalshi board (one shared read, coalesced with the ticker's) and the frozen Algo vs Market ledger run beside the
+  // picks read, bounded (800 ms), so each call's Kalshi line is in the same paint. A slow or failed read renders nothing.
+  const [res, , avm] = await Promise.all([api.pbePicks(), within(kalshi.loadBoard()), within(loadAlgoVsMarket())]);
   if (!ctx.isCurrent()) return;
+  const marketOpts = { marketFor: (id) => kalshi.forEvent(id), avm: avm || null };
   if (!res.ok) return render(root, html`${head}${res.status === 401 || res.status === 403 ? teaserView(cov, acct) : errorState(res, 'PBE Picks')}`);
   if (res.data.availability === 'MODEL_IN_VALIDATION') return render(root, html`${head}${pbeValidationNotice()}${researchStack()}`);
 
@@ -61,9 +66,10 @@ export async function mount(root, ctx) {
         ${btn('calls', 'picks', 'Picks')}${btn('calls', 'nocall', 'No call')}
         <select data-team aria-label="Filter by team"><option value="">All teams</option>${teams.map((t) => html`<option value="${t.team_id}" ${state.team === String(t.team_id) ? 'selected' : ''}>${teamName(t)}</option>`)}</select>
       </div>
-      ${shown.length ? html`<div class="pbe-flagship-board">${shown.map(flagshipPbeCard)}</div>` : html`<div class="pbe-empty">${all.length ? 'No calls match these filters.' : 'No covered games are inside the current scoring window. PBE calls appear as games enter the model window.'}</div>`}
+      ${shown.length ? html`<div class="pbe-flagship-board">${shown.map((p) => flagshipPbeCard(p, { market: pbeCallMarket(p, marketOpts) }))}</div>` : html`<div class="pbe-empty">${all.length ? 'No calls match these filters.' : 'No covered games are inside the current scoring window. PBE calls appear as games enter the model window.'}</div>`}
     `);
 
+    wireKalshi(root);
     root.querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => {
       const k = b.dataset.f;
       const v = b.dataset.v;

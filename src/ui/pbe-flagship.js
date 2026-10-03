@@ -1,4 +1,4 @@
-import { html } from '../lib/dom.js';
+import { html, raw } from '../lib/dom.js';
 import { teamLogo } from './logo.js';
 import { fmtDateET, fmtTimeET, relTime, american } from '../lib/format.js';
 import { phaseLine, teamName } from './pbe.js';
@@ -46,7 +46,9 @@ function researchLinks(item, away, home) {
   </nav>`;
 }
 
-export function flagshipPbeCard(item) {
+// market: the pick side's Kalshi line (src/data/pick-market.js, computed by the page from its one board read) —
+// a separate, compact line under the pick; '' renders nothing.
+export function flagshipPbeCard(item, { market = '' } = {}) {
   const g = item.game;
   const away = teamOf(g, g.away_team_id);
   const home = teamOf(g, g.home_team_id);
@@ -75,6 +77,7 @@ export function flagshipPbeCard(item) {
           <span>PBE PICK</span>
           <div>${teamLogo(pick, 42)}<strong>${teamName(pick)}</strong></div>
           <p><b>${pct1(item.pick_probability)}</b> model win probability <i>·</i> <b class="conf-${String(item.confidence || '').toLowerCase()}">${conf(item.confidence)} confidence</b></p>
+          ${market ? raw(market) : ''}
         </div>
         ${marketCompare(item, pick)}
       </section>
