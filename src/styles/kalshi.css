@@ -14,9 +14,39 @@
 /* Matchup page + WNBACast slots: nothing rendered -> no box, no gap. */
 .kx-slot:empty { display: none; }
 .kx-slot--matchup { margin: 0 0 16px; }
-.kx-slot--cast { margin-top: 16px; }
-.kx-slot--cast-pre { margin-top: 16px; }
-.kx-slot--cast-history { margin-top: 12px; }
+.kx-slot--cast { margin-top: 12px; }
+
+/* WNBACast Market Pulse (MLB PBEcast standard): one module directly under the scoreboard for the whole game
+   lifecycle; compact per-team rows (Mid-market + stored movement side by side); stacks on phones (container query). */
+.cast-mkt { min-width: 0; container-type: inline-size; }
+.cast-mkt .kx { padding: 10px 12px; }
+.cast-mkt-phase { display: flex; align-items: center; gap: 6px; margin: 0 0 5px 2px; font: 800 10px/1 var(--f-data); letter-spacing: .14em; color: #7fb8ff; }
+.cast-mkt-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.cast-mkt[data-phase="live"] .cast-mkt-phase { color: var(--live, #ff6b6b); }
+.cast-mkt[data-phase="live"] .cast-mkt-dot { animation: cast-mkt-blink 1.6s ease-in-out infinite; }
+.cast-mkt[data-phase="closed"] .cast-mkt-phase, .cast-mkt[data-phase="settled"] .cast-mkt-phase,
+.cast-mkt[data-phase="final-open"] .cast-mkt-phase, .cast-mkt[data-phase="stale"] .cast-mkt-phase { color: var(--dim, #a7a39a); }
+@keyframes cast-mkt-blink { 50% { opacity: .25 } }
+@media (prefers-reduced-motion: reduce) { .cast-mkt-dot { animation: none !important; } }
+.cast-mkt .kx__hd { margin-bottom: 8px; }
+.cast-mkt .kx__panel { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "who move" "price move" "book book"; column-gap: 12px; align-items: end; padding: 8px 10px 8px 13px; }
+.cast-mkt .kx__who { grid-area: who; }
+.cast-mkt .kx__price { grid-area: price; margin-top: 2px; }
+.cast-mkt .kx__move { grid-area: move; min-height: 0; margin: 0; align-self: stretch; }
+.cast-mkt .kx__book { grid-area: book; margin-top: 6px; }
+.cast-mkt .kx__act { display: none; }
+.cast-mkt .kx__ft { margin-top: 8px; }
+.cast-mkt .kx__panel--settled { display: block; }
+@container (max-width: 560px) {
+  .cast-mkt .kx__panel { grid-template-columns: minmax(0, 1fr); grid-template-areas: "who" "price" "move" "book"; padding: 8px 8px 8px 11px; }
+  .cast-mkt .kx__move { margin-top: 4px; }
+  .cast-mkt .kx__spark { height: 28px; }
+  .cast-mkt .kx__book { gap: 2px 8px; }
+}
+
+/* Today ticker: one inline market segment per WNBA game item (the ticker row height never changes). */
+.ticker .tk-mkt { display: inline-flex; align-items: center; gap: 5px; padding-left: 8px; border-left: 1px dashed rgba(127, 184, 255, .3); font: 600 10.5px/1 var(--f-data); letter-spacing: .02em; color: var(--paper-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ticker .tk-mkt b { font-weight: 800; letter-spacing: .12em; color: #7fb8ff; }
 
 /* Game cards: one restrained line under the sportsbook snapshot. */
 .gc2-kx { min-width: 0; overflow: hidden; }

@@ -4,7 +4,7 @@ import { skeleton, startFreshTicker } from '../ui/components.js';
 import { createPoller } from '../lib/poller.js';
 import { countdownLabel } from '../lib/today-hero.js';
 import { loadToday, todayView } from '../views/today.js';
-import { kalshi } from '../data/kalshi.js';
+import { kalshi, applyTickerMarkets } from '../data/kalshi.js';
 import { wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = () => null;
@@ -46,6 +46,8 @@ export async function mount(root, ctx) {
     const { body, live } = todayView(data);
     poller?.setInterval(live ? 10000 : 30000);
     render(root, body);
+    // Ticker market segments from the same board read (exact, displayable, fresh markets only), in this paint.
+    applyTickerMarkets(root, data.today?.ok ? data.today.data?.slate?.games : []);
     wireKalshi(root);
   };
 

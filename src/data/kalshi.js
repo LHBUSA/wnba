@@ -3,7 +3,7 @@
 // calls Kalshi. The Worker's ingest runs on its own schedule, so polling here adds no Kalshi traffic.
 // Prediction-market prices are not sportsbook odds and not a PropBetEdge model; they are labelled so wherever shown.
 import { createKalshiClient } from '../vendor/kalshi/kalshi-market-client.js';
-import { kalshiLine, marketModule, marketCloseLine } from '../vendor/kalshi/kalshi-market-ui.js';
+import { kalshiCard, kalshiLine, marketModule, marketHistoryCard, marketCloseLine } from '../vendor/kalshi/kalshi-market-ui.js';
 import { html, raw } from '../lib/dom.js';
 import { setGameCardKalshi } from '../ui/components.js';
 import { teamColors } from '../ui/logo.js';
@@ -70,6 +70,84 @@ export function matchupKalshiMarkup(entry, g) {
 /** Matchup page block: the module in its own slot (an empty, zero-height slot when there is no entry). */
 export function matchupKalshiSlot(entry, g) {
   return html`<div class="kx-slot kx-slot--matchup" data-kx-slot>${raw(matchupKalshiMarkup(entry, g))}</div>`;
+}
+
+/**
+ * WNBACast Market Pulse (MLB PBEcast standard, propbetedge-v2 6f34d67): lifecycle label for the one module directly
+ * under the scoreboard. [phase key, label] or null. A stale in-game quote is never labelled live.
+ */
+export function castMarketPhase(entry, g) {
+  if (!entry || !g || String(entry.event?.canonical_event_id ?? '') !== String(g.game_id)) return null;
+  const lc = entry.market?.lifecycle;
+  if (lc === 'SETTLED') return ['settled', 'MARKET SETTLED'];
+  if (lc === 'CLOSED') return ['closed', 'MARKET CLOSED · AWAITING SETTLEMENT'];
+  const s = g.status?.state;
+  if (s === 'post') return ['final-open', 'GAME FINAL · MARKET STILL TRADING'];
+  if (s === 'in') return entry.kalshi?.freshness === 'stale' ? ['stale', 'MARKET OPEN · QUOTE STALE'] : ['live', 'LIVE MARKET'];
+  if (s === 'pre') return ['pre', 'MARKET OPEN · PRE-MATCH'];
+  return null;
+}
+
+/**
+ * The module: lifecycle label over the full compact Market Pulse card (Mid-market per side, Updated Ns ago, stored
+ * movement + sparkline, bid/ask, View market on Kalshi), or "How the market closed" once CLOSED/SETTLED (the settled
+ * card when no history is stored yet — never nothing after the final). '' when there is no entry for this game.
+ */
+export function castMarketMarkup(entry, g) {
+  const phase = castMarketPhase(entry, g);
+  if (!phase) return '';
+  const colors = kalshiColors(g);
+  const body = (isMarketDone(entry) && entry.market_history ? marketHistoryCard(entry, { placement: 'wnbacast-history' }) : '')
+    || kalshiCard(entry, { placement: 'wnbacast', colors, compact: true });
+  if (!body) return '';
+  return `<div class="cast-mkt" data-phase="${phase[0]}"><div class="cast-mkt-phase"><span class="cast-mkt-dot" aria-hidden="true"></span>${phase[1]}</div>${body}</div>`;
+}
+
+/**
+ * Ticker market text for a WNBA game ("NY 40.5¢ · ATL 59.5¢"), or ''. Only an exact match (event id + both team ids,
+ * away / home order) and only what a game card would show (kalshiLine: open, displayable, every Mid-market, not
+ * stale). Final games carry none (their history lives in WNBACast).
+ */
+const cents = (bp) => `${(bp / 100).toFixed(1)}¢`;
+export function tickerMarketText(entry, g) {
+  if (!entry || !g) return '';
+  const s = g.status?.state;
+  if (s !== 'in' && s !== 'pre') return '';
+  if (String(entry.event?.canonical_event_id ?? '') !== String(g.game_id)) return '';
+  if (isMarketDone(entry) || !kalshiLine(entry)) return '';
+  const outs = entry.kalshi?.outcomes || [];
+  if (outs.length !== 2) return '';
+  const away = outs.find((o) => o.role === 'away');
+  const home = outs.find((o) => o.role === 'home');
+  if (!away || !home || g.away?.team_id == null || g.home?.team_id == null) return '';
+  if (String(away.team_id) !== String(g.away.team_id) || String(home.team_id) !== String(g.home.team_id)) return '';
+  if (!Number.isFinite(away.mid_bp) || !Number.isFinite(home.mid_bp)) return '';
+  return `${g.away.abbr} ${cents(away.mid_bp)} · ${g.home.abbr} ${cents(home.mid_bp)}`;
+}
+
+const escText = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/** Write / update / remove one ticker item's market segment in place; nothing else in the item changes. */
+export function patchTickerMarket(item, text) {
+  const el = item.querySelector('.tk-mkt');
+  if (!text) { if (el) el.remove(); return; }
+  if (!el) { item.insertAdjacentHTML('beforeend', `<span class="tk-mkt" title="Kalshi prediction market · Mid-market (not sportsbook odds)"><b>MKT</b>${escText(text)}</span>`); return; }
+  const next = `MKT${text}`;
+  if (el.textContent !== next) el.innerHTML = `<b>MKT</b>${escText(text)}`;
+}
+
+/**
+ * Client-only: the Today ticker's WNBA game items get their market segment from the last loaded board (read once per
+ * Today refresh, alongside the slate). Items are matched by their /cast/<id> or /matchups/<id> link; the marquee
+ * duplicate copy is patched too. The publishing Worker's server render is unchanged (no Worker deploy).
+ */
+export function applyTickerMarkets(root, games = []) {
+  const byId = new Map((games || []).filter(Boolean).map((g) => [String(g.game_id), g]));
+  root.querySelectorAll('.ticker .tk-item:not(.tk-intl)').forEach((item) => {
+    const m = /\/(?:cast|matchups)\/(\d+)(?:[/?#]|$)/.exec(item.getAttribute('href') || '');
+    const g = m ? byId.get(m[1]) : null;
+    patchTickerMarket(item, g ? tickerMarketText(kalshi.forEvent(g.game_id), g) : '');
+  });
 }
 
 // Client-only: game cards render the Kalshi line once the SPA has loaded the board. The publishing Worker never

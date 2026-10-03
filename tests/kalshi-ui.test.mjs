@@ -270,9 +270,11 @@ test('history: the event page mounts the market module for FINAL games; WNBACast
   assert.match(mu, /matchupKalshiSlot\(kxFirst \?\? null, g\)/);
   assert.doesNotMatch(mu, /state === 'idle'\) return/); // finals are no longer skipped
   assert.match(mu, /within\(kxLoad, 800\)/);
-  const cast = read('src/pages/cast.js');
-  assert.match(cast, /\$\{v\.replay \? kalshiSlot\('history', g\) : ''\}/);
-  assert.match(cast, /kind === 'history' \|\| isMarketDone\(entry\)\) return marketModule\(/);
+  const cast = read('src/pages/cast.js').split('\r\n').join('\n');
+  // MLB PBEcast standard: ONE slot directly under the scoreboard (live, pre-game and replay alike).
+  assert.match(cast, /<\/section>\n      \$\{kalshiSlot\(g\)\}\n      <div class="share-row">/);
+  assert.equal((cast.match(/kalshiSlot\(/g) || []).length, 2, 'declared once, mounted once');
+  assert.match(read('src/data/kalshi.js'), /isMarketDone\(entry\) && entry\.market_history \? marketHistoryCard\(entry, \{ placement: 'wnbacast-history' \}\)/);
   assert.match(read('src/data/kalshi.js'), /marketModule\(entry, \{ placement: 'matchup-page'/);
 });
 
@@ -324,7 +326,52 @@ test('regression: completed entry with kalshi:null survives the WNBA loaders and
   }
 });
 
-test('regression: WNBACast renders a closed/settled market as history in every slot (never a live card or strip)', () => {
-  const cast = read('src/pages/cast.js');
-  assert.match(cast, /if \(kind === 'history' \|\| isMarketDone\(entry\)\) return marketModule\(/);
+test('regression: WNBACast renders a closed/settled market as history (never a live card or strip)', async () => {
+  const { castMarketMarkup } = await import('../src/data/kalshi.js');
+  for (const done of [SETTLED, CLOSED]) {
+    const h = castMarketMarkup({ ...structuredClone(done), kalshi: null }, FINAL);
+    assert.match(h, /How the market closed/);
+    assert.doesNotMatch(h, /Market Pulse|<details/);
+  }
+});
+
+test('WNBACast market module: lifecycle labels over the full compact card; stale never LIVE; history once closed', async () => {
+  const { castMarketMarkup, castMarketPhase } = await import('../src/data/kalshi.js');
+  const g = (state) => ({ ...GAME, status: { ...(GAME.status || {}), state } });
+  assert.equal(castMarketPhase(null, g('pre')), null);
+  assert.deepEqual(castMarketPhase(ENTRY, g('pre')), ['pre', 'MARKET OPEN · PRE-MATCH']);
+  assert.deepEqual(castMarketPhase(ENTRY, g('in')), ['live', 'LIVE MARKET']);
+  assert.deepEqual(castMarketPhase({ ...ENTRY, kalshi: { ...ENTRY.kalshi, freshness: 'stale' } }, g('in')), ['stale', 'MARKET OPEN · QUOTE STALE']);
+  assert.deepEqual(castMarketPhase({ ...ENTRY, market: { ...(ENTRY.market || {}), lifecycle: 'ACTIVE' } }, g('post')), ['final-open', 'GAME FINAL · MARKET STILL TRADING']);
+  assert.deepEqual(castMarketPhase(CLOSED, FINAL), ['closed', 'MARKET CLOSED · AWAITING SETTLEMENT']);
+  assert.deepEqual(castMarketPhase(SETTLED, FINAL), ['settled', 'MARKET SETTLED']);
+  const live = castMarketMarkup(ENTRY, g('in'));
+  assert.match(text(live), /^LIVE MARKET Market Pulse/);
+  assert.match(live, /class="ic kx kx--compact"[^>]*data-kx-placement="wnbacast"/);
+  assert.match(text(live), /Mid-market/);
+  assert.match(live, /rel="noopener noreferrer sponsored"/);
+  assert.doesNotMatch(live, /<details/);
+  assert.match(text(castMarketMarkup(SETTLED, FINAL)), /^MARKET SETTLED How the market closed/);
+  assert.equal(castMarketMarkup({ ...ENTRY, event: { ...ENTRY.event, canonical_event_id: '1' } }, g('in')), '', 'another game');
+});
+
+test('Today ticker: market segment only for exact, displayable, fresh two-sided markets; patched in place', async () => {
+  const { tickerMarketText, patchTickerMarket } = await import('../src/data/kalshi.js');
+  const g = (state, ids = [GAME.away.team_id, GAME.home.team_id]) => ({ ...GAME, status: { ...(GAME.status || {}), state }, away: { ...GAME.away, team_id: ids[0] }, home: { ...GAME.home, team_id: ids[1] } });
+  const t = tickerMarketText(ENTRY, g('pre'));
+  assert.match(t, /^[A-Z]{2,4} \d+\.\d¢ · [A-Z]{2,4} \d+\.\d¢$/);
+  assert.equal(tickerMarketText(ENTRY, g('in')), t);
+  assert.equal(tickerMarketText(ENTRY, g('post')), '', 'final: no segment');
+  assert.equal(tickerMarketText(ENTRY, g('pre', [GAME.home.team_id, GAME.away.team_id])), '', 'team ids must match away / home');
+  assert.equal(tickerMarketText({ ...ENTRY, kalshi: { ...ENTRY.kalshi, freshness: 'stale' } }, g('in')), '', 'stale');
+  assert.equal(tickerMarketText(SETTLED, g('in')), '', 'closed / settled never as a live price');
+  let inserted = '';
+  patchTickerMarket({ querySelector: () => null, insertAdjacentHTML: (_, h) => { inserted = h; } }, 'NY 40.5¢ · ATL 59.5¢');
+  assert.match(inserted, /^<span class="tk-mkt"[^>]*><b>MKT<\/b>NY 40\.5¢ · ATL 59\.5¢<\/span>$/);
+  const el = { textContent: 'MKTNY 40.5¢ · ATL 59.5¢', innerHTML: '', remove() { this.removed = true; } };
+  patchTickerMarket({ querySelector: () => el }, 'NY 41.0¢ · ATL 59.0¢');
+  assert.equal(el.innerHTML, '<b>MKT</b>NY 41.0¢ · ATL 59.0¢');
+  patchTickerMarket({ querySelector: () => el }, '');
+  assert.ok(el.removed);
+  assert.match(read('src/pages/today.js'), /const \[data\] = await Promise\.all\(\[loadToday\(api\), kalshi\.loadBoard\(\)\]\);[\s\S]*applyTickerMarkets\(root,/);
 });
