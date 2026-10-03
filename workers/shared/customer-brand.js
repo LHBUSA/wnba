@@ -31,7 +31,7 @@ const RULES = [
   [/(^|[^\w’'])ESPN now (lists|shows)\b/g, '$1the observed injury report now $2'],
   [/ \(ESPN season team stats\)/g, ' (season team stats)'],
   [/\bESPN regular-season game(\(s\)|s)?\b/g, 'regular-season game$1'],
-  [/\bESPN (season team stats|scoreboard|postseason events|injury|status)\b/g, 'provider $1'],
+  [/(?<!\ban )\bESPN (season team stats|scoreboard|postseason events|injury|status)\b/g, 'provider $1'],
   [/(^|[^\w’'])ESPN (lists|listed)\b/g, '$1the observed injury report $2'],
   [/\ban ESPN (estimated return|return estimate|injury update|injury status|injury)\b/g, 'a provider $1'],
   [/\bESPN (estimated return|return estimate|injury update|injury status|return date)\b/g, 'provider $1'],
