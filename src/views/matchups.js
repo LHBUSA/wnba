@@ -64,7 +64,9 @@ export async function loadMatchup(api, gameId) {
   return { res, arts, winba };
 }
 
-export function matchupView({ res, arts, winba }) {
+// `kalshi` is an optional client-only slot (the SPA passes the Kalshi prediction-market block; the publishing Worker
+// passes nothing, so its output is unchanged).
+export function matchupView({ res, arts, winba, kalshi }) {
   if (!res?.ok) return errorState(res, 'This matchup');
   const d = res.data;
   const g = d.game;
@@ -148,7 +150,7 @@ export function matchupView({ res, arts, winba }) {
           <div class="tile"><small>Player props</small><b>${d.market_summary.props?.available ? d.market_summary.props.players : '—'}</b><span>${d.market_summary.props?.available ? 'players captured' : '36h capture window'}</span></div>
           <div class="tile"><small>Books captured</small><b>${d.market_summary.books ?? '—'}</b><span>sportsbooks in snapshot</span></div>
         </div>` : html`<p class="note">No market snapshot matched to this game yet. Snapshots run at 8:00, 1:00 and 6:00 ET; a page view never requests new prices.</p>`}
-    </section>
+    </section>${kalshi || ''}
 
     <section class="section" style="margin:0 0 16px">
       <div class="sec-head"><h2 class="sec-title bc">Newsroom on this game</h2><a class="sec-link" href="/news/c/preview">All previews →</a></div>

@@ -32,7 +32,9 @@ const code = [...src, ...workers];
 for (const f of code) if (/Math\.random\s*\(/.test(read(f))) fail('no-math-random', rel(f));
 
 // 2. Browser code never talks to a provider or database directly.
-const PROVIDER_HOSTS = [/site\.web\.api\.espn\.com/, /site\.api\.espn\.com/, /sports\.core\.api\.espn\.com/, /api\.the-odds-api\.com/, /supabase\.co/, /cdn\.wnba\.com/, /stats\.wnba\.com/, /a\.espncdn\.com/, /upload\.wikimedia\.org/];
+const PROVIDER_HOSTS = [/site\.web\.api\.espn\.com/, /site\.api\.espn\.com/, /sports\.core\.api\.espn\.com/, /api\.the-odds-api\.com/, /supabase\.co/, /cdn\.wnba\.com/, /stats\.wnba\.com/, /a\.espncdn\.com/, /upload\.wikimedia\.org/,
+  // Kalshi prediction-market data reaches the browser only through the owned propsports-markets Worker.
+  /(?:api\.elections|trading-api|demo-api|external-api)\.kalshi\.com/, /kalshi\.com\/trade-api/];
 for (const f of src) {
   const t = read(f).replace(/^\s*\/\/.*$/gm, '');
   for (const re of PROVIDER_HOSTS) if (re.test(t)) fail('no-browser-provider-call', `${rel(f)} -> ${re}`);

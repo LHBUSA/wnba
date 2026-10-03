@@ -58,6 +58,15 @@ export function marketStrip(m, g) {
   <div class="mkt-note">Best prices across <b>${m.books} books</b> · <a href="https://propsports.proptechusa.ai" rel="noopener" target="_blank">propsports.proptechusa.ai</a> · ${m.semantics === 'LAST_PRE_TIP_SNAPSHOT' ? 'last pre-tip capture' : 'captured'} ${relTime(m.captured_at)}${m.stale ? ' · STALE' : ''}${m.props?.available ? ` · props: ${m.props.players} players` : ''}</div>`;
 }
 
+// Client-only Kalshi prediction-market line for not-final game cards. src/data/kalshi.js installs the lookup in the
+// SPA; the publishing Worker never does, so server-rendered cards stay unchanged. No entry -> nothing.
+let gameCardKalshi = null;
+export function setGameCardKalshi(fn) { gameCardKalshi = typeof fn === 'function' ? fn : null; }
+function gameCardKalshiLine(g) {
+  const kx = gameCardKalshi && g.status?.state !== 'post' ? gameCardKalshi(g) : '';
+  return kx ? html`<div class="gc2-kx">${raw(kx)}</div>` : '';
+}
+
 export function gameCard(g, { showDate = false, links = true } = {}) {
   const st = gameState(g);
   const post = g.status?.state === 'post';
@@ -74,6 +83,7 @@ export function gameCard(g, { showDate = false, links = true } = {}) {
     ${row(g.away, g.home)}
     ${row(g.home, g.away)}
     ${g.market ? marketStrip(g.market, g) : g.status?.state === 'pre' ? html`<div class="mkt-note">No market snapshot for this game yet · captured 8:00 / 1:00 / 6:00 ET</div>` : ''}
+    ${gameCardKalshiLine(g)}
     ${g.venue?.name ? html`<div class="mkt-note">${g.venue.name}${g.venue.city ? `, ${g.venue.city}` : ''}${g.broadcasts?.length ? ` · ${g.broadcasts.slice(0, 2).join(' / ')}` : ''}</div>` : ''}
     ${links ? html`<div class="gc2-foot">
       <a class="primary" href="/cast/${g.game_id}">${g.status?.state === 'in' ? 'Live in WNBACast' : post ? 'Replay' : 'WNBACast'}</a>

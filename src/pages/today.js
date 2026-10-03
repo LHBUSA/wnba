@@ -4,6 +4,8 @@ import { skeleton, startFreshTicker } from '../ui/components.js';
 import { createPoller } from '../lib/poller.js';
 import { countdownLabel } from '../lib/today-hero.js';
 import { loadToday, todayView } from '../views/today.js';
+import { kalshi } from '../data/kalshi.js';
+import { wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = () => null;
 
@@ -38,11 +40,13 @@ export async function mount(root, ctx) {
   const stopHeroTicker = startHeroTicker(root);
 
   const draw = async () => {
-    const data = await loadToday(api);
+    // The Kalshi board (our markets Worker, never Kalshi) loads alongside the slate so game-card lines are in the same paint.
+    const [data] = await Promise.all([loadToday(api), kalshi.loadBoard()]);
     if (!ctx.isCurrent()) return;
     const { body, live } = todayView(data);
     poller?.setInterval(live ? 10000 : 30000);
     render(root, body);
+    wireKalshi(root);
   };
 
   poller = createPoller(draw, { intervalMs: 30000 });

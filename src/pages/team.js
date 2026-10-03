@@ -7,15 +7,19 @@ import { skeleton } from '../ui/components.js';
 import { loadTeam, teamView, nextMatchup } from '../views/team.js';
 import { routeMeta } from '../seo/meta.js';
 import { pbeTeaser, pbeTeamPicker, pbeValidationNotice } from '../ui/pbe.js';
+import { kalshi } from '../data/kalshi.js';
+import { wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = () => 'Team';
 
 export async function mount(root, ctx) {
   render(root, html`${skeleton(220)}${skeleton(420)}`);
-  const data = await loadTeam(api, ctx.params.teamId);
+  // The Kalshi board loads alongside the schedule so next-game card lines are in the first paint.
+  const [data] = await Promise.all([loadTeam(api, ctx.params.teamId), kalshi.loadBoard()]);
   if (!ctx.isCurrent()) return;
   if (data.res.ok) ctx.setMeta(routeMeta('team', { path: ctx.path, params: ctx.params, data: data.res.data }));
   render(root, teamView(data));
+  wireKalshi(root);
   if (data.res.ok) mountPbe(root, ctx, data);
 }
 

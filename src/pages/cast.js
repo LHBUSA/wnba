@@ -21,6 +21,8 @@ import { etCompact, addDays } from '../../workers/shared/time.js';
 import { pbpEmphasis } from '../ui/pbp.js';
 import { groupRailGames, patchRailGame, mergeSlate, createRailRefresher, pollIntervalFor, LIVE_POLL_MS } from '../lib/cast-rail.js';
 import { isBackwards, mergeLiveEvents, liveSnapshotKey } from '../lib/cast-live.js';
+import { kalshi, kalshiColors, kalshiPollState } from '../data/kalshi.js';
+import { kalshiCard, kalshiStrip, wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = (p) => (p.gameId ? 'WNBACast' : 'WNBACast — live WNBA games & replays');
 export const description = () => 'WNBACast: live WNBA scoreboard, real play-by-play, published shot locations, scoring runs, box scores and full replays of completed games.';
@@ -56,9 +58,15 @@ export async function mount(root, ctx) {
     animateShotSeq: null,
     tab: 'box',
     progPlayer: null,
-    rail: []
+    rail: [],
+    kalshi: null, // Kalshi prediction-market entry for kalshiGame (our markets Worker; never Kalshi)
+    kalshiGame: null,
+    kalshiOpen: false
   };
   let poller = null;
+  let kxPoller = null;
+  // Warm the Kalshi read for a deep-linked game while the schedule loads; it never gates WNBACast.
+  if (state.gameId) kalshi.loadEvent(state.gameId);
   let playTimer = null;
   let railPositioned = false;
   const stopTicker = startFreshTicker(root);
@@ -145,6 +153,9 @@ export async function mount(root, ctx) {
     state.shotPinnedSeq = null;
     state.progPlayer = null;
     state.pbpScroll = { top: 0, anchor: null, lastSeen: null };
+    state.kalshi = null;
+    state.kalshiGame = null;
+    state.kalshiOpen = false;
   }
 
   $rail.addEventListener('click', (e) => {
@@ -163,6 +174,7 @@ export async function mount(root, ctx) {
     loadGameArticles(gameId);
     poller?.setInterval(LIVE_POLL_MS);
     load();
+    loadKalshi();
   });
 
   let gameArticles = null;
@@ -215,8 +227,58 @@ export async function mount(root, ctx) {
     refreshRailLive();
     const s = d.game.status?.state;
     setPollInterval();
+    setKalshiInterval();
     if (s === 'post' && state.cursor === null) state.cursor = state.events.length - 1;
     draw();
+  }
+
+  // ------------------------------------------------------------ Kalshi prediction market
+  // A separate, independent lane: its own poller (20 s live, 45 s pregame, idle otherwise) against our markets
+  // Worker. It never blocks or delays the WNBACast event poll, and it repaints only its own slot.
+  async function loadKalshi() {
+    const gameId = state.gameId;
+    if (!gameId) return;
+    const entry = await kalshi.loadEvent(gameId, { force: state.kalshiGame === gameId });
+    if (!ctx.isCurrent() || gameId !== state.gameId) return;
+    state.kalshi = entry;
+    state.kalshiGame = gameId;
+    paintKalshi();
+    setKalshiInterval();
+  }
+
+  function setKalshiInterval() {
+    if (state.data?.game) kxPoller?.setInterval(kalshi.pollMsFor(kalshiPollState(state.data.game)));
+  }
+
+  function kalshiEntry() {
+    return state.kalshiGame === state.gameId ? state.kalshi : null;
+  }
+
+  // Line & market tab: the full card, below the sportsbook market. Pre-game: the one-line strip (expands to the card).
+  function kalshiMarkup(kind, g) {
+    const entry = kalshiEntry();
+    if (!entry || !g) return '';
+    if (kind === 'tab') return kalshiCard(entry, { placement: 'wnbacast-market', colors: kalshiColors(g) });
+    const strip = kalshiStrip(entry, { placement: 'wnbacast-strip', colors: kalshiColors(g) });
+    return state.kalshiOpen ? strip.replace('<details class="kx-strip"', '<details open class="kx-strip"') : strip;
+  }
+
+  function kalshiSlot(kind, g) {
+    return html`<div class="kx-slot kx-slot--${kind === 'tab' ? 'cast' : 'cast-pre'}" data-kx-slot="${kind}">${raw(kalshiMarkup(kind, g))}</div>`;
+  }
+
+  function paintKalshi() {
+    const slot = $stage.querySelector('[data-kx-slot]');
+    if (!slot || !state.data?.game) return;
+    slot.innerHTML = kalshiMarkup(slot.dataset.kxSlot, state.data.game);
+    bindKalshi(slot);
+  }
+
+  function bindKalshi(slot) {
+    if (!slot) return;
+    wireKalshi(slot);
+    const det = slot.querySelector('details.kx-strip');
+    if (det) det.addEventListener('toggle', () => { state.kalshiOpen = det.open; });
   }
 
   // ------------------------------------------------------------ derived at cursor
@@ -339,11 +401,12 @@ export async function mount(root, ctx) {
       ${g.status?.state === 'pre' ? preGame(g) : liveBody(v)}
     `);
     bind();
+    bindKalshi($stage.querySelector('[data-kx-slot]'));
   }
 
   function preGame(g) {
     const d = state.data;
-    return html`<div class="grid g2" style="margin-top:16px">
+    return html`${kalshiSlot('strip', g)}<div class="grid g2" style="margin-top:16px">
       <section class="card card-pad">
         <span class="eyebrow">Pre-game</span>
         <p style="margin-top:10px;color:var(--paper-2)">Tip-off ${fmtDateTimeET(g.start_utc)}. WNBACast switches to the live event stream automatically at tip — no refresh needed.</p>
@@ -640,7 +703,8 @@ export async function mount(root, ctx) {
       ${pc.map((o) => html`<tr><td>${o.provider} · PropSports feed</td><td>${o.details || '—'}</td><td>${o.over_under ?? '—'}</td><td>${american(o.away_moneyline)}</td><td>${american(o.home_moneyline)}</td></tr>`)}
       </tbody></table></div><p class="note" style="margin-top:8px">A single sportsbook line exposed through propsports.proptechusa.ai. It is not a PropBetEdge price, consensus or model.</p>` : html`<p class="note">No line published for this game in the source record.</p>`}
       <div class="callout" style="margin-top:14px">PBE game predictions are <b>live</b>. Sportsbook fair-value and model-gap comparisons remain <b>unavailable</b> until the separate market model is validated.</div>
-      <p style="margin-top:12px"><a class="sec-link" href="/props">Open the best-line board →</a></p>`;
+      <p style="margin-top:12px"><a class="sec-link" href="/props">Open the best-line board →</a></p>
+      ${kalshiSlot('tab', g)}`;
   }
 
   // ------------------------------------------------------------ events
@@ -937,5 +1001,6 @@ export async function mount(root, ctx) {
   }
 
   poller = createPoller(load, { intervalMs: LIVE_POLL_MS });
-  return () => { poller?.stop(); stopPlay(); stopTicker(); };
+  kxPoller = createPoller(loadKalshi, { intervalMs: kalshi.pollMsFor('pregame') });
+  return () => { poller?.stop(); kxPoller?.stop(); stopPlay(); stopTicker(); };
 }

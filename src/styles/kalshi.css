@@ -1,0 +1,22 @@
+/* WNBA adapter for the shared Kalshi component (src/vendor/kalshi/kalshi-market-ui.css, vendored unchanged).
+   Maps the component's --pbe-* hooks onto WNBA tokens and gives the module this product's card frame.
+   Fixed structure: a poll that changes a price never changes the module's size. */
+.kx, .kx-strip, .kx-line {
+  --pbe-ink-2: var(--ink-2);
+  --pbe-line: var(--line-2);
+  --pbe-warn: var(--warn);
+  --f-mono: var(--f-data);
+  --r: var(--r3);
+}
+.kx { border: 1px solid rgba(127, 184, 255, .24); border-radius: var(--r3); padding: var(--s4); box-shadow: var(--sh-1); min-width: 0; }
+.kx-strip > .kx { box-shadow: none; }
+
+/* Matchup page + WNBACast slots: nothing rendered -> no box, no gap. */
+.kx-slot:empty { display: none; }
+.kx-slot--matchup { margin: 0 0 16px; }
+.kx-slot--cast { margin-top: 16px; }
+.kx-slot--cast-pre { margin-top: 16px; }
+
+/* Game cards: one restrained line under the sportsbook snapshot. */
+.gc2-kx { min-width: 0; overflow: hidden; }
+.gc2-kx .kx-line { max-width: 100%; white-space: nowrap; }
