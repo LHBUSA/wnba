@@ -28,6 +28,8 @@ const RULES = [
   [/\bESPN (?:WNBA )?(injury feed|transactions log)\b/g, 'PropSports $1'],
   [new RegExp(String.raw`\b(?:the )?ESPN (${LOG_NOUNS})\b`, 'g'), 'PropSports $1'],
   [/\(ESPN provider record\)/g, '(provider record)'],
+  [/\ban ESPN (estimated return|return estimate|injury update|injury status|injury)\b/g, 'a provider $1'],
+  [/\bESPN (estimated return|return estimate|injury update|injury status|return date)\b/g, 'provider $1'],
   [/\bidentical ESPN athlete IDs\b/g, 'identical athlete IDs'],
   [/\bnumeric ESPN athlete id\b/g, 'numeric player id'],
   [/\(ESPN public data/g, '(PropSports data'],
