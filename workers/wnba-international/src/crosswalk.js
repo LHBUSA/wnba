@@ -96,7 +96,7 @@ export function linkInternationalPlayers(intlPlayers, wnbaRoster, { capturedAt =
   for (const p of intlPlayers) {
     const same = byId.get(String(p.provider_ids?.espn || ''));
     if (same && normalizeName(same.name) === normalizeName(p.name)) {
-      p.wnba = { wnba_player_id: String(same.athlete_id), wnba_name: same.name, wnba_team: same.team ? { team_id: String(same.team.team_id), abbr: same.team.abbr, name: same.team.name } : null, photo: photoOf(same), mapping_method: 'provider_athlete_id', mapping_confidence: 'high', mapping_provenance: { source: 'ESPN athlete id shared by wnba-api /v1/players and the ESPN FIBA box score', espn_athlete_id: String(p.provider_ids.espn), captured_at: capturedAt } };
+      p.wnba = { wnba_player_id: String(same.athlete_id), wnba_name: same.name, wnba_team: same.team ? { team_id: String(same.team.team_id), abbr: same.team.abbr, name: same.team.name } : null, photo: photoOf(same), mapping_method: 'provider_athlete_id', mapping_confidence: 'high', mapping_provenance: { source: 'ESPN athlete id shared by wnba-api /v1/players and the ESPN FIBA box score', player_id: String(same.athlete_id), espn_athlete_id: String(p.provider_ids.espn), captured_at: capturedAt } };
     } else {
       const hit = link({ name: p.name, dob: p.dob || null, team_code: p.team?.country_code });
       if (hit) p.wnba = { ...hit, photo: photoOf(byId.get(hit.wnba_player_id)) };

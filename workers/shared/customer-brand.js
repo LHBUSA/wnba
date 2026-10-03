@@ -86,8 +86,8 @@ const UPSTREAM_API = /^https?:\/\/(?:site\.web\.api|site\.api|sports\.core\.api|
  * pass through unchanged. Identifier values (no spaces) are left alone: legacy enum values are a compatibility
  * matter handled field-by-field with neutral aliases.
  */
-export function customerDoc(v) {
-  if (Array.isArray(v)) return v.map(customerDoc);
+export function customerDoc(v, legacy = null) {
+  if (Array.isArray(v)) return v.map((x) => customerDoc(x, legacy));
   if (!v || typeof v !== 'object') return v === 'ESPN' ? DATA_BRAND : typeof v === 'string' && /\s/.test(v) ? customerText(v) : v;
   if (v.kind === 'publisher_report' || 'rights' in v || 'licence' in v || 'license' in v) return v;
   const out = {};
@@ -97,7 +97,34 @@ export function customerDoc(v) {
       out[k] = x;
       continue;
     }
-    out[k] = customerDoc(x);
+    out[k] = customerDoc(x, legacy);
+  }
+  // Additive neutral aliases beside legacy upstream-named fields (legacy kept; listed in meta.deprecated_fields).
+  for (const [legacyKey, alias, value] of LEGACY_ALIASES) {
+    if (!(legacyKey in v) || v[legacyKey] == null) continue;
+    if (value === undefined && v[legacyKey] !== 'espn') continue;
+    if (!(alias in out)) out[alias] = value === undefined ? DATA_BRAND : value === true ? v[legacyKey] : value;
+    legacy?.add(legacyKey);
+  }
+  return out;
+}
+// [legacy field, neutral alias, alias value]: true = same value; undefined = only when the legacy value is the
+// upstream lane 'espn' (alias = PropSports).
+const LEGACY_ALIASES = [
+  ['espn_athlete_id', 'player_id', true],
+  ['espn_event_id', 'event_id', true],
+  ['espn_game_id', 'event_id', true],
+  ['odds_espn', 'odds_reference', true],
+  ['source', 'data_source', undefined],
+];
+export const DEPRECATION_NOTE = 'Compatibility-only upstream-named fields; use the neutral aliases (player_id, event_id, odds_reference, data_source). Scheduled for removal in the next versioned contract.';
+/** Map a public body and attach meta.deprecated_fields for every legacy field that was served. */
+export function customerBody(body) {
+  const legacy = new Set();
+  const out = customerDoc(body, legacy);
+  if (out && typeof out === 'object' && !Array.isArray(out) && out.meta && typeof out.meta === 'object' && legacy.size) {
+    const prior = Array.isArray(out.meta.deprecated_fields) ? out.meta.deprecated_fields : [];
+    out.meta = { ...out.meta, deprecated_fields: [...new Set([...prior, ...legacy])], deprecation_note: out.meta.deprecation_note || DEPRECATION_NOTE };
   }
   return out;
 }

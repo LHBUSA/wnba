@@ -30,7 +30,14 @@ const SOURCE = { ...SOURCES.espn, note: 'Public ESPN JSON for the FIBA competiti
 const LIVE_TTL_S = 10;
 const IDLE_TTL_S = 120;
 
-const m = (route, extra = {}) => meta({ service: SERVICE, version: VERSION, route, source: SOURCE, ...extra });
+// Public contract (PropSports, 2026-10-03): neutral ids are id / game_id (g-*), player id (p-*), team slug and
+// wnba.wnba_player_id / player_id. Upstream identifiers stay for compatibility only and are listed as deprecated.
+const CONTRACT = Object.freeze({
+  data_source: 'PropSports',
+  deprecated_fields: ['provider_ids.espn', 'games[].source', 'wnba.mapping_provenance.espn_athlete_id'],
+  deprecation_note: 'Compatibility-only upstream identifiers. Use the neutral ids (id, game_id, slug, player_id, wnba.wnba_player_id) and data_source. Scheduled for removal in the next versioned contract.'
+});
+const m = (route, { extra, ...rest } = {}) => meta({ service: SERVICE, version: VERSION, route, source: SOURCE, ...rest, extra: { ...CONTRACT, ...(extra || {}) } });
 
 // ------------------------------------------------------------ provider reads
 

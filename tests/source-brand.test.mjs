@@ -41,3 +41,17 @@ test('envelope: customer meta.source is PropSports; /v1/sources registry is serv
   const reg = await json({ ok: true, data: { sources: [SOURCES.espn] }, meta: { route: '/v1/sources' } }).json();
   assert.equal(reg.data.sources[0].name, 'ESPN');
 });
+
+test('public contract: neutral aliases beside legacy upstream fields, listed in meta.deprecated_fields', async () => {
+  const { customerBody } = await import('../workers/shared/customer-brand.js');
+  const body = { ok: true, data: { games: [{ game_id: '1', source: 'espn', odds_espn: { spread: -3 } }], player: { espn_athlete_id: '9' }, photo: { provider: 'espn' } }, meta: { route: '/v1/today' } };
+  const out = customerBody(body);
+  assert.equal(out.data.games[0].data_source, 'PropSports');
+  assert.equal(out.data.games[0].source, 'espn', 'legacy value kept');
+  assert.deepEqual(out.data.games[0].odds_reference, { spread: -3 });
+  assert.equal(out.data.player.player_id, '9');
+  assert.equal(out.data.player.espn_athlete_id, '9');
+  assert.deepEqual(out.data.photo, { provider: 'espn' }, 'photo credit metadata untouched');
+  assert.deepEqual([...out.meta.deprecated_fields].sort(), ['espn_athlete_id', 'odds_espn', 'source']);
+  assert.equal(body.data.player.player_id, undefined, 'input not mutated');
+});

@@ -1,7 +1,7 @@
 // Response envelope + freshness semantics shared by every WNBA Worker.
 // Pattern learned from NBA src/data/freshness.js; the states are identical so
 // the frontend can treat every PropBetEdge surface the same way.
-import { customerDoc } from './customer-brand.js';
+import { customerBody } from './customer-brand.js';
 
 export const FRESHNESS = Object.freeze({
   CURRENT: 'CURRENT',       // fetched from the source inside its freshness window
@@ -98,7 +98,7 @@ export function json(body, { status = 200, maxAge = 0, sMaxAge = null, headers =
   else h.set('cache-control', `public, max-age=${Math.max(0, maxAge)}${sMaxAge !== null ? `, s-maxage=${sMaxAge}` : ''}`);
   // Customer source boundary: every public body is mapped, except the provenance registry and ops health.
   const route = body?.meta?.route || '';
-  const out = /^\/(?:health|v1\/sources)\b/.test(route) ? body : customerDoc(body);
+  const out = /^\/(?:health|v1\/sources)\b/.test(route) ? body : customerBody(body);
   return new Response(JSON.stringify(out), { status, headers: h });
 }
 

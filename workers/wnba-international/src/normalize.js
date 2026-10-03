@@ -88,7 +88,8 @@ export function normalizeGame(event, { competitionId, fetchedAt = null } = {}) {
     },
     ...st,
     winner,
-    source: 'espn',
+    source: 'espn', // deprecated compatibility field (upstream lane); see data_source
+    data_source: 'PropSports',
     fetched_at: fetchedAt
   };
 }
