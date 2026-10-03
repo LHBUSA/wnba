@@ -15,7 +15,7 @@ import { storyOriginIso, storyPublishedAt } from './news-ranking.js';
 
 // 1.1.0: a preview's Top Story clock is its game (see leadClockOf), so tonight's playoff preview is not aged out by
 // having been drafted days before tip.
-export const HOMEPAGE_LEAD_POLICY = 'homepage-lead/1.1.0';
+export const HOMEPAGE_LEAD_POLICY = 'homepage-lead/1.2.0';
 
 const HOUR = 3600e3;
 const POOL_WINDOWS_H = [24, 72];
@@ -24,6 +24,8 @@ const RECENT_FINAL_WINDOW = 36 * HOUR;
 const PREVIEW_WINDOW = 48 * HOUR;
 const STALE_RESULT_AGE = 48 * HOUR;
 const PREVIEW_DUE = 36 * HOUR;
+// A WNBA game is over well within three hours of tip: the latest a result can claim as its news moment.
+const GAME_SPAN = 3 * HOUR;
 
 export const MATERIALITY = Object.freeze({ VERY_HIGH: 100, HIGH: 75, MEDIUM: 50, LOW: 25, STALE: 10 });
 const BOOST = Object.freeze({ postgame: 20, pregame: 15, live: 10, full_depth: 4 });
@@ -41,12 +43,19 @@ const teamsOf = (c) => (c?.entities || []).filter((e) => e?.type === 'team' && e
 
 /**
  * The clock Top Story freshness reads. Every story uses its editorial origin (first publication) — never a revision
- * clock. A preview is the one exception: it becomes timely as its game approaches, so its clock is the later of its
- * origin and 36h before tip (capped at now). A preview drafted four days early is judged as of tonight's slate, not
- * as a four-day-old story; one drafted yesterday for a game next week is not promoted early.
+ * clock. Two exceptions are tied to the game itself:
+ *   * a preview becomes timely as its game approaches, so its clock is the later of its origin and 36h before tip
+ *     (capped at now). A preview drafted four days early is judged as of tonight's slate, not as a four-day-old
+ *     story; one drafted yesterday for a game next week is not promoted early.
+ *   * a result is news when its game ends, so its clock is the earlier of its origin and the game's end (tip + 3h).
+ *     A result published a day late (held, then released) is a day-old result, and cannot outrank tonight's game.
  */
 export function leadClockOf(c, now) {
   const origin = storyPublishedAt(c);
+  if ((c?.kind === 'result' || c?.kind === 'performance') && origin) {
+    const ends = gamesOf(c).map((g) => ms(g.start_utc)).filter((t) => t !== null).map((t) => t + GAME_SPAN);
+    return ends.length ? Math.min(origin, Math.max(...ends)) : origin;
+  }
   if (c?.kind !== 'preview') return origin;
   const tips = gamesOf(c).map((g) => ms(g.start_utc)).filter((t) => t !== null && t > now);
   if (!tips.length || !origin) return origin;

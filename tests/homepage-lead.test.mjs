@@ -114,7 +114,7 @@ test('an unlisted current lead is replaced immediately', () => {
 
 test('final-game context boosts the matching fresh result over another result', () => {
   const matching = story('match', 'performance', hoursAgo(4), { entities: [game('g1', hoursAgo(6))] });
-  const other = story('other', 'performance', hoursAgo(3), { entities: [game('g7', hoursAgo(30))] });
+  const other = story('other', 'performance', hoursAgo(3), { entities: [game('g7', hoursAgo(5.5))] });
   const base = ctx({ data: { phase: 'Regular Season', last_results: { games: [] } } });
   assert.equal(leadId([matching, other], base), 'other', 'without context the newer result leads');
   const hero = { mode: 'FINAL', finalGames: [finalGame('g1', hoursAgo(6))] };
@@ -219,4 +219,25 @@ test('1.1.0 · a new injury beats an ordinary same-age preview; a photo never de
   const pv = story('pv', 'preview', hoursAgo(2), { entities: [game('g3', soon)], media: { resolved: 'approved_subject_photos' } });
   const inj = story('inj', 'injury', hoursAgo(2), { media: { resolved: 'team_composition' } });
   assert.equal(leadId([pv, inj]), 'inj');
+});
+
+// ---------------------------------------------------------------- 1.2.0: a result's clock is its game
+
+test('1.2.0 · a day-late result (held, then released) cannot outrank tonight’s clinching result', () => {
+  // Production 2026-10-03: Aces–Fever Game 3 (tip a day earlier) published 7 minutes after Valkyries–Wings Game 3.
+  const tonight = hoursAgo(2.5);
+  const yesterday = hoursAgo(26.5);
+  const fresh = story('gs-g3', 'result', hoursAgo(0.15), { depth_class: 'full', entities: [game('g3', tonight), team('129689'), team('3')] });
+  const late = story('lv-g3', 'performance', hoursAgo(0.02), { depth_class: 'full', entities: [game('l3', yesterday), team('17'), team('5')] });
+  const c = ctx({ hero: { mode: 'FINAL', finalGames: [finalGame('g3', tonight, '3', '129689')] }, data: { phase: 'Postseason', last_results: { games: [finalGame('l3', yesterday, '5', '17')] } } });
+  const { lead, diagnostics } = selectHomepageLead([late, fresh], c);
+  assert.equal(lead.id, 'gs-g3');
+  const lateRow = diagnostics.ranking.find((r) => r.id === 'lv-g3');
+  assert.ok(lateRow.age_hours > 23, `the late story is judged from its game's end, not its publication (${lateRow.age_hours}h)`);
+});
+
+test('1.2.0 · a result published on time keeps its publication clock', () => {
+  const r = story('r', 'result', hoursAgo(1), { entities: [game('g1', hoursAgo(3.5))] });
+  const { diagnostics } = selectHomepageLead([r], ctx());
+  assert.equal(diagnostics.ranking[0].age_hours, 1);
 });
