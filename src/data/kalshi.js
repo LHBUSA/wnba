@@ -35,6 +35,12 @@ export function marketPollMs(g, entry) {
   return entry ? MARKET_CLOSED_POLL_MS : 0;
 }
 
+/** True once the venue market has CLOSED or SETTLED (it then renders as history, never as live). */
+export function isMarketDone(entry) {
+  const lc = entry?.market?.lifecycle;
+  return lc === 'CLOSED' || lc === 'SETTLED';
+}
+
 /** Resolves with the value of `p`, or with `undefined` after `ms` (bounded first-paint wait; `p` keeps running). */
 export function within(p, ms = 800) {
   return Promise.race([p, new Promise((r) => setTimeout(() => r(undefined), ms))]);
@@ -52,7 +58,8 @@ export function kalshiColors(g) {
 export function kalshiLineFor(g) {
   if (!g) return '';
   const entry = kalshi.forEvent(g.game_id);
-  return g.status?.state === 'post' ? marketCloseLine(entry) : kalshiLine(entry);
+  // A closed/settled market is never shown as a live line, whatever the game clock says.
+  return g.status?.state === 'post' || isMarketDone(entry) ? marketCloseLine(entry) : kalshiLine(entry);
 }
 
 /** Event-page module: the live card while the market trades, "How the market closed" once CLOSED/SETTLED. */

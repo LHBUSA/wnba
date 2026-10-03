@@ -272,7 +272,7 @@ test('history: the event page mounts the market module for FINAL games; WNBACast
   assert.match(mu, /within\(kxLoad, 800\)/);
   const cast = read('src/pages/cast.js');
   assert.match(cast, /\$\{v\.replay \? kalshiSlot\('history', g\) : ''\}/);
-  assert.match(cast, /kind === 'history'\) return marketModule\(/);
+  assert.match(cast, /kind === 'history' \|\| isMarketDone\(entry\)\) return marketModule\(/);
   assert.match(read('src/data/kalshi.js'), /marketModule\(entry, \{ placement: 'matchup-page'/);
 });
 
@@ -284,4 +284,47 @@ test('vendored client bytes are pinned (sha256 @ propbetedge-workers 8b73545)', 
     'kalshi-market-ui.js': '93a8f485e90633a1cd70e93ab4123c1dc2161d08b3a76e41ec3cc4a0279d74f4'
   };
   for (const [f, sha] of Object.entries(pins)) assert.equal(createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'src/vendor/kalshi', f))).digest('hex'), sha, f);
+});
+
+// ------------------------------------------------------------ permanent regression (mirrors propbetedge-workers a229028)
+// A completed matched game with NO current quote (kalshi: null), observations present and a CLOSED/SETTLED lifecycle
+// must survive this product's board and event loaders and render as market history — never as a live card.
+test('regression: completed entry with kalshi:null survives the WNBA loaders and renders history', async () => {
+  const { kalshi, kalshiLineFor, matchupKalshiSlot, isMarketDone } = await import('../src/data/kalshi.js');
+  const { kalshiCard: liveCard, kalshiStrip: liveStrip } = await import('../src/vendor/kalshi/kalshi-market-ui.js');
+  const realFetch = globalThis.fetch;
+  for (const done of [SETTLED, CLOSED]) {
+    const entry = { ...structuredClone(done), kalshi: null };
+    const boardEntry = { ...entry, market_history: undefined };
+    globalThis.fetch = async (url) => ({ ok: true, json: async () => (/\/event\//.test(String(url))
+      ? { contract: 'market-intel/1', sport: 'wnba', enabled: true, event: entry }
+      : { contract: 'market-intel/1', sport: 'wnba', enabled: true, events: [boardEntry] }) });
+    try {
+      await kalshi.loadBoard({ force: true });
+      assert.ok(kalshi.forEvent('401918295'), 'board dropped the completed entry');
+      const got = await kalshi.loadEvent('401918295', { force: true });
+      assert.ok(got, 'event read nulled the completed entry');
+      assert.ok(isMarketDone(got));
+      const h = String(matchupKalshiSlot(got, FINAL));
+      assert.match(h, /How the market closed/);
+      assert.equal((h.match(/class="kx-h__row[" ]/g) || []).length, 2);
+      assert.equal(liveCard(got, { placement: 'x' }), '');
+      assert.equal(liveStrip(got, { placement: 'x' }), '');
+      if (done === CLOSED) { assert.match(h, /awaiting settlement/i); assert.doesNotMatch(h, /Settled (YES|NO)/); }
+      else assert.match(text(h), /Kalshi settlement: ATL — YES/);
+      // Result card: compact close line, never the live "KALSHI" line — even if the game clock were not final.
+      for (const g of [FINAL, GAME]) {
+        const line = kalshiLineFor(g);
+        assert.match(line, /kx-line--closed/);
+        assert.doesNotMatch(text(line), /^KALSHI|\bLIVE\b/);
+      }
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  }
+});
+
+test('regression: WNBACast renders a closed/settled market as history in every slot (never a live card or strip)', () => {
+  const cast = read('src/pages/cast.js');
+  assert.match(cast, /if \(kind === 'history' \|\| isMarketDone\(entry\)\) return marketModule\(/);
 });

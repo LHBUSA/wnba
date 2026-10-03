@@ -21,7 +21,7 @@ import { etCompact, addDays } from '../../workers/shared/time.js';
 import { pbpEmphasis } from '../ui/pbp.js';
 import { groupRailGames, patchRailGame, mergeSlate, createRailRefresher, pollIntervalFor, LIVE_POLL_MS } from '../lib/cast-rail.js';
 import { isBackwards, mergeLiveEvents, liveSnapshotKey } from '../lib/cast-live.js';
-import { kalshi, kalshiColors, marketPollMs, within } from '../data/kalshi.js';
+import { kalshi, kalshiColors, marketPollMs, within, isMarketDone } from '../data/kalshi.js';
 import { kalshiCard, kalshiStrip, marketModule, wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = (p) => (p.gameId ? 'WNBACast' : 'WNBACast — live WNBA games & replays');
@@ -274,7 +274,8 @@ export async function mount(root, ctx) {
   function kalshiMarkup(kind, g) {
     const entry = kalshiEntry();
     if (!entry || !g) return '';
-    if (kind === 'history') return marketModule(entry, { placement: 'wnbacast-history', colors: kalshiColors(g) });
+    // A closed/settled market is history in every slot — never a live card or strip.
+    if (kind === 'history' || isMarketDone(entry)) return marketModule(entry, { placement: 'wnbacast-history', colors: kalshiColors(g) });
     if (kind === 'tab') return kalshiCard(entry, { placement: 'wnbacast-market', colors: kalshiColors(g) });
     const strip = kalshiStrip(entry, { placement: 'wnbacast-strip', colors: kalshiColors(g) });
     return state.kalshiOpen ? strip.replace('<details class="kx-strip"', '<details open class="kx-strip"') : strip;
