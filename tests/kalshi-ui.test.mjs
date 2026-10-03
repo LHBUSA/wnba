@@ -96,6 +96,9 @@ test('WNBA entry renders both teams with Mid-market, bid, ask and prediction-mar
   assert.match(t, /Delayed · Updated 4 min ago/);
   assert.match(t, /not sportsbook odds and not a PropBetEdge model/);
   assert.doesNotMatch(t, /win probability|chance to win|PBE prediction/i);
+  assert.match(t, /^Market Pulse Live prediction market · Kalshi/);
+  assert.match(t, /Live prediction-market pricing — no sportsbook line required\. Traded contract prices on Kalshi/);
+  assert.match(text(kalshiStrip(ENTRY, { placement: 'wnbacast-strip' })), /^Market Pulse [\s\S]*Live prediction-market expectations — no sportsbook line required · Kalshi/);
 });
 
 test('every Kalshi link opens the verified market in a new tab with rel sponsored', () => {
