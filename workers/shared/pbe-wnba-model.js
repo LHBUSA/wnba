@@ -15,6 +15,7 @@ import ARTIFACT from '../../model/pbe-wnba-model-v1/artifact.json' with { type: 
 import FEATURE_SPEC from '../../model/pbe-wnba-model-v1/feature_spec.json' with { type: 'json' };
 import MANIFEST from '../../model/pbe-wnba-model-v1/manifest.json' with { type: 'json' };
 import { buildFeatures } from './pbe-wnba-features.js';
+import { assertMarketFree, MARKET_KEY_PATTERN, MarketLeakageError } from './pbe-leakage-guard.js';
 
 export { ARTIFACT, FEATURE_SPEC, MANIFEST };
 export const MODEL_ID = ARTIFACT.model_id;
@@ -67,6 +68,9 @@ export function confidenceTier(pickProb, minCurrentGames, spec = FEATURE_SPEC) {
 
 /** Canonical (home-oriented) prediction for one game from an as-of feature build. */
 export function predictGame(features, { artifact = ARTIFACT, spec = FEATURE_SPEC } = {}) {
+  // Leakage guard (owner 2026-10-03): no prediction-market (Kalshi / Polymarket) field reaches the artifact.
+  assertMarketFree(features, '$.features');
+  for (const n of artifact.feature_order) if (MARKET_KEY_PATTERN.test(n)) throw new MarketLeakageError(`$.artifact.feature_order.${n}`);
   const vector = artifact.feature_order.map((n) => {
     if (!(n in features.all)) throw new Error(`predictGame: feature ${n} missing`);
     return features.all[n];
@@ -108,6 +112,9 @@ export function predictGame(features, { artifact = ARTIFACT, spec = FEATURE_SPEC
 
 /** Build features with the artifact's own params/order, then predict. */
 export function predictFromRows({ game, leagueRows, asOf, artifact = ARTIFACT, spec = FEATURE_SPEC }) {
+  // Leakage guard (owner 2026-10-03): the game and every team-game row are checked before features exist.
+  assertMarketFree(game, '$.game');
+  assertMarketFree(leagueRows, '$.leagueRows');
   const homeRows = leagueRows.filter((r) => r.team_id === String(game.home_id));
   const awayRows = leagueRows.filter((r) => r.team_id === String(game.away_id));
   const features = buildFeatures({ game, homeRows, awayRows, leagueRows, asOf, params: artifact.params });

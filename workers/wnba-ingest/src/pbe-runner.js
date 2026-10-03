@@ -17,6 +17,7 @@
 import { cachedJson, fetchJsonWithTimeout } from '../../shared/fetcher.js';
 import { ESPN } from '../../shared/espn.js';
 import { teamGameRowFromSummary, etDateOf } from '../../shared/pbe-wnba-features.js';
+import { assertModelSource } from '../../shared/pbe-leakage-guard.js';
 import { buildPredictionDoc, observationRow, observationDue, lockPhase, scoringDue, lockDoc, gradeFromFinal, LOCK_POLICY, CONTRACT } from '../../shared/pbe-runtime.js';
 
 export const ROWS_KEY = (season) => `pbe:rows:v1:${season}`;
@@ -51,7 +52,8 @@ export function eligibleFinals(events, season) {
 
 /** Append missing finals (bounded per run). Returns completeness against finals dated before `beforeEtDate`. */
 export async function maintainRows(env, season, { beforeEtDate, fetchSummary = (id) => fetchJsonWithTimeout(`${ESPN.site}/summary?event=${id}`, { timeoutMs: 12000 }), events }) {
-  const store = (await env.WNBA_KV.get(ROWS_KEY(season), 'json')) || { schema: 'pbe-rows-store/1', season, rows: [], event_ids: [] };
+  // Leakage guard (owner 2026-10-03): model rows never come from a prediction-market store.
+  const store = (await env.WNBA_KV.get(assertModelSource(ROWS_KEY(season)), 'json')) || { schema: 'pbe-rows-store/1', season, rows: [], event_ids: [] };
   const have = new Set(store.event_ids);
   const finals = eligibleFinals(events, season);
   const missing = finals.filter((e) => !have.has(String(e.id)));
