@@ -163,3 +163,14 @@ test('browser code never names a Kalshi API host; guard-truth blocks them', () =
   const guard = read('scripts/guard-truth.mjs');
   assert.match(guard, /kalshi/);
 });
+
+test('CSP connect-src allows the owned markets Worker and no Kalshi host (Vercel + publishing Worker identical)', () => {
+  const vercel = JSON.parse(read('vercel.json'));
+  const csp = vercel.headers.flatMap((g) => g.headers || []).find((h) => h.key === 'Content-Security-Policy').value;
+  const connect = csp.split(';').map((d) => d.trim()).find((d) => d.startsWith('connect-src '));
+  assert.ok(connect.split(' ').includes('https://propsports-markets.sales-fd3.workers.dev'));
+  assert.doesNotMatch(csp, /kalshi/i);
+  for (const f of ['workers/wnba-web/src/index.js', 'workers/wnba-web/src/index-historical.js']) {
+    assert.equal(read(f).match(/'content-security-policy': "([^"]+)"/)?.[1], csp, f);
+  }
+});
