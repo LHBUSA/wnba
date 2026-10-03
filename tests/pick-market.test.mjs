@@ -55,3 +55,12 @@ test('flagship card renders the line inside the PBE PICK block, and nothing with
   assert.match(text(card), new RegExp(`PBE PICK .*KALSHI ${home.abbr} ${cents(home.mid_bp).replace('.', '\\.')} PBE pick side`));
   assert.doesNotMatch(String(flagshipPbeCard(call())), /kx-pick|KALSHI/);
 });
+
+test('every identifier the PBE Picks page uses for Kalshi is imported (regression: wireKalshi ReferenceError b863071)', () => {
+  const src = readFileSync(new URL('../src/pages/pbe-picks.js', import.meta.url), 'utf8');
+  const imported = new Set([...src.matchAll(/^import {([^}]*)} from/gm)].flatMap((m) => m[1].split(',').map((x) => x.trim())));
+  for (const name of ['wireKalshi', 'pbeCallMarket', 'kalshi', 'loadAlgoVsMarket', 'within']) {
+    assert.ok(src.includes(name + '(') || src.includes(name + '.'), name + ' is used');
+    assert.ok(imported.has(name), name + ' is imported');
+  }
+});

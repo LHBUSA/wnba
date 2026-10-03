@@ -16,6 +16,7 @@ import { flagshipPbeCard } from '../ui/pbe-flagship.js';
 import { pbePicksPublicView } from '../views/pbe-picks-public.js';
 import { kalshi, loadAlgoVsMarket, within } from '../data/kalshi.js';
 import { pbeCallMarket } from '../data/pick-market.js';
+import { wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = () => 'PBE Picks';
 export const description = () => 'PBE WNBA intelligence: independent win probabilities, de-vigged market comparison, model-market disagreement, confidence, driver-by-driver reasoning, matchup research and a permanent locked track record.';
