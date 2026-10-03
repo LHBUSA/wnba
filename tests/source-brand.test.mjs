@@ -17,6 +17,8 @@ test('newsroom prose and labels map to PropSports; sportsbooks stay', () => {
   assert.equal(customerText('The Odds API (stored PropBetEdge snapshot)'), 'PropSports market snapshot');
   assert.equal(customerText('espn_injuries_feed via wnba-ingest change ledger'), 'PropSports injury feed');
   assert.equal(customerText('Best price at ESPN BET'), 'Best price at ESPN BET');
+  assert.equal(customerText('ESPN lists Stephanie Talbot as Out (leg).'), 'The observed injury report lists Stephanie Talbot as Out (leg).');
+  assert.equal(customerText('after an ESPN injury update for Marina Mabrey.'), 'after a provider injury update for Marina Mabrey.');
   const once = customerText('ESPN game log (2026 Regular Season)');
   assert.equal(customerText(once), once);
 });
