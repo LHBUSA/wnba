@@ -3,7 +3,7 @@
 // calls Kalshi. The Worker's ingest runs on its own schedule, so polling here adds no Kalshi traffic.
 // Prediction-market prices are not sportsbook odds and not a PropBetEdge model; they are labelled so wherever shown.
 import { createKalshiClient } from '../vendor/kalshi/kalshi-market-client.js';
-import { kalshiCard, kalshiLine, marketModule, marketHistoryCard, marketCloseLine } from '../vendor/kalshi/kalshi-market-ui.js';
+import { kalshiCard, kalshiLine, marketModule, marketHistoryCard, marketCloseLine, algoVsMarketCard, algoVsMarketEvent } from '../vendor/kalshi/kalshi-market-ui.js';
 import { html, raw } from '../lib/dom.js';
 import { setGameCardKalshi } from '../ui/components.js';
 import { teamColors } from '../ui/logo.js';
@@ -153,3 +153,86 @@ export function applyTickerMarkets(root, games = []) {
 // Client-only: game cards render the Kalshi line once the SPA has loaded the board. The publishing Worker never
 // imports this module, so server-rendered cards are unchanged.
 setGameCardKalshi(kalshiLineFor);
+
+/* ───────────── ALGO vs MARKET (contract algo-vs-market/1, same markets Worker) ─────────────
+ * The official PBE WNBA Model's pick and the market's pick, both frozen at the PBE lock. The browser renders
+ * exactly what the API returns: `algos` is empty until the first qualifying frozen comparison, a Pro-gated row
+ * comes back LOCKED (no selection) until graded, and a failed read is null — nothing renders, nothing is invented. */
+const AVM_BASE = String(MARKETS_BASE).replace(/\/+$/, '');
+const defaultFetch = (...a) => globalThis.fetch(...a);
+async function avmRead(path, fetchImpl) {
+  try {
+    const res = await fetchImpl(`${AVM_BASE}${path}`, { headers: { accept: 'application/json' } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/** Track record: { algos: [...] } or null on failure. */
+export async function loadAlgoVsMarket({ fetchImpl = defaultFetch } = {}) {
+  const body = await avmRead('/v1/algo-vs-market/wnba', fetchImpl);
+  return body && Array.isArray(body.algos) ? body : null;
+}
+
+/** One game (canonical id = WNBA game_id): { comparisons: [...] } or null on failure. */
+export async function loadAlgoVsMarketEvent(gameId, { fetchImpl = defaultFetch } = {}) {
+  if (!gameId) return null;
+  const body = await avmRead(`/v1/algo-vs-market/event/wnba/${encodeURIComponent(String(gameId))}`, fetchImpl);
+  return body && Array.isArray(body.comparisons) ? body : null;
+}
+
+/** Re-read cadence for a game's comparison: it changes only at the PBE lock and at grading. */
+export const AVM_POLL_MS = 300_000;
+/** A comparison with a result is final (no further reads). */
+export const avmFinal = (payload) => (payload?.comparisons || []).some((r) => r?.result);
+
+// Event label for an AVM ledger row from data the page already has (matchupOf(id) -> "AWAY @ HOME"), else the frozen
+// market's own away/home labels; otherwise the row is unchanged. Never mutates the API payload.
+export function avmWithEventLabels(algo, matchupOf = () => null) {
+  if (!algo || !Array.isArray(algo.ledger)) return algo;
+  const ledger = algo.ledger.map((r) => {
+    if (r.event_label) return r;
+    const p = r.market?.prices;
+    const label = matchupOf(r.canonical_event_id) || (p?.away?.label && p?.home?.label ? `${p.away.label} @ ${p.home.label}` : null);
+    return label ? { ...r, event_label: label } : r;
+  });
+  return { ...algo, ledger };
+}
+
+/** Event layer (PBE pick vs market at PBE lock) for THIS game only; '' when there is no qualifying comparison. */
+export function avmEventMarkup(payload, g) {
+  if (!payload || !g) return '';
+  const own = (payload.comparisons || []).filter((r) => String(r?.canonical_event_id ?? '') === String(g.game_id));
+  if (!own.length) return '';
+  const nameOf = (r, role) => (role === 'away' || role === 'home' ? g[role]?.abbr || null : null);
+  return algoVsMarketEvent({ ...payload, comparisons: own }, { nameOf });
+}
+
+/** Matchup page block: the AVM layer in its own slot (an empty, zero-height slot when there is none). */
+export function matchupAvmSlot(payload, g) {
+  return html`<div class="kx-slot kx-slot--matchup kx-slot--avm" data-avm-slot>${raw(avmEventMarkup(payload, g))}</div>`;
+}
+
+/**
+ * Track-record module: one algoVsMarketCard per algorithm the API returns ('' while `algos` is empty — no box, no
+ * heading). Event labels / away-home names come from the Pro ledger rows when this viewer has them (teamLabel(team_id)),
+ * else the frozen market's own labels — never more than the API returned.
+ */
+export function trackAvmMarkup(body, ledgerRows = [], teamLabel = () => null) {
+  const algos = Array.isArray(body?.algos) ? body.algos : [];
+  if (!algos.length) return '';
+  const gameOf = (id) => ledgerRows.find((x) => String(x?.game?.game_id) === String(id))?.game || null;
+  const matchupOf = (id) => {
+    const g = gameOf(id);
+    const a = g && teamLabel(g.away_team_id);
+    const h = g && teamLabel(g.home_team_id);
+    return a && h ? `${a} @ ${h}` : null;
+  };
+  const nameOf = (r, role) => {
+    const g = gameOf(r.canonical_event_id);
+    return g && (role === 'away' || role === 'home') ? teamLabel(g[`${role}_team_id`]) || null : null;
+  };
+  return algos.map((a) => algoVsMarketCard(avmWithEventLabels(a, matchupOf), { nameOf, recent: 10 })).filter(Boolean).join('');
+}

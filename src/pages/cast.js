@@ -21,7 +21,7 @@ import { etCompact, addDays } from '../../workers/shared/time.js';
 import { pbpEmphasis } from '../ui/pbp.js';
 import { groupRailGames, patchRailGame, mergeSlate, createRailRefresher, pollIntervalFor, LIVE_POLL_MS } from '../lib/cast-rail.js';
 import { isBackwards, mergeLiveEvents, liveSnapshotKey } from '../lib/cast-live.js';
-import { kalshi, marketPollMs, within, castMarketMarkup } from '../data/kalshi.js';
+import { kalshi, marketPollMs, within, castMarketMarkup, loadAlgoVsMarketEvent, avmEventMarkup, avmFinal, AVM_POLL_MS } from '../data/kalshi.js';
 import { wireKalshi } from '../vendor/kalshi/kalshi-market-ui.js';
 
 export const title = (p) => (p.gameId ? 'WNBACast' : 'WNBACast — live WNBA games & replays');
@@ -60,10 +60,13 @@ export async function mount(root, ctx) {
     progPlayer: null,
     rail: [],
     kalshi: null, // Kalshi prediction-market entry for kalshiGame (our markets Worker; never Kalshi)
-    kalshiGame: null
+    kalshiGame: null,
+    avm: null, // ALGO vs MARKET comparison payload for avmGame (null = render nothing)
+    avmGame: null
   };
   let poller = null;
   let kxPoller = null;
+  let avmPoller = null;
   let kxPending = null; // the in-flight first market read for state.gameId (bounded first-paint wait)
   // Warm the Kalshi read for a deep-linked game while the schedule loads; it never gates WNBACast.
   if (state.gameId) kalshi.loadEvent(state.gameId);
@@ -155,6 +158,8 @@ export async function mount(root, ctx) {
     state.pbpScroll = { top: 0, anchor: null, lastSeen: null };
     state.kalshi = null;
     state.kalshiGame = null;
+    state.avm = null;
+    state.avmGame = null;
   }
 
   $rail.addEventListener('click', (e) => {
@@ -248,7 +253,8 @@ export async function mount(root, ctx) {
     // A settled market never changes: no further reads (also covers the poller's on-visible tick).
     if (state.kalshiGame === gameId && state.kalshi?.market?.lifecycle === 'SETTLED') return;
     const p = kalshi.loadEvent(gameId, { force: state.kalshiGame === gameId });
-    if (state.kalshiGame !== gameId) kxPending = p;
+    // First read of a game: its Algo vs Market comparison shares the same bounded first-paint wait.
+    if (state.kalshiGame !== gameId) kxPending = Promise.all([p, loadAvm()]);
     const entry = await p;
     if (!ctx.isCurrent() || gameId !== state.gameId) return;
     state.kalshi = entry;
@@ -271,6 +277,36 @@ export async function mount(root, ctx) {
   // A closed/settled market is history (never a live card); the phase label never calls a stale quote live.
   function kalshiMarkup(g) {
     return castMarketMarkup(kalshiEntry(), g);
+  }
+
+  // ------------------------------------------------------------ Algo vs Market
+  // PBE pick vs market at PBE lock (shared module), its own slot directly under Market Pulse; re-read every 5 min
+  // until the comparison has a result. Nothing until the API has a qualifying comparison for this game.
+  async function loadAvm() {
+    const gameId = state.gameId;
+    if (!gameId) return;
+    if (state.avmGame === gameId && avmFinal(state.avm)) return;
+    const next = await loadAlgoVsMarketEvent(gameId);
+    if (!ctx.isCurrent() || gameId !== state.gameId) return;
+    if (next || state.avmGame !== gameId) { state.avm = next; state.avmGame = gameId; } // a failed re-read keeps what is shown
+    paintAvm();
+  }
+
+  function avmMarkup(g) {
+    return state.avmGame === state.gameId ? avmEventMarkup(state.avm, g) : '';
+  }
+
+  function avmSlot(g) {
+    return html`<div class="kx-slot kx-slot--cast kx-slot--avm" data-avm-slot>${raw(avmMarkup(g))}</div>`;
+  }
+
+  function paintAvm() {
+    const slot = $stage.querySelector('[data-avm-slot]');
+    if (!slot || !state.data?.game) return;
+    const markup = avmMarkup(state.data.game);
+    if (slot.dataset.avmHtml === markup) return;
+    slot.innerHTML = markup;
+    slot.dataset.avmHtml = markup;
   }
 
   function kalshiSlot(g) {
@@ -401,6 +437,7 @@ export async function mount(root, ctx) {
         <div class="card-body" style="padding-top:10px;padding-bottom:12px">${sourceLine(state.meta, { label: semLabel })}</div>
       </section>
       ${kalshiSlot(g)}
+      ${avmSlot(g)}
       <div class="share-row">${shareBar({ path: `/cast/${g.game_id}`, title: castMeta.title })}</div>
 
       ${v.replay ? html`<section class="card replay-bar" style="margin-top:12px" aria-label="Replay controls">
@@ -415,6 +452,8 @@ export async function mount(root, ctx) {
     bind();
     const kxSlot = $stage.querySelector('[data-kx-slot]');
     if (kxSlot) kxSlot.dataset.kxHtml = kxSlot.innerHTML === '' ? '' : kalshiMarkup(g);
+    const avmEl = $stage.querySelector('[data-avm-slot]');
+    if (avmEl) avmEl.dataset.avmHtml = avmMarkup(g);
     bindKalshi(kxSlot);
   }
 
@@ -1015,5 +1054,6 @@ export async function mount(root, ctx) {
 
   poller = createPoller(load, { intervalMs: LIVE_POLL_MS });
   kxPoller = createPoller(loadKalshi, { intervalMs: kalshi.pollMsFor('pregame') });
-  return () => { poller?.stop(); kxPoller?.stop(); stopPlay(); stopTicker(); };
+  avmPoller = createPoller(loadAvm, { intervalMs: AVM_POLL_MS, immediate: false });
+  return () => { poller?.stop(); kxPoller?.stop(); avmPoller?.stop(); stopPlay(); stopTicker(); };
 }

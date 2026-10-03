@@ -96,7 +96,10 @@ test('WNBA entry renders both teams with Mid-market, bid, ask and prediction-mar
   assert.match(t, /Delayed · Updated 4 min ago/);
   assert.match(t, /not sportsbook odds and not a PropBetEdge model/);
   assert.doesNotMatch(t, /win probability|chance to win|PBE prediction/i);
-  assert.match(t, /^Market Pulse Live prediction market · Kalshi/);
+  // The real entry is 'delayed': since ad6187a the subtitle says "Live prediction market" only for a live-fresh quote.
+  assert.match(t, /^Market Pulse Prediction market · Kalshi Delayed/);
+  assert.match(text(kalshiCard({ ...ENTRY, kalshi: { ...ENTRY.kalshi, freshness: 'live', age_seconds: 30 } }, { placement: 'matchup-page' })), /^Market Pulse Live prediction market · Kalshi/);
+  assert.match(text(kalshiCard({ ...ENTRY, kalshi: { ...ENTRY.kalshi, freshness: 'stale', age_seconds: 900 } }, { placement: 'matchup-page' })), /^Market Pulse Prediction market · quote not current · Kalshi Stale/);
   assert.match(t, /Live prediction-market pricing — no sportsbook line required\. Traded contract prices on Kalshi/);
   assert.match(text(kalshiStrip(ENTRY, { placement: 'wnbacast-strip' })), /^Market Pulse [\s\S]*Live prediction-market expectations — no sportsbook line required · Kalshi/);
 });
@@ -272,18 +275,19 @@ test('history: the event page mounts the market module for FINAL games; WNBACast
   assert.match(mu, /within\(kxLoad, 800\)/);
   const cast = read('src/pages/cast.js').split('\r\n').join('\n');
   // MLB PBEcast standard: ONE slot directly under the scoreboard (live, pre-game and replay alike).
-  assert.match(cast, /<\/section>\n      \$\{kalshiSlot\(g\)\}\n      <div class="share-row">/);
+  // Algo vs Market (its own slot) sits directly under Market Pulse, still above the share row.
+  assert.match(cast, /<\/section>\n      \$\{kalshiSlot\(g\)\}\n      \$\{avmSlot\(g\)\}\n      <div class="share-row">/);
   assert.equal((cast.match(/kalshiSlot\(/g) || []).length, 2, 'declared once, mounted once');
   assert.match(read('src/data/kalshi.js'), /isMarketDone\(entry\) && entry\.market_history \? marketHistoryCard\(entry, \{ placement: 'wnbacast-history' \}\)/);
   assert.match(read('src/data/kalshi.js'), /marketModule\(entry, \{ placement: 'matchup-page'/);
 });
 
-test('vendored client bytes are pinned (sha256 @ propbetedge-workers 8b73545)', async () => {
+test('vendored client bytes are pinned (sha256 @ propbetedge-workers ad6187a)', async () => {
   const { createHash } = await import('node:crypto');
   const pins = {
-    'kalshi-market-client.js': '211be23bb9a5b2be0a1b4ed1a1c2c1b3b2dfc4ef45a040ae13c07d28a8ae8744',
+    'kalshi-market-client.js': '68f9ed06de627654634e385acc79b1efdee858de4a59801e20b401b5c0bc43dc',
     'kalshi-market-ui.css': 'fb046ada2b2e5450207e4301c0e41a193aa599e4661843fdcdb50d45ac7191ae',
-    'kalshi-market-ui.js': '93a8f485e90633a1cd70e93ab4123c1dc2161d08b3a76e41ec3cc4a0279d74f4'
+    'kalshi-market-ui.js': '03712a0eb48e5265523ec45b145fd2fa880c9435e1adf2c6ca988c78c3fa37a8'
   };
   for (const [f, sha] of Object.entries(pins)) assert.equal(createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'src/vendor/kalshi', f))).digest('hex'), sha, f);
 });

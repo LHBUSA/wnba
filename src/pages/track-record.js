@@ -7,6 +7,7 @@ import { api } from '../data/api.js';
 import { pageHead, errorState, skeleton } from '../ui/components.js';
 import { fmtDateET, fmtTimeET, american } from '../lib/format.js';
 import { teamName } from '../ui/pbe.js';
+import { loadAlgoVsMarket, trackAvmMarkup, within, AVM_POLL_MS } from '../data/kalshi.js';
 
 export const title = () => 'Track record';
 export const description = () => 'Every official PBE WNBA locked call, graded from the final score. Wins and losses stay on the board; backtests are never counted.';
@@ -35,25 +36,34 @@ function trackSummary(d) {
     ${r.calibration ? html`<section class="card section"><div class="card-head"><span class="card-title">Calibration</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Probability</th><th>Picks</th><th>Avg probability</th><th>Hit rate</th></tr></thead><tbody>${r.calibration.map((b) => html`<tr><td class="l">${pc(b.from)}–${pc(b.to)}</td><td>${b.n}</td><td>${pc(b.mean_probability)}</td><td>${pc(b.hit_rate)}</td></tr>`)}</tbody></table></div></section>` : html`<p class="note" style="margin-top:6px">${r.calibration_note}</p>`}`;
 }
 
+const avmTeam = (teamId) => teamName({ team_id: teamId }, { short: true });
+
 export async function mount(root, ctx) {
   const head = pageHead({ eyebrow: 'PBE Picks', title: 'Live track record', sub: 'Every official locked call, graded from the final score. Wins and losses stay on the board. The backtest lives on How the Model Works and is never counted here.', right: html`<div class="pbe-links"><a class="pill" href="/pbe-picks">PBE Picks</a><a class="pill" href="/pbe-picks/model">How the Model Works</a></div>` });
   render(root, html`${head}${skeleton(300)}`);
+  const avmLoad = loadAlgoVsMarket();
   const [res, acct] = await Promise.all([api.trackRecord(), api.account()]);
   if (!ctx.isCurrent()) return;
   if (!res.ok) return render(root, html`${head}${errorState(res, 'The track record')}`);
   const d = normalizeTrackData(res.data);
   const r = d.record;
 
+  let ledgerRows = [];
   let ledger = html`<section class="pbe-card pbe-teaser"><div class="pbe-head"><span class="pbe-eyebrow">Full call ledger</span><span class="pbe-lock">WNBA Pro</span></div><div class="pbe-teaser-body"><b>Every locked call, game by game</b><span>Original probability · opponent · market comparison · PBE Edge · locked time · result · model version</span></div>${raw(allAccessHeroHtml(membershipFrom(acct), { variant: 'compact' }))}${raw(allAccessDividerHtml())}<a class="btn gold pbe-cta" href="/pro?next=%2Ftrack-record">Unlock WNBA Pro</a></section>`;
   if (acct.ok && acct.data?.state === 'pro') {
     const L = await api.trackRecordLedger();
     if (!ctx.isCurrent()) return;
     if (L.ok && L.data.availability === 'MODEL_IN_VALIDATION') ledger = html`<p class="note">The per-game ledger fills from the first official lock.</p>`;
-    else if (L.ok) ledger = ledgerTable(L.data);
+    else if (L.ok) { ledger = ledgerTable(L.data); ledgerRows = L.data.rows || []; }
   }
+  // Bounded first-paint wait (it was requested with the record, so it is normally already here).
+  let avmBody = await within(avmLoad, 800);
+  if (!ctx.isCurrent()) return;
+  const avmFirst = trackAvmMarkup(avmBody ?? null, ledgerRows, avmTeam);
 
   render(root, html`${head}
     <div class="section" data-track-summary>${trackSummary(d)}</div>
+    <div class="${avmFirst ? 'section' : ''}" data-track-avm>${raw(avmFirst)}</div>
     ${r && r.official_locks === 0 ? html`<div class="callout section">${d.starts}</div>` : ''}
     <div class="section" data-track-ledger>${ledger}</div>
     <section class="card card-pad section"><span class="eyebrow">Ledger rules</span><ul class="pro-list">
@@ -62,6 +72,17 @@ export async function mount(root, ctx) {
       <li>Grades come from the final score. A correction is added as a new revision; the original grade stays visible.</li>
       <li>Losing calls are never removed. Backtests are never counted.</li>
     </ul></section>`);
+
+  let avmShown = avmFirst;
+  const paintAvm = (markup) => {
+    const host = root.querySelector('[data-track-avm]');
+    if (!host || markup === avmShown) return;
+    avmShown = markup;
+    host.innerHTML = markup;
+    host.classList.toggle('section', Boolean(markup));
+  };
+  if (avmBody === undefined) avmLoad.then((b) => { if (!ctx.isCurrent()) return; avmBody = b; paintAvm(trackAvmMarkup(b, ledgerRows, avmTeam)); });
+  let avmAt = Date.now();
 
   let refreshing = false;
   const pro = acct.ok && acct.data?.state === 'pro';
@@ -79,7 +100,14 @@ export async function mount(root, ctx) {
         const host = root.querySelector('[data-track-summary]');
         if (host) render(host, trackSummary(next));
       }
+      if (Date.now() - avmAt >= AVM_POLL_MS) {
+        avmAt = Date.now();
+        const nextAvm = await loadAlgoVsMarket();
+        if (!ctx.isCurrent()) return;
+        if (nextAvm) { avmBody = nextAvm; paintAvm(trackAvmMarkup(nextAvm, ledgerRows, avmTeam)); } // a failed read keeps what is shown
+      }
       if (pro && nextLedger?.ok) {
+        if (nextLedger.data?.rows) ledgerRows = nextLedger.data.rows;
         const host = root.querySelector('[data-track-ledger]');
         if (host) render(host, nextLedger.data.availability === 'MODEL_IN_VALIDATION'
           ? html`<p class="note">The per-game ledger fills from the first official lock.</p>`
