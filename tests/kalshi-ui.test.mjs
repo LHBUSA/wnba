@@ -122,7 +122,9 @@ test('vendored files are byte-identical to the shared client when the canonical 
   const dir = fs.existsSync(canon) ? canon : fs.existsSync(alt) ? alt : null;
   if (!dir) return; // CI has no sibling checkout; the vendor header names the canonical source.
   for (const f of ['kalshi-market-ui.js', 'kalshi-market-ui.css', 'kalshi-market-client.js']) {
-    assert.equal(read(`src/vendor/kalshi/${f}`), fs.readFileSync(path.join(dir, f), 'utf8'), f);
+    // line-ending-insensitive: a Windows checkout of the canonical repo may be CRLF; byte identity is pinned below
+    const lf = (s) => s.replace(/\r\n/g, '\n');
+    assert.equal(lf(read(`src/vendor/kalshi/${f}`)), lf(fs.readFileSync(path.join(dir, f), 'utf8')), f);
   }
 });
 
@@ -282,12 +284,12 @@ test('history: the event page mounts the market module for FINAL games; WNBACast
   assert.match(read('src/data/kalshi.js'), /marketModule\(entry, \{ placement: 'matchup-page'/);
 });
 
-test('vendored client bytes are pinned (sha256 @ propbetedge-workers ad6187a)', async () => {
+test('vendored client bytes are pinned (sha256 @ propbetedge-workers 64ca257)', async () => {
   const { createHash } = await import('node:crypto');
   const pins = {
-    'kalshi-market-client.js': '68f9ed06de627654634e385acc79b1efdee858de4a59801e20b401b5c0bc43dc',
-    'kalshi-market-ui.css': 'fb046ada2b2e5450207e4301c0e41a193aa599e4661843fdcdb50d45ac7191ae',
-    'kalshi-market-ui.js': '03712a0eb48e5265523ec45b145fd2fa880c9435e1adf2c6ca988c78c3fa37a8'
+    'kalshi-market-client.js': 'bbab54f78382f336a149b18f332bc54abe0b9c471ada3dd8ef0d67e5e5706301',
+    'kalshi-market-ui.css': 'df81df5650cc66d0bcea37c2808eaf783522ad9f921449e954f590d4ad9a2c60',
+    'kalshi-market-ui.js': '639f834c27bffed519d37eea4066d3b31e5699f7215d6ea5c07e23c2591ccc48'
   };
   for (const [f, sha] of Object.entries(pins)) assert.equal(createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'src/vendor/kalshi', f))).digest('hex'), sha, f);
 });
