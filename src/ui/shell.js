@@ -160,12 +160,6 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
             <li><a href="https://propbetedge.ai/legal">Legal</a></li>
             <li><a href="https://propbetedge.ai/support">Support</a></li>
             <li><a href="https://propbetedge.ai/media">Media</a></li>
-            <li><a href="https://propbetedge.ai/authors">Editorial Team</a></li>
-            <li><a href="https://propbetedge.ai/authors/justin-erickson">Justin Erickson</a></li>
-            <li><a href="https://propbetedge.ai/authors/propbetedge-editorial-team">PropBetEdge Editorial Team</a></li>
-            <li><a href="https://propbetedge.ai/authors/ty-whitney">Ty Whitney</a></li>
-            <li><a href="https://propbetedge.ai/authors/erik-schwartz">Erik Schwartz</a></li>
-            <li><a href="https://propbetedge.ai/editorial-standards">Editorial Standards</a></li>
             <li><a href="${NETWORK.store.href}">${NETWORK.store.label}</a></li>
             <li><a href="https://billing.stripe.com/p/login/cNi3cv2vY7em3lr4oj7wA00" target="_blank" rel="noopener noreferrer">Manage billing ↗</a></li>
             <li><a href="mailto:sales@proptechusa.ai">Contact us</a></li>
