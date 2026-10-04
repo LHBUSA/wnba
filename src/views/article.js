@@ -4,7 +4,7 @@
 //   photographic hero + credit → desk → headline → deck → byline + timestamps → body (Game Highlights after the
 //   opening section when a verified official video exists) → story links → bettor modules → evidence & method
 //   (trust layer) → related coverage.
-import { html } from '../lib/dom.js';
+import { html, raw } from '../lib/dom.js';
 import { shareBar } from '../ui/share.js';
 import { marketStrip, avatar } from '../ui/components.js';
 import { teamLogo } from '../ui/logo.js';
@@ -195,7 +195,10 @@ export function intelligenceView(a) {
   </section>`;
 }
 
-export function articleView({ article: a, related = [], series = [] }) {
+// marketSlot: the article-market/1 slot HTML (src/data/article-market.js), built by the client page only; the
+// publishing Worker never passes one, so its first response is unchanged. Placed after the first editorial section.
+export function articleView({ article: a, related = [], series = [], marketSlot = '' }) {
+  const market = marketSlot ? raw(marketSlot) : '';
   const naturalNews = a.commission?.presentation === 'natural_news';
   const teams = (a.entities || []).filter((e) => e && e.type === 'team');
   const players = (a.entities || []).filter((e) => e && e.type === 'player');
@@ -275,8 +278,8 @@ export function articleView({ article: a, related = [], series = [] }) {
       <div class="story-layout ${indexAside ? 'story-layout--index' : ''}">
         <div class="story-body art-body">
           ${a.sections?.length
-            ? html`${a.body.slice(0, a.sections[0].first).filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : indexDepth && s.render === 'winba_team_depth' ? indexDepth : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${sectionVisual(a, s)}${articleAnalytics(a, { afterSection: i })}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
-            : a.body.filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
+            ? html`${a.body.slice(0, a.sections[0].first).filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${a.sections.map((s, i) => (indexBoard && s.render === 'winba_leaders' ? '' : indexDepth && s.render === 'winba_team_depth' ? indexDepth : html`${s.title ? html`<h2>${s.title}</h2>` : ''}${a.body.slice(s.first, s.first + s.count).filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${sectionVisual(a, s)}${articleAnalytics(a, { afterSection: i })}${winbaPara(s.key || s.title)}${i === 0 ? indexBoard : ''}${i === 0 ? market : ''}${i === 0 && a.sections.length > 1 ? gameHighlights(a) : ''}`))}`
+            : html`${a.body.filter((p) => !suppressVisualizedParagraph(a, p)).map((p) => html`<p>${linkArticleEntities(p, linkedEntities, linkedSeen)}</p>`)}${market}`}${winbaTrailing}${a.sections?.length > 1 ? '' : gameHighlights(a)}
         </div>
         <aside class="story-aside">
           ${players.length ? html`<section><h2 class="aside-title">In this story</h2>

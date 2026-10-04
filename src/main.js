@@ -25,6 +25,7 @@ import './styles/polish.css';
 import './styles/preferred-source.css';
 import './styles/no-scrollbars.css';
 import './vendor/kalshi/kalshi-market-ui.css';
+import './vendor/kalshi/article-market-ui.css';
 import './styles/kalshi.css';
 import { mountShell } from './ui/shell.js';
 import { installPhotoFallback } from './ui/photo.js';
