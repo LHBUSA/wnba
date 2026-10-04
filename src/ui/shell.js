@@ -155,6 +155,9 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
             <li><a class="foot-net-aa" href="${ALL_ACCESS_URL}" rel="noopener" data-all-access-sell>All Access · ${ALL_ACCESS_OFFER.price}</a></li>
             <li><a href="${NETWORK.news.href}">${NETWORK.news.label}</a></li>
             <li><a href="${NETWORK.learn.href}">${NETWORK.learn.label}</a></li>
+            <li><a href="https://propbetedge.ai/terms">Terms</a></li>
+            <li><a href="https://propbetedge.ai/support">Support</a></li>
+            <li><a href="https://propbetedge.ai/media">Media</a></li>
             <li><a href="${NETWORK.store.href}">${NETWORK.store.label}</a></li>
             <li><a href="https://billing.stripe.com/p/login/cNi3cv2vY7em3lr4oj7wA00" target="_blank" rel="noopener noreferrer">Manage billing ↗</a></li>
             <li><a href="mailto:sales@proptechusa.ai">Contact us</a></li>
