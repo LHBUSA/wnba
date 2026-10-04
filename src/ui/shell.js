@@ -6,7 +6,7 @@ import { preferredSourceHtml } from './preferred-source.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-09-30.1';
+export const SHELL_REV = '2026-10-03.1';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -163,6 +163,10 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           </ul>
           <div class="sports-rail" aria-label="PropBetEdge sports network">
             ${NETWORK.sports.map((s) => html`<a href="${s.href}" class="${s.key === CURRENT_SPORT ? 'here' : ''}" ${s.key === CURRENT_SPORT ? raw('aria-current="true"') : ''} title="${s.name}">${s.label}</a>`)}
+          </div>
+          <div class="foot-intel" aria-label="PropBetEdge Intelligence">
+            <span class="foot-intel-k">Intelligence</span>
+            ${NETWORK.products.map((p) => html`<a href="${p.href}">${p.label}</a>`)}
           </div>
           <p class="note foot-network-note">One research network across the major sports desks.</p>
         </div>

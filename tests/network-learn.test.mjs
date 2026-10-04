@@ -25,8 +25,8 @@ test('SHELL_REV moved past the playoffs shell so clients reconcile the footer be
 });
 
 test('sports rail lists Golf after Soccer, read from the registry, and SHELL_REV moved for it', () => {
-  assert.deepEqual(NETWORK.sports.map((s) => s.key), ['mlb', 'nfl', 'nba', 'wnba', 'nhl', 'ufc', 'tennis', 'soccer', 'golf']);
-  assert.deepEqual(NETWORK.sports.at(-1), { key: 'golf', label: 'Golf', name: 'Golf Intelligence', href: 'https://golf.propbetedge.ai/' });
+  assert.deepEqual(NETWORK.sports.map((s) => s.key), ['mlb', 'nfl', 'nba', 'wnba', 'nhl', 'ufc', 'tennis', 'soccer', 'golf', 'f1']);
+  assert.deepEqual(NETWORK.sports.find((s) => s.key === 'golf'), { key: 'golf', label: 'Golf', name: 'Golf Intelligence', href: 'https://golf.propbetedge.ai/' });
   const doc = String(shellHtml());
   const rail = doc.slice(doc.indexOf('sports-rail'));
   assert.match(rail, /<a href="https:\/\/golf\.propbetedge\.ai\/"[^>]*title="Golf Intelligence">Golf<\/a>/);

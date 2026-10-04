@@ -371,6 +371,9 @@ nav[aria-label='Teams'] + section.card.card-pad > div > div:last-child .btn-pro:
   background: linear-gradient(180deg, var(--gold-bright), var(--gold));
   border-color: transparent;
 }
+.foot-intel { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin-top: 14px; }
+.foot-intel-k { color: rgba(255,255,255,.48); font: 700 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; }
+.foot-intel a { font-weight: 650; }
 .foot-network-note { margin-top: 14px; line-height: 1.55; }
 
 .foot-security {

@@ -1,5 +1,8 @@
 // PropBetEdge network registry (shape follows LHBUSA/UFC web/lib/network.ts).
 // Discord invite is defined exactly once, network-wide.
+// Family parity: sports/products/network URLs must match the vendored canonical registry
+// src/ui/family.json (LHBUSA/propbetedge-workers shared/network/family.json); guarded by
+// tests/network-family-parity.test.mjs.
 
 import { PROPBETEDGE_X_URL, PROPBETEDGE_X_HANDLE } from '../seo/site.js';
 
@@ -25,6 +28,12 @@ export const NETWORK = Object.freeze({
     { key: 'ufc', label: 'UFC', name: 'Fight Intelligence', href: 'https://ufc.propbetedge.ai/' },
     { key: 'tennis', label: 'Tennis', name: 'Tennis Intelligence', href: 'https://tennis.propbetedge.ai/' },
     { key: 'soccer', label: 'Soccer', name: 'Soccer Intelligence', href: 'https://soccer.propbetedge.ai/' },
-    { key: 'golf', label: 'Golf', name: 'Golf Intelligence', href: 'https://golf.propbetedge.ai/' }
+    { key: 'golf', label: 'Golf', name: 'Golf Intelligence', href: 'https://golf.propbetedge.ai/' },
+    { key: 'f1', label: 'F1', name: 'F1 Intelligence', href: 'https://f1.propbetedge.ai/' }
+  ],
+  // Non-sport PropBetEdge intelligence products. Kept OUT of `sports` so nothing that iterates
+  // sports (rail, counts) picks them up; rendered as their own footer group.
+  products: [
+    { key: 'predictions', kind: 'product', label: 'PropBetEdge Predictions', href: 'https://predictions.propbetedge.ai/' }
   ]
 });

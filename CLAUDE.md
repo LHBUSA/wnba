@@ -215,20 +215,13 @@ WNBA should get its own visual personality. Avoid unlicensed league marks and te
 
 ## 8. Network / growth
 
-Shared PropBetEdge footer:
+Shared PropBetEdge footer — the family list is NOT maintained here. Source of truth:
 
-PROPBETEDGE:
-- Sports News
-- Store
-- Discord → `https://discord.gg/kb5zCTHbME`
-
-SPORTS target:
-- MLB
-- NFL
-- NBA
-- WNBA
-- NHL
-- UFC
+- Canonical registry: LHBUSA/propbetedge-workers `shared/network/pbe-network.js`, mirrored to `shared/network/family.json` and vendored verbatim here as `src/ui/family.json` (never hand-edit; re-vendor).
+- Local footer registry: `src/ui/network.js` (`NETWORK.sports` = the ten sports MLB · NFL · NBA · WNBA · NHL · UFC · Tennis · Soccer · Golf · F1; `NETWORK.products` = PropBetEdge Predictions, a non-sport product rendered in its own "Intelligence" row, never in the sports rail or any sport count). Rendered only by `src/ui/shell.js`.
+- `tests/network-family-parity.test.mjs` fails if `src/ui/network.js` drifts from `src/ui/family.json`.
+- Any footer change: bump `SHELL_REV` in `src/ui/shell.js` and redeploy the `wnba-web` Worker from a clean `git archive` (it bundles shell.js for SSR routes).
+- Discord → `https://discord.gg/kb5zCTHbME` (defined once in `src/ui/network.js`).
 
 Cross-funnel WNBA → NBA in contextually useful places (basketball network, offseason continuity, shared research methodology), without treating WNBA as an NBA subpage.
 
