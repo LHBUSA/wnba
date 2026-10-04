@@ -76,8 +76,8 @@ test('ineligible / failed reads render nothing; read uses the owned markets Work
   assert.equal(called, false, 'a pre-activation story never even reads');
 });
 
-test('vendored article-market client pinned byte-for-byte to propbetedge-workers 9d887f3 (SHA-256)', () => {
+test('vendored article-market client pinned byte-for-byte to propbetedge-workers 8d3b73f (SHA-256)', () => {
   const sha = (f) => createHash('sha256').update(readFileSync(new URL(`../src/vendor/kalshi/${f}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n')).digest('hex');
-  assert.equal(sha('article-market-ui.js'), '6d9e875beb080ed84e5b4806c41392c1990402b91b2dc40528f4d0bb53e4d3c6');
-  assert.equal(sha('article-market-ui.css'), 'cfe70d8ca4cb90715e28ff73d71ece09d1066f86e3b317e08c49a1058c888737');
+  assert.equal(sha('article-market-ui.js'), '2149e2854142657a554ef119533680c77657f0d2b1ea8406fe4de711e4fbe635');
+  assert.equal(sha('article-market-ui.css'), '60c223f6afbe32059ea272aeaff648759c254f3494106c41822afaf328c7aa4e');
 });
