@@ -11,6 +11,7 @@
   background: rgba(255, 255, 255, .018);
 }
 .foot-world .pbe-psrc { grid-column: 1 / -1; }
+.foot-world .foot-trust-grid .pbe-psrc { grid-column: auto; height: 100%; }
 .pbe-psrc-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .pbe-psrc-eyebrow {
   color: var(--gold);

@@ -6,7 +6,7 @@ import { preferredSourceHtml } from './preferred-source.js';
 
 // Shell revision lets the latest Vercel client reconcile header/footer chrome when the
 // publishing Worker is still serving an older SSR shell. Main content is never replaced.
-export const SHELL_REV = '2026-10-03.1';
+export const SHELL_REV = '2026-10-04.1';
 
 // Desktop header: keep the highest-frequency game/research destinations flat.
 // Lower-frequency league/reference destinations live behind one "More" disclosure.
@@ -135,7 +135,7 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
         </div>
 
         <div class="foot-col">
-          <h4>Research &amp; Trust</h4>
+          <h4>Research &amp; WNBA Trust</h4>
           <ul>
             <li><a href="/playoffs">Playoffs &amp; bracket</a></li>
             <li><a href="/matchups">Matchups</a></li>
@@ -155,10 +155,6 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
             <li><a class="foot-net-aa" href="${ALL_ACCESS_URL}" rel="noopener" data-all-access-sell>All Access · ${ALL_ACCESS_OFFER.price}</a></li>
             <li><a href="${NETWORK.news.href}">${NETWORK.news.label}</a></li>
             <li><a href="${NETWORK.learn.href}">${NETWORK.learn.label}</a></li>
-            <li><a href="https://propbetedge.ai/about">About PropBetEdge</a></li>
-            <li><a href="https://propbetedge.ai/terms">Terms</a></li>
-            <li><a href="https://propbetedge.ai/legal">Legal</a></li>
-            <li><a href="https://propbetedge.ai/support">Support</a></li>
             <li><a href="${NETWORK.store.href}">${NETWORK.store.label}</a></li>
             <li><a href="https://billing.stripe.com/p/login/cNi3cv2vY7em3lr4oj7wA00" target="_blank" rel="noopener noreferrer">Manage billing ↗</a></li>
             <li><a href="mailto:sales@proptechusa.ai">Contact us</a></li>
@@ -175,16 +171,38 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <p class="note foot-network-note">One research network across the major sports desks.</p>
         </div>
 
-        ${preferredSourceHtml({ surface: 'footer' })}
+        <div class="foot-global-row" aria-label="PropBetEdge editorial, trust and legal">
+          <section>
+            <h4>Editorial &amp; Trust</h4>
+            <p class="foot-global-primary">
+              <a href="https://propbetedge.ai/authors"><strong>Editorial Team</strong></a>
+              <a href="https://propbetedge.ai/editorial-standards"><strong>Editorial Standards</strong></a>
+            </p>
+          </section>
+          <section>
+            <h4>Company &amp; Legal</h4>
+            <p>
+              <a href="https://propbetedge.ai/about">About PropBetEdge</a>
+              <a href="https://propbetedge.ai/privacy">Privacy</a>
+              <a href="https://propbetedge.ai/terms">Terms</a>
+              <a href="https://propbetedge.ai/legal">Legal</a>
+              <a href="https://propbetedge.ai/support">Support</a>
+              <a href="https://propbetedge.ai/media">Media</a>
+            </p>
+          </section>
+        </div>
 
-        <div class="foot-security">
-          <a class="foot-mother-badge" href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Verify PropTechUSA.ai Mother AI protection status (opens in a new tab)">
-            <img src="${MOTHER_BADGE_URL}" alt="Mother AI Protected — AI Controls Active" width="236" height="48" loading="lazy" decoding="async" />
-          </a>
-          <div class="foot-security-copy">
-            <strong>Mother AI Protected</strong>
-            <span>Live verification for the PropTechUSA.ai network security layer.</span>
-            <a href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer">Verify protection status →</a>
+        <div class="foot-trust-grid" aria-label="Trust and discovery">
+          ${preferredSourceHtml({ surface: 'footer' })}
+          <div class="foot-security">
+            <a class="foot-mother-badge" href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Verify PropTechUSA.ai Mother AI protection status (opens in a new tab)">
+              <img src="${MOTHER_BADGE_URL}" alt="Mother AI Protected — AI Controls Active" width="236" height="48" loading="lazy" decoding="async" />
+            </a>
+            <div class="foot-security-copy">
+              <strong>Mother AI Protected</strong>
+              <span>Live verification for the PropTechUSA.ai network security layer.</span>
+              <a href="${MOTHER_VERIFY_URL}" target="_blank" rel="noopener noreferrer">Verify protection status →</a>
+            </div>
           </div>
         </div>
 
