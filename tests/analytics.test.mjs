@@ -23,30 +23,29 @@ function browser(url = 'https://wnba.propbetedge.ai/players/4433403') {
   return { win, doc, appended, listeners };
 }
 
-test('GA4 is consent-gated on the production WNBA host and page views flow through the privacy runtime', () => {
+test('GA4 loads only on the production WNBA host and queues config without an automatic duplicate page view', () => {
   const prod = browser();
-  const calls = [];
-  prod.win.PBEPrivacy = {
-    analyticsAllowed: () => true,
-    initAnalytics: (opts) => calls.push(['init', opts]),
-    track: (name, payload) => { calls.push(['track', name, payload]); return true; },
-    whenAnalyticsAllowed: (fn) => fn(),
-  };
-
   assert.equal(initAnalytics({ win: prod.win, doc: prod.doc }), true);
-  assert.equal(prod.appended.length, 0, 'the bundled module never injects Google directly');
-  assert.deepEqual(calls[0], ['init', { surface: 'wnba', analytics: true, sendPageView: false }]);
+  assert.equal(prod.appended.length, 1);
+  assert.equal(prod.appended[0].src, `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`);
+  assert.equal(prod.appended[0].dataset.pbeGa4, GA_ID);
+
+  const queue = prod.win.dataLayer.map((args) => Array.from(args));
+  const config = queue.find((args) => args[0] === 'config' && args[1] === GA_ID);
+  assert.ok(config, 'GA4 config is queued');
+  assert.equal(config[2].send_page_view, false);
+  assert.equal(config[2].cookie_domain, '.propbetedge.ai');
 
   assert.equal(trackPageView({ routeId: 'player', path: '/players/4433403', win: prod.win, doc: prod.doc }), true);
-  const event = calls.find((args) => args[0] === 'track' && args[1] === 'page_view');
-  assert.ok(event, 'manual SPA page_view is sent through the privacy runtime');
+  const event = prod.win.dataLayer.map((args) => Array.from(args)).find((args) => args[0] === 'event' && args[1] === 'page_view');
+  assert.ok(event, 'manual SPA page_view is queued');
   assert.equal(event[2].page_path, '/players/4433403');
   assert.equal(event[2].pbe_route_id, 'player');
   assert.equal(event[2].pbe_surface, 'wnba');
 
   const preview = browser('https://wnba-abc-justins-projects-ad4f4bb7.vercel.app/');
-  preview.win.PBEPrivacy = prod.win.PBEPrivacy;
   assert.equal(initAnalytics({ win: preview.win, doc: preview.doc }), false);
+  assert.equal(preview.appended.length, 0);
 });
 
 test('WNBA shell has no inline analytics bootstrap and production CSP allows only the required GA endpoints', () => {
