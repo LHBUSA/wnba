@@ -20,58 +20,12 @@ function gtag(win, ...args) {
   if (typeof win?.gtag === 'function') win.gtag(...args);
 }
 
-export function initAnalytics({ win = window, doc = document } = {}) {
-  if (!isProductionWnbaHost(win?.location?.hostname)) return false;
-
-  win.dataLayer = win.dataLayer || [];
-  win.gtag = win.gtag || function () { win.dataLayer.push(arguments); };
-
-  gtag(win, 'js', new Date());
-  gtag(win, 'set', { pbe_surface: GA_SURFACE });
-  gtag(win, 'config', GA_ID, {
-    send_page_view: false,
-    cookie_domain: '.propbetedge.ai',
-    cookie_flags: 'SameSite=Lax;Secure'
-  });
-
-  const src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_ID)}`;
-  if (!doc.querySelector(`script[data-pbe-ga4="${GA_ID}"]`)) {
-    const script = doc.createElement('script');
-    script.async = true;
-    script.src = src;
-    script.dataset.pbeGa4 = GA_ID;
-    script.crossOrigin = 'anonymous';
-    doc.head.appendChild(script);
-  }
-
-  if (!networkClickInstalled) {
-    networkClickInstalled = true;
-    doc.addEventListener('click', (event) => {
-      const target = event.target?.closest?.('a[href]');
-      if (!target) return;
-
-      try {
-        const url = new URL(target.href, win.location.href);
-        const currentHost = String(win.location.hostname || '').toLowerCase();
-        const targetHost = String(url.hostname || '').toLowerCase();
-        const inNetwork = targetHost === 'propbetedge.ai' || targetHost.endsWith('.propbetedge.ai');
-
-        if (inNetwork && targetHost !== currentHost) {
-          gtag(win, 'event', 'pbe_network_click', {
-            pbe_surface: GA_SURFACE,
-            source_host: currentHost,
-            target_host: targetHost,
-            link_url: url.href
-          });
-        }
-      } catch {
-        // Ignore malformed/non-http hrefs.
-      }
-    }, { capture: true });
-  }
-
-  enabled = true;
-  return true;
+export function initAnalytics({ win = window } = {}) {
+  if (!isProductionHost(win?.location?.hostname)) return false;
+  const p = win?.PBEPrivacy;
+  if (!p) return false;
+  p.initAnalytics({ surface: GA_SURFACE, analytics: true, sendPageView: false });
+  return p.analyticsAllowed();
 }
 
 export function trackPageView({ routeId = null, path = null, win = window, doc = document } = {}) {
