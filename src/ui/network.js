@@ -31,9 +31,10 @@ export const NETWORK = Object.freeze({
     { key: 'golf', label: 'Golf', name: 'Golf Intelligence', href: 'https://golf.propbetedge.ai/' },
     { key: 'f1', label: 'F1', name: 'F1 Intelligence', href: 'https://f1.propbetedge.ai/' }
   ],
-  // Non-sport PropBetEdge intelligence products. Kept OUT of `sports` so nothing that iterates
-  // sports (rail, counts) picks them up; rendered as their own footer group.
+  // Non-sport All Access products. Kept OUT of `sports` so nothing that iterates sports picks them up.
   products: [
-    { key: 'predictions', kind: 'product', label: 'PropBetEdge Predictions', href: 'https://predictions.propbetedge.ai/' }
+    { key: 'members', kind: 'product', label: 'Command Center', href: 'https://members.propbetedge.ai/' },
+    { key: 'compare', kind: 'product', label: 'Compare', href: 'https://compare.propbetedge.ai/' },
+    { key: 'predictions', kind: 'product', label: 'Predictions', href: 'https://predictions.propbetedge.ai/' }
   ]
 });
