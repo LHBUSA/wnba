@@ -16,28 +16,29 @@ test('sports: same set, order and canonical URLs as the family registry (self ma
   assert.deepEqual(NETWORK.sports.map(local), FAMILY.sports.map((s) => s.url));
 });
 
-test('Predictions is a separate non-sport product with the canonical URL', () => {
+test('All Access products are separate non-sport products with canonical URLs', () => {
   assert.deepEqual(NETWORK.products.map((p) => [p.key, p.href]), FAMILY.products.map((p) => [p.key, p.url]));
-  assert.ok(!NETWORK.sports.some((s) => s.key === 'predictions' || /predictions\./.test(s.href)));
+  for (const p of NETWORK.products) assert.ok(!NETWORK.sports.some((s) => s.key === p.key || s.href === p.href), p.key);
   assert.ok(NETWORK.products.every((p) => p.kind === 'product'));
 });
 
 test('network URLs: PropBetEdge home, All Access, Learn', () => {
   const want = Object.fromEntries(FAMILY.network.map((n) => [n.key, n.url]));
   assert.equal(NETWORK.news.href, want.hub);
-  assert.equal(ALL_ACCESS_URL, want.all_access);
+  assert.equal(ALL_ACCESS_URL, FAMILY.all_access.find((n) => n.key === 'all_access').url);
   assert.equal(NETWORK.learn.href, want.learn);
 });
 
-test('rendered footer: exactly one canonical F1 and one Predictions link, no retired hosts, no "11 sports"', () => {
+test('rendered footer: one F1 and each All Access product link, no retired hosts, no "11 sports"', () => {
   const doc = String(shellHtml());
   const foot = doc.slice(doc.indexOf('<footer'), doc.indexOf('</footer>'));
   assert.equal((foot.match(/href="https:\/\/f1\.propbetedge\.ai\/"/g) || []).length, 1);
-  assert.equal((foot.match(/href="https:\/\/predictions\.propbetedge\.ai\/"/g) || []).length, 1);
+  for (const p of FAMILY.products) assert.equal((foot.match(new RegExp(`href=\"${p.url.replace(/[./]/g, '\\\\  assert.equal((foot.match(/href="https:\/\/predictions\.propbetedge\.ai\/"/g) || []).length, 1);
   assert.equal((doc.match(/f1\.propbetedge\.ai/g) || []).length, 1);
-  assert.equal((doc.match(/predictions\.propbetedge\.ai/g) || []).length, 1);
+  assert.equal((doc.match(/predictions\.propbetedge\.ai/g) || []).length, 1);')}\"`, 'g')) || []).length, 1, p.key);
+  assert.equal((doc.match(/f1\.propbetedge\.ai/g) || []).length, 1);
   const rail = foot.slice(foot.indexOf('sports-rail'), foot.indexOf('foot-intel'));
-  assert.ok(!rail.includes('predictions.propbetedge.ai'), 'Predictions never rendered inside the sports rail');
+  for (const p of FAMILY.products) assert.ok(!rail.includes(new URL(p.url).host), `${p.key} never rendered inside the sports rail`);
   for (const h of FAMILY.retired_hosts) assert.ok(!doc.includes(h), h);
   assert.ok(!/http:\/\/[^"]*propbetedge\.ai/.test(foot));
   assert.ok(!/\b(11|eleven) sports\b/i.test(doc));
