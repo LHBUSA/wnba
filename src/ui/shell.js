@@ -164,8 +164,9 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
           <div class="sports-rail" aria-label="PropBetEdge sports network">
             ${NETWORK.sports.map((s) => html`<a href="${s.href}" class="${s.key === CURRENT_SPORT ? 'here' : ''}" ${s.key === CURRENT_SPORT ? raw('aria-current="true"') : ''} title="${s.name}">${s.label}</a>`)}
           </div>
-          <div class="foot-intel" aria-label="PropBetEdge Intelligence">
-            <span class="foot-intel-k">Intelligence</span>
+          <div class="foot-intel" aria-label="PropBetEdge All Access">
+            <span class="foot-intel-k">All Access</span>
+            <a href="https://propbetedge.ai/pro">All Access</a>
             ${NETWORK.products.map((p) => html`<a href="${p.href}">${p.label}</a>`)}
           </div>
           <p class="note foot-network-note">One research network across the major sports desks.</p>
