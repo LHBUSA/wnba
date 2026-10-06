@@ -32,10 +32,8 @@ test('network URLs: PropBetEdge home, All Access, Learn', () => {
 test('rendered footer: one F1 and each All Access product link, no retired hosts, no "11 sports"', () => {
   const doc = String(shellHtml());
   const foot = doc.slice(doc.indexOf('<footer'), doc.indexOf('</footer>'));
-  assert.equal((foot.match(/href="https:\/\/f1\.propbetedge\.ai\/"/g) || []).length, 1);
-  for (const p of FAMILY.products) assert.equal((foot.match(new RegExp(`href=\"${p.url.replace(/[./]/g, '\\\\  assert.equal((foot.match(/href="https:\/\/predictions\.propbetedge\.ai\/"/g) || []).length, 1);
-  assert.equal((doc.match(/f1\.propbetedge\.ai/g) || []).length, 1);
-  assert.equal((doc.match(/predictions\.propbetedge\.ai/g) || []).length, 1);')}\"`, 'g')) || []).length, 1, p.key);
+  assert.equal(foot.split('href="https://f1.propbetedge.ai/"').length - 1, 1);
+  for (const p of FAMILY.products) assert.equal(foot.split(`href="${p.url}"`).length - 1, 1, p.key);
   assert.equal((doc.match(/f1\.propbetedge\.ai/g) || []).length, 1);
   const rail = foot.slice(foot.indexOf('sports-rail'), foot.indexOf('foot-intel'));
   for (const p of FAMILY.products) assert.ok(!rail.includes(new URL(p.url).host), `${p.key} never rendered inside the sports rail`);
