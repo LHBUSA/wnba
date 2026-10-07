@@ -30,7 +30,6 @@ import { newsroomHealthReport } from './newsroom-health.js';
 import { readCallLog, costReport, costUsd, governanceState, invariantState } from './openai-cost.js';
 import { reeditPlan } from './editorial-pass.js';
 import { ARTICLE_RUN_MIN_GAP_MS } from './articles-run.js';
-import { readBlob, putBlobsIfChanged, blobForceDue } from './blob-writes.js';
 
 const SERVICE = 'wnba-news';
 const VERSION = '2.0.0';
@@ -168,17 +167,15 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
   const now = Date.parse(startedAt);
   const { dict: rawDict, fresh: dictFresh, error: dictError } = await dictionary(env);
   const dict = buildDictionary(rawDict);
-  // Blobs are read as exact text so the end of the pass can skip rewriting any that did not change (blob-writes.js).
-  const blobSeen = new Map();
   const [storeRaw, intlRaw, validatorsRaw, healthRaw, registryRaw, legacyClusters] = await Promise.all([
-    readBlob(env.NEWS_KV, 'news:v1:items', blobSeen),
+    env.NEWS_KV.get('news:v1:items', 'json'),
     // International lane: national-team / FIBA / Olympic items. The WNBA relevance guard is unchanged — these items
     // do not enter the WNBA feed unless they already qualify — but they are kept, attributed, for the international desk.
-    readBlob(env.NEWS_KV, 'news:v1:intl-items', blobSeen),
-    readBlob(env.NEWS_KV, 'news:v1:http', blobSeen),
-    readBlob(env.NEWS_KV, 'news:v1:source-health', blobSeen),
-    readBlob(env.NEWS_KV, 'news:v1:events', blobSeen),
-    readBlob(env.NEWS_KV, 'news:v1:clusters', blobSeen)
+    env.NEWS_KV.get('news:v1:intl-items', 'json'),
+    env.NEWS_KV.get('news:v1:http', 'json'),
+    env.NEWS_KV.get('news:v1:source-health', 'json'),
+    env.NEWS_KV.get('news:v1:events', 'json'),
+    env.NEWS_KV.get('news:v1:clusters', 'json')
   ]);
   const store = storeRaw || {};
   const intlStore = intlRaw || {};
@@ -249,15 +246,14 @@ async function runIngest(env, trigger, { forceArticles = false, backfillInternat
 
   for (const run of runs) health[run.source_id] = updateHealth(health[run.source_id], srcById.get(run.source_id), run, { now, cronMinutes: CRON_MINUTES });
 
-  const blobWrites = await putBlobsIfChanged(env.NEWS_KV, [
-    ['news:v1:intl-items', intlStore],
-    ['news:v1:items', store],
-    ['news:v1:clusters', clusters],
-    ['news:v1:events', registry],
-    ['news:v1:http', validators],
-    ['news:v1:source-health', health]
-  ], blobSeen, { force: blobForceDue(trigger, now, CRON_MINUTES) });
-  console.log(JSON.stringify({ evt: 'wnba_news_blob_writes', trigger, written: blobWrites.written, unchanged: blobWrites.unchanged }));
+  await Promise.all([
+    env.NEWS_KV.put('news:v1:intl-items', JSON.stringify(intlStore)),
+    env.NEWS_KV.put('news:v1:items', JSON.stringify(store)),
+    env.NEWS_KV.put('news:v1:clusters', JSON.stringify(clusters)),
+    env.NEWS_KV.put('news:v1:events', JSON.stringify(registry)),
+    env.NEWS_KV.put('news:v1:http', JSON.stringify(validators)),
+    env.NEWS_KV.put('news:v1:source-health', JSON.stringify(health))
+  ]);
 
   // Breaking path: a new material roster/injury/league event from an official source (or corroborated high
   // materiality) runs the article pass now instead of waiting for the regular ten-minute article cadence.

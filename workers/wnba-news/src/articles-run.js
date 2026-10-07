@@ -17,7 +17,6 @@ import { articleIdentityFailures, auditStoredIdentity, IDENTITY_VERSION } from '
 import { regularSeasonIds, playoffContext, seasonOverTeams, PLAYOFF_CONTEXT_VERSION } from './playoff-context.js';
 import { makeEditorialGate } from './editorial-pass.js';
 import { applyCorrections, CORRECTIONS_VERSION } from './corrections.js';
-import { putBlobsIfChanged, blobForceDue } from './blob-writes.js';
 
 const et = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replaceAll('-', '');
 const add = (s, n) => { const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8) + n)); return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`; };
@@ -115,9 +114,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
   let coverageDecisions = [];
   const deskDecisions = {};
   let trendDecisions = null; // the COMPLETE trend-desk measurement of this pass (status keeps a trimmed copy)
-  // Exact stored text, so the end of the pass skips rewriting an index that did not change (blob-writes.js).
-  const priorIndexText = await env.NEWS_KV.get('art:v1:index');
-  const priorIndex = (priorIndexText ? JSON.parse(priorIndexText) : null) || [];
+  const priorIndex = (await env.NEWS_KV.get('art:v1:index', 'json')) || [];
   // Backfill: regenerate EXISTING international stories (same id, slug, origin) with the current generator.
   const backfill = backfillInternational ? new Set(priorIndex.filter((c) => c.kind === 'international' && !c.superseded_by).map((c) => (c.entities || []).find((e) => e?.type === 'intl_game')?.id).filter(Boolean).map(String)) : null;
   // Trends run once per ET day per generator version: a new trend generator is picked up by the normal pass.
@@ -314,7 +311,7 @@ export async function runArticles(env, { apiGet, dict, externalItems, force = fa
     c.quality_state = review.state;
     c.quality_review = review;
   }
-  await putBlobsIfChanged(env.NEWS_KV, [['art:v1:index', next]], new Map([['art:v1:index', priorIndexText ?? null]]), { force: blobForceDue(force || backfillInternational ? 'manual' : 'cron', now, ARTICLE_RUN_MIN_GAP_MS / 60e3 + 1) });
+  await env.NEWS_KV.put('art:v1:index', JSON.stringify(next));
   await env.NEWS_KV.put('art:v1:held', JSON.stringify(held.slice(0, 100)));
   const status = { at: started, trigger: backfillInternational ? 'backfill_international' : breaking ? 'breaking' : force ? 'forced' : 'cadence', backfill: backfill ? [...backfill] : null, version: ARTICLE_VERSION, brief_version: BRIEF_VERSION, reconcile_version: RECONCILE_VERSION, runs, produced: produced.length, written, held: held.length, published_total: next.filter(listedCard).length, legacy_policy: LEGACY_POLICY_VERSION, upgrades_attempted: [...regenerations.entries()].map(([id, r]) => ({ id, rebuilt: Boolean(r), passed: Boolean(r?.passed) })), depth_version: DEPTH_VERSION, newsroom_health: newsroomHealth(next, { produced: publishable, held, events }), identity_version: IDENTITY_VERSION, integrity_audit: integrityAudit, coverage_decisions: coverageDecisions.slice(0, 60), desk_decisions: deskDecisions, demotions, corrections: { version: CORRECTIONS_VERSION, applied: corrections }, unforced_previews_retired: unforced, legacy_retired: legacyRetired, editorial: { ...edStats, budget: budgetReport() }, lifecycle: { novelty, trend: trendLifecycle, repairs: repairs.slice(0, 40), events: events.slice(0, 40) }, subrequests: meter(), errors: errors.slice(0, 10) };
   await env.NEWS_KV.put('art:v1:last_run', JSON.stringify(status));
