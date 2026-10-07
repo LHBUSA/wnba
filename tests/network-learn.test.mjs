@@ -15,7 +15,8 @@ test('PropBetEdge Network footer renders Learn once, same-tab, beside the existi
   const col = doc.slice(doc.indexOf('foot-network-links'), doc.indexOf('sports-rail'));
   assert.match(col, /<li><a href="https:\/\/learn\.propbetedge\.ai\/">Learn<\/a><\/li>/);
   assert.equal((doc.match(/learn\.propbetedge\.ai/g) || []).length, 1);
-  for (const s of ['All Access', 'Sports News', 'Store', 'Manage billing', 'Discord']) assert.ok(col.includes(s), s);
+  for (const s of ['All Access', 'Sports News', 'Store', 'Manage billing']) assert.ok(col.includes(s), s);
+  assert.doesNotMatch(col, /Discord|discord\.gg/i, 'Discord is retired from the brand footer');
   const shellSrc = readFileSync(new URL('../src/ui/shell.js', import.meta.url), 'utf8');
   assert.ok(!/learn\.propbetedge\.ai/.test(shellSrc), 'URL lives only in src/ui/network.js');
 });
