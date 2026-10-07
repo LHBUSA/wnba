@@ -158,7 +158,6 @@ export function shellHtml({ main = '', ssrPath = null } = {}) {
             <li><a href="${NETWORK.store.href}">${NETWORK.store.label}</a></li>
             <li><a href="https://billing.stripe.com/p/login/cNi3cv2vY7em3lr4oj7wA00" target="_blank" rel="noopener noreferrer">Manage billing ↗</a></li>
             <li><a href="mailto:sales@proptechusa.ai">Contact us</a></li>
-            <li><a href="${NETWORK.discord.href}">${NETWORK.discord.label}</a></li>
             <li><a class="foot-x" href="${NETWORK.x.href}" target="_blank" rel="noopener noreferrer" aria-label="${NETWORK.x.title} (${NETWORK.x.label})" title="${NETWORK.x.title}"><span aria-hidden="true">𝕏</span> ${NETWORK.x.label}</a></li>
           </ul>
           <div class="sports-rail" aria-label="PropBetEdge sports network">
