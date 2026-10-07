@@ -272,14 +272,40 @@ export async function cachedJson({
   return { body: null, fetchedAt: null, cache: 'none', error: fresh.error };
 }
 
-async function maybeWriteKv(kv, key, body, fetchedAt, minIntervalS) {
+// Change-only last-good writes. The write mark `${key}:w` holds "<written_at_ms>|<sha256 of the body JSON>".
+// A refresh whose body is byte-identical to the stored copy skips both puts until this many seconds have
+// passed since the last real write; the mark then expires and the next refresh rewrites (forced reconcile).
+// Changed bodies keep the original cadence (at most one write per kvWriteMinIntervalS).
+export const KV_LASTGOOD_FORCE_S = 30 * 60;
+export const KV_LASTGOOD_TTL_S = 60 * 60 * 24 * 14;
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export function parseWriteMark(raw) {
+  if (raw === null || raw === undefined || raw === '') return null;
+  const [at, h] = String(raw).split('|');
+  const ms = Number(at);
+  return Number.isFinite(ms) ? { at: ms, h: h || null } : null;
+}
+
+export async function maybeWriteKv(kv, key, body, fetchedAt, minIntervalS, now = Date.now()) {
   try {
     const metaKey = `${key}:w`;
-    const last = await kv.get(metaKey);
-    if (last && Date.now() - Number(last) < minIntervalS * 1000) return;
-    await kv.put(key, JSON.stringify({ body, fetchedAt }), { expirationTtl: 60 * 60 * 24 * 14 });
-    await kv.put(metaKey, String(Date.now()), { expirationTtl: minIntervalS });
+    const last = parseWriteMark(await kv.get(metaKey));
+    if (last && now - last.at < minIntervalS * 1000) return 'throttled';
+    const text = JSON.stringify(body);
+    const h = await sha256Hex(text);
+    if (last && last.h === h && now - last.at < KV_LASTGOOD_FORCE_S * 1000) return 'unchanged';
+    // Byte-identical to JSON.stringify({ body, fetchedAt }) without serializing the body twice.
+    const stored = fetchedAt === undefined ? JSON.stringify({ body, fetchedAt }) : `{"body":${text},"fetchedAt":${JSON.stringify(fetchedAt)}}`;
+    await kv.put(key, stored, { expirationTtl: KV_LASTGOOD_TTL_S });
+    await kv.put(metaKey, `${now}|${h}`, { expirationTtl: Math.max(minIntervalS, KV_LASTGOOD_FORCE_S) });
+    return 'written';
   } catch (e) {
     console.warn('kv last-good write failed', key, e.message);
+    return 'failed';
   }
 }
