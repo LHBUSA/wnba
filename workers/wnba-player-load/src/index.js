@@ -10,7 +10,7 @@ import { buildPlayerLoadSnapshot, PLAYER_LOAD_VERSION } from '../../shared/playe
 import { readWindowGames } from '../../shared/archive-reader.js';
 
 const SERVICE = 'wnba-player-load';
-const VERSION = '1.0.4'; // 1.0.4: reads only archived games inside the lookback window (bounded reader, no slice(-500))
+const VERSION = '1.0.5'; // 1.0.5: fresh-snapshot ticks no longer rewrite the status (change-only + 15-min heartbeat). 1.0.4: reads only archived games inside the lookback window (bounded reader, no slice(-500))
 const SNAPSHOT_KEY = 'player-load:v1:latest';
 const STATUS_KEY = 'player-load:v1:status';
 const REFRESH_MS = 15 * 60e3;
@@ -79,7 +79,48 @@ async function writeStatus(env, patch) {
   }));
 }
 
-async function runScheduled(env) {
+// Status heartbeat: while the snapshot is fresh the status record is rewritten only when its meaningful
+// content changed or this long has passed since its last success stamp (forced reconcile write).
+const STATUS_HEARTBEAT_MS = REFRESH_MS;
+const HEALTHY_STATES = new Set(['HEALTHY', 'HEALTHY_SKIPPED_FRESH']);
+
+/**
+ * A fresh-snapshot tick changes nothing but timestamps. Before 1.0.5 every such tick still wrote the
+ * status twice (RUNNING, then HEALTHY_SKIPPED_FRESH): 2,880 KV writes/day for 96 real refreshes.
+ * The status is skipped only when it already records a healthy state, this VERSION, no error, the
+ * same snapshot generated_at, and a success inside the heartbeat window.
+ */
+export function freshTickStatusCurrent(status, snapshotGeneratedAt, now = Date.now()) {
+  if (!status || !HEALTHY_STATES.has(status.state)) return false;
+  if (status.version !== VERSION || status.last_error) return false;
+  if (status.snapshot_generated_at !== snapshotGeneratedAt) return false;
+  const last = Date.parse(status.last_success_at || 0);
+  return Number.isFinite(last) && now - last < STATUS_HEARTBEAT_MS;
+}
+
+async function runScheduled(env, { now = Date.now() } = {}) {
+  // Cheap freshness gate BEFORE the RUNNING write: most minutes the snapshot is inside its refresh window.
+  if (env.WNBA_KV) {
+    const [existing, status] = await Promise.all([
+      env.WNBA_KV.get(SNAPSHOT_KEY, 'json'),
+      env.WNBA_KV.get(STATUS_KEY, 'json')
+    ]);
+    if (existing?.generated_at && now - Date.parse(existing.generated_at) < REFRESH_MS) {
+      const result = { skipped: 'fresh_snapshot', generated_at: existing.generated_at };
+      if (freshTickStatusCurrent(status, existing.generated_at, now)) return result;
+      const at = new Date(now).toISOString();
+      await writeStatus(env, {
+        state: 'HEALTHY_SKIPPED_FRESH',
+        last_attempt_at: at,
+        last_success_at: at,
+        last_error: null,
+        snapshot_generated_at: existing.generated_at,
+        last_result: result
+      });
+      return result;
+    }
+  }
+
   const attemptedAt = new Date().toISOString();
   await writeStatus(env, {
     state: 'RUNNING',
@@ -185,4 +226,4 @@ async function refresh(env, { force = false } = {}) {
   return { generated_at: snapshot.generated_at, players: snapshot.summary.players, finals_archived_recent: recentGames.length, upcoming_games: upcoming.length, archive_index_total: indexTotal, archives_read: read };
 }
 
-export { refresh, runScheduled };
+export { refresh, runScheduled, SNAPSHOT_KEY, STATUS_KEY, VERSION, REFRESH_MS };
