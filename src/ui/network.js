@@ -1,12 +1,10 @@
 // PropBetEdge network registry (shape follows LHBUSA/UFC web/lib/network.ts).
-// Discord invite is defined exactly once, network-wide.
 // Family parity: sports/products/network URLs must match the vendored canonical registry
 // src/ui/family.json (LHBUSA/propbetedge-workers shared/network/family.json); guarded by
 // tests/network-family-parity.test.mjs.
 
 import { PROPBETEDGE_X_URL, PROPBETEDGE_X_HANDLE } from '../seo/site.js';
 
-export const PROPBETEDGE_DISCORD_URL = 'https://discord.gg/kb5zCTHbME';
 export const CURRENT_SPORT = 'wnba';
 
 export const NETWORK = Object.freeze({
@@ -16,7 +14,6 @@ export const NETWORK = Object.freeze({
   store: { label: 'Store', href: 'https://ufc.propbetedge.ai/store' },
   // Network education layer: first-party, canonical, same-tab.
   learn: { label: 'Learn', href: 'https://learn.propbetedge.ai/' },
-  discord: { label: 'Discord', href: PROPBETEDGE_DISCORD_URL },
   // PropBetEdge's own X account: external, so it opens in a new tab (noopener noreferrer).
   x: { label: PROPBETEDGE_X_HANDLE, href: PROPBETEDGE_X_URL, title: 'Follow PropBetEdge on X' },
   sports: [
