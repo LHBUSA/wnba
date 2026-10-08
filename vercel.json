@@ -62,6 +62,14 @@
       "destination": "/app-shell.html"
     },
     {
+      "source": "/go/kalshi-perps/config",
+      "destination": "https://propsports-markets.sales-fd3.workers.dev/v1/partner/kalshi"
+    },
+    {
+      "source": "/go/kalshi-perps",
+      "destination": "https://propsports-markets.sales-fd3.workers.dev/go/kalshi-perps"
+    },
+    {
       "source": "/",
       "destination": "https://wnba-web.sales-fd3.workers.dev/"
     },
